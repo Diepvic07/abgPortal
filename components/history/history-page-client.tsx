@@ -88,25 +88,25 @@ export function HistoryPageClient() {
             <h1 className="text-2xl font-bold text-gray-900">{t.history.title}</h1>
           </div>
 
-          {/* Tab Navigation */}
+          {/* Tab Navigation - Enhanced highlighting */}
           <div className="border-b border-gray-200">
             <div className="flex">
               <button
                 onClick={() => setActiveTab('requests')}
-                className={`flex-1 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex-1 px-4 sm:px-6 py-3.5 text-sm font-semibold border-b-3 transition-all ${
                   activeTab === 'requests'
-                    ? 'border-brand text-brand bg-brand/5'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'border-brand text-brand bg-brand/10 border-b-[3px]'
+                    : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 {t.history.myRequests}
               </button>
               <button
                 onClick={() => setActiveTab('incoming')}
-                className={`flex-1 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex-1 px-4 sm:px-6 py-3.5 text-sm font-semibold border-b-3 transition-all ${
                   activeTab === 'incoming'
-                    ? 'border-brand text-brand bg-brand/5'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'border-brand text-brand bg-brand/10 border-b-[3px]'
+                    : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 {t.history.incomingMatches}

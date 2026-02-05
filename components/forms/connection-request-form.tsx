@@ -28,7 +28,7 @@ type MatchType = 'professional' | 'dating' | 'job' | 'hiring';
 
 export function ConnectionRequestForm() {
   const { t, locale } = useTranslation();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [matchType, setMatchType] = useState<MatchType>('professional');
   const [matches, setMatches] = useState<MatchWithMember[] | null>(null);
@@ -107,13 +107,13 @@ export function ConnectionRequestForm() {
 
   return (
     <div className="space-y-6">
-      {/* Toggle */}
-      <div className="flex p-1 bg-bg-surface rounded-lg mb-8 border border-border overflow-x-auto">
+      {/* Toggle - Enhanced tab highlighting for better visibility */}
+      <div className="flex p-1.5 bg-gray-100 rounded-xl mb-8 border border-gray-200 overflow-x-auto gap-1">
         <button
           onClick={() => setMatchType('professional')}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all whitespace-nowrap ${matchType === 'professional'
-            ? 'bg-white text-brand shadow-sm'
-            : 'text-text-secondary hover:text-text-primary'
+          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'professional'
+            ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
+            : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
             }`}
           type="button"
         >
@@ -121,9 +121,9 @@ export function ConnectionRequestForm() {
         </button>
         <button
           onClick={() => setMatchType('job')}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all whitespace-nowrap ${matchType === 'job'
-            ? 'bg-white text-brand shadow-sm'
-            : 'text-text-secondary hover:text-text-primary'
+          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'job'
+            ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
+            : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
             }`}
           type="button"
         >
@@ -131,9 +131,9 @@ export function ConnectionRequestForm() {
         </button>
         <button
           onClick={() => setMatchType('hiring')}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all whitespace-nowrap ${matchType === 'hiring'
-            ? 'bg-white text-brand shadow-sm'
-            : 'text-text-secondary hover:text-text-primary'
+          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'hiring'
+            ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
+            : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
             }`}
           type="button"
         >
@@ -141,9 +141,9 @@ export function ConnectionRequestForm() {
         </button>
         <button
           onClick={() => setMatchType('dating')}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all whitespace-nowrap ${matchType === 'dating'
-            ? 'bg-white text-brand shadow-sm'
-            : 'text-text-secondary hover:text-text-primary'
+          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'dating'
+            ? 'bg-pink-500 text-white shadow-md ring-2 ring-pink-500/30'
+            : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
             }`}
           type="button"
         >
@@ -158,13 +158,7 @@ export function ConnectionRequestForm() {
           </div>
         )}
 
-        {session?.user?.email && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
-              {t.auth.signedIn.replace('{email}', session.user.email)}
-            </p>
-          </div>
-        )}
+{/* Removed redundant "signed in as" message - user status is visible in header menu */}
 
         <div>
           <label className="block text-sm font-medium text-text-primary mb-1">
