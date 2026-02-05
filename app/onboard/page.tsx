@@ -1,10 +1,69 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { MemberOnboardingForm } from '@/components/forms/member-onboarding-form';
+import { UpgradePremiumPrompt } from '@/components/upgrade-premium-prompt';
 import { useTranslation } from '@/lib/i18n';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function OnboardPage() {
   const { t } = useTranslation();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [isExistingMember, setIsExistingMember] = useState<boolean | null>(null);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    async function checkMembership() {
+      if (status === 'loading') return;
+
+      if (!session?.user?.email) {
+        setIsChecking(false);
+        return;
+      }
+
+      try {
+        // Check if user already has a profile in database
+        const response = await fetch('/api/profile');
+        if (response.ok) {
+          const data = await response.json();
+          // User exists in database - show upgrade prompt
+          if (data.member?.id) {
+            setIsExistingMember(true);
+          } else {
+            setIsExistingMember(false);
+          }
+        } else {
+          setIsExistingMember(false);
+        }
+      } catch {
+        setIsExistingMember(false);
+      } finally {
+        setIsChecking(false);
+      }
+    }
+
+    checkMembership();
+  }, [session, status]);
+
+  if (status === 'loading' || isChecking) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  // Show upgrade prompt for existing members
+  if (isExistingMember) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <UpgradePremiumPrompt />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto">

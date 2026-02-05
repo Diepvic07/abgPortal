@@ -113,6 +113,8 @@ export const vi: Translations = {
       relationshipPreferNotToSay: 'Không muốn chia sẻ',
       submit: 'Hoàn tất hồ sơ',
       submitting: 'Đang lên hồ sơ...',
+      continueWithGoogle: 'Tiếp tục với Google',
+      emailGoogleNote: 'Email sẽ được tự động điền từ tài khoản Google của bạn',
     },
     success: {
       title: 'Chào mừng người anh em!',

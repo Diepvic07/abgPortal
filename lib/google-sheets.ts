@@ -430,17 +430,22 @@ export async function addRequestAudit(audit: {
   failure_reason?: string;
   request_type: string;
 }): Promise<void> {
-  await appendRow(SHEETS.AUDIT, [
-    audit.id,
-    audit.member_id,
-    audit.request_id || '',
-    audit.ip_address,
-    audit.user_agent,
-    audit.timestamp,
-    audit.success ? 'TRUE' : 'FALSE',
-    audit.failure_reason || '',
-    audit.request_type,
-  ]);
+  try {
+    await appendRow(SHEETS.AUDIT, [
+      audit.id,
+      audit.member_id,
+      audit.request_id || '',
+      audit.ip_address,
+      audit.user_agent,
+      audit.timestamp,
+      audit.success ? 'TRUE' : 'FALSE',
+      audit.failure_reason || '',
+      audit.request_type,
+    ]);
+  } catch (error) {
+    // Log error but don't throw - audit should not block main request flow
+    console.error('Failed to add request audit:', error);
+  }
 }
 
 

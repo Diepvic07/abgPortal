@@ -1,5 +1,7 @@
-
 import { getMembers } from '@/lib/google-sheets';
+
+// Force dynamic rendering - requires env vars at runtime
+export const dynamic = 'force-dynamic';
 
 export default async function MembersTestPage() {
     const members = await getMembers();

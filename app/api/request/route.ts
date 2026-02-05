@@ -9,7 +9,7 @@ import { ConnectionRequest } from '@/types';
 import { requireAuth } from '@/lib/auth-middleware';
 import { checkForAbuse } from '@/lib/abuse-detection';
 
-const FREE_REQUEST_LIMIT = 3;
+const FREE_REQUEST_LIMIT = 0; // Basic users must upgrade to premium
 const PREMIUM_DAILY_LIMIT = 50;
 
 export async function POST(request: NextRequest) {

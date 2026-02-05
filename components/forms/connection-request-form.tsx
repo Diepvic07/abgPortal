@@ -7,9 +7,9 @@ import { z } from 'zod';
 import { useSession } from 'next-auth/react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { MatchResultsDisplay } from '@/components/match-results-display';
+import { FakeResultsPaywall } from '@/components/fake-results-paywall';
 import { MatchResult, Member } from '@/types';
 import { useTranslation } from '@/lib/i18n';
-import { SignInButton } from '@/components/ui/sign-in-button';
 
 // Create schema with translated messages
 function createRequestSchema(t: { request: { validation: Record<string, string> } }) {
@@ -25,6 +25,7 @@ interface MatchWithMember extends MatchResult {
 }
 
 type MatchType = 'professional' | 'dating' | 'job' | 'hiring';
+type PaywallType = 'sign-in' | 'upgrade' | null;
 
 export function ConnectionRequestForm() {
   const { t, locale } = useTranslation();
@@ -34,6 +35,7 @@ export function ConnectionRequestForm() {
   const [matches, setMatches] = useState<MatchWithMember[] | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [paywallType, setPaywallType] = useState<PaywallType>(null);
 
   // Memoize schema to recreate when language changes
   const schema = useMemo(() => createRequestSchema(t), [t]);
@@ -43,9 +45,16 @@ export function ConnectionRequestForm() {
   });
 
   const onSubmit = async (data: RequestData) => {
+    // If user is not authenticated, show sign-in paywall with fake results
+    if (status === 'unauthenticated') {
+      setPaywallType('sign-in');
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     setMatches(null);
+    setPaywallType(null);
 
     try {
       const response = await fetch('/api/request', {
@@ -57,6 +66,12 @@ export function ConnectionRequestForm() {
       const result = await response.json();
 
       if (!response.ok) {
+        // Check if error is due to free request limit reached (403)
+        // Show upgrade paywall for any 403 payment-related error
+        if (response.status === 403) {
+          setPaywallType('upgrade');
+          return;
+        }
         throw new Error(result.error || t.common.error);
       }
 
@@ -69,6 +84,7 @@ export function ConnectionRequestForm() {
     }
   };
 
+  // Show real results for authenticated users with valid requests
   if (matches && requestId) {
     return (
       <MatchResultsDisplay
@@ -78,27 +94,22 @@ export function ConnectionRequestForm() {
     );
   }
 
-  // Show sign-in UI for unauthenticated users
+  // Show fake results with paywall overlay
+  if (paywallType) {
+    return (
+      <FakeResultsPaywall
+        type={paywallType}
+        matchType={matchType}
+        onBack={() => setPaywallType(null)}
+      />
+    );
+  }
+
+  // Show loading spinner only during initial session check
   if (status === 'loading') {
     return (
       <div className="flex items-center justify-center py-12">
         <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (status === 'unauthenticated') {
-    return (
-      <div className="max-w-md mx-auto text-center py-12">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            {t.auth.signInRequired}
-          </h2>
-          <p className="text-gray-600">
-            {t.auth.signInDescription}
-          </p>
-        </div>
-        <SignInButton className="mx-auto" />
       </div>
     );
   }

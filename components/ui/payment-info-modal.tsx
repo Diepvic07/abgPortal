@@ -104,7 +104,7 @@ export function PaymentInfoModal({ memberId, memberName, isOpen, onClose }: Paym
 
           <div className="grid grid-cols-3 gap-2">
             <span className="text-sm text-text-secondary">{t.payment.amount}:</span>
-            <span className="col-span-2 text-sm font-medium text-brand">500,000 VND</span>
+            <span className="col-span-2 text-sm font-medium text-brand">1,000,000 VND</span>
           </div>
 
           <div className="grid grid-cols-3 gap-2">

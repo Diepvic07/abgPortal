@@ -111,6 +111,8 @@ export const en = {
       relationshipPreferNotToSay: 'Prefer not to say',
       submit: 'Complete Profile',
       submitting: 'Creating your profile...',
+      continueWithGoogle: 'Continue with Google',
+      emailGoogleNote: 'Your email will be automatically filled from your Google account',
     },
     success: {
       title: 'Welcome aboard!',
