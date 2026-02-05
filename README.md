@@ -1,36 +1,137 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ABG Alumni Connect
+
+AI-powered member matching platform for ABG Alumni community (~300 users).
+
+## Features
+
+- **Member Onboarding**: Form with AI-generated bio via Gemini
+- **Connection Matching**: AI-powered matching based on needs and expertise
+- **Email Introductions**: Automated intro emails to both parties via Resend
+- **Admin Notifications**: Discord webhooks for new members/requests/connections
+
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: Google Sheets API
+- **AI**: Gemini 1.5 Flash
+- **Email**: Resend
+- **Notifications**: Discord Webhooks
+- **Storage**: Vercel Blob (voice uploads)
+- **Hosting**: Vercel
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone and Install
+
+```bash
+cd abg-alumni-connect
+npm install
+```
+
+### 2. Configure Environment
+
+Copy `.env.example` to `.env.local` and fill in values:
+
+```bash
+cp .env.example .env.local
+```
+
+Required variables:
+- `GOOGLE_SHEETS_ID` - Spreadsheet ID from URL
+- `GOOGLE_SERVICE_ACCOUNT_EMAIL` - Service account email
+- `GOOGLE_PRIVATE_KEY` - Service account private key (with quotes)
+- `GEMINI_API_KEY` - From Google AI Studio
+- `RESEND_API_KEY` - From Resend dashboard
+- `DISCORD_WEBHOOK_URL` - Discord channel webhook
+- `BLOB_READ_WRITE_TOKEN` - Vercel Blob token
+
+### 3. Setup Google Sheets
+
+Create a spreadsheet with 3 sheets:
+- **Members** - Headers in row 1
+- **Requests** - Headers in row 1
+- **Connections** - Headers in row 1
+
+Or run the seed script after configuring env:
+
+```bash
+npx tsx scripts/seed-test-data.ts
+```
+
+### 4. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/
+  layout.tsx           # Root layout with header/footer
+  page.tsx             # Landing page
+  onboard/page.tsx     # Member onboarding form
+  request/page.tsx     # Connection request form
+  error.tsx            # Global error page
+  loading.tsx          # Global loading state
+  api/
+    onboard/route.ts   # POST - create member
+    request/route.ts   # POST - find matches
+    connect/route.ts   # POST - send intro email
 
-## Learn More
+components/
+  forms/
+    member-onboarding-form.tsx
+    connection-request-form.tsx
+  ui/
+    loading-spinner.tsx
+    toast-provider.tsx
+  match-results-display.tsx
 
-To learn more about Next.js, take a look at the following resources:
+lib/
+  google-sheets.ts     # Sheets CRUD operations
+  gemini.ts            # AI text generation
+  resend.ts            # Email sending
+  discord.ts           # Webhook notifications
+  utils.ts             # Helpers (UUID, dates, cn)
+  api-response.ts      # API response helpers
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+types/
+  index.ts             # TypeScript interfaces
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+### Vercel (Recommended)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push to GitHub
+2. Import in Vercel
+3. Add all environment variables
+4. Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [docs/admin-operations-guide.md](docs/admin-operations-guide.md) for full deployment checklist.
+
+## User Flows
+
+### Onboarding
+1. User fills form with profile info
+2. Gemini generates professional bio
+3. Member saved to Google Sheets
+4. Confirmation email sent via Resend
+5. Admin notified via Discord
+
+### Connection Request
+1. Member describes what they need
+2. System verifies membership (paid or 1 free request)
+3. Gemini matches with relevant members
+4. User selects preferred match
+5. Intro email sent to both parties
+6. Connection logged, admin notified
+
+## License
+
+Private - ABG Alumni Community

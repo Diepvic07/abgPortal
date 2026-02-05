@@ -1,0 +1,90 @@
+import { NextRequest } from 'next/server';
+import {
+  getMemberById,
+  addConnection,
+  updateRequestStatus,
+  getSheetData,
+  SHEETS
+} from '@/lib/google-sheets';
+import { sendIntroEmail } from '@/lib/resend';
+import { notifyAdmin } from '@/lib/discord';
+import { generateId, formatDate } from '@/lib/utils';
+import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
+import { Connection } from '@/types';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { request_id, selected_id, match_reason, locale = 'en' } = await request.json();
+
+    if (!request_id || !selected_id || !match_reason) {
+      return errorResponse('Missing required fields', 400);
+    }
+
+    const requests = await getSheetData(SHEETS.REQUESTS);
+    const requestRow = requests.find(row => row[0] === request_id);
+
+    if (!requestRow) {
+      return errorResponse('Request not found', 404);
+    }
+
+    const requester_id = requestRow[1];
+    const request_text = requestRow[2];
+
+    const requester = await getMemberById(requester_id);
+
+    // Try finding target as member first, then dating profile
+    const { getDatingProfileById } = await import('@/lib/google-sheets');
+    let targetMember = await getMemberById(selected_id);
+    let targetDating = null;
+
+    if (!targetMember) {
+      targetDating = await getDatingProfileById(selected_id);
+    }
+
+    if (!requester || (!targetMember && !targetDating)) {
+      return errorResponse('Member not found', 404);
+    }
+
+    // Prepare target details
+    const targetName = targetMember ? targetMember.name : targetDating!.nickname;
+    const targetEmail = targetMember ? targetMember.email : targetDating!.contact_email;
+    const targetRole = targetMember ? targetMember.role : (targetDating!.career_field || 'Community Member');
+    const targetCompany = targetMember ? targetMember.company : (targetDating!.location || 'ABG Community');
+
+    await sendIntroEmail({
+      requester_email: requester.email,
+      requester_name: requester.name,
+      requester_role: requester.role,
+      requester_company: requester.company,
+      target_email: targetEmail,
+      target_name: targetName,
+      request_text,
+      match_reason,
+      locale,
+    });
+
+    await updateRequestStatus(request_id, 'connected', selected_id);
+
+    const connection: Connection = {
+      id: generateId(),
+      request_id,
+      from_id: requester_id,
+      to_id: selected_id,
+      intro_sent: true,
+      created_at: formatDate(),
+    };
+
+    await addConnection(connection);
+
+    await notifyAdmin('connection_made', {
+      from_name: requester.name,
+      to_name: targetName,
+    });
+
+    return successResponse({
+      message: 'Introduction email sent to both parties',
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
