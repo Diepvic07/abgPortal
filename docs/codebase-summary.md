@@ -408,6 +408,188 @@ npm run import-members                  # Execute import
 - Discord webhooks for audit trail of admin actions
 - NextAuth JWT session strategy with 30-day expiry
 
+## E2E Testing Infrastructure
+
+### Test Structure (Playwright)
+
+Tests organized in `/e2e` directory with clear separation by feature:
+
+```
+e2e/
+├── playwright.config.ts      # Playwright configuration
+├── .env.test                 # Test environment variables
+├── pages/                    # Page Object Model classes
+│   ├── base.page.ts         # BasePage with common utilities
+│   ├── login.page.ts        # Login page actions
+│   ├── signup.page.ts       # Signup page actions
+│   ├── profile.page.ts      # Profile page actions
+│   ├── request.page.ts      # Request form page actions
+│   ├── history.page.ts      # History page actions
+│   ├── onboard.page.ts      # Onboarding form actions
+│   └── admin.page.ts        # Admin dashboard actions
+├── fixtures/                # Test data and utilities
+│   ├── index.ts             # Fixture exports
+│   ├── auth.fixture.ts      # Authentication setup
+│   └── test-data.ts         # Mock data factories
+├── mocks/                   # External service mocks
+│   ├── index.ts             # Mock exports
+│   ├── setup-all-mocks.ts   # Global mock registration
+│   ├── google-sheets.mock.ts # Sheets API mock
+│   ├── gemini.mock.ts       # Gemini AI mock
+│   ├── resend.mock.ts       # Email service mock
+│   ├── blob.mock.ts         # Storage service mock
+│   └── discord.mock.ts      # Discord webhook mock
+└── tests/                   # Test suites
+    ├── smoke.spec.ts        # Critical path smoke tests
+    ├── auth/                # Authentication tests
+    │   ├── google-oauth.spec.ts
+    │   ├── magic-link.spec.ts
+    │   ├── protected-routes.spec.ts
+    │   ├── auth-status.spec.ts
+    │   └── session.spec.ts
+    ├── onboarding/          # Onboarding tests
+    │   └── ai-bio-generation.spec.ts
+    ├── matching/            # Matching & request tests
+    │   ├── request-submission.spec.ts
+    │   ├── match-results.spec.ts
+    │   ├── tier-limits.spec.ts
+    │   └── connection-request.spec.ts
+    ├── admin/               # Admin features tests
+    │   ├── approval-workflow.spec.ts
+    │   ├── member-list.spec.ts
+    │   ├── tier-management.spec.ts
+    │   └── access-control.spec.ts
+    ├── user-flows/          # Complete user journey tests
+    │   ├── profile.spec.ts
+    │   ├── history.spec.ts
+    │   └── complete-journeys.spec.ts
+    └── edge-cases/          # Error and boundary tests
+        ├── network-failures.spec.ts
+        ├── rate-limiting.spec.ts
+        ├── boundary-conditions.spec.ts
+        ├── session-expiry.spec.ts
+        └── api-errors.spec.ts
+```
+
+### Key Commands
+
+```bash
+# Run all tests (headless)
+npm run test:e2e
+
+# Run tests with UI mode (interactive debugging)
+npm run test:e2e:ui
+
+# Run tests with browser visible
+npm run test:e2e:headed
+
+# Debug mode (step through with Inspector)
+npm run test:e2e:debug
+
+# Run only Chromium tests
+npm run test:e2e:chromium
+
+# Run specific test file
+npx playwright test --config=e2e/playwright.config.ts e2e/tests/auth/login.spec.ts
+
+# Run tests matching pattern
+npx playwright test --config=e2e/playwright.config.ts -g "oauth"
+```
+
+### Page Object Pattern
+
+All pages inherit from `BasePage` and encapsulate UI interactions:
+
+```typescript
+// Example: LoginPage
+export class LoginPage extends BasePage {
+  readonly emailInput: Locator;
+  readonly loginButton: Locator;
+
+  async fillEmail(email: string) {
+    await this.emailInput.fill(email);
+  }
+
+  async clickLogin() {
+    await this.loginButton.click();
+    await this.waitForLoad();
+  }
+}
+
+// Usage in tests
+const loginPage = new LoginPage(page);
+await loginPage.navigate('/login');
+await loginPage.fillEmail('user@example.com');
+await loginPage.clickLogin();
+```
+
+Benefits:
+- **Maintainability**: UI changes require updates in one place (page class)
+- **Readability**: Tests describe business logic, not CSS selectors
+- **Reusability**: Common actions (navigation, waits) in BasePage
+- **Debugging**: Clear separation between page structure and test logic
+
+### Mock Strategy for External APIs
+
+Playwright intercepts API requests and mocks responses to:
+- Eliminate external dependencies
+- Control test data deterministically
+- Speed up test execution
+- Test error scenarios
+
+```typescript
+// Mock Google Sheets API (in global setup or fixture)
+await page.route('**/sheets.googleapis.com/**', (route) => {
+  if (route.request().postDataJSON()?.values) {
+    return route.abort('failed'); // Simulate network error
+  }
+  return route.continue();
+});
+
+// Mock Gemini AI responses
+await page.route('**/generativelanguage.googleapis.com/**', (route) => {
+  return route.fulfill({
+    status: 200,
+    body: JSON.stringify({
+      candidates: [{ content: { parts: [{ text: 'Generated bio' }] } }]
+    })
+  });
+});
+```
+
+Mocked Services:
+- **Google Sheets**: Member CRUD, approval workflow, data persistence
+- **Gemini AI**: Bio generation, member matching
+- **Resend**: Email confirmation, magic links, introductions
+- **Vercel Blob**: Avatar/voice file uploads
+- **Discord**: Admin notifications
+
+### CI/CD Pipeline Integration
+
+#### GitHub Actions
+- Runs on: Push to main, PRs, manual trigger
+- Parallel execution: All 3 browser projects (Chromium, Firefox, WebKit)
+- Retry strategy: 2 retries in CI, 0 retries locally
+- Artifacts: HTML report, videos, traces on failure
+- Timeout: 30-second test timeout, 2-minute startup
+
+#### Local Development
+- Reuses existing server if running
+- Single worker by default
+- Traces and screenshots on failure
+- HTML report auto-opens in browser
+
+### Test Configuration
+
+**playwright.config.ts** settings:
+- **baseURL**: `http://127.0.0.1:3000` (configurable via env)
+- **timeout**: 30 seconds per test
+- **retries**: 2 in CI, 0 locally
+- **workers**: 1 in CI, unlimited locally
+- **trace**: Recorded on first retry for debugging
+- **screenshot**: Only on failure
+- **video**: Only in CI on first retry
+
 ## Future Extensibility
 
 Key areas designed for future expansion:
