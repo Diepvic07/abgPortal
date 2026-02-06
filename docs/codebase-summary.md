@@ -13,6 +13,7 @@ ABG Alumni Connect is an AI-powered member matching platform for ABG Alumni comm
 - **Approval Workflow**: pending → approved/rejected status
 - **Account Status**: active, suspended, banned
 - **Last Login Tracking**: Automatic updates on sign-in
+- **Email-First Verification**: Landing page email check before authentication
 
 ### 2. Membership Tiers
 - **Basic**: 1 free request lifetime, login access only
@@ -24,6 +25,7 @@ ABG Alumni Connect is an AI-powered member matching platform for ABG Alumni comm
 - **Smart Filtering**: Matches based on expertise, needs, location
 - **Approval-Gated**: Only approved members can request matches
 - **Tier-Limited**: Basic tier gets 1 match, premium unlimited
+- **Public Search Preview**: Unauthenticated users can search with blurred results
 
 ### 4. Admin Management
 - **Approval Dashboard**: `/admin` - approve/reject pending members
@@ -73,7 +75,8 @@ abg-alumni-connect/
 │   │   └── verify-request/page.tsx # Magic link verification
 │   └── api/
 │       ├── auth/[...nextauth]/    # NextAuth configuration
-│       ├── auth/check-email/      # Email existence check
+│       ├── auth/check-email/      # Email existence check with intent parameter
+│       ├── search/public/         # Public search with blurred results (NEW)
 │       ├── onboard/               # Create member
 │       ├── request/               # Gemini matching
 │       ├── connect/               # Send intro email
@@ -90,6 +93,12 @@ abg-alumni-connect/
 │   │   └── connection-request-form.tsx
 │   ├── profile/
 │   │   └── profile-edit-form-component.tsx
+│   ├── landing/                   # Landing page components (NEW)
+│   │   ├── public-search-section.tsx   # Unauthenticated search
+│   │   ├── auth-section.tsx            # Returning Member + Join buttons
+│   │   ├── email-check-card.tsx        # Reusable email verification card
+│   │   ├── about-abg-alumni-section.tsx
+│   │   └── how-it-works-section.tsx
 │   ├── ui/
 │   │   ├── loading-spinner.tsx
 │   │   ├── toast-provider.tsx
@@ -245,7 +254,29 @@ Member selects match → Intro email sent →
 Connection logged → Request status = "connected"
 ```
 
-### 4. CSV Bulk Import
+### 4. Public Search (Email Check Landing Flow)
+```
+User arrives at landing page → PublicSearchSection shown →
+User enters search query → POST /api/search/public →
+Gemini matches against paid members → Results blurred (preview) →
+Shows: obfuscated ID, blurred name/role/company, matching reason →
+Message: "Found X matches. Sign in to see full profiles."
+```
+
+### 5. Email Check with Intent
+```
+User enters email at landing page → POST /api/auth/check-email →
+Request includes: { email, intent: "signin" | "signup" } →
+Response matrix:
+- If email not found + intent=signup → "Great! Sign in with Google"
+- If email not found + intent=signin → "Join Community instead"
+- If email found + pending → "Application pending review"
+- If email found + approved + intent=signup → "Already registered"
+- If email found + approved + intent=signin → "Welcome back!"
+- If suspended/banned → "Account suspended. Contact admin."
+```
+
+### 6. CSV Bulk Import
 ```
 CSV file prepared → Run import-csv-members script →
 For each row: Check email doesn't exist → Create member →
@@ -362,8 +393,11 @@ npm run import-members                  # Execute import
 1. **Approval-First**: All sign-ins check approval_status before allowing access
 2. **Tier-Gated Features**: Request limits enforced at API layer, not UI
 3. **CSV Batch Processing**: Rate-limited imports to prevent API throttling
-4. **Email-First Auth**: Magic links as default, Google OAuth as alternative
+4. **Email-First Auth**: Landing page email check routes users to signup/signin appropriately
 5. **Blurred Matching**: Basic tier sees softly-blocked results to encourage upgrades
+6. **Public Search Preview**: Anonymous users can search and see blurred results without login
+7. **Intent-Based Email Check**: Single API endpoint handles both signin/signup flows with context-aware responses
+8. **Rate Limiting**: Both `/api/auth/check-email` (10 req/min) and `/api/search/public` (5 req/min) protected per IP
 
 ## Security Considerations
 

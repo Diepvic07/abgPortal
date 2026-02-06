@@ -55,6 +55,32 @@ export const en = {
       step3Title: 'Get Matched & Connected',
       step3Desc: 'Our AI finds the best matches and facilitates email introductions between you and your matches.',
     },
+    // Email check section translations
+    emailCheck: {
+      checkButton: 'Check & Continue',
+      googleButton: 'Continue with Google',
+      switchToSignup: 'Not a member? Join Community',
+      switchToSignin: 'Already a member? Sign In',
+      tryDifferentEmail: 'Try a different email',
+    },
+    // Auth section translations
+    authSection: {
+      returningTitle: 'Returning Member',
+      returningDesc: 'Already registered? Enter your email to sign in.',
+      joinTitle: 'Join Community',
+      joinDesc: 'New to ABG Connect? Start your application here.',
+    },
+    // Public search translations
+    publicSearch: {
+      title: 'Find a Connection',
+      subtitle: 'Try our AI matching - no signup required',
+      placeholder: 'e.g., I need a marketing expert for my startup...',
+      searchButton: 'Search',
+      signInToSee: 'Sign in to see full profiles',
+      teaser: 'Sign in to unlock full profiles and connect directly',
+    },
+    // Divider
+    divider: 'OR',
   },
 
   // Onboarding page

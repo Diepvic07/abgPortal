@@ -57,6 +57,32 @@ export const vi: Translations = {
       step3Title: 'Được ghép và kết nối',
       step3Desc: 'AI tìm người phù hợp nhất và gửi email giới thiệu cho cả hai bên.',
     },
+    // Email check section translations
+    emailCheck: {
+      checkButton: 'Kiểm tra & Tiếp tục',
+      googleButton: 'Đăng nhập với Google',
+      switchToSignup: 'Chưa có tài khoản? Đăng ký',
+      switchToSignin: 'Đã là thành viên? Đăng nhập',
+      tryDifferentEmail: 'Thử email khác',
+    },
+    // Auth section translations
+    authSection: {
+      returningTitle: 'Thành viên cũ',
+      returningDesc: 'Đã đăng ký rồi? Nhập email để đăng nhập.',
+      joinTitle: 'Gia nhập cộng đồng',
+      joinDesc: 'Mới tham gia ABG Connect? Bắt đầu đăng ký tại đây.',
+    },
+    // Public search translations
+    publicSearch: {
+      title: 'Tìm kết nối',
+      subtitle: 'Thử tính năng ghép đôi AI - không cần đăng ký',
+      placeholder: 'VD: Tôi cần chuyên gia marketing cho startup...',
+      searchButton: 'Tìm',
+      signInToSee: 'Đăng nhập để xem đầy đủ hồ sơ',
+      teaser: 'Đăng nhập để xem đầy đủ hồ sơ và kết nối trực tiếp',
+    },
+    // Divider
+    divider: 'HOẶC',
   },
 
   // Onboarding page

@@ -4,6 +4,8 @@ AI-powered member matching platform for ABG Alumni community (~300 users).
 
 ## Features
 
+- **Email-First Landing Page**: Check email status before auth, guided to signup or signin
+- **Public Search Preview**: Unauthenticated users can search and see blurred member results
 - **Dual Authentication**: Google OAuth + Magic Link (Email) sign-in
 - **Approval Workflow**: Admin approves pending members; rejected members see status page
 - **Two-Tier System**: Basic (1 free request) and Premium (unlimited requests, 50/day limit)
@@ -151,6 +153,27 @@ scripts/
 See [docs/admin-operations-guide.md](docs/admin-operations-guide.md) for full deployment checklist.
 
 ## User Flows
+
+### Email-First Landing Flow (NEW)
+1. User arrives at `/` → Sees landing page with 3 sections
+2. **Search Section**: Public search with email check → Blurred preview results
+3. **Auth Section**: Two cards:
+   - "Returning Member" → Email check with `intent=signin` → Route to login if approved
+   - "Join Community" → Email check with `intent=signup` → Route to signup if email available
+4. System checks email against Members sheet:
+   - **Not found + signup**: "Great! Sign in with Google to continue"
+   - **Not found + signin**: "Join Community instead"
+   - **Found + pending**: "Application pending review"
+   - **Found + approved + signup**: "Already registered"
+   - **Found + approved + signin**: "Welcome back!"
+
+### Public Search (NEW)
+1. User enters query on landing page without login
+2. POST `/api/search/public` with query
+3. Rate limited: 5 requests/min per IP
+4. Returns 3 blurred matches (name/role/company obscured)
+5. Shows matching reason (visible to encourage signup)
+6. Message: "Sign in to see full profiles"
 
 ### Authentication
 1. User visits `/login` → chooses Google OAuth or Magic Link

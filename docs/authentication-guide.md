@@ -2,11 +2,144 @@
 
 ## Overview
 
-ABG Alumni Connect supports dual authentication:
-1. **Magic Link (Email)** - Resend sends verification link to inbox
-2. **Google OAuth** - Sign in with existing Google account
+ABG Alumni Connect features an **email-first landing flow** plus dual authentication:
 
-Both methods require email verification and member approval before platform access.
+1. **Email Check (Landing Page)** - Users enter email to check status and route appropriately
+2. **Magic Link (Email)** - Resend sends verification link to inbox
+3. **Google OAuth** - Sign in with existing Google account
+
+The email check endpoint (`POST /api/auth/check-email`) intelligently guides users to signup or signin based on their email status and intent (new member or returning member).
+
+## Email Check Flow (NEW - Landing Page)
+
+### Overview
+The email check endpoint enables a smart routing system at `/` (landing page) that guides users to the appropriate next step based on their email status and intent.
+
+### API Endpoint
+**POST /api/auth/check-email**
+
+**Request:**
+```json
+{
+  "email": "user@example.com",
+  "intent": "signin" | "signup"
+}
+```
+
+**Rate Limiting:** 10 requests/minute per IP
+
+**Response Examples:**
+
+**1. Email not found + intent=signup (Join Community flow):**
+```json
+{
+  "exists": false,
+  "status": "not_found",
+  "message": "Great! Sign in with Google to continue.",
+  "showOAuth": true
+}
+```
+
+**2. Email not found + intent=signin (Try Join instead):**
+```json
+{
+  "exists": false,
+  "status": "not_found",
+  "message": "Email not found. Join Community instead.",
+  "showOAuth": false
+}
+```
+
+**3. Email exists + pending approval:**
+```json
+{
+  "exists": true,
+  "status": "pending",
+  "message": "Application pending review. We'll notify you when approved.",
+  "showOAuth": false,
+  "accountStatus": "active"
+}
+```
+
+**4. Email exists + approved + intent=signin (Returning member):**
+```json
+{
+  "exists": true,
+  "status": "approved",
+  "message": "Welcome back! Sign in below.",
+  "showOAuth": true,
+  "accountStatus": "active"
+}
+```
+
+**5. Email exists + approved + intent=signup (Already registered):**
+```json
+{
+  "exists": true,
+  "status": "approved",
+  "message": "Already registered. Use Returning Member instead.",
+  "showOAuth": false,
+  "accountStatus": "active"
+}
+```
+
+**6. Account suspended/banned:**
+```json
+{
+  "exists": true,
+  "status": "approved",
+  "message": "Account suspended. Contact admin for assistance.",
+  "showOAuth": false,
+  "accountStatus": "suspended"
+}
+```
+
+### Landing Page Components
+The landing page uses reusable components to implement the email check flow:
+
+**`components/landing/email-check-card.tsx`** (Shared)
+- Accepts `intent` prop ("signin" or "signup")
+- Email input field
+- Calls `/api/auth/check-email` with intent
+- Handles rate limiting (429 errors)
+- Shows context-aware messages and next steps
+
+**`components/landing/auth-section.tsx`** (NEW)
+- Two cards side-by-side:
+  - **"Returning Member"** → Email check with `intent=signin`
+  - **"Join Community"** → Email check with `intent=signup`
+- Cards route user appropriately after email check
+
+**`components/landing/public-search-section.tsx`** (NEW)
+- Allows unauthenticated search preview
+- Shows blurred results to encourage signup
+
+### User Flow
+
+**Scenario A: New Member (Join Community)**
+```
+Landing page → Click "Join Community" →
+Email check with intent=signup →
+Email not found → "Sign in with Google" →
+OAuth popup → New Google account → Redirect to /signup
+```
+
+**Scenario B: Returning Member (Returning Member)**
+```
+Landing page → Click "Returning Member" →
+Email check with intent=signin →
+Email found + approved → "Welcome back" →
+Email/OAuth option → Enter magic link or Google →
+Login succeeds → Redirect to /
+```
+
+**Scenario C: Application Pending**
+```
+Landing page → Click either button →
+Email check → Email found + pending →
+"Application pending review" message →
+Cannot proceed until admin approves
+```
 
 ## Authentication Flow
 
@@ -506,7 +639,76 @@ npm run dev
 # 5. New member can now login
 ```
 
-## Related Documentation
+## Public Search API (NEW)
+
+### Overview
+The public search endpoint allows unauthenticated users to preview member matches without logging in. Results are intentionally blurred to encourage signup.
+
+### API Endpoint
+**POST /api/search/public**
+
+**Request:**
+```json
+{
+  "query": "search query (min 3 chars, max 500 chars)"
+}
+```
+
+**Rate Limiting:** 5 requests/minute per IP
+
+**Response:**
+```json
+{
+  "matches": [
+    {
+      "id": "preview-a1b2",
+      "name": "Joh** ***",
+      "role": "Pro**** *****",
+      "company": "Tec** **",
+      "reason": "Expert in product management and growth strategy",
+      "blurred": true
+    }
+  ],
+  "total": 3,
+  "message": "Found 3 potential matches. Sign in to see full profiles."
+}
+```
+
+**Error Responses:**
+```json
+// Query too short
+{ "error": "Query must be at least 3 characters" }
+
+// Rate limited
+{ "error": "Too many requests. Please try again later." }
+
+// No members available
+{
+  "matches": [],
+  "total": 0,
+  "message": "No members available at this time."
+}
+```
+
+### Implementation Details
+- **Location:** `app/api/search/public/route.ts`
+- **Component:** `components/landing/public-search-section.tsx`
+- **Max Results:** 3 matches per query
+- **Blurring:** Uses `blurText()` utility to obscure:
+  - Name: Leave 2 chars visible
+  - Role: Leave 3 chars visible
+  - Company: Leave 3 chars visible
+- **ID Obfuscation:** Returns last 4 chars of ID prefixed with "preview-"
+- **Visible Info:** Matching reason always shown (teaser for signup)
+
+### User Experience
+1. User enters search query on landing page
+2. Real-time Gemini matching against paid members
+3. Results show blurred names with visible matching reasons
+4. CTA message: "Sign in to see full profiles"
+5. User must sign in to see unblurred results
+
+### Related Documentation
 - [Setup Guide](./setup-guide.md) - Environment variable configuration
 - [Admin Operations Guide](./admin-operations-guide.md) - Approval workflow
 - [Codebase Summary](./codebase-summary.md) - Technical architecture
