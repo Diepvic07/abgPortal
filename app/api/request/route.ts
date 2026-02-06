@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { findMatches } from '@/lib/gemini';
-import { getActivePaidMembers, getMemberByEmail, addRequest, updateMemberFreeRequests, incrementMemberRequestCounts, addRequestAudit } from '@/lib/google-sheets';
+import { getActivePaidMembers, getMembers, addRequest, updateMemberFreeRequests, incrementMemberRequestCounts, addRequestAudit } from '@/lib/google-sheets';
 import { notifyAdmin } from '@/lib/discord';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
@@ -8,9 +8,7 @@ import { getTranslations, type Locale } from '@/lib/i18n';
 import { ConnectionRequest } from '@/types';
 import { requireAuth } from '@/lib/auth-middleware';
 import { checkForAbuse } from '@/lib/abuse-detection';
-
-const FREE_REQUEST_LIMIT = 0; // Basic users must upgrade to premium
-const PREMIUM_DAILY_LIMIT = 50;
+import { canMakeRequest, getMemberTier, createBlurredMatch, TIER_LIMITS } from '@/lib/tier-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,18 +61,27 @@ export async function POST(request: NextRequest) {
       return errorResponse('Your account has been banned.', 403);
     }
 
-    // Check limits
-    if (!requester.paid && requester.role !== 'Admin') {
-      // Free user: max 3 requests total
-      if (requester.free_requests_used >= FREE_REQUEST_LIMIT) {
-        await logAudit(false, 'Free request limit reached');
-        return errorResponse(t.request.errors.limitReached, 403);
+    // Check tier-based request limits
+    const requestStatus = canMakeRequest(requester);
+    const memberTier = getMemberTier(requester);
+
+    // For basic tier with limit reached, we'll do soft block (show blurred matches)
+    // Store this flag to handle soft block after matching
+    const shouldSoftBlock = !requestStatus.allowed && requestStatus.reason === 'limit_reached' && memberTier === 'basic';
+
+    // For other blocking reasons, return hard error
+    if (!requestStatus.allowed && !shouldSoftBlock) {
+      if (requestStatus.reason === 'not_approved') {
+        await logAudit(false, 'Account not approved');
+        return errorResponse('Your account is pending approval.', 403);
       }
-    } else if (requester.paid) {
-      // Premium user: max 50 requests per day
-      if ((requester.requests_today || 0) >= PREMIUM_DAILY_LIMIT) {
+      if (requestStatus.reason === 'account_suspended') {
+        await logAudit(false, 'Account suspended');
+        return errorResponse(t.auth?.accountSuspended || 'Your account has been suspended.', 403);
+      }
+      if (requestStatus.reason === 'limit_reached' && memberTier === 'premium') {
         await logAudit(false, 'Premium daily limit reached');
-        return errorResponse(`Daily request limit reached. Premium members can make up to ${PREMIUM_DAILY_LIMIT} requests per day.`, 403);
+        return errorResponse(`Daily request limit reached. Premium members can make up to ${TIER_LIMITS.premium.dailyLimit} requests per day.`, 403);
       }
     }
 
@@ -240,6 +247,20 @@ export async function POST(request: NextRequest) {
       requester_name: requester.name,
       request_text: `[${type.toUpperCase()}] ${request_text}`,
     });
+
+    // Soft block for basic tier with limit reached - show blurred matches
+    if (shouldSoftBlock) {
+      const blurredMatches = enrichedMatches
+        .map(match => createBlurredMatch(match as { id: string; reason: string; member?: import('@/types').Member }))
+        .filter(Boolean);
+
+      return successResponse({
+        request_id: connectionRequest.id,
+        matches: blurredMatches,
+        upgrade_required: true,
+        message: 'Upgrade to premium to see full profiles and make unlimited connections.',
+      });
+    }
 
     return successResponse({
       request_id: connectionRequest.id,

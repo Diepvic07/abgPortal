@@ -1,6 +1,6 @@
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL!;
 
-type NotificationType = 'new_member' | 'new_request' | 'connection_made' | 'abuse_detected';
+type NotificationType = 'new_member' | 'new_request' | 'connection_made' | 'abuse_detected' | 'new_signup';
 
 interface NotificationData {
   name?: string;
@@ -58,6 +58,17 @@ export async function notifyAdmin(
         { name: 'User', value: data.requester_name || 'N/A', inline: true },
         { name: 'Alert', value: data.request_text || 'N/A', inline: false },
       ],
+      timestamp: new Date().toISOString(),
+    },
+    new_signup: {
+      title: '📝 New Signup Request',
+      color: 0x9333ea, // Purple
+      fields: [
+        { name: 'Name', value: data.name || 'N/A', inline: true },
+        { name: 'Email', value: data.email || 'N/A', inline: true },
+        { name: 'Role', value: `${data.role || 'N/A'} at ${data.company || 'N/A'}`, inline: false },
+      ],
+      description: '⏳ Needs approval in admin dashboard',
       timestamp: new Date().toISOString(),
     },
   };

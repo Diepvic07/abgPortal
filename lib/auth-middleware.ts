@@ -33,3 +33,21 @@ export async function requireAuth(request?: NextRequest) {
 
     return member;
 }
+
+/**
+ * Require only session authentication (for new user signup)
+ * Does NOT require existing member record
+ */
+export async function requireSession() {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+        throw new Error('Authentication required');
+    }
+
+    return {
+        email: session.user.email,
+        name: session.user.name || '',
+        image: session.user.image || '',
+    };
+}

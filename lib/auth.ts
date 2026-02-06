@@ -1,8 +1,13 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import EmailProvider from "next-auth/providers/email";
+import { Resend } from "resend";
 import { Member } from "@/types";
 import { getMemberByEmail, addMember, updateMemberLastLogin } from "./google-sheets";
 import { generateId, formatDate } from "./utils";
+import { getMagicLinkEmailHtml, getMagicLinkEmailText } from "./auth-email-template";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -16,7 +21,25 @@ export const authOptions: NextAuthOptions = {
                     response_type: "code"
                 }
             }
-        })
+        }),
+        EmailProvider({
+            from: process.env.EMAIL_FROM || "ABG Connect <onboarding@resend.dev>",
+            sendVerificationRequest: async ({ identifier: email, url }) => {
+                const host = new URL(url).host;
+                try {
+                    await resend.emails.send({
+                        from: process.env.EMAIL_FROM || "ABG Connect <onboarding@resend.dev>",
+                        to: email,
+                        subject: "Sign in to ABG Alumni Connect",
+                        html: getMagicLinkEmailHtml(url, host),
+                        text: getMagicLinkEmailText(url),
+                    });
+                } catch (error) {
+                    console.error("Failed to send magic link email:", error);
+                    throw new Error("Failed to send verification email");
+                }
+            },
+        }),
     ],
     callbacks: {
         async signIn({ user, account }) {
@@ -26,42 +49,32 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 // Check if member exists
-                let member = await getMemberByEmail(user.email);
+                const member = await getMemberByEmail(user.email);
 
-                // If member doesn't exist, create a new one with basic info
+                // If member doesn't exist, redirect to signup
                 if (!member) {
-                    const newMember: Member = {
-                        id: generateId(),
-                        name: user.name || 'New Member',
-                        email: user.email,
-                        role: '',
-                        company: '',
-                        expertise: '',
-                        can_help_with: '',
-                        looking_for: '',
-                        bio: '',
-                        avatar_url: user.image || undefined,
-                        status: 'active',
-                        paid: false,
-                        free_requests_used: 0,
-                        created_at: formatDate(),
-                        auth_provider: account?.provider || 'google',
-                        auth_provider_id: account?.providerAccountId || '',
-                        last_login: formatDate(),
-                        account_status: 'active',
-                        total_requests_count: 0,
-                        requests_today: 0,
-                    };
-
-                    await addMember(newMember);
-                } else {
-                    // Update last login time
-                    await updateMemberLastLogin(user.email);
+                    return `/signup?email=${encodeURIComponent(user.email)}&name=${encodeURIComponent(user.name || "")}`;
                 }
 
+                // Check approval status
+                if (member.approval_status === "pending") {
+                    return `/auth/pending?email=${encodeURIComponent(user.email)}`;
+                }
+
+                if (member.approval_status === "rejected") {
+                    return "/auth/rejected";
+                }
+
+                // Check account status
+                if (member.account_status === "suspended" || member.account_status === "banned") {
+                    return "/auth/suspended";
+                }
+
+                // Approved - update last login and allow
+                await updateMemberLastLogin(user.email);
                 return true;
             } catch (error) {
-                console.error('Sign in error:', error);
+                console.error("Sign in error:", error);
                 return false;
             }
         },
@@ -87,8 +100,13 @@ export const authOptions: NextAuthOptions = {
         }
     },
     session: {
-        strategy: 'jwt',
+        strategy: "jwt",
         maxAge: 30 * 24 * 60 * 60, // 30 days
+    },
+    pages: {
+        signIn: "/login",
+        error: "/auth/error",
+        verifyRequest: "/auth/verify-request",
     },
     secret: process.env.NEXTAUTH_SECRET,
 };

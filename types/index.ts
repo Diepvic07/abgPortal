@@ -41,6 +41,9 @@ export interface Member {
   discord_username?: string;
   payment_status?: 'unpaid' | 'pending' | 'paid' | 'expired';
   membership_expiry?: string;
+  // Approval fields (columns AO-AP)
+  approval_status?: 'pending' | 'approved' | 'rejected';
+  is_csv_imported?: boolean;
 }
 
 // Membership status for badge display

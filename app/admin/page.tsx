@@ -1,0 +1,326 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+interface AdminMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  company: string;
+  approval_status: "pending" | "approved" | "rejected";
+  paid: boolean;
+  is_csv_imported: boolean;
+  created_at: string;
+  abg_class?: string;
+}
+
+export default function AdminPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [members, setMembers] = useState<AdminMember[]>([]);
+  const [activeTab, setActiveTab] = useState<"pending" | "all">("pending");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    } else if (status === "authenticated") {
+      fetchMembers();
+    }
+  }, [status, router]);
+
+  const fetchMembers = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/members");
+      if (!res.ok) {
+        if (res.status === 401) {
+          setError("Unauthorized. Admin access required.");
+          return;
+        }
+        throw new Error("Failed to fetch members");
+      }
+      const data = await res.json();
+      setMembers(data.members || []);
+    } catch {
+      setError("Failed to load members");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: id }),
+      });
+      if (!res.ok) throw new Error("Failed to approve");
+      await fetchMembers();
+    } catch {
+      alert("Failed to approve member");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    if (!confirm("Are you sure you want to reject and remove this member? This action cannot be undone.")) {
+      return;
+    }
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/reject", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: id }),
+      });
+      if (!res.ok) throw new Error("Failed to reject");
+      await fetchMembers();
+    } catch {
+      alert("Failed to reject member");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleTierChange = async (id: string, currentPaid: boolean) => {
+    const newTier = currentPaid ? "basic" : "premium";
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/tier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: id, tier: newTier }),
+      });
+      if (!res.ok) throw new Error("Failed to change tier");
+      await fetchMembers();
+    } catch {
+      alert("Failed to change tier");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const pendingMembers = members.filter((m) => m.approval_status === "pending");
+  const displayMembers = activeTab === "pending" ? pendingMembers : members;
+
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Link href="/" className="text-blue-600 hover:underline">
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto py-8 px-4">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
+            Back to App
+          </Link>
+        </div>
+
+        {/* Tab buttons */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab("pending")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === "pending"
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            Pending ({pendingMembers.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("all")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === "all"
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            All Members ({members.length})
+          </button>
+        </div>
+
+        {/* Members table */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                    Name
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                    Email
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                    Role
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                    Tier
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {displayMembers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                      {activeTab === "pending"
+                        ? "No pending applications"
+                        : "No members found"}
+                    </td>
+                  </tr>
+                ) : (
+                  displayMembers.map((member) => (
+                    <tr key={member.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="font-medium text-gray-900">{member.name}</p>
+                          {member.abg_class && (
+                            <p className="text-xs text-gray-500">{member.abg_class}</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {member.email}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {member.role || "-"}
+                        {member.company && (
+                          <span className="text-gray-400"> at {member.company}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                            member.approval_status === "approved"
+                              ? "bg-green-100 text-green-800"
+                              : member.approval_status === "pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {member.approval_status}
+                        </span>
+                        {member.is_csv_imported && (
+                          <span className="ml-1 inline-flex px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
+                            CSV
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                            member.paid
+                              ? "bg-purple-100 text-purple-800"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {member.paid ? "Premium" : "Basic"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {member.approval_status === "pending" && (
+                            <>
+                              <button
+                                onClick={() => handleApprove(member.id)}
+                                disabled={actionLoading === member.id}
+                                className="text-sm text-green-600 hover:text-green-800 disabled:opacity-50"
+                              >
+                                {actionLoading === member.id ? "..." : "Approve"}
+                              </button>
+                              <button
+                                onClick={() => handleReject(member.id)}
+                                disabled={actionLoading === member.id}
+                                className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+                          {member.approval_status === "approved" && (
+                            <button
+                              onClick={() => handleTierChange(member.id, member.paid)}
+                              disabled={actionLoading === member.id}
+                              className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                            >
+                              {actionLoading === member.id
+                                ? "..."
+                                : member.paid
+                                ? "Downgrade"
+                                : "Upgrade"}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Stats summary */}
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-2xl font-bold text-gray-900">{members.length}</p>
+            <p className="text-sm text-gray-500">Total Members</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-2xl font-bold text-yellow-600">{pendingMembers.length}</p>
+            <p className="text-sm text-gray-500">Pending Approval</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-2xl font-bold text-purple-600">
+              {members.filter((m) => m.paid).length}
+            </p>
+            <p className="text-sm text-gray-500">Premium Members</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-2xl font-bold text-gray-600">
+              {members.filter((m) => m.is_csv_imported).length}
+            </p>
+            <p className="text-sm text-gray-500">CSV Imported</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

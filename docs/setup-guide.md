@@ -46,7 +46,54 @@ This guide will help you obtain all the necessary API keys and configure the env
     *   Make sure "Editor" is selected.
     *   Click **Send** (uncheck "Notify people" if you want).
 
-## 2. Gemini AI (`GEMINI_API_KEY`)
+## 2. Google OAuth Credentials (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`)
+
+1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2.  Select your ABG Connect project (same as for Sheets API).
+3.  Go to **APIs & Services** → **OAuth consent screen**.
+4.  Configure consent screen:
+    *   **App name**: "ABG Alumni Connect"
+    *   **User type**: External (for testing) or Internal (for production)
+    *   **Scopes**: No extra scopes needed for OAuth sign-in
+    *   Save and continue
+5.  Go to **APIs & Services** → **Credentials**.
+6.  Click **+ CREATE CREDENTIALS** → **OAuth client ID**.
+7.  Application type: **Web application**.
+8.  Name: "ABG Alumni Connect Web"
+9.  **Authorized JavaScript origins**: Add these:
+    *   `http://localhost:3000`
+    *   `https://your-domain.com` (production domain)
+10. **Authorized redirect URIs**: Add these:
+    *   `http://localhost:3000/api/auth/callback/google`
+    *   `https://your-domain.com/api/auth/callback/google`
+11. Click **Create**.
+12. Copy the **Client ID** and **Client Secret**.
+13. Paste into `.env.local` as:
+    ```
+    GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+    GOOGLE_CLIENT_SECRET=xxx
+    ```
+
+## 3. NextAuth Configuration (`NEXTAUTH_SECRET`, `NEXTAUTH_URL`)
+
+1.  Generate a random 32-character secret:
+    ```bash
+    openssl rand -base64 32
+    ```
+    Or use an online generator: [1Password generator](https://1password.com/password-generator/)
+
+2.  Copy the generated secret into `.env.local`:
+    ```
+    NEXTAUTH_SECRET=your-random-32-char-secret-here
+    ```
+
+3.  Set the callback URL in `.env.local`:
+    ```
+    NEXTAUTH_URL=http://localhost:3000  # For local development
+    NEXTAUTH_URL=https://your-domain.com  # For production
+    ```
+
+## 4. Gemini AI (`GEMINI_API_KEY`)
 1.  Go to [Google AI Studio](https://aistudio.google.com/).
 2.  Sign in with your Google account.
 3.  Click **Get API key** (top left or main button).
@@ -54,15 +101,22 @@ This guide will help you obtain all the necessary API keys and configure the env
 5.  Copy the key starting with `AIza...`.
 6.  Paste it into `.env.local` as `GEMINI_API_KEY`.
 
-## 3. Resend Email (`RESEND_API_KEY`)
+## 5. Resend Email (`RESEND_API_KEY`, `EMAIL_FROM`)
 1.  Go to [Resend.com](https://resend.com) and sign up/login.
 2.  On the dashboard, click **API Keys** (sidebar).
 3.  Click **Create API Key**.
 4.  Name: "ABG Connect" → Permission: "Full Access" → **Add**.
 5.  Copy the key (starts with `re_...`).
 6.  Paste it into `.env.local` as `RESEND_API_KEY`.
+7.  Go to **Domains** and add a custom domain or use the test domain `onboarding@resend.dev`.
+8.  Set `EMAIL_FROM` in `.env.local`:
+    ```
+    EMAIL_FROM=ABG Connect <onboarding@resend.dev>
+    # Or with custom domain:
+    EMAIL_FROM=ABG Connect <noreply@your-domain.com>
+    ```
 
-## 4. Discord Notifications (`DISCORD_WEBHOOK_URL`)
+## 6. Discord Notifications (`DISCORD_WEBHOOK_URL`)
 1.  Open Discord and go to the server/channel where you want notifications (e.g., `#admin-alerts`).
 2.  Click the **Gear icon** (Edit Channel) next to the channel name.
 3.  Go to **Integrations** → **Webhooks**.
@@ -71,7 +125,7 @@ This guide will help you obtain all the necessary API keys and configure the env
 6.  Click **Copy Webhook URL**.
 7.  Paste it into `.env.local` as `DISCORD_WEBHOOK_URL`.
 
-## 5. Vercel Blob (`BLOB_READ_WRITE_TOKEN`)
+## 7. Vercel Blob (`BLOB_READ_WRITE_TOKEN`)
 *Used for storing voice introductions. If you are deploying to Vercel, this is easiest to get via the Vercel Dashboard.*
 
 **Option A: If deploying now**

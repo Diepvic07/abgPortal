@@ -22,20 +22,20 @@ export const SHEETS = {
   AUDIT: 'RequestAudit',
 } as const;
 
-// Generic read function - extended range to include new columns
+// Generic read function - extended range to include new columns (A:AP for 42 columns)
 export async function getSheetData(sheetName: string): Promise<string[][]> {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!A:AN`,
+    range: `${sheetName}!A:AP`,
   });
   return response.data.values || [];
 }
 
-// Generic append function - extended range to include new columns
+// Generic append function - extended range to include new columns (A:AP for 42 columns)
 async function appendRow(sheetName: string, values: string[]): Promise<void> {
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!A:AN`,
+    range: `${sheetName}!A:AP`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [values] },
   });
@@ -89,6 +89,9 @@ export async function getMembers(): Promise<Member[]> {
     discord_username: row[37] || undefined,
     payment_status: (row[38] as 'unpaid' | 'pending' | 'paid' | 'expired') || 'unpaid',
     membership_expiry: row[39] || undefined,
+    // Approval fields (columns 40-41, AO-AP)
+    approval_status: (row[40] as 'pending' | 'approved' | 'rejected') || 'approved',
+    is_csv_imported: row[41] === 'TRUE',
   }));
 }
 
@@ -151,6 +154,9 @@ export async function addMember(member: Member): Promise<void> {
     member.discord_username || '',
     member.payment_status || 'unpaid',
     member.membership_expiry || '',
+    // Approval fields (columns AO-AP)
+    member.approval_status || 'approved',
+    member.is_csv_imported ? 'TRUE' : 'FALSE',
   ]);
 }
 
@@ -169,8 +175,8 @@ export async function updateMemberFreeRequests(id: string, count: number): Promi
 
 export async function updateMemberLastLogin(email: string): Promise<void> {
   const rows = await getSheetData(SHEETS.MEMBERS);
-  // Find by email (Column B)
-  const rowIndex = rows.findIndex(row => row[1] === email);
+  // Find by email (Column C, index 2)
+  const rowIndex = rows.findIndex(row => row[2]?.toLowerCase() === email.toLowerCase());
   if (rowIndex === -1) return;
 
   const timestamp = formatDate();
@@ -257,11 +263,14 @@ export async function updateMember(
     discord_username: 37,
     payment_status: 38,
     membership_expiry: 39,
+    // Approval fields
+    approval_status: 40,
+    is_csv_imported: 41,
   };
 
-  // Build update values - ensure row has 40 columns
+  // Build update values - ensure row has 42 columns (A:AP)
   const newRow = [...currentRow];
-  while (newRow.length < 40) newRow.push('');
+  while (newRow.length < 42) newRow.push('');
 
   for (const [field, value] of Object.entries(updates)) {
     const colIndex = fieldMap[field];
@@ -274,12 +283,55 @@ export async function updateMember(
     }
   }
 
-  // Update the entire row
+  // Update the entire row (A:AP for 42 columns)
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.MEMBERS}!A${rowIndex + 1}:AN${rowIndex + 1}`,
+    range: `${SHEETS.MEMBERS}!A${rowIndex + 1}:AP${rowIndex + 1}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [newRow] },
+  });
+
+  return true;
+}
+
+// Update member approval status
+export async function updateMemberApprovalStatus(
+  id: string,
+  status: 'pending' | 'approved' | 'rejected'
+): Promise<boolean> {
+  return updateMember(id, { approval_status: status });
+}
+
+// Delete member by ID
+export async function deleteMember(id: string): Promise<boolean> {
+  const rows = await getSheetData(SHEETS.MEMBERS);
+  const rowIndex = rows.findIndex(row => row[0] === id);
+  if (rowIndex === -1) return false;
+
+  // Get sheet ID for Members sheet
+  const sheetMetadata = await sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+  });
+  const membersSheet = sheetMetadata.data.sheets?.find(
+    s => s.properties?.title === SHEETS.MEMBERS
+  );
+  const sheetId = membersSheet?.properties?.sheetId || 0;
+
+  // Delete row (add 1 because of header row not being counted in findIndex after slice)
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [{
+        deleteDimension: {
+          range: {
+            sheetId,
+            dimension: 'ROWS',
+            startIndex: rowIndex,
+            endIndex: rowIndex + 1,
+          },
+        },
+      }],
+    },
   });
 
   return true;

@@ -7,13 +7,13 @@ import { notifyAdmin } from '@/lib/discord';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { Member } from '@/types';
-import { requireAuth } from '@/lib/auth-middleware';
+import { requireSession } from '@/lib/auth-middleware';
 import { updateMemberLastLogin } from '@/lib/google-sheets';
+
 export async function POST(request: NextRequest) {
   try {
-    // Require authentication
-    const requester = await requireAuth(request);
-
+    // Require session (new users won't have member record yet)
+    const session = await requireSession();
 
     const formData = await request.formData();
 
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const email = formData.get('email') as string;
 
     // Security check: email must match authenticated user
-    if (email !== requester.email) {
+    if (email.toLowerCase() !== session.email.toLowerCase()) {
       return errorResponse('Authenticated email mismatch', 403);
     }
 
@@ -100,8 +100,8 @@ export async function POST(request: NextRequest) {
       paid: false,
       free_requests_used: 0,
       created_at: formatDate(),
-      auth_provider: requester.auth_provider,
-      auth_provider_id: requester.auth_provider_id,
+      auth_provider: 'google', // From OAuth flow
+      auth_provider_id: '',
       last_login: formatDate(),
       account_status: 'active',
       total_requests_count: 0,
@@ -119,6 +119,9 @@ export async function POST(request: NextRequest) {
       display_nickname_in_email,
       discord_username,
       payment_status: 'unpaid',
+      // New signups require approval
+      approval_status: 'pending',
+      is_csv_imported: false,
     };
 
     await addMember(member);
@@ -128,7 +131,8 @@ export async function POST(request: NextRequest) {
 
     await sendOnboardingConfirmation(email, name, bio, locale);
 
-    await notifyAdmin('new_member', {
+    // Notify admin of new signup requiring approval
+    await notifyAdmin('new_signup', {
       name,
       email,
       role,

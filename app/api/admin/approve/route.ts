@@ -1,0 +1,47 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getMemberById, updateMember } from "@/lib/google-sheets";
+import { isAdmin } from "@/lib/admin-utils";
+import { sendApprovalEmail } from "@/lib/resend";
+import { notifyAdmin } from "@/lib/discord";
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!isAdmin(session?.user?.email)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { memberId } = await request.json();
+
+    if (!memberId) {
+      return NextResponse.json({ error: "Member ID required" }, { status: 400 });
+    }
+
+    const member = await getMemberById(memberId);
+    if (!member) {
+      return NextResponse.json({ error: "Member not found" }, { status: 404 });
+    }
+
+    // Update approval status
+    await updateMember(memberId, { approval_status: "approved" });
+
+    // Send approval email
+    await sendApprovalEmail(member.email, member.name);
+
+    // Notify admin channel
+    await notifyAdmin("new_member", {
+      name: member.name,
+      email: member.email,
+      role: member.role,
+      company: member.company,
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Admin approve error:", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
+}
