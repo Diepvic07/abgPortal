@@ -1,9 +1,9 @@
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, Page } from '@playwright/test';
 import { createTestMember, createTestAdmin, TestMember } from './test-data';
 
 type AuthFixtures = {
-  authenticatedPage: { page: typeof base extends { page: infer P } ? P : never; member: TestMember };
-  adminPage: { page: typeof base extends { page: infer P } ? P : never; admin: TestMember };
+  authenticatedPage: { page: Page; member: TestMember };
+  adminSession: { page: Page; admin: TestMember };
 };
 
 export const test = base.extend<AuthFixtures>({
@@ -39,7 +39,7 @@ export const test = base.extend<AuthFixtures>({
     await use({ page, member });
   },
 
-  adminPage: async ({ page, context }, use) => {
+  adminSession: async ({ page, context }, use) => {
     const admin = createTestAdmin();
 
     await context.addCookies([
