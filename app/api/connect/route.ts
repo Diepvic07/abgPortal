@@ -31,25 +31,15 @@ export async function POST(request: NextRequest) {
     const request_text = requestRow[2];
 
     const requester = await getMemberById(requester_id);
+    const targetMember = await getMemberById(selected_id);
 
-    // Try finding target as member first, then dating profile
-    const { getDatingProfileById } = await import('@/lib/google-sheets');
-    let targetMember = await getMemberById(selected_id);
-    let targetDating = null;
-
-    if (!targetMember) {
-      targetDating = await getDatingProfileById(selected_id);
-    }
-
-    if (!requester || (!targetMember && !targetDating)) {
+    if (!requester || !targetMember) {
       return errorResponse('Member not found', 404);
     }
 
-    // Prepare target details
-    const targetName = targetMember ? targetMember.name : targetDating!.nickname;
-    const targetEmail = targetMember ? targetMember.email : targetDating!.contact_email;
-    const targetRole = targetMember ? targetMember.role : (targetDating!.career_field || 'Community Member');
-    const targetCompany = targetMember ? targetMember.company : (targetDating!.location || 'ABG Community');
+    // Prepare target details - use nickname for dating if available
+    const targetName = targetMember.nickname || targetMember.name;
+    const targetEmail = targetMember.email;
 
     await sendIntroEmail({
       requester_email: requester.email,

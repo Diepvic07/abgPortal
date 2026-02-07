@@ -33,6 +33,16 @@ function createProfileEditSchema(t: { onboard: { validation: Record<string, stri
     display_nickname_in_search: z.boolean().optional(),
     display_nickname_in_match: z.boolean().optional(),
     display_nickname_in_email: z.boolean().optional(),
+    // Dating profile fields
+    self_description: z.string().optional(),
+    truth_lie: z.string().optional(),
+    ideal_day: z.string().optional(),
+    qualities_looking_for: z.string().optional(),
+    core_values: z.string().optional(),
+    deal_breakers: z.string().optional(),
+    interests: z.string().optional(),
+    dating_message: z.string().optional(),
+    other_share: z.string().optional(),
   });
 }
 
@@ -47,6 +57,10 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Dating section state - open by default if user has any dating fields filled
+  const [isDatingSectionOpen, setIsDatingSectionOpen] = useState(
+    Boolean(member.self_description || member.interests || member.dating_message)
+  );
 
   const schema = useMemo(() => createProfileEditSchema(t), [t]);
 
@@ -81,6 +95,16 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
       display_nickname_in_search: member.display_nickname_in_search || false,
       display_nickname_in_match: member.display_nickname_in_match || false,
       display_nickname_in_email: member.display_nickname_in_email || false,
+      // Dating profile fields
+      self_description: member.self_description || '',
+      truth_lie: member.truth_lie || '',
+      ideal_day: member.ideal_day || '',
+      qualities_looking_for: member.qualities_looking_for || '',
+      core_values: member.core_values || '',
+      deal_breakers: member.deal_breakers || '',
+      interests: member.interests || '',
+      dating_message: member.dating_message || '',
+      other_share: member.other_share || '',
     },
   });
 
@@ -346,6 +370,137 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
                 <option value="Married">{t.onboard.form.relationshipMarried}</option>
               </select>
             </div>
+          </section>
+
+          {/* Dating Profile Section - Collapsible */}
+          <section className="pt-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => setIsDatingSectionOpen(!isDatingSectionOpen)}
+              className="flex items-center justify-between w-full text-left"
+            >
+              <h2 className="text-lg font-semibold text-pink-600">
+                {t.profile.sections.dating || 'Dating Profile'} (Optional)
+              </h2>
+              <span className="text-pink-500">
+                {isDatingSectionOpen ? '▼' : '▶'}
+              </span>
+            </button>
+
+            {isDatingSectionOpen && (
+              <div className="mt-4 space-y-4 bg-pink-50 p-4 rounded-lg border border-pink-100">
+                <p className="text-sm text-pink-700 mb-4">
+                  {t.profile.datingDescription || 'Fill out this section to enhance your dating profile.'}
+                </p>
+
+                <div>
+                  <label className="block text-sm font-medium text-pink-900 mb-1">
+                    {t.profile.dating?.selfDescription || 'Describe yourself in 3 words'}
+                  </label>
+                  <input
+                    {...register('self_description')}
+                    className="w-full px-4 py-3 border border-pink-200 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    placeholder={t.profile.dating?.selfDescriptionPlaceholder || 'e.g., Creative, Adventurous, Thoughtful'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pink-900 mb-1">
+                    {t.profile.dating?.truthLie || '2 Truths & 1 Lie'}
+                  </label>
+                  <textarea
+                    {...register('truth_lie')}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-pink-200 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    placeholder={t.profile.dating?.truthLiePlaceholder || 'Share 2 truths and 1 lie about yourself'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pink-900 mb-1">
+                    {t.profile.dating?.idealDay || 'My Ideal Day'}
+                  </label>
+                  <textarea
+                    {...register('ideal_day')}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-pink-200 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    placeholder={t.profile.dating?.idealDayPlaceholder || 'Describe your perfect day...'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pink-900 mb-1">
+                    {t.profile.dating?.qualitiesLookingFor || 'Qualities I Look For'}
+                  </label>
+                  <textarea
+                    {...register('qualities_looking_for')}
+                    rows={2}
+                    className="w-full px-4 py-3 border border-pink-200 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    placeholder={t.profile.dating?.qualitiesPlaceholder || 'What qualities are you looking for in a partner?'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pink-900 mb-1">
+                    {t.profile.dating?.coreValues || 'My Core Values'}
+                  </label>
+                  <textarea
+                    {...register('core_values')}
+                    rows={2}
+                    className="w-full px-4 py-3 border border-pink-200 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    placeholder={t.profile.dating?.coreValuesPlaceholder || 'What values matter most to you?'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pink-900 mb-1">
+                    {t.profile.dating?.dealBreakers || 'Deal Breakers'}
+                  </label>
+                  <textarea
+                    {...register('deal_breakers')}
+                    rows={2}
+                    className="w-full px-4 py-3 border border-pink-200 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    placeholder={t.profile.dating?.dealBreakersPlaceholder || 'What are your relationship deal breakers?'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pink-900 mb-1">
+                    {t.profile.dating?.interests || 'Hobbies & Interests'}
+                  </label>
+                  <textarea
+                    {...register('interests')}
+                    rows={2}
+                    className="w-full px-4 py-3 border border-pink-200 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    placeholder={t.profile.dating?.interestsPlaceholder || 'What do you enjoy doing?'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pink-900 mb-1">
+                    {t.profile.dating?.message || 'Message to Potential Matches'}
+                  </label>
+                  <textarea
+                    {...register('dating_message')}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-pink-200 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    placeholder={t.profile.dating?.messagePlaceholder || 'Write a message to someone who might be interested...'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pink-900 mb-1">
+                    {t.profile.dating?.otherShare || 'Anything else to share?'}
+                  </label>
+                  <textarea
+                    {...register('other_share')}
+                    rows={2}
+                    className="w-full px-4 py-3 border border-pink-200 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    placeholder={t.profile.dating?.otherSharePlaceholder || 'Any other details...'}
+                  />
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Social Links Section */}

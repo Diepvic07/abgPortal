@@ -88,47 +88,67 @@ export async function POST(request: NextRequest) {
     let matchResults = [];
     let finalMatches = [];
     let enrichedMatches = [];
-    let availableMembersOrProfiles = []; // To hold either members or dating profiles
 
     // 3. Fetch candidates based on type
     if (type === 'dating') {
-      const { getDatingProfiles, getDatingProfileByEmail } = await import('@/lib/google-sheets');
       const { findDatingMatches } = await import('@/lib/gemini');
-      const { filterByGenderPreference } = await import('@/lib/dating-utils');
 
-      // Get requester's dating profile to check gender preferences
-      const requesterDatingProfile = await getDatingProfileByEmail(requester.email);
-      if (!requesterDatingProfile) {
-        return errorResponse('Please create a dating profile first at /dating to use this feature.', 404);
+      // Validate requester has valid gender and status for dating
+      if (!['Male', 'Female'].includes(requester.gender || '')) {
+        return errorResponse('Please complete your dating profile with a valid gender (Male/Female) first.', 400);
+      }
+      // Accept both "Single" and "Single (Available)" per validation session
+      if (requester.relationship_status !== 'Single' && requester.relationship_status !== 'Single (Available)') {
+        return errorResponse('Must be Single or Single (Available) to use dating feature.', 400);
       }
 
-      const allProfiles = await getDatingProfiles();
-      let availableProfiles = allProfiles.filter(p => p.contact_email !== requester.email); // Exclude self
+      // Get all members for dating - filter by opposite gender and single status
+      const allMembers = await getMembers();
+      const oppositeGender = requester.gender === 'Male' ? 'Female' : 'Male';
 
-      if (availableProfiles.length === 0) {
-        return errorResponse('No dating profiles available yet.', 404);
-      }
-
-      // Filter by gender preference before AI matching
-      availableProfiles = filterByGenderPreference(
-        requesterDatingProfile.match_preferences,
-        availableProfiles
+      const availableMembers = allMembers.filter(m =>
+        m.id !== requester.id &&
+        m.gender === oppositeGender &&
+        (m.relationship_status === 'Single' || m.relationship_status === 'Single (Available)') &&
+        m.status === 'active'
       );
 
-      if (availableProfiles.length === 0) {
+      if (availableMembers.length === 0) {
         return Response.json({
           matches: [],
           request_id: 'no-matches',
-          message: 'No profiles match your gender preferences currently.'
+          message: 'No profiles match your preferences currently.'
         });
       }
 
-      matchResults = await findDatingMatches(request_text, availableProfiles, locale);
+      // Build dating profiles from Member data for AI matching
+      const datingProfiles = availableMembers.map(m => ({
+        id: m.id,
+        nickname: m.nickname || m.name,
+        contact_email: m.email,
+        location: m.country || '',
+        match_preferences: '',
+        birth_year: '',
+        gender: m.gender || '',
+        career_field: `${m.role} at ${m.company}`,
+        self_description: m.self_description || '',
+        truth_lie: m.truth_lie || '',
+        ideal_day: m.ideal_day || '',
+        qualities_looking_for: m.qualities_looking_for || '',
+        core_values: m.core_values || '',
+        deal_breakers: m.deal_breakers || '',
+        interests: m.interests || '',
+        message: m.dating_message || '',
+        other_share: m.other_share || '',
+        created_at: m.created_at,
+      }));
+
+      matchResults = await findDatingMatches(request_text, datingProfiles, locale);
 
       if (matchResults.length === 0) {
         // Fallback
-        finalMatches = availableProfiles.slice(0, 3).map(p => ({
-          id: p.id,
+        finalMatches = availableMembers.slice(0, 3).map(m => ({
+          id: m.id,
           reason: 'New community member open to connection.'
         }));
       } else {
@@ -136,21 +156,22 @@ export async function POST(request: NextRequest) {
       }
 
       enrichedMatches = finalMatches.map(match => {
-        const profile = availableProfiles.find(p => p.id === match.id);
-        if (!profile) return null;
+        const member = availableMembers.find(m => m.id === match.id);
+        if (!member) return null;
         return {
           ...match,
           member: {
-            // Map dating profile to member-like structure for frontend compatibility
-            id: profile.id,
-            name: profile.nickname, // Use Nickname
-            role: profile.gender,
-            company: profile.location,
-            expertise: profile.interests,
-            can_help_with: profile.ideal_day, // Showing Ideal Day as "Help" area for now
-            looking_for: profile.qualities_looking_for,
-            bio: `${profile.self_description}. Values: ${profile.core_values}`,
-            avatar_url: '', // Default avatar
+            id: member.id,
+            name: member.nickname || member.name,
+            role: member.role,
+            company: member.country || member.company,
+            expertise: member.interests || member.expertise,
+            can_help_with: member.ideal_day || member.can_help_with,
+            looking_for: member.qualities_looking_for || member.looking_for,
+            bio: member.self_description
+              ? `${member.self_description}${member.core_values ? `. Values: ${member.core_values}` : ''}`
+              : member.bio,
+            avatar_url: member.avatar_url || '',
             status: 'active',
           }
         };

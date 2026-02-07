@@ -1,4 +1,14 @@
-
+/**
+ * @deprecated DatingProfile is deprecated as of 2026-02-07.
+ * Dating fields are now part of the Member interface.
+ * See types/index.ts for Member.self_description, Member.interests, etc.
+ *
+ * This type is kept for:
+ * - Migration script compatibility (scripts/migrate-dating-profiles.ts)
+ * - AI matching function compatibility (lib/gemini.ts findDatingMatches)
+ *
+ * DatingProfiles Google Sheet should be renamed to "DatingProfiles_ARCHIVED"
+ */
 export interface DatingProfile {
     id: string;
     nickname: string;

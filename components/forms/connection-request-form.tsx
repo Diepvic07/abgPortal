@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -36,9 +36,84 @@ export function ConnectionRequestForm() {
   const [requestId, setRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paywallType, setPaywallType] = useState<PaywallType>(null);
+  // Dating profile completion state
+  const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
+  const [userGender, setUserGender] = useState<string | undefined>();
+  const [userStatus, setUserStatus] = useState<string | undefined>();
+  const [profileCheckDone, setProfileCheckDone] = useState(false);
+  const [isCompletingProfile, setIsCompletingProfile] = useState(false);
+  const [completionError, setCompletionError] = useState<string | null>(null);
 
   // Memoize schema to recreate when language changes
   const schema = useMemo(() => createRequestSchema(t), [t]);
+
+  // Check profile when dating tab selected
+  useEffect(() => {
+    if (matchType === 'dating' && status === 'authenticated' && !profileCheckDone) {
+      fetch('/api/profile')
+        .then(res => res.json())
+        .then(data => {
+          if (data.member) {
+            const { gender, relationship_status } = data.member;
+            setUserGender(gender);
+            setUserStatus(relationship_status);
+
+            const validGender = gender === 'Male' || gender === 'Female';
+            // Accept both "Single" and "Single (Available)" per validation session
+            const validStatus = relationship_status === 'Single' || relationship_status === 'Single (Available)';
+
+            setNeedsProfileCompletion(!validGender || !validStatus);
+          }
+          setProfileCheckDone(true);
+        })
+        .catch(() => setProfileCheckDone(true));
+    }
+  }, [matchType, status, profileCheckDone]);
+
+  // Reset profile check when switching away from dating
+  useEffect(() => {
+    if (matchType !== 'dating') {
+      setProfileCheckDone(false);
+      setNeedsProfileCompletion(false);
+    }
+  }, [matchType]);
+
+  // Handle dating profile completion form submission
+  const handleProfileCompletion = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const gender = formData.get('gender') as string;
+    const relationship_status = formData.get('relationship_status') as string;
+
+    if (!gender || !relationship_status) {
+      setCompletionError(t.common.required);
+      return;
+    }
+
+    setIsCompletingProfile(true);
+    setCompletionError(null);
+
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gender, relationship_status }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || t.common.error);
+      }
+
+      // Success - re-check profile
+      setNeedsProfileCompletion(false);
+      setProfileCheckDone(false);
+    } catch (err) {
+      setCompletionError(err instanceof Error ? err.message : t.common.error);
+    } finally {
+      setIsCompletingProfile(false);
+    }
+  };
 
   const { register, handleSubmit, formState: { errors } } = useForm<RequestData>({
     resolver: zodResolver(schema),
@@ -116,51 +191,132 @@ export function ConnectionRequestForm() {
 
   const isDating = matchType === 'dating';
 
+  // Render tab buttons (extracted to reuse)
+  const renderTabs = () => (
+    <div className="flex p-1.5 bg-gray-100 rounded-xl mb-8 border border-gray-200 overflow-x-auto gap-1">
+      <button
+        onClick={() => setMatchType('professional')}
+        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'professional'
+          ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
+          : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
+          }`}
+        type="button"
+      >
+        {t.dating.professionalNetwork}
+      </button>
+      <button
+        onClick={() => setMatchType('job')}
+        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'job'
+          ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
+          : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
+          }`}
+        type="button"
+      >
+        {t.dating.findJob}
+      </button>
+      <button
+        onClick={() => setMatchType('hiring')}
+        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'hiring'
+          ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
+          : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
+          }`}
+        type="button"
+      >
+        {t.dating.findCandidates}
+      </button>
+      <button
+        onClick={() => setMatchType('dating')}
+        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'dating'
+          ? 'bg-pink-500 text-white shadow-md ring-2 ring-pink-500/30'
+          : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
+          }`}
+        type="button"
+      >
+        {t.dating.findPartner}
+      </button>
+    </div>
+  );
+
+  // Show profile completion form for dating if needed
+  if (matchType === 'dating' && needsProfileCompletion && status === 'authenticated') {
+    return (
+      <div className="space-y-6">
+        {renderTabs()}
+
+        <div className="bg-pink-50 border border-pink-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-pink-900 mb-2">
+            {t.dating.completeProfile || 'Complete Your Profile'}
+          </h3>
+          <p className="text-pink-700 mb-4">
+            {t.dating.completeProfileDescription || 'To use the dating feature, please provide your gender and confirm your availability status.'}
+          </p>
+
+          {completionError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 mb-4">
+              {completionError}
+            </div>
+          )}
+
+          <form onSubmit={handleProfileCompletion} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-pink-900 mb-1">
+                {t.onboard.form.gender} *
+              </label>
+              <select
+                name="gender"
+                defaultValue={userGender || ''}
+                className="w-full px-4 py-3 border border-pink-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+              >
+                <option value="">{t.dating.selectGender || 'Select your gender'}</option>
+                <option value="Female">{t.onboard.form.genderFemale}</option>
+                <option value="Male">{t.onboard.form.genderMale}</option>
+              </select>
+              <p className="text-pink-600 text-xs mt-1">
+                {t.dating.genderNote || 'Note: "Undisclosed" is not available for dating feature'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-pink-900 mb-1">
+                {t.onboard.form.relationshipStatus} *
+              </label>
+              <select
+                name="relationship_status"
+                defaultValue={userStatus || ''}
+                className="w-full px-4 py-3 border border-pink-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+              >
+                <option value="">{t.dating.selectStatus || 'Select status'}</option>
+                <option value="Single">{t.onboard.form.relationshipSingle}</option>
+                <option value="Single (Available)">{t.onboard.form.relationshipAvailable}</option>
+              </select>
+              <p className="text-pink-600 text-xs mt-1">
+                {t.dating.statusNote || 'Only single members can use the dating feature'}
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isCompletingProfile}
+              className="w-full py-3 px-6 bg-pink-500 text-white rounded-md font-medium hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isCompletingProfile ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  <span>{t.common.loading}</span>
+                </>
+              ) : (
+                t.dating.saveAndContinue || 'Save & Continue'
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Toggle - Enhanced tab highlighting for better visibility */}
-      <div className="flex p-1.5 bg-gray-100 rounded-xl mb-8 border border-gray-200 overflow-x-auto gap-1">
-        <button
-          onClick={() => setMatchType('professional')}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'professional'
-            ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
-            : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
-            }`}
-          type="button"
-        >
-          {t.dating.professionalNetwork}
-        </button>
-        <button
-          onClick={() => setMatchType('job')}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'job'
-            ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
-            : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
-            }`}
-          type="button"
-        >
-          {t.dating.findJob}
-        </button>
-        <button
-          onClick={() => setMatchType('hiring')}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'hiring'
-            ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
-            : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
-            }`}
-          type="button"
-        >
-          {t.dating.findCandidates}
-        </button>
-        <button
-          onClick={() => setMatchType('dating')}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'dating'
-            ? 'bg-pink-500 text-white shadow-md ring-2 ring-pink-500/30'
-            : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
-            }`}
-          type="button"
-        >
-          {t.dating.findPartner}
-        </button>
-      </div>
+      {renderTabs()}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {error && (

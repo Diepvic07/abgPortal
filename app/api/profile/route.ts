@@ -51,6 +51,17 @@ export async function PATCH(request: NextRequest) {
       'display_nickname_in_email',
       'discord_username',
       'payment_status', // Only 'pending' allowed from client
+      // Dating profile fields
+      'self_description',
+      'truth_lie',
+      'ideal_day',
+      'qualities_looking_for',
+      'core_values',
+      'deal_breakers',
+      'interests',
+      'dating_message',
+      'other_share',
+      'dating_profile_complete',
     ];
 
     const updates: Record<string, unknown> = {};

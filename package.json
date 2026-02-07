@@ -16,7 +16,9 @@
     "test:e2e:report": "playwright show-report e2e/playwright-report",
     "test:e2e:ci": "CI=true npm run test:e2e",
     "migrate-live": "npx tsx scripts/migrate-live-data.ts",
-    "verify-migration": "npx tsx scripts/verify-migration.ts"
+    "verify-migration": "npx tsx scripts/verify-migration.ts",
+    "migrate:dating": "npx tsx scripts/migrate-dating-profiles.ts",
+    "migrate:dating:dry": "npx tsx scripts/migrate-dating-profiles.ts --dry-run"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

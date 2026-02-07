@@ -46,6 +46,17 @@ export interface Member {
   is_csv_imported?: boolean;
   // Admin field (column AQ)
   is_admin?: boolean;
+  // Dating profile fields (columns AR-BA)
+  self_description?: string;      // AR (43) - 3 adjectives describing self
+  truth_lie?: string;             // AS (44) - 2 truths 1 lie game
+  ideal_day?: string;             // AT (45) - narrative description
+  qualities_looking_for?: string; // AU (46) - partner expectations
+  core_values?: string;           // AV (47) - personal values
+  deal_breakers?: string;         // AW (48) - relationship no-gos
+  interests?: string;             // AX (49) - hobbies
+  dating_message?: string;        // AY (50) - open message to matches
+  other_share?: string;           // AZ (51) - additional context
+  dating_profile_complete?: boolean; // BA (52) - has filled dating section
 }
 
 // Membership status for badge display

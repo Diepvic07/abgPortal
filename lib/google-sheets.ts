@@ -1,6 +1,5 @@
 import { google } from 'googleapis';
 import { Member, ConnectionRequest, Connection } from '@/types';
-import { DatingProfile } from '@/types/dating';
 import { formatDate } from './utils';
 
 const auth = new google.auth.GoogleAuth({
@@ -18,24 +17,24 @@ export const SHEETS = {
   MEMBERS: 'Members',
   REQUESTS: 'Requests',
   CONNECTIONS: 'Connections',
-  DATING_PROFILES: 'DatingProfiles',
   AUDIT: 'RequestAudit',
+  // Note: DatingProfiles sheet archived - dating data now in Member schema (columns AR-BA)
 } as const;
 
-// Generic read function - extended range to include new columns (A:AQ for 43 columns)
+// Generic read function - extended range to include dating columns (A:BA for 53 columns)
 export async function getSheetData(sheetName: string): Promise<string[][]> {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!A:AQ`,
+    range: `${sheetName}!A:BA`,
   });
   return response.data.values || [];
 }
 
-// Generic append function - extended range to include new columns (A:AQ for 43 columns)
+// Generic append function - extended range to include dating columns (A:BA for 53 columns)
 async function appendRow(sheetName: string, values: string[]): Promise<void> {
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!A:AQ`,
+    range: `${sheetName}!A:BA`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [values] },
   });
@@ -94,6 +93,17 @@ export async function getMembers(): Promise<Member[]> {
     is_csv_imported: row[41] === 'TRUE',
     // Admin field (column 42, AQ)
     is_admin: row[42] === 'TRUE',
+    // Dating profile fields (columns AR-BA, indices 43-52)
+    self_description: row[43] || undefined,
+    truth_lie: row[44] || undefined,
+    ideal_day: row[45] || undefined,
+    qualities_looking_for: row[46] || undefined,
+    core_values: row[47] || undefined,
+    deal_breakers: row[48] || undefined,
+    interests: row[49] || undefined,
+    dating_message: row[50] || undefined,
+    other_share: row[51] || undefined,
+    dating_profile_complete: row[52] === 'TRUE',
   }));
 }
 
@@ -161,6 +171,17 @@ export async function addMember(member: Member): Promise<void> {
     member.is_csv_imported ? 'TRUE' : 'FALSE',
     // Admin field (column AQ)
     member.is_admin ? 'TRUE' : 'FALSE',
+    // Dating profile fields (columns AR-BA)
+    member.self_description || '',
+    member.truth_lie || '',
+    member.ideal_day || '',
+    member.qualities_looking_for || '',
+    member.core_values || '',
+    member.deal_breakers || '',
+    member.interests || '',
+    member.dating_message || '',
+    member.other_share || '',
+    member.dating_profile_complete ? 'TRUE' : 'FALSE',
   ]);
 }
 
@@ -272,11 +293,22 @@ export async function updateMember(
     is_csv_imported: 41,
     // Admin field
     is_admin: 42,
+    // Dating profile fields
+    self_description: 43,
+    truth_lie: 44,
+    ideal_day: 45,
+    qualities_looking_for: 46,
+    core_values: 47,
+    deal_breakers: 48,
+    interests: 49,
+    dating_message: 50,
+    other_share: 51,
+    dating_profile_complete: 52,
   };
 
-  // Build update values - ensure row has 43 columns (A:AQ)
+  // Build update values - ensure row has 53 columns (A:BA)
   const newRow = [...currentRow];
-  while (newRow.length < 43) newRow.push('');
+  while (newRow.length < 53) newRow.push('');
 
   for (const [field, value] of Object.entries(updates)) {
     const colIndex = fieldMap[field];
@@ -289,10 +321,10 @@ export async function updateMember(
     }
   }
 
-  // Update the entire row (A:AQ for 43 columns)
+  // Update the entire row (A:BA for 53 columns including dating fields)
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.MEMBERS}!A${rowIndex + 1}:AQ${rowIndex + 1}`,
+    range: `${SHEETS.MEMBERS}!A${rowIndex + 1}:BA${rowIndex + 1}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [newRow] },
   });
@@ -437,44 +469,6 @@ export async function addConnection(connection: Connection): Promise<void> {
     connection.feedback || '',
     connection.created_at,
   ]);
-}
-
-// Dating operations
-export async function getDatingProfiles(): Promise<DatingProfile[]> {
-  const rows = await getSheetData(SHEETS.DATING_PROFILES);
-  // Skip header
-  if (rows.length < 2) return [];
-
-  return rows.slice(1).map(row => ({
-    id: row[0] || '',
-    nickname: row[1] || '',
-    contact_email: row[2] || '',
-    location: row[3] || '',
-    match_preferences: row[4] || '',
-    birth_year: row[5] || '',
-    gender: row[6] || '',
-    career_field: row[7] || '',
-    self_description: row[8] || '',
-    truth_lie: row[9] || '',
-    ideal_day: row[10] || '',
-    qualities_looking_for: row[11] || '',
-    core_values: row[12] || '',
-    deal_breakers: row[13] || '',
-    interests: row[14] || '',
-    message: row[15] || '',
-    other_share: row[16] || '',
-    created_at: row[17] || '',
-  }));
-}
-
-export async function getDatingProfileById(id: string): Promise<DatingProfile | null> {
-  const profiles = await getDatingProfiles();
-  return profiles.find(p => p.id === id) || null;
-}
-
-export async function getDatingProfileByEmail(email: string): Promise<DatingProfile | null> {
-  const profiles = await getDatingProfiles();
-  return profiles.find(p => p.contact_email === email) || null;
 }
 
 export async function addRequestAudit(audit: {
