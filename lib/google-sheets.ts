@@ -22,20 +22,20 @@ export const SHEETS = {
   AUDIT: 'RequestAudit',
 } as const;
 
-// Generic read function - extended range to include new columns (A:AP for 42 columns)
+// Generic read function - extended range to include new columns (A:AQ for 43 columns)
 export async function getSheetData(sheetName: string): Promise<string[][]> {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!A:AP`,
+    range: `${sheetName}!A:AQ`,
   });
   return response.data.values || [];
 }
 
-// Generic append function - extended range to include new columns (A:AP for 42 columns)
+// Generic append function - extended range to include new columns (A:AQ for 43 columns)
 async function appendRow(sheetName: string, values: string[]): Promise<void> {
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!A:AP`,
+    range: `${sheetName}!A:AQ`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [values] },
   });
@@ -92,6 +92,8 @@ export async function getMembers(): Promise<Member[]> {
     // Approval fields (columns 40-41, AO-AP)
     approval_status: (row[40] as 'pending' | 'approved' | 'rejected') || 'approved',
     is_csv_imported: row[41] === 'TRUE',
+    // Admin field (column 42, AQ)
+    is_admin: row[42] === 'TRUE',
   }));
 }
 
@@ -157,6 +159,8 @@ export async function addMember(member: Member): Promise<void> {
     // Approval fields (columns AO-AP)
     member.approval_status || 'approved',
     member.is_csv_imported ? 'TRUE' : 'FALSE',
+    // Admin field (column AQ)
+    member.is_admin ? 'TRUE' : 'FALSE',
   ]);
 }
 
@@ -266,11 +270,13 @@ export async function updateMember(
     // Approval fields
     approval_status: 40,
     is_csv_imported: 41,
+    // Admin field
+    is_admin: 42,
   };
 
-  // Build update values - ensure row has 42 columns (A:AP)
+  // Build update values - ensure row has 43 columns (A:AQ)
   const newRow = [...currentRow];
-  while (newRow.length < 42) newRow.push('');
+  while (newRow.length < 43) newRow.push('');
 
   for (const [field, value] of Object.entries(updates)) {
     const colIndex = fieldMap[field];
@@ -283,10 +289,10 @@ export async function updateMember(
     }
   }
 
-  // Update the entire row (A:AP for 42 columns)
+  // Update the entire row (A:AQ for 43 columns)
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.MEMBERS}!A${rowIndex + 1}:AP${rowIndex + 1}`,
+    range: `${SHEETS.MEMBERS}!A${rowIndex + 1}:AQ${rowIndex + 1}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [newRow] },
   });

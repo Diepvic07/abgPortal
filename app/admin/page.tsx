@@ -14,6 +14,7 @@ interface AdminMember {
   approval_status: "pending" | "approved" | "rejected";
   paid: boolean;
   is_csv_imported: boolean;
+  is_admin: boolean;
   created_at: string;
   abg_class?: string;
 }
@@ -111,6 +112,27 @@ export default function AdminPage() {
     }
   };
 
+  const handleToggleAdmin = async (id: string, currentIsAdmin: boolean) => {
+    const action = currentIsAdmin ? "remove admin privileges from" : "grant admin privileges to";
+    if (!confirm(`Are you sure you want to ${action} this member?`)) {
+      return;
+    }
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/toggle-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: id, isAdmin: !currentIsAdmin }),
+      });
+      if (!res.ok) throw new Error("Failed to toggle admin");
+      await fetchMembers();
+    } catch {
+      alert("Failed to toggle admin status");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const pendingMembers = members.filter((m) => m.approval_status === "pending");
   const displayMembers = activeTab === "pending" ? pendingMembers : members;
 
@@ -192,6 +214,9 @@ export default function AdminPage() {
                     Tier
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                    Admin
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
                     Actions
                   </th>
                 </tr>
@@ -199,7 +224,7 @@ export default function AdminPage() {
               <tbody className="divide-y divide-gray-100">
                 {displayMembers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                       {activeTab === "pending"
                         ? "No pending applications"
                         : "No members found"}
@@ -255,6 +280,15 @@ export default function AdminPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
+                        {member.is_admin ? (
+                          <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Admin
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           {member.approval_status === "pending" && (
                             <>
@@ -275,17 +309,34 @@ export default function AdminPage() {
                             </>
                           )}
                           {member.approval_status === "approved" && (
-                            <button
-                              onClick={() => handleTierChange(member.id, member.paid)}
-                              disabled={actionLoading === member.id}
-                              className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
-                            >
-                              {actionLoading === member.id
-                                ? "..."
-                                : member.paid
-                                ? "Downgrade"
-                                : "Upgrade"}
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleTierChange(member.id, member.paid)}
+                                disabled={actionLoading === member.id}
+                                className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                              >
+                                {actionLoading === member.id
+                                  ? "..."
+                                  : member.paid
+                                  ? "Downgrade"
+                                  : "Upgrade"}
+                              </button>
+                              <button
+                                onClick={() => handleToggleAdmin(member.id, member.is_admin)}
+                                disabled={actionLoading === member.id}
+                                className={`text-sm disabled:opacity-50 ${
+                                  member.is_admin
+                                    ? "text-orange-600 hover:text-orange-800"
+                                    : "text-purple-600 hover:text-purple-800"
+                                }`}
+                              >
+                                {actionLoading === member.id
+                                  ? "..."
+                                  : member.is_admin
+                                  ? "Remove Admin"
+                                  : "Make Admin"}
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -298,7 +349,7 @@ export default function AdminPage() {
         </div>
 
         {/* Stats summary */}
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-white rounded-lg p-4 shadow-sm">
             <p className="text-2xl font-bold text-gray-900">{members.length}</p>
             <p className="text-sm text-gray-500">Total Members</p>
@@ -312,6 +363,12 @@ export default function AdminPage() {
               {members.filter((m) => m.paid).length}
             </p>
             <p className="text-sm text-gray-500">Premium Members</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-2xl font-bold text-red-600">
+              {members.filter((m) => m.is_admin).length}
+            </p>
+            <p className="text-sm text-gray-500">Admins</p>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm">
             <p className="text-2xl font-bold text-gray-600">

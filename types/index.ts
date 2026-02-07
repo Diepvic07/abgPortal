@@ -44,6 +44,8 @@ export interface Member {
   // Approval fields (columns AO-AP)
   approval_status?: 'pending' | 'approved' | 'rejected';
   is_csv_imported?: boolean;
+  // Admin field (column AQ)
+  is_admin?: boolean;
 }
 
 // Membership status for badge display

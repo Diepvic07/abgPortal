@@ -24,6 +24,7 @@ export async function GET() {
       approval_status: m.approval_status || "approved",
       paid: m.paid,
       is_csv_imported: m.is_csv_imported || false,
+      is_admin: m.is_admin || false,
       created_at: m.created_at,
       abg_class: m.abg_class,
     }));
