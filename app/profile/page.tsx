@@ -7,9 +7,9 @@ import { ProfileViewDisplay } from '@/components/profile/profile-view-display';
 import { ProfileEditFormComponent } from '@/components/profile/profile-edit-form-component';
 
 interface ProfilePageProps {
-  searchParams: {
+  searchParams: Promise<{
     edit?: string;
-  };
+  }>;
 }
 
 export default async function ProfilePage({ searchParams }: ProfilePageProps) {
@@ -31,7 +31,8 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   }
 
   const membershipStatus = getMembershipStatus(member);
-  const isEditMode = searchParams.edit === 'true';
+  const resolvedSearchParams = await searchParams;
+  const isEditMode = resolvedSearchParams.edit === 'true';
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
