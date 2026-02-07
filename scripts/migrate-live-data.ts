@@ -145,14 +145,24 @@ async function updateMemberHeaders(): Promise<void> {
   console.log('  ✓ Headers updated (42 columns)\n');
 }
 
+// Admin email constant
+const ADMIN_EMAIL = 'diepvic@gmail.com';
+
 // Parse CSV and map to 42-column format
 function parseCsvMembers(csvPath: string): string[][] {
   console.log('Parsing CSV file...');
   const csvContent = fs.readFileSync(csvPath, 'utf8');
   const parsed = parseCSV(csvContent);
 
-  // Skip header row
-  const dataRows = parsed.slice(1);
+  // Skip header row and filter out admin email (will be added separately with Premium tier)
+  const dataRows = parsed.slice(1).filter(row => {
+    const email = row[5]?.toLowerCase().trim();
+    if (email === ADMIN_EMAIL.toLowerCase()) {
+      console.log(`  Skipping CSV entry for admin email: ${email}`);
+      return false;
+    }
+    return true;
+  });
   console.log(`  Found ${dataRows.length} rows in CSV`);
 
   // CSV column mapping (based on abg_members_portal_data.csv inspection):
@@ -235,7 +245,7 @@ function createAdminMember(): string[] {
   return [
     'diep_admin',           // id
     'Diep Vic',             // name
-    'diepvic@gmail.com',    // email
+    ADMIN_EMAIL,            // email
     'Admin',                // role
     'ABG',                  // company
     'Everything',           // expertise
@@ -319,7 +329,7 @@ async function main(): Promise<void> {
   // Step 4: Add admin account
   console.log('Adding admin account...');
   members.push(createAdminMember());
-  console.log('  ✓ Admin account added (diepvic@gmail.com)\n');
+  console.log(`  ✓ Admin account added (${ADMIN_EMAIL})\n`);
 
   // Step 5: Batch insert all members
   await batchInsertMembers(members);
