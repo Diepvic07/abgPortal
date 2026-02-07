@@ -12,43 +12,44 @@ export default function OnboardPage() {
   const { t } = useTranslation();
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [isExistingMember, setIsExistingMember] = useState<boolean | null>(null);
-  const [isChecking, setIsChecking] = useState(true);
+  const [memberStatus, setMemberStatus] = useState<'loading' | 'new' | 'basic' | 'premium'>('loading');
 
   useEffect(() => {
     async function checkMembership() {
       if (status === 'loading') return;
 
       if (!session?.user?.email) {
-        setIsChecking(false);
+        setMemberStatus('new');
         return;
       }
 
       try {
-        // Check if user already has a profile in database
         const response = await fetch('/api/profile');
         if (response.ok) {
           const data = await response.json();
-          // User exists in database - show upgrade prompt
           if (data.member?.id) {
-            setIsExistingMember(true);
+            // Existing member - check if premium
+            if (data.member.paid) {
+              // Premium member - redirect to request page
+              router.push('/request');
+              return;
+            }
+            setMemberStatus('basic');
           } else {
-            setIsExistingMember(false);
+            setMemberStatus('new');
           }
         } else {
-          setIsExistingMember(false);
+          setMemberStatus('new');
         }
       } catch {
-        setIsExistingMember(false);
-      } finally {
-        setIsChecking(false);
+        setMemberStatus('new');
       }
     }
 
     checkMembership();
-  }, [session, status]);
+  }, [session, status, router]);
 
-  if (status === 'loading' || isChecking) {
+  if (status === 'loading' || memberStatus === 'loading') {
     return (
       <div className="flex items-center justify-center py-20">
         <LoadingSpinner />
@@ -56,8 +57,8 @@ export default function OnboardPage() {
     );
   }
 
-  // Show upgrade prompt for existing members
-  if (isExistingMember) {
+  // Show upgrade prompt for existing basic members (not premium)
+  if (memberStatus === 'basic') {
     return (
       <div className="max-w-2xl mx-auto">
         <UpgradePremiumPrompt />
