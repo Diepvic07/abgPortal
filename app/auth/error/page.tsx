@@ -7,6 +7,7 @@ import { Suspense } from "react";
 function AuthErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+  const details = searchParams.get("details");
 
   const errorMessages: Record<string, { title: string; description: string }> = {
     Configuration: {
@@ -20,6 +21,10 @@ function AuthErrorContent() {
     Verification: {
       title: "Verification Failed",
       description: "The sign in link is no longer valid. It may have been used already or expired.",
+    },
+    SignInError: {
+      title: "Sign In Error",
+      description: "An error occurred while verifying your account. Please try again or contact support.",
     },
     Default: {
       title: "Authentication Error",

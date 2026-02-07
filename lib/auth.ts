@@ -1,15 +1,27 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import EmailProvider from "next-auth/providers/email";
-import { Resend } from "resend";
-import { Member } from "@/types";
-import { getMemberByEmail, addMember, updateMemberLastLogin } from "./google-sheets";
-import { generateId, formatDate } from "./utils";
-import { getMagicLinkEmailHtml, getMagicLinkEmailText } from "./auth-email-template";
+import { getMemberByEmail, updateMemberLastLogin } from "./google-sheets";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Validate required environment variables
+const requiredEnvVars = {
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+};
+
+// Log missing env vars for debugging (server-side only)
+if (typeof window === 'undefined') {
+    const missing = Object.entries(requiredEnvVars)
+        .filter(([, value]) => !value)
+        .map(([key]) => key);
+
+    if (missing.length > 0) {
+        console.error('[Auth Config Error] Missing required environment variables:', missing.join(', '));
+    }
+}
 
 export const authOptions: NextAuthOptions = {
+    debug: process.env.NODE_ENV === 'development',
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -21,24 +33,6 @@ export const authOptions: NextAuthOptions = {
                     response_type: "code"
                 }
             }
-        }),
-        EmailProvider({
-            from: process.env.EMAIL_FROM || "ABG Connect <onboarding@resend.dev>",
-            sendVerificationRequest: async ({ identifier: email, url }) => {
-                const host = new URL(url).host;
-                try {
-                    await resend.emails.send({
-                        from: process.env.EMAIL_FROM || "ABG Connect <onboarding@resend.dev>",
-                        to: email,
-                        subject: "Sign in to ABG Alumni Connect",
-                        html: getMagicLinkEmailHtml(url, host),
-                        text: getMagicLinkEmailText(url),
-                    });
-                } catch (error) {
-                    console.error("Failed to send magic link email:", error);
-                    throw new Error("Failed to send verification email");
-                }
-            },
         }),
     ],
     callbacks: {
@@ -75,7 +69,8 @@ export const authOptions: NextAuthOptions = {
                 return true;
             } catch (error) {
                 console.error("Sign in error:", error);
-                return false;
+                // Return a specific error page instead of false to avoid generic Configuration error
+                return `/auth/error?error=SignInError&details=${encodeURIComponent(error instanceof Error ? error.message : 'Unknown error')}`;
             }
         },
         async jwt({ token, user, account }) {
@@ -106,7 +101,6 @@ export const authOptions: NextAuthOptions = {
     pages: {
         signIn: "/login",
         error: "/auth/error",
-        verifyRequest: "/auth/verify-request",
     },
     secret: process.env.NEXTAUTH_SECRET,
 };
