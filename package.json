@@ -14,7 +14,8 @@
     "test:e2e:debug": "playwright test --config=e2e/playwright.config.ts --debug",
     "test:e2e:chromium": "playwright test --config=e2e/playwright.config.ts --project=chromium",
     "test:e2e:report": "playwright show-report e2e/playwright-report",
-    "test:e2e:ci": "CI=true npm run test:e2e"
+    "test:e2e:ci": "CI=true npm run test:e2e",
+    "migrate-live": "npx tsx scripts/migrate-live-data.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

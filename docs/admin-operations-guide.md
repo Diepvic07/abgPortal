@@ -93,6 +93,158 @@ If Reject:  approval_status = "rejected"
 - Revoke premium access for policy violation
 - Demo/trial period ended
 
+## Data Migration
+
+### Live Data Migration (`npm run migrate-live`)
+
+Use this **one-time script** to migrate production data from CSV to Google Sheets during initial deployment.
+
+#### What It Does
+1. **Clears all existing data** - Deletes all rows from Members, Requests, Connections, DatingProfiles, and RequestAudit sheets
+2. **Updates headers** - Sets 42-column Member sheet headers matching the system schema
+3. **Imports CSV data** - Reads `docs/abg_members_portal_data.csv` and maps all fields
+4. **Auto-approves members** - Sets `approval_status = "approved"` (skip manual approval)
+5. **Marks members as CSV imported** - Sets `is_csv_imported = TRUE` for tracking
+6. **Creates admin account** - Adds `diepvic@gmail.com` as Premium tier admin
+7. **Sets Basic tier** - All members start as Basic tier; admins upgrade manually
+
+#### CSV File Format
+Location: `/docs/abg_members_portal_data.csv`
+
+Mapping from CSV columns to Member sheet:
+| CSV Column | Index | Maps To | Notes |
+|------------|-------|---------|-------|
+| Submission ID | 0 | id | Unique member identifier |
+| Họ và tên | 3 | name | Full name |
+| Email | 5 | email | Login email (unique key) |
+| Position | 15 | role | Job title |
+| Organization | 12 | company | Company name |
+| Organization Field | 14 | expertise | Areas of expertise |
+| 3 things to share | 16 | can_help_with | What they offer |
+| 3 things to learn | 17 | looking_for | What they need |
+| Bio | 18 | bio | Professional bio |
+| Avatar URL | 6 | avatar_url | Profile photo URL |
+| City | 7 | city | City (optional) |
+| Country | 19 | country | Country of residence |
+| Phone | 9 | phone | Phone number (optional) |
+| Facebook | 10 | facebook_url | Facebook profile (optional) |
+| LinkedIn | 11 | linkedin_url | LinkedIn profile (optional) |
+| Organization Website | 13 | company_website | Company website (optional) |
+| Học viên khoá ABG? | 4 | abg_class | ABG cohort (Class 2024, etc.) |
+| Submitted at | 2 | created_at | Import timestamp |
+
+#### Prerequisites
+- CSV file at `/docs/abg_members_portal_data.csv`
+- All required env vars set (GOOGLE_SHEETS_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY)
+- **WARNING: All existing data will be deleted. Back up your Google Sheets before running.**
+
+#### Step-by-Step
+**1. Backup Current Data (CRITICAL)**
+```bash
+# Take a screenshot or export current Google Sheets manually
+# Data cannot be recovered after migration
+```
+
+**2. Verify CSV File**
+```bash
+# Check file exists and has data
+head -5 docs/abg_members_portal_data.csv
+```
+
+**3. Run Migration**
+```bash
+npm run migrate-live
+```
+
+Expected output:
+```
+==================================================
+ABG Live Data Migration
+==================================================
+
+Clearing all sheets...
+  ✓ Cleared Members
+  ✓ Cleared Requests
+  ✓ Cleared Connections
+  ✓ Cleared DatingProfiles
+  ✓ Cleared RequestAudit
+
+Updating Members headers...
+  ✓ Headers updated (42 columns)
+
+Parsing CSV file...
+  Found 442 rows in CSV
+  ✓ Parsed 442 members
+
+Adding admin account...
+  ✓ Admin account added (diepvic@gmail.com)
+
+Inserting members into Google Sheets...
+  ✓ Inserted 443 members
+
+==================================================
+Migration Complete!
+==================================================
+Total members: 443
+  - CSV members: 442 (Basic tier)
+  - Admin: 1 (Premium tier)
+
+All members have:
+  - approval_status = approved
+  - account_status = active
+  - is_csv_imported = TRUE (except admin)
+
+Next steps:
+  1. Verify member count in Google Sheets
+  2. Test login with a sample member email
+  3. Mark premium members via admin panel
+```
+
+**4. Verify in Google Sheets**
+1. Open your Google Sheet
+2. Go to Members tab → Should show 443 rows (442 members + 1 admin)
+3. Check columns are populated correctly (A:AP)
+
+**5. Test Login**
+```bash
+# Try logging in with a member email from the CSV
+# Should succeed with approval_status = "approved"
+```
+
+**6. Tier Upgrades**
+1. Login to `/admin`
+2. Go to All Members tab
+3. Find members who paid for Premium
+4. Click **Upgrade** to change their tier
+
+#### Differences from `npm run import-members`
+| Feature | migrate-live | import-members |
+|---------|--------------|-----------------|
+| Purpose | One-time production migration | Ongoing member imports |
+| Clears data | YES (all sheets) | NO (appends only) |
+| Updates headers | YES | NO |
+| Auto-approves | YES | YES |
+| Creates admin | YES | NO |
+| Use case | Initial deployment | Adding members later |
+
+#### Troubleshooting
+
+**"CSV file not found"**
+- Verify: `/docs/abg_members_portal_data.csv` exists
+- Check file path is correct in script
+
+**"Migration failed" with API error**
+- Verify all env vars are set correctly
+- Check Google Sheets exists and service account has Editor access
+- Ensure sheet has tabs named: Members, Requests, Connections, DatingProfiles, RequestAudit
+
+**Partial import (missing some members)**
+- Re-run script - it appends and will add missing rows
+- Check CSV file has no blank rows between data
+
+**Admin account already exists after migration**
+- Email conflict: Change admin email in script if re-running
+
 ## Daily Operations
 
 ### Morning Checklist
@@ -454,8 +606,11 @@ Located in Vercel Dashboard → Settings → Environment Variables:
 - [ ] Test authentication flow (magic link and OAuth)
 
 ### Post-Deployment
-- [ ] Run seed script: `npm run seed` (optional test data)
-- [ ] Run CSV import: `npm run import-members` (for pre-approved members)
+- [ ] Run live data migration: `npm run migrate-live` (for initial ABG member import)
+  - OR run seed script: `npm run seed` (for test data only)
+- [ ] Verify member count in Google Sheets (should be 442+ members)
+- [ ] Test login with sample member email
+- [ ] Mark premium members via admin panel
 - [ ] Test complete flow:
   - [ ] User signup via magic link
   - [ ] Admin approval flow

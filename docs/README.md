@@ -70,13 +70,20 @@ Two tiers control what members can do:
 
 See [tier-system-guide.md](./tier-system-guide.md)
 
-### CSV Bulk Import
-Import pre-approved members in bulk:
+### Data Migration & CSV Import
+Two scripts for different use cases:
+
+**Live Data Migration (One-time, Production)**
+- `npm run migrate-live` - Initial deployment from CSV
+- Clears all data, auto-approves members, creates admin account
+- Use during first deployment
+
+**CSV Bulk Import (Ongoing)**
 - `npm run import-members -- --dry-run` (preview)
 - `npm run import-members` (execute)
-- Auto-approves with `is_csv_imported = TRUE`
+- Appends members, auto-approves
 
-See [admin-operations-guide.md](./admin-operations-guide.md#csv-bulk-import)
+See [admin-operations-guide.md](./admin-operations-guide.md#data-migration)
 
 ## Common Tasks
 
@@ -96,6 +103,7 @@ See [admin-operations-guide.md](./admin-operations-guide.md#csv-bulk-import)
 
 ### For DevOps
 - [Environment variable setup](./setup-guide.md)
+- [Initial data migration](./admin-operations-guide.md#live-data-migration-npm-run-migrate-live)
 - [Deployment checklist](./admin-operations-guide.md#deployment-checklist)
 - [Troubleshooting tips](./admin-operations-guide.md#troubleshooting)
 
