@@ -164,6 +164,19 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t.onboard.form.email}
+                </label>
+                <input
+                  type="email"
+                  value={member.email}
+                  disabled
+                  className="w-full px-4 py-3 border border-gray-200 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
+                />
+                <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   {t.onboard.form.fullName} *
                 </label>
                 <input
