@@ -32,12 +32,18 @@ export async function getSheetData(sheetName: string): Promise<string[][]> {
 
 // Generic append function - extended range to include dating columns (A:BA for 53 columns)
 async function appendRow(sheetName: string, values: string[]): Promise<void> {
-  await sheets.spreadsheets.values.append({
+  const result = await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A:BA`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [values] },
   });
+
+  console.log(`[GoogleSheets] Append result for ${sheetName}:`, JSON.stringify(result.data.updates));
+
+  if (!result.data.updates?.updatedRows) {
+    throw new Error(`Failed to append row to ${sheetName}: 0 rows updated. Response: ${JSON.stringify(result.data)}`);
+  }
 }
 
 // Members operations
