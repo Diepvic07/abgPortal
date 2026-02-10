@@ -284,6 +284,9 @@ export const en = {
     confirmPayment: 'I\'ve Made Payment',
     confirming: 'Confirming...',
     cancel: 'Cancel',
+    confirmationTitle: 'Confirmation Sent!',
+    confirmationMessage: 'Admin will verify payment and activate your Premium account within 24 hours.',
+    findConnections: 'Find Connections Now',
   },
 
   // Dating

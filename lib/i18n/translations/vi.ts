@@ -286,6 +286,9 @@ export const vi: Translations = {
     confirmPayment: 'Đã thanh toán',
     confirming: 'Đang xác nhận...',
     cancel: 'Hủy',
+    confirmationTitle: 'Đã gửi xác nhận!',
+    confirmationMessage: 'Admin sẽ xác minh thanh toán và kích hoạt tài khoản Premium trong vòng 24 giờ.',
+    findConnections: 'Tìm kết nối ngay',
   },
 
   // Dating
