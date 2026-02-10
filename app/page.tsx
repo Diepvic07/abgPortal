@@ -1,5 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 import { PublicSearchSection } from '@/components/landing/public-search-section';
 import { AuthSection } from '@/components/landing/auth-section';
@@ -8,6 +11,24 @@ import HowItWorksSection from '@/components/landing/how-it-works-section';
 
 export default function Home() {
   const { t } = useTranslation();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.email) {
+      // Check if user is a member
+      fetch('/api/profile').then(res => {
+        if (res.ok) {
+          res.json().then(data => {
+            if (!data.member?.id) {
+              // Not a member yet, redirect to onboarding
+              router.push('/onboard');
+            }
+          });
+        }
+      });
+    }
+  }, [status, session, router]);
 
   return (
     <div className="max-w-6xl mx-auto px-4">

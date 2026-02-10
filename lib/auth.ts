@@ -45,9 +45,9 @@ export const authOptions: NextAuthOptions = {
                 // Check if member exists
                 const member = await getMemberByEmail(user.email);
 
-                // If member doesn't exist, redirect to signup
+                // If member doesn't exist, allow sign in to proceed to onboarding
                 if (!member) {
-                    return `/signup?email=${encodeURIComponent(user.email)}&name=${encodeURIComponent(user.name || "")}`;
+                    return true;
                 }
 
                 // Check approval status
