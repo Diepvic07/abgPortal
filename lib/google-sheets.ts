@@ -49,6 +49,9 @@ async function appendRow(sheetName: string, values: string[]): Promise<void> {
 // Members operations
 export async function getMembers(): Promise<Member[]> {
   const rows = await getSheetData(SHEETS.MEMBERS);
+  // Debug log to check what rows we are getting back
+  console.log(`[GoogleSheets] getMembers found ${rows.length} rows. Header:`, rows[0]);
+
   if (rows.length < 2) return [];
 
   return rows.slice(1).map(row => ({

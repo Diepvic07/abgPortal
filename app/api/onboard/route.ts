@@ -126,11 +126,21 @@ export async function POST(request: NextRequest) {
 
     await addMember(member);
 
-    // Verify member was actually added (handle silent failures)
-    // Add a small delay to allow for propagation/consistency if needed, though usually direct read is fine
-    const verifyMember = await getMemberByEmail(email);
+    // Verify member was actually added (handle silent failures and eventual consistency)
+    // Retry up to 3 times with 1s delay
+    let verifyMember: Member | null = null;
+    for (let i = 0; i < 3; i++) {
+      // Wait 1s before first check and between retries
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      verifyMember = await getMemberByEmail(email);
+      if (verifyMember) break;
+
+      console.log(`[API] Verification attempt ${i + 1} failed for ${email}, retrying...`);
+    }
+
     if (!verifyMember) {
-      console.error(`[API] Member creation verification failed for ${email}`);
+      console.error(`[API] Member creation verification failed for ${email} after 3 attempts`);
       throw new Error('Failed to verify member creation - please try again or contact support');
     }
     console.log(`[API] Verified member creation for ${email}`);
