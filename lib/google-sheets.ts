@@ -123,66 +123,86 @@ export async function getMemberByEmail(email: string): Promise<Member | null> {
 }
 
 export async function addMember(member: Member): Promise<void> {
-  await appendRow(SHEETS.MEMBERS, [
-    member.id,
-    member.name,
-    member.email,
-    member.role,
-    member.company,
-    member.expertise,
-    member.can_help_with,
-    member.looking_for,
-    member.bio,
-    member.avatar_url || '',
-    member.voice_url || '',
-    member.status,
-    member.paid ? 'TRUE' : 'FALSE',
-    member.free_requests_used.toString(),
-    member.created_at,
-    member.phone || '',
-    member.facebook_url || '',
-    member.linkedin_url || '',
-    member.company_website || '',
-    member.country || '',
-    member.open_to_work ? 'TRUE' : 'FALSE',
-    member.job_preferences || '',
-    member.hiring ? 'TRUE' : 'FALSE',
-    member.hiring_preferences || '',
-    member.gender || '',
-    member.relationship_status || '',
-    // Auth fields
-    member.auth_provider || '',
-    member.auth_provider_id || '',
-    member.last_login || '',
-    member.account_status || 'active',
-    (member.total_requests_count || 0).toString(),
-    (member.requests_today || 0).toString(),
-    // New profile fields (columns AG-AN)
-    member.abg_class || '',
-    member.nickname || '',
-    member.display_nickname_in_search ? 'TRUE' : 'FALSE',
-    member.display_nickname_in_match ? 'TRUE' : 'FALSE',
-    member.display_nickname_in_email ? 'TRUE' : 'FALSE',
-    member.discord_username || '',
-    member.payment_status || 'unpaid',
-    member.membership_expiry || '',
-    // Approval fields (columns AO-AP)
-    member.approval_status || 'approved',
-    member.is_csv_imported ? 'TRUE' : 'FALSE',
-    // Admin field (column AQ)
-    member.is_admin ? 'TRUE' : 'FALSE',
-    // Dating profile fields (columns AR-BA)
-    member.self_description || '',
-    member.truth_lie || '',
-    member.ideal_day || '',
-    member.qualities_looking_for || '',
-    member.core_values || '',
-    member.deal_breakers || '',
-    member.interests || '',
-    member.dating_message || '',
-    member.other_share || '',
-    member.dating_profile_complete ? 'TRUE' : 'FALSE',
-  ]);
+  // Debug logging
+  console.log(`[GoogleSheets] Adding member: ${member.email}`);
+
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_SHEETS_ID) {
+    const missing = [];
+    if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL) missing.push('GOOGLE_SERVICE_ACCOUNT_EMAIL');
+    if (!process.env.GOOGLE_PRIVATE_KEY) missing.push('GOOGLE_PRIVATE_KEY');
+    if (!process.env.GOOGLE_SHEETS_ID) missing.push('GOOGLE_SHEETS_ID');
+
+    const errorMsg = `Missing environment variables: ${missing.join(', ')}`;
+    console.error(`[GoogleSheets] ${errorMsg}`);
+    throw new Error(errorMsg);
+  }
+
+  try {
+    await appendRow(SHEETS.MEMBERS, [
+      member.id,
+      member.name,
+      member.email,
+      member.role,
+      member.company,
+      member.expertise,
+      member.can_help_with,
+      member.looking_for,
+      member.bio,
+      member.avatar_url || '',
+      member.voice_url || '',
+      member.status,
+      member.paid ? 'TRUE' : 'FALSE',
+      member.free_requests_used.toString(),
+      member.created_at,
+      member.phone || '',
+      member.facebook_url || '',
+      member.linkedin_url || '',
+      member.company_website || '',
+      member.country || '',
+      member.open_to_work ? 'TRUE' : 'FALSE',
+      member.job_preferences || '',
+      member.hiring ? 'TRUE' : 'FALSE',
+      member.hiring_preferences || '',
+      member.gender || '',
+      member.relationship_status || '',
+      // Auth fields
+      member.auth_provider || '',
+      member.auth_provider_id || '',
+      member.last_login || '',
+      member.account_status || 'active',
+      (member.total_requests_count || 0).toString(),
+      (member.requests_today || 0).toString(),
+      // New profile fields (columns AG-AN)
+      member.abg_class || '',
+      member.nickname || '',
+      member.display_nickname_in_search ? 'TRUE' : 'FALSE',
+      member.display_nickname_in_match ? 'TRUE' : 'FALSE',
+      member.display_nickname_in_email ? 'TRUE' : 'FALSE',
+      member.discord_username || '',
+      member.payment_status || 'unpaid',
+      member.membership_expiry || '',
+      // Approval fields (columns AO-AP)
+      member.approval_status || 'approved',
+      member.is_csv_imported ? 'TRUE' : 'FALSE',
+      // Admin field (column AQ)
+      member.is_admin ? 'TRUE' : 'FALSE',
+      // Dating profile fields (columns AR-BA)
+      member.self_description || '',
+      member.truth_lie || '',
+      member.ideal_day || '',
+      member.qualities_looking_for || '',
+      member.core_values || '',
+      member.deal_breakers || '',
+      member.interests || '',
+      member.dating_message || '',
+      member.other_share || '',
+      member.dating_profile_complete ? 'TRUE' : 'FALSE',
+    ]);
+    console.log(`[GoogleSheets] Successfully added member ${member.email}`);
+  } catch (error) {
+    console.error(`[GoogleSheets] Failed to add member ${member.email}:`, error);
+    throw error;
+  }
 }
 
 export async function updateMemberFreeRequests(id: string, count: number): Promise<void> {

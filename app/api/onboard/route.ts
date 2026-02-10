@@ -126,6 +126,15 @@ export async function POST(request: NextRequest) {
 
     await addMember(member);
 
+    // Verify member was actually added (handle silent failures)
+    // Add a small delay to allow for propagation/consistency if needed, though usually direct read is fine
+    const verifyMember = await getMemberByEmail(email);
+    if (!verifyMember) {
+      console.error(`[API] Member creation verification failed for ${email}`);
+      throw new Error('Failed to verify member creation - please try again or contact support');
+    }
+    console.log(`[API] Verified member creation for ${email}`);
+
     // Explicitly update last login to initialize all security fields
     await updateMemberLastLogin(email);
 
