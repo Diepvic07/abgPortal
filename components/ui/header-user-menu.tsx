@@ -105,7 +105,7 @@ export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps
               {t.nav.history}
             </Link>
 
-            {isAdmin(member.email) && (
+            {isAdmin(member) && (
               <Link
                 href="/admin"
                 className="flex items-center gap-2 px-4 py-2 text-sm text-purple-700 hover:bg-purple-50"

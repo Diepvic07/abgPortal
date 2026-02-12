@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getMemberById, updateMember } from "@/lib/google-sheets";
-import { isAdmin } from "@/lib/admin-utils";
+import { isAdminAsync } from "@/lib/admin-utils-server";
 import { sendApprovalEmail } from "@/lib/resend";
 import { notifyAdmin } from "@/lib/discord";
 
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!isAdmin(session?.user?.email)) {
+    if (!(await isAdminAsync(session?.user?.email))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

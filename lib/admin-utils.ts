@@ -1,5 +1,6 @@
 /**
  * Admin utilities for access control
+ * NOTE: This file can be used in both client and server components
  */
 
 import { Member } from '@/types';
