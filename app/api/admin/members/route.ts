@@ -31,7 +31,19 @@ export async function GET() {
       abg_class: m.abg_class,
     }));
 
-    return NextResponse.json({ members: adminMembers });
+    // Deduplicate by email, keeping the entry with most recent created_at
+    // This prevents duplicate rows from appearing in the admin dashboard
+    const emailMap = new Map<string, (typeof adminMembers)[0]>();
+    for (const member of adminMembers) {
+      const normalizedEmail = member.email.toLowerCase();
+      const existing = emailMap.get(normalizedEmail);
+      if (!existing || new Date(member.created_at) > new Date(existing.created_at)) {
+        emailMap.set(normalizedEmail, member);
+      }
+    }
+    const deduplicatedMembers = Array.from(emailMap.values());
+
+    return NextResponse.json({ members: deduplicatedMembers });
   } catch (error) {
     console.error("Admin members error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

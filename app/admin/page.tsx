@@ -231,8 +231,8 @@ export default function AdminPage() {
                     </td>
                   </tr>
                 ) : (
-                  displayMembers.map((member) => (
-                    <tr key={member.id} className="hover:bg-gray-50">
+                  displayMembers.map((member, index) => (
+                    <tr key={`${member.id}-${member.email}-${index}`} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
                         <div>
                           <p className="font-medium text-gray-900">{member.name}</p>
