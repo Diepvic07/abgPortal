@@ -56,17 +56,30 @@ To balance free access with sustainable operations, the platform enforces a two-
 
 ### 3.4 AI-Powered Connection Matching
 - **Request Categories:** Members can select from 4 distinct types of searches based on their primary intent:
-  - **Love Matching (Dating):** Find a romantic partner within the verified alumni network.
+  - **Love Matching (Dating):** Find a romantic partner within the verified alumni network. *(Strict privacy and mutual opt-in rules apply; see below).*
   - **Job Hunting:** Discover open roles or connect with mentors/recruiters.
   - **Recruitment (Hiring):** Find talent for available job positions.
   - **Partner Matching (Professional):** Connect for business partnerships or networking.
 - **Request Flow:** A member selects a request category and submits a request detailing what they are looking for (text input).
 - **Intelligent Matching (Top 5):** The Gemini API analyzes the request against the database of approved members and returns the top **5 most relevant matches**, each with a calculated **Match Score** and a reasoned explanation for *why* they are a good fit.
 - **Refresh / Reroll:** Users can click a "Run Again/Redraw" button if they aren't satisfied with the matches. Since LLM models incorporate temperature/randomness, running it again may yield different matches or newly discovered angles. (Each run counts against their request quota).
-- **Selection & Introduction:** The requester selects their preferred match. The system automatically sends a professionally formatted email via Resend introducing both parties.
+- **Custom Introduction Text:** When clicking to connect with a match, the searching user has the option to compose an introductory text (custom message) to provide context for the connection, or simply skip it to use a system default.
+- **Selection & Introduction (Standard Flow):** The requester selects their preferred match. The system automatically sends a professionally formatted email (including the custom intro text if provided) via Resend introducing both parties.
+- **Selection & Introduction (Love Matching Workflow):**
+  - **Pre-Send Notice:** Before connecting, the searching user sees a notice confirming exactly which profile details will be shared with the matched partner.
+  - **Full Privacy:** When a Love Match request is sent, the searching user only sees the target user's general matching info. All identifying details (real name, contact info, current role/company) remain completely hidden.
+  - **Receiver Decision:** The matched partner receives an anonymous/pseudonymous introductory request. They must explicitly accept or refuse the connection based on the provided profile details.
+  - **Acceptance:** If they accept, both users' real names and contact information are revealed, and an introductory email is sent connecting them.
+  - **Refusal / Rejection:** If the matched partner refuses, the searching user receives a notice stating that the partner felt it was "not a matched case."
+  - **Ignorance / Timeouts:** If the matched partner ignores the request for 3 days after seeing the notice, the system automatically marks it as denied and the searching user receives the "not a matched case" notice.
 - **Public Search Preview:** Unauthenticated users can perform a search on the landing page, receiving 3 blurred matches to demonstrate the platform's value and encourage signups.
 
-### 3.5 Administrator Operations
+### 3.5 Connection Requests Dashboard
+- **Request Management:** All users have access to a dashboard to view the status of their connection requests on the website.
+- **Visibility:** Both "Incoming" (requests received) and "Outgoing" (requests sent) are visible.
+- **Statuses Tracking:** Users can track the lifecycle of each request (e.g., Pending, Accepted, Refused, Ignored).
+
+### 3.6 Administrator Operations
 - **Admin Dashboard (`/admin`):**
   - **Approval Management:** View, approve, or reject new applicants.
   - **Member Management:** View all members, filter by status, and monitor key metrics.
@@ -85,14 +98,14 @@ To balance free access with sustainable operations, the platform enforces a two-
 5. Admin is notified via Discord and approves the user via `/admin`.
 6. User can now log in via Google or Magic Link and access the platform.
 
-### 4.2 Connection Request (Pro User)
-1. User navigates to `/request`, selects a matching category (e.g., Love Matching or Job Hunting), and describes a need.
+### 4.2 Connection Request (Pro User, Standard Flow)
+1. User navigates to `/request`, selects a matching category (e.g., Job Hunting), and describes a need.
 2. System verifies tier limits (`requests_this_month < 100`).
 3. Gemini returns top 5 unblurred matches with match scores and explanations.
 4. User may click "Run Again" to get a fresh set of 5 matches.
-5. User selects a match.
+5. User selects a match and may optionally type a custom introductory message.
 6. System sends an automated email introducing both members.
-7. Connection is logged in the system.
+7. User can track this sent request on their Connection Requests Dashboard.
 
 ### 4.3 Appreciating the Paywall (Basic User)
 1. User navigates to `/request`, selects a matching category, and describes a need.
@@ -100,6 +113,18 @@ To balance free access with sustainable operations, the platform enforces a two-
 3. Gemini returns top 5 matches, but personal details (name, role, company) are blurred.
 4. User sees the matching reason and match score, realizing the value of the platform.
 5. User clicks "Upgrade to Pro" CTA to access the unblurred profiles and connect.
+
+### 4.4 Flow: Love Matching Request
+1. User searches under the **Love Matching** category and finds a top 5 match.
+2. The match list displays only generalized profile info; the real name and contact details are hidden to protect privacy.
+3. The user clicks "Connect" on an anonymous profile. 
+4. The system warns them exactly what info from *their* profile will be shared dynamically.
+5. The request is sent to the target matched partner, and it enters a "Pending" state on both users' Connection Requests Dashboards.
+6. The target partner reviews the compatibility notification.
+7. **Resolution:**
+   - **Accept:** Identity is revealed for both; an email connects them.
+   - **Refuse:** Handled anonymously via UI notice to the searching user.
+   - **Ignore:** Handled anonymously after 3 days of viewing.
 
 ---
 
