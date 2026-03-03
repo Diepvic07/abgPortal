@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { Member, ConnectionRequest, Connection } from '@/types';
+import { Member, ConnectionRequest, Connection, LoveMatchRequest, NewsArticle, NewsCategory } from '@/types';
 import { formatDate } from './utils';
 
 const auth = new google.auth.GoogleAuth({
@@ -18,23 +18,36 @@ export const SHEETS = {
   REQUESTS: 'Requests',
   CONNECTIONS: 'Connections',
   AUDIT: 'RequestAudit',
-  // Note: DatingProfiles sheet archived - dating data now in Member schema (columns AR-BA)
+  LOVE_MATCH_REQUESTS: 'LoveMatchRequests',
+  NEWS: 'News',
 } as const;
 
-// Generic read function - extended range to include dating columns (A:BA for 53 columns)
+// Sheet-specific column ranges
+const SHEET_RANGES: Record<string, string> = {
+  [SHEETS.MEMBERS]: 'A:BC',          // 55 columns (including monthly tracking)
+  [SHEETS.REQUESTS]: 'A:I',           // 9 columns (including category, custom_intro)
+  [SHEETS.CONNECTIONS]: 'A:G',        // 7 columns
+  [SHEETS.AUDIT]: 'A:I',              // 9 columns
+  [SHEETS.LOVE_MATCH_REQUESTS]: 'A:J', // 10 columns
+  [SHEETS.NEWS]: 'A:L',               // 12 columns
+};
+
+// Generic read function with sheet-appropriate range
 export async function getSheetData(sheetName: string): Promise<string[][]> {
+  const range = SHEET_RANGES[sheetName] || 'A:Z';
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!A:BA`,
+    range: `${sheetName}!${range}`,
   });
   return response.data.values || [];
 }
 
-// Generic append function - extended range to include dating columns (A:BA for 53 columns)
+// Generic append function with sheet-appropriate range
 async function appendRow(sheetName: string, values: string[]): Promise<void> {
+  const range = SHEET_RANGES[sheetName] || 'A:Z';
   const result = await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!A:BA`,
+    range: `${sheetName}!${range}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [values] },
   });
@@ -113,6 +126,9 @@ export async function getMembers(): Promise<Member[]> {
     dating_message: row[50] || undefined,
     other_share: row[51] || undefined,
     dating_profile_complete: row[52] === 'TRUE',
+    // Monthly tracking fields (columns BB-BC, indices 53-54)
+    requests_this_month: parseInt(row[53] || '0', 10),
+    month_reset_date: row[54] || undefined,
   }));
 }
 
@@ -206,6 +222,9 @@ export async function addMember(member: Member): Promise<void> {
       member.dating_message || '',
       member.other_share || '',
       member.dating_profile_complete ? 'TRUE' : 'FALSE',
+      // Monthly tracking fields (columns BB-BC)
+      (member.requests_this_month || 0).toString(),
+      member.month_reset_date || '',
     ]);
     console.log(`[GoogleSheets] Successfully added member ${member.email}`);
   } catch (error) {
@@ -333,11 +352,14 @@ export async function updateMember(
     dating_message: 50,
     other_share: 51,
     dating_profile_complete: 52,
+    // Monthly tracking fields
+    requests_this_month: 53,
+    month_reset_date: 54,
   };
 
-  // Build update values - ensure row has 53 columns (A:BA)
+  // Build update values - ensure row has 55 columns (A:BC)
   const newRow = [...currentRow];
-  while (newRow.length < 53) newRow.push('');
+  while (newRow.length < 55) newRow.push('');
 
   for (const [field, value] of Object.entries(updates)) {
     const colIndex = fieldMap[field];
@@ -350,10 +372,10 @@ export async function updateMember(
     }
   }
 
-  // Update the entire row (A:BA for 53 columns including dating fields)
+  // Update the entire row (A:BC for 55 columns including monthly tracking)
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.MEMBERS}!A${rowIndex + 1}:BA${rowIndex + 1}`,
+    range: `${SHEETS.MEMBERS}!A${rowIndex + 1}:BC${rowIndex + 1}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [newRow] },
   });
@@ -433,6 +455,8 @@ export async function addRequest(request: ConnectionRequest): Promise<void> {
     request.selected_id || '',
     request.status,
     request.created_at,
+    request.category || '',
+    request.custom_intro_text || '',
   ]);
 }
 
@@ -449,6 +473,8 @@ export async function getRequestById(id: string): Promise<ConnectionRequest | nu
     selected_id: row[4] || undefined,
     status: row[5] as ConnectionRequest['status'],
     created_at: row[6],
+    category: (row[7] as ConnectionRequest['category']) || undefined,
+    custom_intro_text: row[8] || undefined,
   };
 }
 
@@ -466,6 +492,8 @@ export async function getRequestsByMemberId(memberId: string): Promise<Connectio
       selected_id: row[4] || undefined,
       status: row[5] as ConnectionRequest['status'],
       created_at: row[6],
+      category: (row[7] as ConnectionRequest['category']) || undefined,
+      custom_intro_text: row[8] || undefined,
     }))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
@@ -529,4 +557,156 @@ export async function addRequestAudit(audit: {
   }
 }
 
+// Update matched_ids on a request (for reroll — append new IDs)
+export async function updateRequestMatchedIds(id: string, matchedIds: string): Promise<void> {
+  const rows = await getSheetData(SHEETS.REQUESTS);
+  const rowIndex = rows.findIndex(row => row[0] === id);
+  if (rowIndex === -1) return;
 
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.REQUESTS}!D${rowIndex + 1}`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [[matchedIds]] },
+  });
+}
+
+// Increment monthly request count for a member
+export async function incrementMemberMonthlyRequests(id: string): Promise<void> {
+  const member = await getMemberById(id);
+  if (!member) return;
+
+  const rows = await getSheetData(SHEETS.MEMBERS);
+  const rowIndex = rows.findIndex(row => row[0] === id);
+  if (rowIndex === -1) return;
+
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const existingMonth = member.month_reset_date?.slice(0, 7) || '';
+  const currentMonthPrefix = currentMonth.slice(0, 7);
+
+  // Reset if new month
+  const newCount = existingMonth === currentMonthPrefix
+    ? (member.requests_this_month || 0) + 1
+    : 1;
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.MEMBERS}!BB${rowIndex + 1}:BC${rowIndex + 1}`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [[newCount.toString(), currentMonth]] },
+  });
+}
+
+// ==================== LoveMatchRequests ====================
+
+function parseLoveMatchRow(row: string[]): LoveMatchRequest {
+  return {
+    id: row[0] || '',
+    request_id: row[1] || '',
+    from_id: row[2] || '',
+    to_id: row[3] || '',
+    status: (row[4] as LoveMatchRequest['status']) || 'pending',
+    from_profile_shared: row[5] || '{}',
+    to_profile_shared: row[6] || undefined,
+    viewed_at: row[7] || undefined,
+    resolved_at: row[8] || undefined,
+    created_at: row[9] || '',
+  };
+}
+
+export async function createLoveMatchRequest(data: LoveMatchRequest): Promise<void> {
+  await appendRow(SHEETS.LOVE_MATCH_REQUESTS, [
+    data.id,
+    data.request_id,
+    data.from_id,
+    data.to_id,
+    data.status,
+    data.from_profile_shared,
+    data.to_profile_shared || '',
+    data.viewed_at || '',
+    data.resolved_at || '',
+    data.created_at,
+  ]);
+}
+
+export async function getLoveMatchRequestsByUserId(userId: string): Promise<LoveMatchRequest[]> {
+  const rows = await getSheetData(SHEETS.LOVE_MATCH_REQUESTS);
+  if (rows.length < 2) return [];
+
+  return rows.slice(1)
+    .filter(row => row[2] === userId || row[3] === userId)
+    .map(parseLoveMatchRow)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+}
+
+export async function getLoveMatchRequestById(id: string): Promise<LoveMatchRequest | null> {
+  const rows = await getSheetData(SHEETS.LOVE_MATCH_REQUESTS);
+  const row = rows.find(r => r[0] === id);
+  if (!row) return null;
+  return parseLoveMatchRow(row);
+}
+
+export async function updateLoveMatchRequest(
+  id: string,
+  updates: Partial<Pick<LoveMatchRequest, 'status' | 'viewed_at' | 'resolved_at'>>
+): Promise<boolean> {
+  const rows = await getSheetData(SHEETS.LOVE_MATCH_REQUESTS);
+  const rowIndex = rows.findIndex(row => row[0] === id);
+  if (rowIndex === -1) return false;
+
+  const currentRow = rows[rowIndex];
+  if (updates.status !== undefined) currentRow[4] = updates.status;
+  if (updates.viewed_at !== undefined) currentRow[7] = updates.viewed_at;
+  if (updates.resolved_at !== undefined) currentRow[8] = updates.resolved_at;
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.LOVE_MATCH_REQUESTS}!A${rowIndex + 1}:J${rowIndex + 1}`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [currentRow.slice(0, 10)] },
+  });
+
+  return true;
+}
+
+// ==================== News ====================
+
+function parseNewsRow(row: string[]): NewsArticle {
+  return {
+    id: row[0] || '',
+    title: row[1] || '',
+    slug: row[2] || '',
+    category: (row[3] as NewsCategory) || 'Announcement',
+    excerpt: row[4] || '',
+    content: row[5] || '',
+    image_url: row[6] || undefined,
+    author_name: row[7] || 'ABG Admin',
+    published_date: row[8] || '',
+    is_published: row[9] === 'TRUE',
+    is_featured: row[10] === 'TRUE',
+    created_at: row[11] || '',
+  };
+}
+
+export async function getNewsArticles(category?: string): Promise<NewsArticle[]> {
+  const rows = await getSheetData(SHEETS.NEWS);
+  if (rows.length < 2) return [];
+
+  return rows.slice(1)
+    .map(parseNewsRow)
+    .filter(a => a.is_published)
+    .filter(a => !category || category === 'All' || a.category === category)
+    .sort((a, b) => new Date(b.published_date).getTime() - new Date(a.published_date).getTime());
+}
+
+export async function getNewsArticleBySlug(slug: string): Promise<NewsArticle | null> {
+  const rows = await getSheetData(SHEETS.NEWS);
+  if (rows.length < 2) return null;
+
+  const row = rows.slice(1).find(r => r[2] === slug);
+  if (!row) return null;
+
+  const article = parseNewsRow(row);
+  return article.is_published ? article : null;
+}

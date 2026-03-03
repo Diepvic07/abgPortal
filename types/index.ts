@@ -57,6 +57,9 @@ export interface Member {
   dating_message?: string;        // AY (50) - open message to matches
   other_share?: string;           // AZ (51) - additional context
   dating_profile_complete?: boolean; // BA (52) - has filled dating section
+  // Monthly tracking fields (columns BB-BC, indices 53-54)
+  requests_this_month?: number;      // BB (53) - monthly usage for Pro
+  month_reset_date?: string;         // BC (54) - ISO date of current tracking month
 }
 
 // Membership status for badge display
@@ -86,6 +89,8 @@ export function getMembershipStatus(member: Member): MembershipStatus {
   return 'premium';
 }
 
+export type RequestCategory = 'love' | 'job' | 'hiring' | 'partner';
+
 export interface ConnectionRequest {
   id: string;
   requester_id: string;
@@ -94,6 +99,8 @@ export interface ConnectionRequest {
   selected_id?: string;
   status: 'pending' | 'matched' | 'connected' | 'declined';
   created_at: string;
+  category?: RequestCategory;
+  custom_intro_text?: string;
 }
 
 export interface Connection {
@@ -109,5 +116,36 @@ export interface Connection {
 export interface MatchResult {
   id: string;
   reason: string;
+  match_score?: number;
   member?: Member;
+}
+
+export interface LoveMatchRequest {
+  id: string;
+  request_id: string;
+  from_id: string;
+  to_id: string;
+  status: 'pending' | 'accepted' | 'refused' | 'ignored';
+  from_profile_shared: string;
+  to_profile_shared?: string;
+  viewed_at?: string;
+  resolved_at?: string;
+  created_at: string;
+}
+
+export type NewsCategory = 'Edu' | 'Business' | 'Event' | 'Course' | 'Announcement';
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  slug: string;
+  category: NewsCategory;
+  excerpt: string;
+  content: string;
+  image_url?: string;
+  author_name: string;
+  published_date: string;
+  is_published: boolean;
+  is_featured: boolean;
+  created_at: string;
 }

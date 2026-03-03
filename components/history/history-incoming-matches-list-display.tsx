@@ -2,6 +2,8 @@
 
 import { useTranslation } from '@/lib/i18n';
 import { MemberAvatar } from '@/components/ui/member-avatar';
+import { LoveMatchRequest } from '@/types';
+import { IncomingLoveMatchCard } from './incoming-love-match-card';
 
 interface EnrichedConnection {
   id: string;
@@ -18,6 +20,9 @@ interface EnrichedConnection {
 
 interface IncomingMatchesListProps {
   connections: EnrichedConnection[];
+  loveMatches?: LoveMatchRequest[];
+  onLoveMatchRespond?: (id: string, action: 'accept' | 'refuse') => void;
+  loveMatchLoadingId?: string | null;
 }
 
 function getRelativeTime(dateStr: string): string {
@@ -33,10 +38,17 @@ function getRelativeTime(dateStr: string): string {
   return date.toLocaleDateString();
 }
 
-export function IncomingMatchesList({ connections }: IncomingMatchesListProps) {
+export function IncomingMatchesList({
+  connections,
+  loveMatches = [],
+  onLoveMatchRespond,
+  loveMatchLoadingId,
+}: IncomingMatchesListProps) {
   const { t } = useTranslation();
+  const hasConnections = connections.length > 0;
+  const hasLoveMatches = loveMatches.length > 0;
 
-  if (connections.length === 0) {
+  if (!hasConnections && !hasLoveMatches) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-400 mb-2">
@@ -60,51 +72,81 @@ export function IncomingMatchesList({ connections }: IncomingMatchesListProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {connections.map((connection) => (
-        <div
-          key={connection.id}
-          className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-        >
-          {/* Date */}
-          <div className="flex justify-end mb-3">
-            <span className="text-sm text-gray-500">
-              {getRelativeTime(connection.created_at)}
-            </span>
-          </div>
+    <div className="space-y-8">
+      {/* Regular incoming connections */}
+      {hasConnections && (
+        <div>
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Connections
+          </h3>
+          <div className="space-y-4">
+            {connections.map((connection) => (
+              <div
+                key={connection.id}
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              >
+                {/* Date */}
+                <div className="flex justify-end mb-3">
+                  <span className="text-sm text-gray-500">
+                    {getRelativeTime(connection.created_at)}
+                  </span>
+                </div>
 
-          {/* Requester Info */}
-          {connection.requester && (
-            <div className="flex items-center gap-3 mb-4">
-              <MemberAvatar
-                name={connection.requester.name}
-                avatarUrl={connection.requester.avatar_url}
-                size="md"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-medium text-gray-900 truncate">
-                  {connection.requester.name}
-                </p>
-                <p className="text-sm text-gray-500 truncate">
-                  {connection.requester.role} at {connection.requester.company}
-                </p>
+                {/* Requester Info */}
+                {connection.requester && (
+                  <div className="flex items-center gap-3 mb-4">
+                    <MemberAvatar
+                      name={connection.requester.name}
+                      avatarUrl={connection.requester.avatar_url}
+                      size="md"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-medium text-gray-900 truncate">
+                        {connection.requester.name}
+                      </p>
+                      <p className="text-sm text-gray-500 truncate">
+                        {connection.requester.role} at {connection.requester.company}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Request Text */}
+                {connection.request_text && (
+                  <div className="bg-gray-50 rounded-md p-3 border border-gray-100">
+                    <p className="text-xs font-medium text-gray-500 uppercase mb-1">
+                      {t.history.theyWereLookingFor}
+                    </p>
+                    <p className="text-sm text-gray-700">{connection.request_text}</p>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
-
-          {/* Request Text */}
-          {connection.request_text && (
-            <div className="bg-gray-50 rounded-md p-3 border border-gray-100">
-              <p className="text-xs font-medium text-gray-500 uppercase mb-1">
-                {t.history.theyWereLookingFor}
-              </p>
-              <p className="text-sm text-gray-700">
-                {connection.request_text}
-              </p>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
-      ))}
+      )}
+
+      {/* Incoming love match requests */}
+      {hasLoveMatches && (
+        <div>
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <span>Love Match Requests</span>
+            <span className="bg-pink-100 text-pink-700 text-xs font-bold px-2 py-0.5 rounded-full border border-pink-200">
+              {loveMatches.filter(lm => lm.status === 'pending').length} pending
+            </span>
+          </h3>
+          <div className="space-y-4">
+            {loveMatches.map((lm) => (
+              <IncomingLoveMatchCard
+                key={lm.id}
+                loveMatch={lm}
+                onRespond={onLoveMatchRespond ?? (() => {})}
+                isLoading={loveMatchLoadingId === lm.id}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

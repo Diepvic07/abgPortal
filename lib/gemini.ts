@@ -43,9 +43,15 @@ export async function findMatches(
     hiring_preferences?: string;
   }[],
   locale: string = 'en',
-  type: string = 'professional'
-): Promise<{ id: string; reason: string }[]> {
-  const membersJson = JSON.stringify(members.map(m => ({
+  type: string = 'professional',
+  excludeIds: string[] = []
+): Promise<{ id: string; reason: string; match_score: number }[]> {
+  // Filter out excluded IDs (for reroll)
+  const filtered = excludeIds.length > 0
+    ? members.filter(m => !excludeIds.includes(m.id))
+    : members;
+  if (filtered.length === 0) return [];
+  const membersJson = JSON.stringify(filtered.map(m => ({
     id: m.id,
     name: m.name,
     expertise: m.expertise,
@@ -57,32 +63,34 @@ export async function findMatches(
 
   let prompt = '';
 
+  const matchCount = Math.min(5, filtered.length);
+
   if (type === 'job') {
     prompt = locale === 'vi'
       ? `Bạn là một chuyên gia tư vấn nghề nghiệp. Thành viên này đang tìm việc: "${requestText}"
          Đây là danh sách các nhà tuyển dụng tiềm năng (thành viên đang Hiring):
          ${membersJson}
-         Chọn 2-3 nhà tuyển dụng phù hợp nhất dựa trên nhu cầu tuyển dụng của họ (hiring_preferences) và chuyên môn.
-         Giải thích ngắn gọn tại sao nên ứng tuyển.`
+         Chọn tối đa ${matchCount} nhà tuyển dụng phù hợp nhất dựa trên nhu cầu tuyển dụng của họ (hiring_preferences) và chuyên môn.
+         Giải thích ngắn gọn tại sao nên ứng tuyển. Cho điểm match_score từ 0-100.`
       : `You are a career consultant. This member is looking for a job: "${requestText}"
          Here are potential employers (members who are Hiring):
          ${membersJson}
-         Select 2-3 best matching employers based on their hiring_preferences and expertise.
-         Briefly explain why they should apply.`;
+         Select up to ${matchCount} best matching employers based on their hiring_preferences and expertise.
+         Briefly explain why they should apply. Include match_score (0-100).`;
   } else if (type === 'hiring') {
     prompt = locale === 'vi'
       ? `Bạn là một chuyên gia tuyển dụng. Thành viên này đang muốn tuyển nhân sự: "${requestText}"
           Đây là danh sách các ứng viên tiềm năng (thành viên Open to Work):
           ${membersJson}
-          Chọn 2-3 ứng viên phù hợp nhất dựa trên mong muốn tìm việc của họ (job_preferences) và chuyên môn.
-          Giải thích ngắn gọn tại sao nên phỏng vấn họ.`
+          Chọn tối đa ${matchCount} ứng viên phù hợp nhất dựa trên mong muốn tìm việc của họ (job_preferences) và chuyên môn.
+          Giải thích ngắn gọn tại sao nên phỏng vấn họ. Cho điểm match_score từ 0-100.`
       : `You are a recruitment expert. This member is hiring: "${requestText}"
           Here are potential candidates (members Open to Work):
           ${membersJson}
-          Select 2-3 best candidates based on their job_preferences and expertise.
-          Briefly explain why they are a good fit.`;
+          Select up to ${matchCount} best candidates based on their job_preferences and expertise.
+          Briefly explain why they are a good fit. Include match_score (0-100).`;
   } else {
-    // Professional
+    // Professional / Partner
     prompt = locale === 'vi'
       ? `Bạn là người kết nối chuyên nghiệp cho cộng đồng ABG Alumni. Một thành viên cần giúp đỡ:
 "${requestText}"
@@ -90,29 +98,29 @@ export async function findMatches(
 Đây là danh sách các thành viên hiện có:
 ${membersJson}
 
-Hãy chọn 2-3 người phù hợp nhất dựa trên chuyên môn và những gì họ có thể giúp.
-Với mỗi người, hãy giải thích trong 1-2 câu tiếng Việt TẠI SAO họ phù hợp với yêu cầu này.
+Hãy chọn tối đa ${matchCount} người phù hợp nhất dựa trên chuyên môn và những gì họ có thể giúp.
+Với mỗi người, hãy giải thích trong 1-2 câu tiếng Việt TẠI SAO họ phù hợp với yêu cầu này. Cho điểm match_score từ 0-100.
 
 Trả về CHỈ một mảng JSON hợp lệ, không dùng markdown:
-[{"id": "member_id", "reason": "Tại sao họ phù hợp"}]`
+[{"id": "member_id", "reason": "Tại sao họ phù hợp", "match_score": 85}]`
       : `You are a professional networker for the ABG Alumni community. A member needs help:
 "${requestText}"
 
 Here are available members:
 ${membersJson}
 
-Select 2-3 best matches based on their expertise and what they can help with.
-For each, explain in 1-2 sentences WHY they're relevant to this specific request.
+Select up to ${matchCount} best matches based on their expertise and what they can help with.
+For each, explain in 1-2 sentences WHY they're relevant to this specific request. Include match_score (0-100).
 
 Return ONLY valid JSON array, no markdown:
-[{"id": "member_id", "reason": "Why they match"}]`;
+[{"id": "member_id", "reason": "Why they match", "match_score": 85}]`;
   }
 
-  // Common JSON instruction for job/hiring if not included
+  // Common JSON instruction for job/hiring
   if (type !== 'professional') {
     prompt += locale === 'vi'
-      ? `\nTrả về CHỈ một mảng JSON hợp lệ, không dùng markdown: [{"id": "member_id", "reason": "Lý do phù hợp"}]`
-      : `\nReturn ONLY valid JSON array, no markdown: [{"id": "member_id", "reason": "Why they match"}]`;
+      ? `\nTrả về CHỈ một mảng JSON hợp lệ, không dùng markdown: [{"id": "member_id", "reason": "Lý do phù hợp", "match_score": 85}]`
+      : `\nReturn ONLY valid JSON array, no markdown: [{"id": "member_id", "reason": "Why they match", "match_score": 85}]`;
   }
 
   try {
@@ -130,10 +138,11 @@ Return ONLY valid JSON array, no markdown:
     }
   } catch (error) {
     console.error('Gemini findMatches error:', error);
-    // Fallback: return the first 3 members as matches
-    return members.slice(0, 3).map(m => ({
+    // Fallback: return the first 5 members as matches
+    return filtered.slice(0, 5).map(m => ({
       id: m.id,
-      reason: "Matched based on availability (AI unavailable)."
+      reason: "Matched based on availability (AI unavailable).",
+      match_score: 50,
     }));
   }
 }
@@ -141,10 +150,19 @@ Return ONLY valid JSON array, no markdown:
 export async function findDatingMatches(
   requestText: string,
   profiles: DatingProfile[],
-  locale: string = 'en'
-): Promise<{ id: string; reason: string }[]> {
+  locale: string = 'en',
+  excludeIds: string[] = []
+): Promise<{ id: string; reason: string; match_score: number }[]> {
+  // Filter out excluded IDs (for reroll)
+  const filtered = excludeIds.length > 0
+    ? profiles.filter(p => !excludeIds.includes(p.id))
+    : profiles;
+  if (filtered.length === 0) return [];
+
+  const matchCount = Math.min(5, filtered.length);
+
   // Use Nickname instead of real name for privacy
-  const profilesJson = JSON.stringify(profiles.map(p => ({
+  const profilesJson = JSON.stringify(filtered.map(p => ({
     id: p.id,
     nickname: p.nickname,
     gender: p.gender,
@@ -165,24 +183,24 @@ export async function findDatingMatches(
 Đây là các hồ sơ hẹn hò ẩn danh:
 ${profilesJson}
 
-Hãy chọn 2-3 người phù hợp nhất dựa trên sự tương đồng về giá trị sống, sở thích, nơi ở và tính cách.
-Với mỗi người, hãy giải thích trong 1-2 câu tiếng Việt TẠI SAO họ là một cặp đôi phù hợp.
+Hãy chọn tối đa ${matchCount} người phù hợp nhất dựa trên sự tương đồng về giá trị sống, sở thích, nơi ở và tính cách.
+Với mỗi người, hãy giải thích trong 1-2 câu tiếng Việt TẠI SAO họ là một cặp đôi phù hợp. Cho điểm match_score từ 0-100.
 Hãy tập trung vào "Ideal Day" (Ngày lý tưởng), "Core Values" (Giá trị cốt lõi), và "Interests" (Sở thích) của họ.
 
 Trả về CHỈ một mảng JSON hợp lệ, không dùng markdown:
-[{"id": "profile_id", "reason": "Tại sao họ phù hợp"}]`
+[{"id": "profile_id", "reason": "Tại sao họ phù hợp", "match_score": 85}]`
     : `You are a matchmaker for a high-quality alumni community. A member is looking for a partner:
 "${requestText}"
 
 Here are the anonymous dating profiles:
 ${profilesJson}
 
-Select 2-3 best matches based on compatibility of values, interests, location, and personality.
-For each, explain in 1-2 sentences WHY they're a good match.
+Select up to ${matchCount} best matches based on compatibility of values, interests, location, and personality.
+For each, explain in 1-2 sentences WHY they're a good match. Include match_score (0-100).
 Focus on their "Ideal Day", "Core Values", and "Interests".
 
 Return ONLY valid JSON array, no markdown:
-[{"id": "profile_id", "reason": "Why they match"}]`;
+[{"id": "profile_id", "reason": "Why they match", "match_score": 85}]`;
 
   try {
     const result = await model.generateContent(prompt);
@@ -191,9 +209,10 @@ Return ONLY valid JSON array, no markdown:
     return JSON.parse(jsonStr);
   } catch (error) {
     console.error('Gemini findDatingMatches error:', error);
-    return profiles.slice(0, 3).map(p => ({
+    return filtered.slice(0, 5).map(p => ({
       id: p.id,
-      reason: "Matched based on shared community interest."
+      reason: "Matched based on shared community interest.",
+      match_score: 50,
     }));
   }
 }

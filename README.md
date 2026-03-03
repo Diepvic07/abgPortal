@@ -8,9 +8,15 @@ AI-powered member matching platform for ABG Alumni community (~300 users).
 - **Public Search Preview**: Unauthenticated users can search and see blurred member results
 - **Dual Authentication**: Google OAuth + Magic Link (Email) sign-in
 - **Approval Workflow**: Admin approves pending members; rejected members see status page
-- **Two-Tier System**: Basic (1 free request) and Premium (unlimited requests, 50/day limit)
+- **Two-Tier System**: Basic (3 lifetime requests) and Premium (100/month, 20/day soft-cap)
+- **Request Categories**: 4 categories (Love, Job, Hiring, Partner) with card-style selection
+- **AI Matching**: Gemini returns top 5 matches with match scores (0-100) and explanations
+- **Reroll/Refresh**: "Run Again" button to get fresh matches (counts against quota)
+- **Custom Intro Text**: Optional 500-char personal message included in intro emails
+- **Love Matching Privacy**: Anonymous profiles, pre-send notice, accept/refuse/ignore, 3-day auto-timeout
+- **Enhanced Dashboard**: `/history` with Outgoing/Incoming tabs, love match sections, status badges
+- **News Board**: Public `/news` and `/news/[slug]` with ISR, Google Sheets CMS, category filtering, Markdown
 - **Member Onboarding**: Form with AI-generated bio via Gemini
-- **Connection Matching**: AI-powered matching based on needs and expertise
 - **Admin Dashboard**: `/admin` for member approval, tier management, CSV bulk import
 - **Email Introductions**: Automated intro emails to both parties via Resend
 - **Admin Notifications**: Discord webhooks for new members/requests/connections
@@ -61,10 +67,11 @@ Required variables (see [setup-guide.md](docs/setup-guide.md) for detailed instr
 
 ### 3. Setup Google Sheets
 
-Create a spreadsheet with 3 sheets:
-- **Members** - Headers in row 1
-- **Requests** - Headers in row 1
+Create a spreadsheet with 4 sheets:
+- **Members** - Headers in row 1 (includes new columns: requests_this_month, month_reset_date)
+- **Requests** - Headers in row 1 (includes new columns: category, custom_intro_text)
 - **Connections** - Headers in row 1
+- **LoveMatchRequests** - Headers in row 1 (new sheet for love match workflow)
 
 Or run the seed script after configuring env:
 
@@ -91,7 +98,9 @@ app/
   profile/page.tsx             # User profile
   onboard/page.tsx             # Member onboarding form
   request/page.tsx             # Connection request form
-  history/page.tsx             # Request history
+  history/page.tsx             # Request history (Outgoing/Incoming tabs + love matches)
+  news/page.tsx                # News feed (public, ISR)
+  news/[slug]/page.tsx         # News article detail (public, ISR)
   admin/page.tsx               # Admin dashboard (APPROVAL + TIER MGMT)
   auth/
     pending/page.tsx           # Pending approval status
@@ -104,9 +113,13 @@ app/
     auth/[...nextauth]/        # NextAuth configuration
     auth/check-email/          # Check if email exists
     onboard/route.ts           # POST - create member
-    request/route.ts           # POST - find matches
+    request/route.ts           # POST - find matches (returns top 5 with scores)
+    request/reroll/route.ts    # POST - reroll matches (NEW)
     connect/route.ts           # POST - send intro email
     my-requests/route.ts       # GET - user request history
+    love-match/send/route.ts   # POST - send love match request (NEW)
+    love-match/respond/route.ts# POST - respond to love match (accept/refuse) (NEW)
+    love-match/list/route.ts   # GET - list incoming love matches (NEW)
     admin/members/             # GET - list members (admin)
     admin/approve/             # POST - approve member (admin)
     admin/reject/              # POST - reject member (admin)
@@ -118,6 +131,21 @@ components/
     connection-request-form.tsx
   profile/
     profile-edit-form-component.tsx
+  history/
+    love-match-status-badge.tsx
+    incoming-love-match-card.tsx
+  love-match/
+    love-match-card.tsx
+    love-match-modal.tsx
+    love-match-request-form.tsx
+  news/
+    news-card.tsx
+    news-card-grid.tsx
+    news-detail-page.tsx
+    news-filter-bar.tsx
+    news-hero-section.tsx
+    news-loading-skeleton.tsx
+    news-markdown-renderer.tsx
   ui/
     loading-spinner.tsx
     toast-provider.tsx
@@ -128,9 +156,11 @@ lib/
   auth-middleware.ts       # Session middleware
   google-sheets.ts         # Sheets CRUD operations
   gemini.ts                # AI text generation
-  tier-utils.ts            # Tier limits & enforcement (NEW)
+  tier-utils.ts            # Tier limits & enforcement
   resend.ts                # Email sending
   discord.ts               # Webhook notifications
+  news-service.ts          # News CMS service with ISR (NEW)
+  news-utils.ts            # News parsing/formatting helpers (NEW)
   utils.ts                 # Helpers (UUID, dates, cn)
 
 types/
@@ -212,15 +242,18 @@ See [docs/admin-operations-guide.md](docs/admin-operations-guide.md) for full de
 5. Members can login immediately
 
 ### Connection Request
-1. Approved member describes what they need
+1. Approved member selects category (Love/Job/Hiring/Partner) and describes what they need
 2. System checks tier & request limits via `canMakeRequest()`:
-   - **Basic**: Must have free_requests_used < 1 (1 lifetime request)
-   - **Premium**: Must have requests_today < 50 (reset daily)
-3. Gemini matches with relevant members
-4. Results shown (blurred for basic tier as soft upsell)
-5. User selects preferred match
-6. Intro email sent to both parties
-7. Connection logged, request status = "connected"
+   - **Basic**: Must have free_requests_used < 3 (3 lifetime requests)
+   - **Premium**: Must have requests_this_month < 100 (monthly reset) with 20/day soft-cap (warning only)
+3. Gemini returns top 5 matches with match scores (0-100) and explanations
+4. User can click "Run Again" to get fresh matches (counts against quota)
+5. Results shown (blurred for basic tier as soft upsell)
+6. User optionally adds custom intro text (max 500 chars)
+7. User selects preferred match
+8. For Love Matching: Anonymous flow with 3-day accept/refuse/ignore timeout
+9. For other categories: Direct intro email sent to both parties
+10. Connection logged with appropriate status
 
 ## License
 

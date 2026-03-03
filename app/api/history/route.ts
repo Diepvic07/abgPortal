@@ -6,7 +6,12 @@ import {
   getConnectionsByTargetId,
   getMemberById,
   getRequestById,
+  getLoveMatchRequestsByUserId,
+  updateLoveMatchRequest,
 } from '@/lib/google-sheets';
+import { formatDate } from '@/lib/utils';
+
+const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,14 +42,14 @@ export async function GET(request: NextRequest) {
         requests.map(async (req) => {
           let matchedMember = null;
           if (req.selected_id) {
-            const member = await getMemberById(req.selected_id);
-            if (member) {
+            const m = await getMemberById(req.selected_id);
+            if (m) {
               matchedMember = {
-                id: member.id,
-                name: member.name,
-                role: member.role,
-                company: member.company,
-                avatar_url: member.avatar_url,
+                id: m.id,
+                name: m.name,
+                role: m.role,
+                company: m.company,
+                avatar_url: m.avatar_url,
               };
             }
           }
@@ -53,12 +58,17 @@ export async function GET(request: NextRequest) {
             request_text: req.request_text,
             status: req.status,
             created_at: req.created_at,
+            category: req.category,
             matched_member: matchedMember,
           };
         })
       );
 
-      return successResponse({ requests: enrichedRequests });
+      // Fetch outgoing love match requests
+      const allLoveMatches = await getLoveMatchRequestsByUserId(member.id);
+      const outgoingLoveMatches = allLoveMatches.filter(lm => lm.from_id === member.id);
+
+      return successResponse({ requests: enrichedRequests, love_matches: outgoingLoveMatches });
     }
 
     if (type === 'incoming') {
@@ -102,7 +112,30 @@ export async function GET(request: NextRequest) {
         })
       );
 
-      return successResponse({ connections: enrichedConnections });
+      // Fetch incoming love match requests and handle auto-timeout + mark viewed_at
+      const allLoveMatches = await getLoveMatchRequestsByUserId(member.id);
+      const incomingLoveMatches = allLoveMatches.filter(lm => lm.to_id === member.id);
+      const now = Date.now();
+
+      await Promise.all(
+        incomingLoveMatches.map(async (lm) => {
+          if (lm.status === 'pending') {
+            const viewedAt = lm.viewed_at ? new Date(lm.viewed_at).getTime() : null;
+            // Auto-timeout: viewed > 3 days ago => ignored
+            if (viewedAt && now - viewedAt > THREE_DAYS_MS) {
+              await updateLoveMatchRequest(lm.id, { status: 'ignored', resolved_at: formatDate() });
+              lm.status = 'ignored';
+            } else if (!lm.viewed_at) {
+              // First view — mark viewed_at
+              const viewedNow = formatDate();
+              await updateLoveMatchRequest(lm.id, { viewed_at: viewedNow });
+              lm.viewed_at = viewedNow;
+            }
+          }
+        })
+      );
+
+      return successResponse({ connections: enrichedConnections, love_matches: incomingLoveMatches });
     }
 
     return errorResponse('Invalid type parameter', 400);

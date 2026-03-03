@@ -2,12 +2,11 @@ import { Member } from "@/types";
 
 export const TIER_LIMITS = {
   basic: {
-    freeRequests: 1, // 1 free request total
-    dailyLimit: 0,
+    lifetime_requests: 3,
   },
   premium: {
-    freeRequests: Infinity,
-    dailyLimit: 50,
+    monthly_limit: 100,
+    daily_soft_cap: 20,
   },
 } as const;
 
@@ -17,17 +16,27 @@ export function getMemberTier(member: Member): TierType {
   return member.paid ? "premium" : "basic";
 }
 
+/**
+ * Check if a member's monthly counter needs resetting (calendar month).
+ * Returns true if reset was needed.
+ */
+export function checkMonthlyReset(member: Member): { needsReset: boolean; currentMonth: string } {
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const resetMonth = member.month_reset_date
+    ? member.month_reset_date.slice(0, 7)
+    : '';
+  return { needsReset: resetMonth !== currentMonth, currentMonth };
+}
+
 export function canMakeRequest(member: Member): {
   allowed: boolean;
+  warning?: string;
   reason?: "limit_reached" | "not_approved" | "account_suspended";
   remaining: number;
 } {
   // Check approval status first
-  if (member.approval_status === "pending") {
-    return { allowed: false, reason: "not_approved", remaining: 0 };
-  }
-
-  if (member.approval_status === "rejected") {
+  if (member.approval_status === "pending" || member.approval_status === "rejected") {
     return { allowed: false, reason: "not_approved", remaining: 0 };
   }
 
@@ -39,17 +48,27 @@ export function canMakeRequest(member: Member): {
   const tier = getMemberTier(member);
 
   if (tier === "premium") {
-    const dailyRemaining = TIER_LIMITS.premium.dailyLimit - (member.requests_today || 0);
-    return {
-      allowed: dailyRemaining > 0,
-      reason: dailyRemaining <= 0 ? "limit_reached" : undefined,
-      remaining: Math.max(0, dailyRemaining)
-    };
+    // Monthly reset check — if month changed, treat requests_this_month as 0
+    const { needsReset } = checkMonthlyReset(member);
+    const monthlyUsed = needsReset ? 0 : (member.requests_this_month || 0);
+    const monthlyRemaining = TIER_LIMITS.premium.monthly_limit - monthlyUsed;
+
+    if (monthlyRemaining <= 0) {
+      return { allowed: false, reason: "limit_reached", remaining: 0 };
+    }
+
+    // Daily soft-cap — warning only, still allowed
+    const dailyUsed = member.requests_today || 0;
+    const warning = dailyUsed >= TIER_LIMITS.premium.daily_soft_cap
+      ? `You've made ${dailyUsed} requests today. Consider spreading requests across days.`
+      : undefined;
+
+    return { allowed: true, warning, remaining: monthlyRemaining };
   }
 
-  // Basic tier - check free requests
+  // Basic tier - check lifetime requests (3 total)
   const used = member.free_requests_used || 0;
-  const limit = TIER_LIMITS.basic.freeRequests;
+  const limit = TIER_LIMITS.basic.lifetime_requests;
 
   if (used >= limit) {
     return { allowed: false, reason: "limit_reached", remaining: 0 };

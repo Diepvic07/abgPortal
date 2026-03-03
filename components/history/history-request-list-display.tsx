@@ -2,12 +2,14 @@
 
 import { useTranslation } from '@/lib/i18n';
 import { MemberAvatar } from '@/components/ui/member-avatar';
+import { RequestCategory } from '@/types';
 
 interface EnrichedRequest {
   id: string;
   request_text: string;
   status: 'pending' | 'matched' | 'connected' | 'declined';
   created_at: string;
+  category?: RequestCategory;
   matched_member: {
     id: string;
     name: string;
@@ -16,6 +18,13 @@ interface EnrichedRequest {
     avatar_url?: string;
   } | null;
 }
+
+const CATEGORY_STYLES: Record<RequestCategory, { label: string; classes: string }> = {
+  love:    { label: 'Love',    classes: 'bg-pink-100 text-pink-700 border-pink-200' },
+  job:     { label: 'Job',     classes: 'bg-blue-100 text-blue-700 border-blue-200' },
+  hiring:  { label: 'Hiring',  classes: 'bg-purple-100 text-purple-700 border-purple-200' },
+  partner: { label: 'Partner', classes: 'bg-orange-100 text-orange-700 border-orange-200' },
+};
 
 interface RequestHistoryListProps {
   requests: EnrichedRequest[];
@@ -82,18 +91,27 @@ export function RequestHistoryList({ requests }: RequestHistoryListProps) {
           key={request.id}
           className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
         >
-          {/* Status Badge and Date */}
+          {/* Status Badge, Category Badge and Date */}
           <div className="flex items-center justify-between mb-3">
-            <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-                request.status
-              )}`}
-            >
-              {request.status === 'pending' ? t.history.status.pending :
-               request.status === 'matched' ? t.history.status.matched :
-               request.status === 'connected' ? t.history.status.connected :
-               t.history.status.declined}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                  request.status
+                )}`}
+              >
+                {request.status === 'pending' ? t.history.status.pending :
+                 request.status === 'matched' ? t.history.status.matched :
+                 request.status === 'connected' ? t.history.status.connected :
+                 t.history.status.declined}
+              </span>
+              {request.category && CATEGORY_STYLES[request.category] && (
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${CATEGORY_STYLES[request.category].classes}`}
+                >
+                  {CATEGORY_STYLES[request.category].label}
+                </span>
+              )}
+            </div>
             <span className="text-sm text-gray-500">
               {getRelativeTime(request.created_at)}
             </span>

@@ -16,15 +16,18 @@ ABG Alumni Connect is an AI-powered member matching platform for ABG Alumni comm
 - **Email-First Verification**: Landing page email check before authentication
 
 ### 2. Membership Tiers
-- **Basic**: 1 free request lifetime, login access only
-- **Premium**: Unlimited requests, 50 per day limit, full profile access
+- **Basic**: 3 lifetime requests, blurred profiles, limited access
+- **Premium**: 100/month requests with 20/day soft-cap (warning only), full profile access
 - **Tier Management**: Admin can upgrade/downgrade members via dashboard
 
-### 3. Connection Matching
-- **AI-Powered**: Gemini 1.5 Flash for matching logic
-- **Smart Filtering**: Matches based on expertise, needs, location
+### 3. AI-Powered Connection Matching
+- **AI Engine**: Gemini 1.5 Flash returns top 5 matches with Match Scores (0-100)
+- **Request Categories**: Love (dating), Job (hunting), Hiring (recruitment), Partner (professional)
+- **Reroll Feature**: "Run Again" button for fresh matches (counts against quota)
+- **Custom Intros**: Optional 500-char personal message in intro emails
+- **Love Matching**: Anonymous flow with accept/refuse/ignore, 3-day auto-timeout
 - **Approval-Gated**: Only approved members can request matches
-- **Tier-Limited**: Basic tier gets 1 match, premium unlimited
+- **Tier-Limited**: Basic tier limited to 3 lifetime, premium to 100/month
 - **Public Search Preview**: Unauthenticated users can search with blurred results
 
 ### 4. Admin Management
@@ -33,20 +36,28 @@ ABG Alumni Connect is an AI-powered member matching platform for ABG Alumni comm
 - **CSV Import**: Bulk import pre-approved members with `is_csv_imported` flag
 - **Tier Controls**: Upgrade/downgrade members between basic/premium
 
-### 5. Notifications
-- **Discord Webhooks**: New members, requests, connections
-- **Email via Resend**: Confirmation, introductions, magic links
-- **Status Updates**: Admin alerts for important actions
+### 5. News & Announcements
+- **Public Board**: `/news` and `/news/[slug]` with full article detail pages
+- **Headless CMS**: Google Sheets "News" tab for content management
+- **Markdown Support**: Article content rendered with typography styling
+- **Category Filtering**: Swipeable filter bar for sorting articles
+- **Performance**: Next.js ISR (1-hour revalidation) for fast, rate-limited loads
+
+### 6. Notifications
+- **Discord Webhooks**: New members, requests, connections, love match responses
+- **Email via Resend**: Confirmation, introductions, love match notifications, magic links
+- **Status Updates**: Admin alerts for important actions, love match timeouts
 
 ## Technology Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Framework** | Next.js 14 (App Router) |
+| **Framework** | Next.js 14 (App Router) with ISR |
 | **Language** | TypeScript |
 | **Auth** | NextAuth v4 (Google + Email providers) |
-| **Database** | Google Sheets API |
-| **UI** | React + Tailwind CSS |
+| **Database** | Google Sheets API (5 sheets) |
+| **UI** | React + Tailwind CSS + Typography |
+| **Markdown** | react-markdown with prose styling |
 | **AI** | Google Gemini 1.5 Flash |
 | **Email** | Resend |
 | **Storage** | Vercel Blob (voice/avatar) |
@@ -65,8 +76,10 @@ abg-alumni-connect/
 │   ├── profile/page.tsx           # User profile
 │   ├── onboard/page.tsx           # Member onboarding form
 │   ├── request/page.tsx           # Connection request flow
-│   ├── history/page.tsx           # User request history
-│   ├── admin/page.tsx             # Admin dashboard (NEW)
+│   ├── history/page.tsx           # Request history (Outgoing/Incoming + love matches)
+│   ├── news/page.tsx              # News feed (public, ISR)
+│   ├── news/[slug]/page.tsx       # News article detail (public, ISR)
+│   ├── admin/page.tsx             # Admin dashboard
 │   ├── auth/                      # Auth status pages
 │   │   ├── pending/page.tsx       # Pending approval state
 │   │   ├── rejected/page.tsx      # Rejected state
@@ -76,11 +89,16 @@ abg-alumni-connect/
 │   └── api/
 │       ├── auth/[...nextauth]/    # NextAuth configuration
 │       ├── auth/check-email/      # Email existence check with intent parameter
-│       ├── search/public/         # Public search with blurred results (NEW)
+│       ├── search/public/         # Public search with blurred results
 │       ├── onboard/               # Create member
-│       ├── request/               # Gemini matching
+│       ├── request/               # Gemini matching (returns top 5 with scores)
+│       ├── request/reroll/        # Reroll for fresh matches (NEW)
 │       ├── connect/               # Send intro email
 │       ├── my-requests/           # User request history
+│       ├── love-match/send/       # Send love match request (NEW)
+│       ├── love-match/respond/    # Accept/refuse love match (NEW)
+│       ├── love-match/list/       # List incoming love matches (NEW)
+│       ├── news/[...routes]/      # News CMS endpoints (NEW)
 │       └── admin/                 # Admin operations
 │           ├── members/           # List members
 │           ├── approve/           # Approve member
@@ -93,10 +111,25 @@ abg-alumni-connect/
 │   │   └── connection-request-form.tsx
 │   ├── profile/
 │   │   └── profile-edit-form-component.tsx
-│   ├── landing/                   # Landing page components (NEW)
-│   │   ├── public-search-section.tsx   # Unauthenticated search
-│   │   ├── auth-section.tsx            # Returning Member + Join buttons
-│   │   ├── email-check-card.tsx        # Reusable email verification card
+│   ├── history/
+│   │   ├── love-match-status-badge.tsx
+│   │   └── incoming-love-match-card.tsx
+│   ├── love-match/
+│   │   ├── love-match-card.tsx
+│   │   ├── love-match-modal.tsx
+│   │   └── love-match-request-form.tsx
+│   ├── news/
+│   │   ├── news-card.tsx
+│   │   ├── news-card-grid.tsx
+│   │   ├── news-detail-page.tsx
+│   │   ├── news-filter-bar.tsx
+│   │   ├── news-hero-section.tsx
+│   │   ├── news-loading-skeleton.tsx
+│   │   └── news-markdown-renderer.tsx
+│   ├── landing/
+│   │   ├── public-search-section.tsx
+│   │   ├── auth-section.tsx
+│   │   ├── email-check-card.tsx
 │   │   ├── about-abg-alumni-section.tsx
 │   │   └── how-it-works-section.tsx
 │   ├── ui/
@@ -106,22 +139,26 @@ abg-alumni-connect/
 │   └── match-results-display.tsx
 │
 ├── lib/                           # Core utilities
-│   ├── auth.ts                    # NextAuth configuration
 │   ├── auth.ts                    # NextAuth config with approval checks
 │   ├── auth-email-template.ts     # Magic link email templates
 │   ├── auth-middleware.ts         # Session middleware
 │   ├── google-sheets.ts           # Sheets CRUD operations
-│   ├── gemini.ts                  # AI text generation
-│   ├── tier-utils.ts              # Tier limits & filtering (NEW)
+│   ├── gemini.ts                  # AI text generation & matching
+│   ├── tier-utils.ts              # Tier limits & enforcement
+│   ├── news-service.ts            # News CMS service with ISR (NEW)
+│   ├── news-utils.ts              # News parsing/formatting (NEW)
 │   ├── resend.ts                  # Email sending
 │   ├── discord.ts                 # Webhook notifications
 │   └── utils.ts                   # Helper functions
 │
 ├── types/index.ts                 # TypeScript interfaces
-│   ├── Member                     # With approval_status, is_csv_imported
-│   ├── ConnectionRequest
+│   ├── Member                     # With requests_this_month, month_reset_date
+│   ├── ConnectionRequest          # With category, custom_intro_text
 │   ├── Connection
-│   └── MatchResult
+│   ├── MatchResult                # With match_score (0-100)
+│   ├── LoveMatchRequest           # New type for love matches (NEW)
+│   ├── NewsArticle                # New type for news articles (NEW)
+│   └── RequestCategory            # Enum: Love, Job, Hiring, Partner (NEW)
 │
 ├── scripts/
 │   ├── seed-test-data.ts          # Initial seed script
@@ -191,7 +228,7 @@ interface Member {
 
 ### Google Sheets Schema (Cloud Storage)
 
-**Members Sheet** (Columns A-AP)
+**Members Sheet** (Columns A-BC)
 | Column | Field | Type | Notes |
 |--------|-------|------|-------|
 | A | id | String | Unique ID |
@@ -202,8 +239,10 @@ interface Member {
 | ... | (fields 6-39 as per type) | | |
 | AO | approval_status | String | pending\|approved\|rejected |
 | AP | is_csv_imported | Boolean | TRUE if from CSV import |
+| BB | requests_this_month | Number | Monthly request count (Premium) |
+| BC | month_reset_date | String | ISO date of current month start |
 
-**Requests Sheet** (Columns A-G)
+**Requests Sheet** (Columns A-I)
 | Column | Field | Type | Notes |
 |--------|-------|------|-------|
 | A | id | String | Request ID |
@@ -213,6 +252,8 @@ interface Member {
 | E | selected_id | String | Final chosen match |
 | F | status | String | pending\|matched\|connected\|declined |
 | G | created_at | String | ISO timestamp |
+| H | category | String | Love\|Job\|Hiring\|Partner |
+| I | custom_intro_text | String | Optional 500-char message |
 
 **Connections Sheet** (Columns A-G)
 | Column | Field | Type | Notes |
@@ -224,6 +265,36 @@ interface Member {
 | E | intro_sent | Boolean | TRUE if email sent |
 | F | feedback | String | Optional user feedback |
 | G | created_at | String | ISO timestamp |
+
+**LoveMatchRequests Sheet** (Columns A-J) [NEW]
+| Column | Field | Type | Notes |
+|--------|-------|------|-------|
+| A | id | String | Love match ID |
+| B | requester_id | String | FK to Members.id (sender) |
+| C | receiver_id | String | FK to Members.id (receiver) |
+| D | requester_profile_preview | String | Anonymized profile JSON |
+| E | status | String | pending\|accepted\|refused\|auto_denied |
+| F | created_at | String | ISO timestamp |
+| G | responded_at | String | When receiver decided |
+| H | expires_at | String | 3-day timeout ISO timestamp |
+| I | notification_sent | Boolean | TRUE if notification sent |
+| J | notes | String | Optional context |
+
+**News Sheet** (Columns A-L) [NEW]
+| Column | Field | Type | Notes |
+|--------|-------|------|-------|
+| A | id | String | Article ID |
+| B | title | String | Article title |
+| C | slug | String | URL slug |
+| D | date | String | ISO date |
+| E | content | String | Markdown content |
+| F | image_url | String | Optional cover image |
+| G | category | String | Edu\|Business\|Event\|Course |
+| H | excerpt | String | Short preview |
+| I | is_published | Boolean | TRUE to show |
+| J | author | String | Author name |
+| K | created_at | String | ISO timestamp |
+| L | updated_at | String | ISO timestamp |
 
 ## Request Flow
 
@@ -245,13 +316,18 @@ approval_status = "rejected" → Member sees rejection page
 ### 3. Connection Request (Tier-Limited)
 ```
 Approved member clicks "Find Connection" →
+Select category (Love/Job/Hiring/Partner) →
 Check tier & limits (canMakeRequest) →
-If basic: check free_requests_used < 1 →
-If premium: check requests_today < 50 →
-Submit request → Gemini matches →
+If basic: check free_requests_used < 3 (lifetime) →
+If premium: check requests_this_month < 100 (monthly) →
+Submit request → Gemini returns top 5 matches + scores →
 Show results (blurred if basic tier) →
-Member selects match → Intro email sent →
-Connection logged → Request status = "connected"
+User can click "Run Again" for fresh matches (counts against quota) →
+User optionally adds custom intro text (max 500 chars) →
+Member selects match →
+  For Love: Anonymous flow, receiver gets 3 days to accept/refuse/ignore
+  For others: Intro email sent immediately →
+Connection logged → Request status updated
 ```
 
 ### 4. Public Search (Email Check Landing Flow)
@@ -276,7 +352,27 @@ Response matrix:
 - If suspended/banned → "Account suspended. Contact admin."
 ```
 
-### 6. CSV Bulk Import
+### 6. Love Match Decision Flow
+```
+User receives anonymous love match request (3-day timeout) →
+Sees anonymized profile preview →
+Options: Accept / Refuse / Ignore (auto-deny after 3 days) →
+If Accept: Both identities revealed → Intro email sent →
+If Refuse: Requester gets "not a matched case" notice →
+If Ignore: Auto-denied after 3 days → Requester notified →
+Notifications sent via email throughout flow
+```
+
+### 7. News Management
+```
+Admin adds article to Google Sheets "News" tab →
+Set is_published = TRUE to go live →
+Article auto-renders via ISR at /news/[slug] →
+Public users see filtered by category, browse full feed →
+Markdown content + cover images + metadata displayed
+```
+
+### 8. CSV Bulk Import
 ```
 CSV file prepared → Run import-csv-members script →
 For each row: Check email doesn't exist → Create member →
@@ -288,26 +384,26 @@ Members skip approval queue, ready to use immediately
 
 ### Basic Tier (paid = false)
 - **Cost**: Free
-- **Free Requests**: 1 lifetime
-- **Daily Limit**: N/A
+- **Requests**: 3 lifetime total
 - **Profile Visibility**: Limited (no phone, LinkedIn, voice)
-- **Match Results**: Blurred names/roles/companies
+- **Match Results**: Blurred names/roles/companies, visible reasons
+- **Match Score**: Not visible (Premium feature)
 - **Access**: Full app after approval
 
 ### Premium Tier (paid = true)
 - **Cost**: Paid membership
-- **Free Requests**: Unlimited
-- **Daily Limit**: 50 requests/day
+- **Requests**: 100 per month with 20/day soft-cap (warning only)
 - **Profile Visibility**: Full details visible
-- **Match Results**: Full unblurred results
+- **Match Results**: Full unblurred results + Match Score (0-100)
 - **Access**: Full app with priority
 
 ### Tier Enforcement
 - Checked in `lib/tier-utils.ts` via `canMakeRequest(member)`
 - Approval status checked first (must be "approved")
 - Then tier limits applied
-- Basic tier tracks: `free_requests_used`
-- Premium tier tracks: `requests_today` (resets daily)
+- Basic tier tracks: `free_requests_used` (0-3)
+- Premium tier tracks: `requests_this_month` (0-100) and `month_reset_date`
+- Daily counter: `requests_today` (informational, soft-cap only)
 
 ## Admin Operations
 
@@ -395,9 +491,15 @@ npm run import-members                  # Execute import
 3. **CSV Batch Processing**: Rate-limited imports to prevent API throttling
 4. **Email-First Auth**: Landing page email check routes users to signup/signin appropriately
 5. **Blurred Matching**: Basic tier sees softly-blocked results to encourage upgrades
-6. **Public Search Preview**: Anonymous users can search and see blurred results without login
-7. **Intent-Based Email Check**: Single API endpoint handles both signin/signup flows with context-aware responses
-8. **Rate Limiting**: Both `/api/auth/check-email` (10 req/min) and `/api/search/public` (5 req/min) protected per IP
+6. **Match Scores**: AI returns 0-100 scores for ranking relevance (Premium visible)
+7. **Reroll Pattern**: Stateless reroll endpoint for fresh matches (counts against quota)
+8. **Anonymous Love Matching**: Pre-request notices, 3-day decision window, auto-timeout
+9. **Public Search Preview**: Anonymous users can search and see blurred results without login
+10. **Intent-Based Email Check**: Single API endpoint handles both signin/signup flows with context-aware responses
+11. **Rate Limiting**: Both `/api/auth/check-email` (10 req/min) and `/api/search/public` (5 req/min) protected per IP
+12. **ISR for News**: Next.js ISR (1-hour revalidation) for fast static news pages with dynamic content
+13. **Markdown-to-HTML**: Server-side rendering of News content with Tailwind typography styling
+14. **Monthly Reset Logic**: Auto-reset `requests_this_month` based on `month_reset_date` comparison
 
 ## Security Considerations
 
@@ -590,12 +692,24 @@ Mocked Services:
 - **screenshot**: Only on failure
 - **video**: Only in CI on first retry
 
+## Recent Enhancements
+
+### Q1 2026 Features
+- **Request Categories**: Love, Job, Hiring, Partner with card-style selection UI
+- **Match Scoring**: Gemini returns top 5 matches with 0-100 match scores
+- **Reroll Feature**: "Run Again" button to get fresh matches (quota-counted)
+- **Custom Intros**: Optional 500-char personal messages in intro emails
+- **Love Matching**: Fully anonymous flow with accept/refuse/ignore, 3-day timeout
+- **Enhanced Dashboard**: `/history` with Outgoing/Incoming tabs, love match sections
+- **News Board**: Public `/news` feed with ISR, Google Sheets CMS, category filtering, Markdown
+- **Monthly Quotas**: Premium tier changed from 50/day to 100/month with 20/day soft-cap
+
 ## Future Extensibility
 
 Key areas designed for future expansion:
-- Additional OAuth providers (Microsoft, LinkedIn)
 - Payment gateway integration (Stripe for premium tier)
 - Advanced filtering (location, industry, skill tags)
 - Reputation/rating system for connections
 - Analytics dashboard for member engagement
 - API for third-party integrations
+- Advanced news search and recommendations

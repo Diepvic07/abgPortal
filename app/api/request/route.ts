@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 import { findMatches } from '@/lib/gemini';
-import { getActivePaidMembers, getMembers, addRequest, updateMemberFreeRequests, incrementMemberRequestCounts, addRequestAudit } from '@/lib/google-sheets';
+import { getActivePaidMembers, getMembers, addRequest, updateMemberFreeRequests, incrementMemberRequestCounts, incrementMemberMonthlyRequests, addRequestAudit } from '@/lib/google-sheets';
 import { notifyAdmin } from '@/lib/discord';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { getTranslations, type Locale } from '@/lib/i18n';
-import { ConnectionRequest } from '@/types';
+import { ConnectionRequest, RequestCategory } from '@/types';
 import { requireAuth } from '@/lib/auth-middleware';
 import { checkForAbuse } from '@/lib/abuse-detection';
 import { canMakeRequest, getMemberTier, createBlurredMatch, TIER_LIMITS } from '@/lib/tier-utils';
@@ -15,7 +15,13 @@ export async function POST(request: NextRequest) {
     // Require authentication - get authenticated member
     const requester = await requireAuth(request);
 
-    const { request_text, type = 'professional', locale = 'en' } = await request.json();
+    const body = await request.json();
+    const request_text = body.request_text;
+    const locale = body.locale || 'en';
+    // Support both legacy 'type' and new 'category' field
+    const category: RequestCategory = body.category || (body.type === 'dating' ? 'love' : body.type === 'professional' ? 'partner' : body.type) || 'partner';
+    // Map category to internal type for Gemini
+    const type = category === 'love' ? 'dating' : category === 'partner' ? 'professional' : category;
     const t = getTranslations(locale as Locale);
 
     if (!request_text) {
@@ -80,8 +86,8 @@ export async function POST(request: NextRequest) {
         return errorResponse(t.auth?.accountSuspended || 'Your account has been suspended.', 403);
       }
       if (requestStatus.reason === 'limit_reached' && memberTier === 'premium') {
-        await logAudit(false, 'Premium daily limit reached');
-        return errorResponse(`Daily request limit reached. Premium members can make up to ${TIER_LIMITS.premium.dailyLimit} requests per day.`, 403);
+        await logAudit(false, 'Premium monthly limit reached');
+        return errorResponse(`Monthly request limit reached. Premium members can make up to ${TIER_LIMITS.premium.monthly_limit} requests per month.`, 403);
       }
     }
 
@@ -163,14 +169,14 @@ export async function POST(request: NextRequest) {
           member: {
             id: member.id,
             name: member.nickname || member.name,
-            role: member.role,
-            company: member.country || member.company,
-            expertise: member.interests || member.expertise,
-            can_help_with: member.ideal_day || member.can_help_with,
-            looking_for: member.qualities_looking_for || member.looking_for,
+            role: '', // Hidden for privacy in love matching
+            company: member.country || '', // Only show location, not company
+            expertise: member.interests || '',
+            can_help_with: member.ideal_day || '',
+            looking_for: member.qualities_looking_for || '',
             bio: member.self_description
               ? `${member.self_description}${member.core_values ? `. Values: ${member.core_values}` : ''}`
-              : member.bio,
+              : '',
             avatar_url: member.avatar_url || '',
             status: 'active',
           }
@@ -250,6 +256,7 @@ export async function POST(request: NextRequest) {
       matched_ids: finalMatches.map(m => m.id).join(','),
       status: 'matched',
       created_at: formatDate(),
+      category,
     };
 
     await addRequest(connectionRequest);
@@ -260,7 +267,9 @@ export async function POST(request: NextRequest) {
     // Update request counts
     await incrementMemberRequestCounts(requester.id);
 
-    if (!requester.paid) {
+    if (requester.paid) {
+      await incrementMemberMonthlyRequests(requester.id);
+    } else {
       await updateMemberFreeRequests(requester.id, requester.free_requests_used + 1);
     }
 

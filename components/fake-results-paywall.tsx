@@ -24,7 +24,7 @@ const PAYMENT_CONFIG = {
 
 interface FakeResultsPaywallProps {
   type: 'sign-in' | 'upgrade';
-  matchType: 'professional' | 'dating' | 'job' | 'hiring';
+  matchType: string;
   onBack: () => void;
 }
 
@@ -34,7 +34,7 @@ export function FakeResultsPaywall({ type, matchType, onBack }: FakeResultsPaywa
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isDating = matchType === 'dating';
+  const isDating = matchType === 'love' || matchType === 'dating';
   const buttonColor = isDating ? 'bg-pink-500 hover:bg-pink-600' : 'bg-brand hover:bg-brand-dark';
 
   const handleConfirmPayment = async () => {

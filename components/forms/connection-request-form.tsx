@@ -8,7 +8,7 @@ import { useSession } from 'next-auth/react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { MatchResultsDisplay } from '@/components/match-results-display';
 import { FakeResultsPaywall } from '@/components/fake-results-paywall';
-import { MatchResult, Member } from '@/types';
+import { MatchResult, Member, RequestCategory } from '@/types';
 import { useTranslation } from '@/lib/i18n';
 
 // Create schema with translated messages
@@ -24,14 +24,13 @@ interface MatchWithMember extends MatchResult {
   member: Member;
 }
 
-type MatchType = 'professional' | 'dating' | 'job' | 'hiring';
 type PaywallType = 'sign-in' | 'upgrade' | null;
 
 export function ConnectionRequestForm() {
   const { t, locale } = useTranslation();
   const { status } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [matchType, setMatchType] = useState<MatchType>('professional');
+  const [matchType, setMatchType] = useState<RequestCategory>('partner');
   const [matches, setMatches] = useState<MatchWithMember[] | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +48,7 @@ export function ConnectionRequestForm() {
 
   // Check profile when dating tab selected
   useEffect(() => {
-    if (matchType === 'dating' && status === 'authenticated' && !profileCheckDone) {
+    if (matchType === 'love' && status === 'authenticated' && !profileCheckDone) {
       fetch('/api/profile')
         .then(res => res.json())
         .then(data => {
@@ -72,7 +71,7 @@ export function ConnectionRequestForm() {
 
   // Reset profile check when switching away from dating
   useEffect(() => {
-    if (matchType !== 'dating') {
+    if (matchType !== 'love') {
       setProfileCheckDone(false);
       setNeedsProfileCompletion(false);
     }
@@ -135,7 +134,7 @@ export function ConnectionRequestForm() {
       const response = await fetch('/api/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_text: data.request_text, type: matchType, locale }),
+        body: JSON.stringify({ request_text: data.request_text, category: matchType, locale }),
       });
 
       const result = await response.json();
@@ -165,6 +164,7 @@ export function ConnectionRequestForm() {
       <MatchResultsDisplay
         matches={matches}
         requestId={requestId}
+        category={matchType}
       />
     );
   }
@@ -189,56 +189,45 @@ export function ConnectionRequestForm() {
     );
   }
 
-  const isDating = matchType === 'dating';
+  const isDating = matchType === 'love';
 
   // Render tab buttons (extracted to reuse)
+  const categories: { key: RequestCategory; label: string; icon: string; desc: string; color: string }[] = [
+    { key: 'love', label: t.dating.findPartner || 'Love Matching', icon: '❤️', desc: 'Find a romantic partner within the verified alumni network', color: 'pink-500' },
+    { key: 'job', label: t.dating.findJob || 'Job Hunting', icon: '💼', desc: 'Discover open roles or connect with mentors/recruiters', color: 'brand' },
+    { key: 'hiring', label: t.dating.findCandidates || 'Recruitment', icon: '👥', desc: 'Find talent for available job positions', color: 'brand' },
+    { key: 'partner', label: t.dating.professionalNetwork || 'Partner Matching', icon: '🤝', desc: 'Connect for business partnerships or networking', color: 'brand' },
+  ];
+
   const renderTabs = () => (
-    <div className="flex p-1.5 bg-gray-100 rounded-xl mb-8 border border-gray-200 overflow-x-auto gap-1">
-      <button
-        onClick={() => setMatchType('professional')}
-        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'professional'
-          ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
-          : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
-          }`}
-        type="button"
-      >
-        {t.dating.professionalNetwork}
-      </button>
-      <button
-        onClick={() => setMatchType('job')}
-        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'job'
-          ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
-          : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
-          }`}
-        type="button"
-      >
-        {t.dating.findJob}
-      </button>
-      <button
-        onClick={() => setMatchType('hiring')}
-        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'hiring'
-          ? 'bg-brand text-white shadow-md ring-2 ring-brand/30'
-          : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
-          }`}
-        type="button"
-      >
-        {t.dating.findCandidates}
-      </button>
-      <button
-        onClick={() => setMatchType('dating')}
-        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${matchType === 'dating'
-          ? 'bg-pink-500 text-white shadow-md ring-2 ring-pink-500/30'
-          : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
-          }`}
-        type="button"
-      >
-        {t.dating.findPartner}
-      </button>
+    <div className="grid grid-cols-2 gap-3 mb-8">
+      {categories.map(cat => (
+        <button
+          key={cat.key}
+          onClick={() => setMatchType(cat.key)}
+          className={`p-4 rounded-xl border-2 text-left transition-all ${matchType === cat.key
+            ? cat.key === 'love'
+              ? 'border-pink-500 bg-pink-50 shadow-md ring-2 ring-pink-500/20'
+              : 'border-brand bg-blue-50 shadow-md ring-2 ring-brand/20'
+            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+            }`}
+          type="button"
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-lg">{cat.icon}</span>
+            <span className={`text-sm font-semibold ${matchType === cat.key
+              ? cat.key === 'love' ? 'text-pink-700' : 'text-brand'
+              : 'text-gray-700'
+              }`}>{cat.label}</span>
+          </div>
+          <p className="text-xs text-gray-500 leading-relaxed">{cat.desc}</p>
+        </button>
+      ))}
     </div>
   );
 
   // Show profile completion form for dating if needed
-  if (matchType === 'dating' && needsProfileCompletion && status === 'authenticated') {
+  if (matchType === 'love' && needsProfileCompletion && status === 'authenticated') {
     return (
       <div className="space-y-6">
         {renderTabs()}
@@ -329,7 +318,7 @@ export function ConnectionRequestForm() {
 
         <div>
           <label className="block text-sm font-medium text-text-primary mb-1">
-            {matchType === 'dating' ? t.dating.idealMatch :
+            {matchType === 'love' ? t.dating.idealMatch :
               matchType === 'job' ? t.dating.jobPreferences :
                 matchType === 'hiring' ? t.dating.hiringPreferences :
                   t.request.form.requestText} *
@@ -340,7 +329,7 @@ export function ConnectionRequestForm() {
             className={`w-full px-4 py-3 border border-border rounded-md focus:ring-2 transition-colors ${isDating ? 'focus:ring-pink-500 focus:border-pink-500' : 'focus:ring-brand focus:border-brand'
               }`}
             placeholder={
-              matchType === 'dating'
+              matchType === 'love'
                 ? t.dating.idealMatchPlaceholder
                 : matchType === 'job'
                   ? t.dating.jobPreferencesPlaceholder
@@ -363,10 +352,10 @@ export function ConnectionRequestForm() {
           {isSubmitting ? (
             <>
               <LoadingSpinner size="sm" />
-              <span>{matchType === 'dating' ? t.dating.searching : t.request.form.submitting}</span>
+              <span>{matchType === 'love' ? t.dating.searching : t.request.form.submitting}</span>
             </>
           ) : (
-            matchType === 'dating' ? t.dating.findMyMatch :
+            matchType === 'love' ? t.dating.findMyMatch :
               matchType === 'job' ? t.dating.findJobBtn :
                 matchType === 'hiring' ? t.dating.findCandidatesBtn :
                   t.request.form.submit

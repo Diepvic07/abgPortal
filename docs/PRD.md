@@ -19,11 +19,11 @@ Smart, low-effort peer connections powered by AI, augmented with an automated in
 - **Frontend/Backend:** Next.js 14 (App Router), deployed on Vercel
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
-- **Database:** Google Sheets API (used as a lightweight CMS/DB)
+- **Database / CMS:** Google Sheets API (used as a lightweight CMS/DB for users and News)
 - **AI Integration:** Google Gemini 1.5 Flash (for matching logic and profile generation)
 - **Emails:** Resend API
 - **Notifications:** Discord Webhooks
-- **Storage:** Vercel Blob (for avatars/images)
+- **Storage:** Vercel Blob (for avatars/images) or direct Google Drive links (for News images)
 
 ---
 
@@ -47,43 +47,54 @@ To balance free access with sustainable operations, the platform enforces a two-
 - **Profile Visibility:** Limited view of other members. Phone numbers and LinkedIn URLs are hidden.
 - **Match Results:** Teaser format. Names, roles, and companies of matches are blurred (e.g., `Jo** Sm***`), but the "Reason for Match" is fully visible to encourage upgrades.
 
-**Pro Tier (Paid - 500,000 VND / year)**
-- **Cost Analysis & Proposed Limit:** With Gemini API costs and an affordable 500k/year membership, unlimited matching is unsustainable. 
-  - *Proposed Limit:* **100 connection requests per month** (approximately 3 per day, or ~1200/year). This prevents abuse via API farming while offering more than enough connections for genuine networking. A daily soft-cap of **20 per day** can also be used to mitigate sudden bot bursts.
+**Premium Tier (Paid - 500,000 VND / year)**
+- **Monthly Limit:** 100 connection requests per month, preventing abuse via API farming while offering sufficient connections for genuine networking.
+- **Daily Soft-Cap:** 20 requests per day (warning only, not a hard block) to mitigate bot bursts and encourage healthy usage patterns.
 - **Profile Visibility:** Full access to all member details (phone, LinkedIn).
-- **Match Results:** Full visibility of matched members.
-- **Visuals:** Premium/Pro badge displayed on profile and dashboard.
+- **Match Results:** Full visibility of matched members with match scores (0-100).
+- **Visuals:** Premium badge displayed on profile and dashboard.
 
 ### 3.4 AI-Powered Connection Matching
 - **Request Categories:** Members can select from 4 distinct types of searches based on their primary intent:
   - **Love Matching (Dating):** Find a romantic partner within the verified alumni network. *(Strict privacy and mutual opt-in rules apply; see below).*
   - **Job Hunting:** Discover open roles or connect with mentors/recruiters.
-  - **Recruitment (Hiring):** Find talent for available job positions.
+  - **Hiring (Recruitment):** Find talent for available job positions.
   - **Partner Matching (Professional):** Connect for business partnerships or networking.
 - **Request Flow:** A member selects a request category and submits a request detailing what they are looking for (text input).
-- **Intelligent Matching (Top 5):** The Gemini API analyzes the request against the database of approved members and returns the top **5 most relevant matches**, each with a calculated **Match Score** and a reasoned explanation for *why* they are a good fit.
-- **Refresh / Reroll:** Users can click a "Run Again/Redraw" button if they aren't satisfied with the matches. Since LLM models incorporate temperature/randomness, running it again may yield different matches or newly discovered angles. (Each run counts against their request quota).
-- **Custom Introduction Text:** When clicking to connect with a match, the searching user has the option to compose an introductory text (custom message) to provide context for the connection, or simply skip it to use a system default.
+- **Intelligent Matching (Top 5):** The Gemini API analyzes the request against the database of approved members and returns the top **5 most relevant matches**, each with a calculated **Match Score (0-100)** and a reasoned explanation for *why* they are a good fit.
+- **Refresh / Reroll:** Users can click a "Run Again" button if they aren't satisfied with the matches. Since LLM models incorporate temperature/randomness, running it again may yield different matches or newly discovered angles. Each run counts against their monthly quota (Premium) or lifetime limit (Basic).
+- **Custom Introduction Text:** When selecting a match, the user can optionally compose an introductory message (up to 500 characters) to provide personal context, or use the system default.
 - **Selection & Introduction (Standard Flow):** The requester selects their preferred match. The system automatically sends a professionally formatted email (including the custom intro text if provided) via Resend introducing both parties.
-- **Selection & Introduction (Love Matching Workflow):**
+- **Love Matching Workflow (Special Flow):**
   - **Pre-Send Notice:** Before connecting, the searching user sees a notice confirming exactly which profile details will be shared with the matched partner.
-  - **Full Privacy:** When a Love Match request is sent, the searching user only sees the target user's general matching info. All identifying details (real name, contact info, current role/company) remain completely hidden.
-  - **Receiver Decision:** The matched partner receives an anonymous/pseudonymous introductory request. They must explicitly accept or refuse the connection based on the provided profile details.
-  - **Acceptance:** If they accept, both users' real names and contact information are revealed, and an introductory email is sent connecting them.
-  - **Refusal / Rejection:** If the matched partner refuses, the searching user receives a notice stating that the partner felt it was "not a matched case."
-  - **Ignorance / Timeouts:** If the matched partner ignores the request for 3 days after seeing the notice, the system automatically marks it as denied and the searching user receives the "not a matched case" notice.
-- **Public Search Preview:** Unauthenticated users can perform a search on the landing page, receiving 3 blurred matches to demonstrate the platform's value and encourage signups.
+  - **Full Privacy:** When sent, the requesting user only sees the target's general matching info. All identifying details (real name, contact info, role/company) remain hidden.
+  - **Receiver Decision:** The matched partner receives an anonymous request notification and must explicitly **Accept**, **Refuse**, or ignore it.
+  - **Acceptance:** If accepted, both users' real names and contact information are revealed, and an introductory email connects them.
+  - **Refusal / Rejection:** If refused, the searching user receives a "not a matched case" notice.
+  - **Auto-Timeout:** If ignored for 3 days, the request auto-denies and the searching user receives a "not a matched case" notice.
+- **Public Search Preview:** Unauthenticated users can search on the landing page, receiving 3 blurred matches to demonstrate platform value and encourage signups.
 
 ### 3.5 Connection Requests Dashboard
-- **Request Management:** All users have access to a dashboard to view the status of their connection requests on the website.
-- **Visibility:** Both "Incoming" (requests received) and "Outgoing" (requests sent) are visible.
-- **Statuses Tracking:** Users can track the lifecycle of each request (e.g., Pending, Accepted, Refused, Ignored).
+- **Request Management:** All users view request statuses on `/history` dashboard.
+- **Tabs:** Both "Outgoing" (requests sent) and "Incoming" (requests received) with love match section.
+- **Status Tracking:** Track lifecycle of each request with status badges (pending, accepted, refused, ignored).
+- **Love Match Actions:** Inline accept/refuse buttons, 3-day auto-timeout with reminder notifications.
 
-### 3.6 Administrator Operations
+### 3.6 News & Announcements Board
+- **Public Visibility:** News page (`/news`) is fully public. Both members and unauthenticated visitors can view feed and individual articles.
+- **Headless CMS:** Dedicated "News" tab in Google Sheets as lightweight CMS.
+- **Data Structure:** Each article row has: ID, Title, Date, Content (Markdown), Image URL (optional), Category, Is_Published.
+- **Categories & Filtering:** Horizontal filter bar sorts articles by category (Edu, Business, Event, Course, etc.).
+- **UI (Tailwind CSS):** Premium professional design with clean white spaces, subtle borders, soft shadows, blue brand colors, modern typography, Markdown rendering (via `prose` classes).
+- **Card Components:** Responsive grid with image handling (cover photo on hover scale) and text-only fallback.
+- **Performance:** Next.js ISR fetches Google Sheets periodically (1-hour revalidation), ensuring fast loads and respecting API rate limits.
+
+### 3.7 Administrator Operations
 - **Admin Dashboard (`/admin`):**
   - **Approval Management:** View, approve, or reject new applicants.
   - **Member Management:** View all members, filter by status, and monitor key metrics.
   - **Tier Management:** Manually upgrade or downgrade approved members between Basic and Premium tiers.
+- **News Management:** Admins publish/unpublish news articles directly via the Google Sheet "News" tab without needing to access a separate CMS platform.
 - **Notifications:** Admins receive real-time alerts via a Discord Webhook when new members onboard, new matches are requested, and when connections are accepted.
 
 ---

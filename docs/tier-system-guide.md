@@ -7,10 +7,11 @@ ABG Alumni Connect uses a two-tier membership model to balance free access with 
 | Feature | Basic | Premium |
 |---------|-------|---------|
 | **Cost** | Free | Paid membership |
-| **Free Requests** | 1 (lifetime) | Unlimited |
-| **Daily Limit** | N/A | 50/day |
+| **Lifetime Requests** | 3 total | Unlimited |
+| **Monthly Limit** | N/A | 100 per month |
+| **Daily Soft-Cap** | N/A | 20/day (warning only) |
 | **Profile Access** | Limited (no phone, LinkedIn) | Full access |
-| **Match Results** | Blurred (teaser) | Full visibility |
+| **Match Results** | Blurred (teaser) | Full visibility + Match Score |
 | **Premium Badge** | — | ✓ |
 
 ## Tier Determination
@@ -55,23 +56,23 @@ Response: { "success": true }
 
 - **Default tier** for new signups
 - **Cost**: Free
-- **Request limit**: 1 lifetime free request
+- **Request limit**: 3 lifetime requests
 - **Profile visibility**: Limited
 - **Match results**: Blurred/soft-blocked
 
 ### Request Limits
 
-Basic tier members get **1 free request ever**.
+Basic tier members get **3 lifetime requests total**.
 
 **Tracking:**
-- Column T: `free_requests_used` tracks count (0 or 1)
-- Once `free_requests_used >= 1`, cannot make more requests
+- Column T: `free_requests_used` tracks count (0-3)
+- Once `free_requests_used >= 3`, cannot make more requests
 - Limit is lifetime, not per month/year
 
 **Enforcement Logic:**
 ```typescript
 const used = member.free_requests_used || 0;
-const limit = 1;  // TIER_LIMITS.basic.freeRequests
+const limit = 3;  // TIER_LIMITS.basic.lifetime_requests
 
 if (used >= limit) {
   return { allowed: false, reason: "limit_reached", remaining: 0 };
@@ -163,30 +164,39 @@ Member sees enough to know if match is interesting, but needs to upgrade for ful
 ### Characteristics
 
 - **Cost**: Paid membership
-- **Request limit**: Unlimited requests, 50 per day
+- **Request limit**: 100 per month with daily soft-cap of 20
 - **Profile visibility**: Full access to all fields
-- **Match results**: Unblurred, full details visible
+- **Match results**: Unblurred, full details + Match Score (0-100)
 - **Priority**: Treated as valued member
 
 ### Request Limits
 
-Premium tier members get **unlimited requests** with daily cap.
+Premium tier members get **100 requests per month** with a **daily soft-cap of 20** (warning only).
 
 **Tracking:**
-- Column V: `requests_today` counts requests in current day
-- Resets daily at UTC midnight
-- Once `requests_today >= 50`, cannot make more today
-- Can make requests again tomorrow
+- Column BB: `requests_this_month` counts monthly usage
+- Column BC: `month_reset_date` tracks current month's start (ISO date)
+- Column V: `requests_today` counts requests in current day (informational)
+- Resets monthly and daily at UTC midnight
 
 **Enforcement Logic:**
 ```typescript
 if (tier === "premium") {
-  const dailyRemaining = 50 - (member.requests_today || 0);
-  if (dailyRemaining > 0) {
-    return { allowed: true, remaining: dailyRemaining };
-  } else {
-    return { allowed: false, reason: "limit_reached", remaining: 0 };
+  // Check monthly limit (hard block)
+  const monthlyUsed = member.requests_this_month || 0;
+  const monthlyRemaining = 100 - monthlyUsed;
+
+  if (monthlyRemaining <= 0) {
+    return { allowed: false, reason: "monthly_limit_reached", remaining: 0 };
   }
+
+  // Check daily soft-cap (warning only)
+  const dailyUsed = member.requests_today || 0;
+  const warning = dailyUsed >= 20
+    ? `You've made ${dailyUsed} requests today. Consider spreading requests across days.`
+    : undefined;
+
+  return { allowed: true, warning, remaining: monthlyRemaining };
 }
 ```
 
@@ -199,17 +209,17 @@ Premium tier members see complete profiles:
 - Voice recording playable
 - All optional fields shown
 
-### Daily Reset
+### Daily & Monthly Resets
 
-`requests_today` resets daily:
-- Reset happens at **UTC midnight** (00:00 UTC)
-- Implemented via scheduled job or daily reset on request
-- Member can see remaining requests: "3 of 50 requests remaining"
+**Daily Reset (requests_today):**
+- Resets at **UTC midnight** (00:00 UTC)
+- Happens on first request of day
+- Compare timestamp with today's date; if different → reset to 0
 
-**Current Implementation:**
-- Manual reset on first request of day
-- Compare `created_at` of last request with today's date
-- If different day → reset `requests_today = 0`
+**Monthly Reset (requests_this_month):**
+- Resets when month changes from `month_reset_date`
+- Happens on first request of new month
+- Compare `month_reset_date` with current month; if different → reset counter and update date
 
 ### Premium Badge
 
@@ -315,18 +325,23 @@ export function canMakeRequest(member: Member) {
   const tier = getMemberTier(member);
   if (tier === "basic") {
     const used = member.free_requests_used || 0;
-    if (used >= 1) {
+    if (used >= 3) {  // 3 lifetime limit
       return { allowed: false, reason: "limit_reached", remaining: 0 };
     }
+    return { allowed: true, remaining: 3 - used };
   } else { // premium
-    const remaining = 50 - (member.requests_today || 0);
-    if (remaining <= 0) {
-      return { allowed: false, reason: "limit_reached", remaining: 0 };
+    const monthlyUsed = member.requests_this_month || 0;
+    const monthlyRemaining = 100 - monthlyUsed;
+    if (monthlyRemaining <= 0) {
+      return { allowed: false, reason: "monthly_limit_reached", remaining: 0 };
     }
-    return { allowed: true, remaining };
-  }
 
-  return { allowed: true, remaining: 1 };
+    // Daily soft-cap (warning only)
+    const dailyUsed = member.requests_today || 0;
+    const warning = dailyUsed >= 20 ? `Made ${dailyUsed} requests today.` : undefined;
+
+    return { allowed: true, warning, remaining: monthlyRemaining };
+  }
 }
 ```
 
@@ -459,12 +474,11 @@ All tier limits defined in one place: `lib/tier-utils.ts`
 ```typescript
 export const TIER_LIMITS = {
   basic: {
-    freeRequests: 1,          // Lifetime free requests
-    dailyLimit: 0,            // Not applicable
+    lifetime_requests: 3,     // Lifetime requests
   },
   premium: {
-    freeRequests: Infinity,   // Unlimited
-    dailyLimit: 50,           // Per day
+    monthly_limit: 100,       // Per month
+    daily_soft_cap: 20,       // Per day (warning only)
   },
 } as const;
 ```
@@ -475,11 +489,11 @@ export const TIER_LIMITS = {
 3. Changes apply immediately to new requests
 4. Does not affect already-made requests
 
-**Example: Increase daily limit to 100**
+**Example: Increase monthly limit to 150**
 ```typescript
 premium: {
-  freeRequests: Infinity,
-  dailyLimit: 100,  // ← Change from 50
+  monthly_limit: 150,         // ← Change from 100
+  daily_soft_cap: 20,
 }
 ```
 
@@ -513,17 +527,22 @@ Q: What tier is new member at?
 A: Basic tier (paid=false) automatically
 
 Q: Can they make requests immediately?
-A: No, must wait for approval first (approval_status check)
+A: No, must wait for approval first (approval_status check). Then gets 3 lifetime requests.
 
 ### CSV Import
 
 Q: Can I import members as Premium?
 A: Yes, but not in one step. Import as Basic, then bulk upgrade.
 
-### Tier Change During Request
+### Reroll/Refresh Feature
 
-Q: What if tier changes while member is making request?
-A: Check happens at API time, so new tier applies
+Q: Does rerolling/running again count against quota?
+A: Yes, each "Run Again" request counts as a full request against monthly limit (Premium) or lifetime total (Basic).
+
+### Monthly Reset Edge Case
+
+Q: What happens if user was in grace period during month boundary?
+A: Counter resets; previous month's usage doesn't carry over. Grace period only applies within current month.
 
 ### Account Suspension
 

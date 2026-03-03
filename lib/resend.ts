@@ -84,10 +84,11 @@ export async function sendIntroEmail(data: {
   target_name: string;
   request_text: string;
   match_reason: string;
+  custom_message?: string;
   locale?: Locale;
 }): Promise<void> {
   const { requester_email, requester_name, requester_role, requester_company,
-    target_email, target_name, request_text, match_reason, locale = 'en' } = data;
+    target_email, target_name, request_text, match_reason, custom_message, locale = 'en' } = data;
 
   const t = getTranslations(locale);
 
@@ -128,6 +129,13 @@ export async function sendIntroEmail(data: {
     <p>${lookingFor}</p>
 
     <div class="quote">"${request_text}"</div>
+
+    ${custom_message ? `
+    <div style="background: #fef9c3; border-left: 4px solid #eab308; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+      <strong>Personal message from ${requester_name}:</strong>
+      <p style="margin: 8px 0 0;">${custom_message}</p>
+    </div>
+    ` : ''}
 
     <div class="match-reason">
       <strong>${t.email.intro.whyMatched}</strong><br>
@@ -247,6 +255,204 @@ export async function sendApprovalEmail(to: string, name: string): Promise<void>
       return;
     }
     console.error('Failed to send approval email:', error);
+  }
+}
+
+/**
+ * Send anonymous love match notification to target
+ */
+export async function sendLoveMatchNotificationEmail(
+  to: string,
+  data: {
+    interests?: string;
+    core_values?: string;
+    self_description?: string;
+    app_url?: string;
+  }
+): Promise<void> {
+  const resend = getResendClient();
+  const appUrl = data.app_url || process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: 'Someone is interested in connecting with you on ABG Connect',
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { border-bottom: 2px solid #ec4899; padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { margin: 0; font-size: 24px; color: #ec4899; }
+    .snippet { background: #fdf2f8; border-left: 4px solid #ec4899; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+    .snippet-label { font-size: 12px; font-weight: 600; color: #9d174d; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .cta-button { display: inline-block; background: #ec4899; color: white; padding: 12px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .privacy-note { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px; margin: 16px 0; font-size: 14px; color: #166534; }
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>ABG Alumni Connect</h1>
+    </div>
+
+    <h2>Someone wants to connect with you!</h2>
+
+    <p>A fellow ABG alumni has expressed interest in connecting with you. Here's a glimpse of who they are:</p>
+
+    ${data.self_description ? `
+    <div class="snippet">
+      <div class="snippet-label">About them</div>
+      ${data.self_description}
+    </div>
+    ` : ''}
+
+    ${data.interests ? `
+    <div class="snippet">
+      <div class="snippet-label">Interests</div>
+      ${data.interests}
+    </div>
+    ` : ''}
+
+    ${data.core_values ? `
+    <div class="snippet">
+      <div class="snippet-label">Core Values</div>
+      ${data.core_values}
+    </div>
+    ` : ''}
+
+    <div class="privacy-note">
+      Their real name, contact info, and employer are kept private until you accept.
+    </div>
+
+    <p>Log in to view their full anonymous profile and choose to accept or pass.</p>
+
+    <a href="${appUrl}/love-match" class="cta-button">View & Respond</a>
+
+    <p>Best regards,<br>ABG Alumni Connect</p>
+
+    <div class="footer">
+      <p>ABG Alumni Community</p>
+    </div>
+  </div>
+</body>
+</html>
+    `,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: Love match notification not sent.', error.message);
+      return;
+    }
+    console.error('Failed to send love match notification email:', error);
+    throw new Error(`Failed to send email: ${error.message}`);
+  }
+}
+
+/**
+ * Send love match acceptance email to both parties — reveals real info
+ */
+export async function sendLoveMatchAcceptEmail(data: {
+  from_email: string;
+  from_name: string;
+  from_role: string;
+  from_company: string;
+  from_phone?: string;
+  from_linkedin?: string;
+  to_email: string;
+  to_name: string;
+  to_role: string;
+  to_company: string;
+  to_phone?: string;
+  to_linkedin?: string;
+}): Promise<void> {
+  const resend = getResendClient();
+
+  const buildContact = (phone?: string, linkedin?: string) => {
+    const parts: string[] = [];
+    if (phone) parts.push(`Phone: ${phone}`);
+    if (linkedin) parts.push(`LinkedIn: <a href="${linkedin}">${linkedin}</a>`);
+    return parts.length ? parts.join(' &bull; ') : 'No additional contact info shared';
+  };
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { border-bottom: 2px solid #ec4899; padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { margin: 0; font-size: 24px; color: #ec4899; }
+    .match-card { background: #fdf2f8; border: 1px solid #f9a8d4; border-radius: 8px; padding: 16px; margin: 16px 0; }
+    .match-card h3 { margin: 0 0 8px; color: #9d174d; }
+    .match-card p { margin: 4px 0; font-size: 14px; }
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>ABG Alumni Connect</h1>
+    </div>
+
+    <h2>You've been matched!</h2>
+
+    <p>Great news — you and your match have both expressed mutual interest. Here are each other's contact details:</p>
+
+    <div class="match-card">
+      <h3>${data.from_name}</h3>
+      <p>${data.from_role} at ${data.from_company}</p>
+      <p>${buildContact(data.from_phone, data.from_linkedin)}</p>
+      <p>Email: <a href="mailto:${data.from_email}">${data.from_email}</a></p>
+    </div>
+
+    <div class="match-card">
+      <h3>${data.to_name}</h3>
+      <p>${data.to_role} at ${data.to_company}</p>
+      <p>${buildContact(data.to_phone, data.to_linkedin)}</p>
+      <p>Email: <a href="mailto:${data.to_email}">${data.to_email}</a></p>
+    </div>
+
+    <p>We encourage you to reach out and start a conversation. Wishing you all the best!</p>
+
+    <p>Best regards,<br>ABG Alumni Connect</p>
+
+    <div class="footer">
+      <p>ABG Alumni Community</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: [data.from_email, data.to_email],
+    subject: "You've been matched on ABG Connect!",
+    html,
+    replyTo: data.from_email,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: Love match accept email not sent.', error.message);
+      // Fallback: send only to from_email
+      await resend.emails.send({
+        from: FROM_EMAIL,
+        to: data.from_email,
+        subject: "[TEST MODE] You've been matched on ABG Connect!",
+        html,
+        replyTo: data.from_email,
+      });
+      return;
+    }
+    console.error('Failed to send love match accept email:', error);
+    throw new Error(`Failed to send email: ${error.message}`);
   }
 }
 

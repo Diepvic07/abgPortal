@@ -11,10 +11,12 @@ import { notifyAdmin } from '@/lib/discord';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { Connection } from '@/types';
+import { requireAuth } from '@/lib/auth-middleware';
 
 export async function POST(request: NextRequest) {
   try {
-    const { request_id, selected_id, match_reason, locale = 'en' } = await request.json();
+    const authedMember = await requireAuth(request);
+    const { request_id, selected_id, match_reason, custom_intro_text, locale = 'en' } = await request.json();
 
     if (!request_id || !selected_id || !match_reason) {
       return errorResponse('Missing required fields', 400);
@@ -22,6 +24,11 @@ export async function POST(request: NextRequest) {
 
     const requests = await getSheetData(SHEETS.REQUESTS);
     const requestRow = requests.find(row => row[0] === request_id);
+
+    // Verify request ownership
+    if (requestRow && requestRow[1] !== authedMember.id) {
+      return errorResponse('Unauthorized', 403);
+    }
 
     if (!requestRow) {
       return errorResponse('Request not found', 404);
@@ -41,6 +48,12 @@ export async function POST(request: NextRequest) {
     const targetName = targetMember.nickname || targetMember.name;
     const targetEmail = targetMember.email;
 
+    // Sanitize custom intro text (prevent XSS in email)
+    const sanitizedIntro = custom_intro_text
+      ? custom_intro_text.slice(0, 500).replace(/[<>&"']/g, (c: string) =>
+          ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c] || c))
+      : undefined;
+
     await sendIntroEmail({
       requester_email: requester.email,
       requester_name: requester.name,
@@ -50,6 +63,7 @@ export async function POST(request: NextRequest) {
       target_name: targetName,
       request_text,
       match_reason,
+      custom_message: sanitizedIntro,
       locale,
     });
 

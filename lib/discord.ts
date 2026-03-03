@@ -1,6 +1,6 @@
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL!;
 
-type NotificationType = 'new_member' | 'new_request' | 'connection_made' | 'abuse_detected' | 'new_signup';
+type NotificationType = 'new_member' | 'new_request' | 'connection_made' | 'abuse_detected' | 'new_signup' | 'love_match_accepted';
 
 interface NotificationData {
   name?: string;
@@ -69,6 +69,15 @@ export async function notifyAdmin(
         { name: 'Role', value: `${data.role || 'N/A'} at ${data.company || 'N/A'}`, inline: false },
       ],
       description: '⏳ Needs approval in admin dashboard',
+      timestamp: new Date().toISOString(),
+    },
+    love_match_accepted: {
+      title: 'Love Match Accepted',
+      color: 0xec4899, // Pink
+      fields: [
+        { name: 'From', value: data.from_name || 'N/A', inline: true },
+        { name: 'To', value: data.to_name || 'N/A', inline: true },
+      ],
       timestamp: new Date().toISOString(),
     },
   };
