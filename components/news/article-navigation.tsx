@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { NewsArticle } from '@/types';
+import { localizeArticle } from '@/lib/news-utils';
 import { useTranslation } from '@/lib/i18n';
 
 interface ArticleNavigationProps {
@@ -10,7 +11,9 @@ interface ArticleNavigationProps {
 }
 
 export function ArticleNavigation({ prev, next }: ArticleNavigationProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const prevLocalized = prev ? localizeArticle(prev, locale) : null;
+  const nextLocalized = next ? localizeArticle(next, locale) : null;
 
   if (!prev && !next) return null;
 
@@ -25,7 +28,7 @@ export function ArticleNavigation({ prev, next }: ArticleNavigationProps) {
             </span>
             <span className="text-sm font-medium text-gray-700 group-hover:text-brand
               group-hover:-translate-x-1 transition-transform line-clamp-2">
-              &larr; {prev.title}
+              &larr; {prevLocalized!.title}
             </span>
           </Link>
         )}
@@ -39,7 +42,7 @@ export function ArticleNavigation({ prev, next }: ArticleNavigationProps) {
             </span>
             <span className="text-sm font-medium text-gray-700 group-hover:text-brand
               group-hover:translate-x-1 transition-transform line-clamp-2">
-              {next.title} &rarr;
+              {nextLocalized!.title} &rarr;
             </span>
           </Link>
         )}

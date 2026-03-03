@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { NewsArticle } from '@/types';
-import { getCategoryColor } from '@/lib/news-utils';
+import { getCategoryColor, localizeArticle } from '@/lib/news-utils';
 
 interface NewsCardProps {
   article: NewsArticle;
@@ -9,6 +9,7 @@ interface NewsCardProps {
   readFullStoryLabel: string;
   categoryLabel: string;
   dateLocale?: string;
+  locale?: string;
 }
 
 function CalendarIcon() {
@@ -20,7 +21,8 @@ function CalendarIcon() {
   );
 }
 
-export function NewsCard({ article, featured = false, readFullStoryLabel, categoryLabel, dateLocale = 'en-US' }: NewsCardProps) {
+export function NewsCard({ article, featured = false, readFullStoryLabel, categoryLabel, dateLocale = 'en-US', locale = 'en' }: NewsCardProps) {
+  const localized = localizeArticle(article, locale);
   const formattedDate = new Date(article.published_date).toLocaleDateString(dateLocale, {
     year: 'numeric', month: 'long', day: 'numeric',
   });
@@ -63,9 +65,9 @@ export function NewsCard({ article, featured = false, readFullStoryLabel, catego
         </div>
         <h2 className={`font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-brand transition-colors
           ${featured ? 'text-xl' : 'text-base'}`}>
-          {article.title}
+          {localized.title}
         </h2>
-        <p className="text-sm text-gray-500 line-clamp-3 flex-1">{article.excerpt}</p>
+        <p className="text-sm text-gray-500 line-clamp-3 flex-1">{localized.excerpt}</p>
         <span className="mt-4 text-sm font-medium text-brand-light">
           {readFullStoryLabel} &rarr;
         </span>

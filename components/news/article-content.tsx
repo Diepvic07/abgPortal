@@ -1,8 +1,13 @@
+'use client';
+
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
+import { NewsArticle } from '@/types';
+import { localizeArticle } from '@/lib/news-utils';
+import { useTranslation } from '@/lib/i18n';
 
 interface ArticleContentProps {
-  content: string;
+  article: NewsArticle;
 }
 
 const components: Components = {
@@ -39,7 +44,10 @@ const components: Components = {
   ),
 };
 
-export function ArticleContent({ content }: ArticleContentProps) {
+export function ArticleContent({ article }: ArticleContentProps) {
+  const { locale } = useTranslation();
+  const { content } = localizeArticle(article, locale);
+
   return (
     <div className="max-w-3xl mx-auto px-4">
       <div className="prose prose-lg max-w-none text-gray-700 prose-p:leading-relaxed">

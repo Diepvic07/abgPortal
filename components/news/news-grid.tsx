@@ -52,6 +52,7 @@ export function NewsGrid({ articles, activeCategory = 'All' }: NewsGridProps) {
             readFullStoryLabel={t.news.readFullStory}
             categoryLabel={t.news.categories[article.category.toLowerCase() as keyof typeof t.news.categories] ?? article.category}
             dateLocale={dateLocale}
+            locale={locale}
           />
         ))}
       </div>

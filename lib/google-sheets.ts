@@ -29,7 +29,7 @@ const SHEET_RANGES: Record<string, string> = {
   [SHEETS.CONNECTIONS]: 'A:G',        // 7 columns
   [SHEETS.AUDIT]: 'A:I',              // 9 columns
   [SHEETS.LOVE_MATCH_REQUESTS]: 'A:J', // 10 columns
-  [SHEETS.NEWS]: 'A:L',               // 12 columns
+  [SHEETS.NEWS]: 'A:O',               // 15 columns (incl. vi translations)
 };
 
 // Generic read function with sheet-appropriate range
@@ -686,6 +686,10 @@ function parseNewsRow(row: string[]): NewsArticle {
     is_published: row[9] === 'TRUE',
     is_featured: row[10] === 'TRUE',
     created_at: row[11] || '',
+    // Vietnamese localized fields (columns M-O, indices 12-14)
+    title_vi: row[12] || undefined,
+    excerpt_vi: row[13] || undefined,
+    content_vi: row[14] || undefined,
   };
 }
 

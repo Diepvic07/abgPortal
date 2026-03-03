@@ -1,4 +1,19 @@
-import { NewsCategory } from '@/types';
+import { NewsArticle, NewsCategory } from '@/types';
+
+/** Returns localized title/excerpt/content for an article, falling back to English. */
+export function localizeArticle(
+  article: NewsArticle,
+  locale: string
+): { title: string; excerpt: string; content: string } {
+  if (locale === 'vi') {
+    return {
+      title: article.title_vi || article.title,
+      excerpt: article.excerpt_vi || article.excerpt,
+      content: article.content_vi || article.content,
+    };
+  }
+  return { title: article.title, excerpt: article.excerpt, content: article.content };
+}
 
 export function generateSlug(title: string): string {
   return title

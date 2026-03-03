@@ -148,4 +148,8 @@ export interface NewsArticle {
   is_published: boolean;
   is_featured: boolean;
   created_at: string;
+  // Vietnamese localized fields (Google Sheets columns M-O)
+  title_vi?: string;
+  excerpt_vi?: string;
+  content_vi?: string;
 }

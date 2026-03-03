@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { NewsArticle } from '@/types';
-import { getCategoryColor } from '@/lib/news-utils';
+import { getCategoryColor, localizeArticle } from '@/lib/news-utils';
 import { useTranslation } from '@/lib/i18n';
 
 interface ArticleHeaderProps {
@@ -16,6 +16,7 @@ function getInitials(name: string): string {
 
 export function ArticleHeader({ article }: ArticleHeaderProps) {
   const { t, locale } = useTranslation();
+  const localized = localizeArticle(article, locale);
   const [copied, setCopied] = useState(false);
   const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const formattedDate = new Date(article.published_date).toLocaleDateString(dateLocale, {
@@ -26,7 +27,7 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
 
   function shareTwitter() {
     const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent(article.title);
+    const text = encodeURIComponent(localized.title);
     window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
   }
 
@@ -91,7 +92,7 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
 
       {/* Title */}
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-8 leading-tight">
-        {article.title}
+        {localized.title}
       </h1>
 
       {/* Author */}

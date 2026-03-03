@@ -60,7 +60,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           </div>
         )}
 
-        <ArticleContent content={article.content} />
+        <ArticleContent article={article} />
         <ArticleNavigation prev={prev} next={next} />
       </div>
     </div>
