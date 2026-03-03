@@ -38,6 +38,31 @@ export async function mockGeminiAPI(page: Page, config: GeminiMockConfig = {}) {
       });
     }
 
+    if (prompt.toLowerCase().includes('dating') || prompt.toLowerCase().includes('romantic') || prompt.toLowerCase().includes('love')) {
+      // Dating match request — includes match_score field
+      const matchResult = matchMembers.slice(0, 3).map((m, i) => ({
+        id: m.id,
+        name: m.name,
+        match_score: 92 - i * 5,
+        score: 0.92 - i * 0.05,
+        reason: `Compatible personality and shared interests.`,
+      }));
+
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: JSON.stringify(matchResult) }],
+              },
+            },
+          ],
+        }),
+      });
+    }
+
     if (prompt.toLowerCase().includes('match') || prompt.toLowerCase().includes('connect')) {
       // Matching request
       const matchResult = matchMembers.slice(0, 3).map((m, i) => ({

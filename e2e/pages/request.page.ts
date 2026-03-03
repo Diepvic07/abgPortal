@@ -10,10 +10,10 @@ export class RequestPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.purposeTextarea = page.getByLabel(/purpose|reason|looking for/i);
-    this.submitButton = page.getByRole('button', { name: /find|match|submit/i });
+    this.purposeTextarea = page.locator('textarea[name="request_text"]');
+    this.submitButton = page.locator('form button[type="submit"]');
     this.matchResults = page.locator('[data-testid="match-results"]');
-    this.connectButton = page.getByRole('button', { name: /connect/i });
+    this.connectButton = page.getByRole('button', { name: /connect|request introduction/i });
     this.tierLimitMessage = page.locator('[data-testid="tier-limit"]');
   }
 

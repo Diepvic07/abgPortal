@@ -6,6 +6,7 @@ import { RequestPage } from '../pages/request.page';
 import { AdminPage } from '../pages/admin.page';
 import { ProfilePage } from '../pages/profile.page';
 import { HistoryPage } from '../pages/history.page';
+import { NewsPage } from '../pages/news.page';
 
 type PageFixtures = {
   loginPage: LoginPage;
@@ -15,6 +16,7 @@ type PageFixtures = {
   adminPage: AdminPage;
   profilePage: ProfilePage;
   historyPage: HistoryPage;
+  newsPage: NewsPage;
 };
 
 export const extendedTest = test.extend<PageFixtures>({
@@ -38,6 +40,9 @@ export const extendedTest = test.extend<PageFixtures>({
   },
   historyPage: async ({ page }, use) => {
     await use(new HistoryPage(page));
+  },
+  newsPage: async ({ page }, use) => {
+    await use(new NewsPage(page));
   },
 });
 
