@@ -3,9 +3,8 @@ import {
   getMemberById,
   addConnection,
   updateRequestStatus,
-  getSheetData,
-  SHEETS
-} from '@/lib/google-sheets';
+  getRequestById,
+} from '@/lib/supabase-db';
 import { sendIntroEmail } from '@/lib/resend';
 import { notifyAdmin } from '@/lib/discord';
 import { generateId, formatDate } from '@/lib/utils';
@@ -22,20 +21,19 @@ export async function POST(request: NextRequest) {
       return errorResponse('Missing required fields', 400);
     }
 
-    const requests = await getSheetData(SHEETS.REQUESTS);
-    const requestRow = requests.find(row => row[0] === request_id);
+    const connectionRequest = await getRequestById(request_id);
 
-    // Verify request ownership
-    if (requestRow && requestRow[1] !== authedMember.id) {
-      return errorResponse('Unauthorized', 403);
-    }
-
-    if (!requestRow) {
+    if (!connectionRequest) {
       return errorResponse('Request not found', 404);
     }
 
-    const requester_id = requestRow[1];
-    const request_text = requestRow[2];
+    // Verify request ownership
+    if (connectionRequest.requester_id !== authedMember.id) {
+      return errorResponse('Unauthorized', 403);
+    }
+
+    const requester_id = connectionRequest.requester_id;
+    const request_text = connectionRequest.request_text;
 
     const requester = await getMemberById(requester_id);
     const targetMember = await getMemberById(selected_id);

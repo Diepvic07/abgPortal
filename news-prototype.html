@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News & Updates | ABG Alumni Connect</title>
+    <!-- Using Tailwind CSS via CDN for rapid prototyping -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles */
+        :root {
+            --brand-primary: #1e3a8a;
+            --brand-secondary: #3b82f6;
+        }
+
+        /* Custom scrollbar for horizontal categories on mobile */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- Mock Navigation Bar -->
+    <nav class="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-gray-900 tracking-tight">ABG <span
+                            class="text-blue-600">Alumni</span></span>
+                </div>
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-gray-900 text-sm font-medium transition-colors">Home</a>
+                    <a href="#"
+                        class="text-blue-600 font-semibold text-sm relative after:absolute after:bottom-[-22px] after:left-0 after:w-full after:h-0.5 after:bg-blue-600">News
+                        & Updates</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-900 text-sm font-medium transition-colors">Find
+                        Matches</a>
+                    <button
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                        Login
+                    </button>
+                </div>
+                <!-- Mobile Menu Button (Mock) -->
+                <div class="flex items-center md:hidden">
+                    <button class="text-gray-500 hover:text-gray-900 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="bg-white pb-6 pt-12 md:pt-16 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-4 md:pt-8 pb-4">
+            <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight mb-4">
+                Community <span class="text-blue-600">News & Updates</span>
+            </h1>
+            <p class="text-base md:text-lg text-gray-500 max-w-2xl mx-auto">
+                Stay informed with the latest announcements, success stories, and events from the ABG Alumni network.
+            </p>
+        </div>
+    </header>
+
+    <!-- Filter/Category Bar -->
+    <div class="bg-white border-b border-gray-100 sticky top-16 z-40 shadow-sm shadow-gray-100/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div
+                class="flex items-center space-x-1 md:space-x-2 py-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
+
+                <!-- Category: All (Active) -->
+                <button
+                    class="snap-start flex-shrink-0 px-4 md:px-5 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold border border-blue-100 whitespace-nowrap transition-colors">
+                    All News
+                </button>
+
+                <!-- Category: Edu -->
+                <button
+                    class="snap-start flex-shrink-0 px-4 md:px-5 py-2 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-full text-sm font-medium border border-transparent hover:border-gray-200 whitespace-nowrap transition-colors">
+                    Edu
+                </button>
+
+                <!-- Category: Business -->
+                <button
+                    class="snap-start flex-shrink-0 px-4 md:px-5 py-2 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-full text-sm font-medium border border-transparent hover:border-gray-200 whitespace-nowrap transition-colors">
+                    Business
+                </button>
+
+                <!-- Category: Event -->
+                <button
+                    class="snap-start flex-shrink-0 px-4 md:px-5 py-2 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-full text-sm font-medium border border-transparent hover:border-gray-200 whitespace-nowrap transition-colors">
+                    Event
+                </button>
+
+                <!-- Category: Course -->
+                <button
+                    class="snap-start flex-shrink-0 px-4 md:px-5 py-2 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-full text-sm font-medium border border-transparent hover:border-gray-200 whitespace-nowrap transition-colors">
+                    Course
+                </button>
+
+                <!-- Category: Announcement -->
+                <button
+                    class="snap-start flex-shrink-0 px-4 md:px-5 py-2 hover:bg-gray-50 text-gray-600 hover:text-gray-900 rounded-full text-sm font-medium border border-transparent hover:border-gray-200 whitespace-nowrap transition-colors">
+                    Announcement
+                </button>
+            </div>
+            <!-- Fade effect for horizontal scrolling on mobile -->
+            <div
+                class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none md:hidden">
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Main Content Area: The Feed -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+
+        <!-- Interactive feedback to show active filter -->
+        <div class="mb-8 flex items-center justify-between text-sm text-gray-500 font-medium">
+            <span>Showing <strong>All News</strong> articles</span>
+            <span class="text-gray-400">24 Items</span>
+        </div>
+
+        <!-- Grid layout for the news cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <!-- NEWS CARD 1: Featured Article (spans 2 columns on desktop) -->
+            <article onclick="window.location.href='article-prototype.html'"
+                class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300 flex flex-col group cursor-pointer lg:col-span-2">
+                <div class="h-56 md:h-64 w-full overflow-hidden bg-gray-100 relative">
+                    <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
+                        alt="Networking Event"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <!-- Dynamic Category Badge matching the button styles -->
+                    <span
+                        class="absolute top-4 left-4 bg-white/95 backdrop-blur-sm text-xs font-bold px-3 py-1.5 rounded-full text-gray-800 shadow-sm border border-gray-200 uppercase tracking-wide">
+                        Announcement
+                    </span>
+                </div>
+
+                <div class="p-6 md:p-8 flex-1 flex flex-col">
+                    <time datetime="2026-03-05" class="text-sm text-gray-400 font-medium mb-3 flex items-center">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        March 5, 2026
+                    </time>
+                    <h2
+                        class="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4 group-hover:text-blue-600 transition-colors line-clamp-2">
+                        Welcome to the New ABG Alumni Connect Platform!
+                    </h2>
+                    <p class="text-gray-500 text-sm md:text-base leading-relaxed line-clamp-3 mb-6 flex-1">
+                        We are thrilled to launch the newly redesigned ABG Alumni Connect platform today. Log in now to
+                        explore better matching algorithms, instant email intros, and an upgraded Pro tier experience
+                        designed specifically for our community's needs.
+                    </p>
+                    <div class="mt-auto flex items-center text-blue-600 font-semibold text-sm group/btn">
+                        Read full story
+                        <svg class="w-4 h-4 ml-1 transform group-hover/btn:translate-x-1 transition-transform"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                    </div>
+                </div>
+            </article>
+
+            <!-- NEWS CARD 2: Course Category -->
+            <article
+                class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300 flex flex-col group cursor-pointer">
+                <div class="p-6 md:p-8 flex-1 flex flex-col justify-center">
+                    <div class="flex justify-between items-start mb-4">
+                        <!-- Badges map directly to the categories in the filter bar -->
+                        <span
+                            class="bg-purple-50 text-purple-700 text-xs font-bold px-3 py-1.5 rounded-full border border-purple-100 uppercase tracking-wide">
+                            Course
+                        </span>
+                    </div>
+
+                    <time datetime="2026-02-28" class="text-sm text-gray-400 font-medium mb-3">Feb 28, 2026</time>
+                    <h2
+                        class="text-lg md:text-xl font-bold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors">
+                        Mastering AI for Executives: 6-Week Bootcamp
+                    </h2>
+                    <p class="text-gray-600 text-sm mb-6 leading-relaxed flex-1">
+                        Enrollment is now open for our intensive AI leadership course. Learn how to implement LLMs in
+                        your daily workflows to save 10+ hours a week. Limited to 20 spots.
+                    </p>
+                    <div class="mt-auto flex items-center text-blue-600 font-semibold text-sm group/btn">
+                        View Sylabus
+                        <svg class="w-4 h-4 ml-1 transform group-hover/btn:translate-x-1 transition-transform"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                    </div>
+                </div>
+            </article>
+
+            <!-- NEWS CARD 3: Business Category -->
+            <article
+                class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300 flex flex-col group cursor-pointer">
+                <div class="p-6 md:p-8 flex-1 flex flex-col justify-center">
+                    <div class="flex justify-between items-start mb-4">
+                        <span
+                            class="bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full border border-emerald-100 uppercase tracking-wide">
+                            Business
+                        </span>
+                    </div>
+                    <time datetime="2026-02-20" class="text-sm text-gray-400 font-medium mb-3">Feb 20, 2026</time>
+                    <h2
+                        class="text-lg md:text-xl font-bold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors">
+                        Member Spotlight: How John found his technical co-founder
+                    </h2>
+                    <p class="text-gray-600 text-sm mb-6 leading-relaxed flex-1">
+                        "I had been looking for a CTO for 6 months on standard job boards with no success. I ran a 'Job
+                        Hunting' search on the ABG network on a Tuesday, found Sarah's masked profile..."
+                    </p>
+                    <div class="mt-auto flex items-center text-blue-600 font-semibold text-sm group/btn">
+                        Read the interview
+                        <svg class="w-4 h-4 ml-1 transform group-hover/btn:translate-x-1 transition-transform"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                    </div>
+                </div>
+            </article>
+
+            <!-- NEWS CARD 4: Event Category -->
+            <article
+                class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300 flex flex-col group cursor-pointer lg:col-span-2">
+                <!-- Spans 2 cols to offset rhythm -->
+                <div class="h-48 md:h-56 w-full overflow-hidden bg-gray-100 relative">
+                    <img src="https://images.unsplash.com/photo-1515169067868-5387ec356754?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                        alt="Coffee Event"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 grayscale opacity-80 mix-blend-multiply transition-all group-hover:grayscale-0 group-hover:opacity-100">
+                    <span
+                        class="absolute top-4 left-4 bg-orange-50/95 backdrop-blur-sm text-xs font-bold px-3 py-1.5 rounded-full text-orange-700 shadow-sm border border-orange-200 uppercase tracking-wide">
+                        Event
+                    </span>
+                </div>
+                <div class="p-6 md:p-8 flex-1 flex flex-col">
+                    <time datetime="2026-02-15" class="text-sm text-gray-400 font-medium mb-3 flex items-center">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        Feb 15, 2026
+                    </time>
+                    <h2
+                        class="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
+                        April Offline Networking Mixer Added (Hanoi)
+                    </h2>
+                    <p class="text-gray-500 text-sm line-clamp-3 mb-6 flex-1">
+                        Save the date! We are hosting an exclusive offline morning mixer in Hanoi for all active
+                        members. Location details and RSVP links inside.
+                    </p>
+                    <div class="mt-auto flex items-center text-blue-600 font-semibold text-sm group/btn">
+                        Get details & RSVP
+                        <svg class="w-4 h-4 ml-1 transform group-hover/btn:translate-x-1 transition-transform"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                    </div>
+                </div>
+            </article>
+
+        </div>
+
+        <!-- Pagination / Load More -->
+        <div class="mt-12 md:mt-16 text-center">
+            <button
+                class="bg-white border text-sm md:text-base border-gray-200 text-gray-700 hover:border-blue-600 hover:text-blue-600 px-6 py-2.5 rounded-xl font-semibold transition-colors duration-200 shadow-sm hover:shadow">
+                Load More Articles (20+)
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Mock Footer -->
+    <footer class="bg-gray-900 py-12 border-t border-gray-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
+            <p>&copy; 2026 ABG Alumni Connect. Private Community.</p>
+        </div>
+    </footer>
+
+</body>
+
+</html>

@@ -38,7 +38,7 @@ ABG Alumni Connect is an AI-powered member matching platform for ABG Alumni comm
 
 ### 5. News & Announcements
 - **Public Board**: `/news` and `/news/[slug]` with full article detail pages
-- **Headless CMS**: Google Sheets "News" tab for content management
+- **Headless CMS**: Supabase `news` table for content management
 - **Markdown Support**: Article content rendered with typography styling
 - **Category Filtering**: Swipeable filter bar for sorting articles
 - **Performance**: Next.js ISR (1-hour revalidation) for fast, rate-limited loads
@@ -54,8 +54,9 @@ ABG Alumni Connect is an AI-powered member matching platform for ABG Alumni comm
 |-------|-----------|
 | **Framework** | Next.js 14 (App Router) with ISR |
 | **Language** | TypeScript |
-| **Auth** | NextAuth v4 (Google + Email providers) |
-| **Database** | Google Sheets API (5 sheets) |
+| **Auth** | NextAuth v4 (Google OAuth + Magic Link) |
+| **Database** | Supabase Postgres (6 tables with RLS policies) |
+| **ORM** | @supabase/supabase-js with server/client patterns |
 | **UI** | React + Tailwind CSS + Typography |
 | **Markdown** | react-markdown with prose styling |
 | **AI** | Google Gemini 1.5 Flash |
@@ -142,7 +143,11 @@ abg-alumni-connect/
 │   ├── auth.ts                    # NextAuth config with approval checks
 │   ├── auth-email-template.ts     # Magic link email templates
 │   ├── auth-middleware.ts         # Session middleware
-│   ├── google-sheets.ts           # Sheets CRUD operations
+│   ├── supabase-db.ts             # Supabase Postgres CRUD operations
+│   ├── supabase/
+│   │   ├── server.ts              # Server-side Supabase client
+│   │   ├── client.ts              # Browser-side Supabase client
+│   │   └── types.ts               # Database type definitions
 │   ├── gemini.ts                  # AI text generation & matching
 │   ├── tier-utils.ts              # Tier limits & enforcement
 │   ├── news-service.ts            # News CMS service with fallback to sample data
@@ -226,16 +231,20 @@ interface Member {
 }
 ```
 
-### Google Sheets Schema (Cloud Storage)
+### Database Schema (Supabase Postgres)
 
-**Members Sheet** (Columns A-BC)
-| Column | Field | Type | Notes |
-|--------|-------|------|-------|
-| A | id | String | Unique ID |
-| B | name | String | Full name |
-| C | email | String | Primary key, login email |
-| D | role | String | Job title |
-| E | company | String | Company name |
+**Migrations**
+- `001_create_tables.sql` - Creates 6 tables with indexes and triggers
+- `002_rls_policies.sql` - Row Level Security policies for data isolation
+
+**Members Table**
+| Field | Type | Notes |
+|-------|------|-------|
+| id | TEXT | Unique ID (primary key) |
+| name | TEXT | Full name |
+| email | TEXT | Primary key, login email (unique) |
+| role | TEXT | Job title |
+| company | TEXT | Company name |
 | ... | (fields 6-39 as per type) | | |
 | AO | approval_status | String | pending\|approved\|rejected |
 | AP | is_csv_imported | Boolean | TRUE if from CSV import |
@@ -365,7 +374,7 @@ Notifications sent via email throughout flow
 
 ### 7. News Management
 ```
-Admin adds article to Google Sheets "News" tab →
+Admin adds article to Supabase news table →
 Set is_published = TRUE to go live →
 Article auto-renders via ISR at /news/[slug] →
 Public users see filtered by category, browse full feed →
@@ -476,13 +485,14 @@ npm run import-members                  # Execute import
 1. Connect GitHub repository
 2. Set all environment variables in Vercel Dashboard
 3. Deploy automatically on push to main
-4. Database: Google Sheets (no additional setup)
+4. Database: Supabase (ensure migrations run: `supabase migration up`)
 
 ### Local Development
 1. Copy `.env.example` to `.env.local`
-2. Fill in all required variables
-3. Run `npm install && npm run dev`
-4. Access at `http://localhost:3000`
+2. Fill in Supabase credentials from project settings
+3. Run migrations: `supabase migration up`
+4. Run `npm install && npm run dev`
+5. Access at `http://localhost:3000`
 
 ## Notable Implementation Patterns
 
@@ -536,7 +546,7 @@ e2e/
 ├── mocks/                   # External service mocks
 │   ├── index.ts             # Mock exports
 │   ├── setup-all-mocks.ts   # Global mock registration
-│   ├── google-sheets.mock.ts # Sheets API mock
+│   ├── supabase.mock.ts     # Supabase database mock
 │   ├── gemini.mock.ts       # Gemini AI mock
 │   ├── resend.mock.ts       # Email service mock
 │   ├── blob.mock.ts         # Storage service mock
@@ -660,7 +670,7 @@ await page.route('**/generativelanguage.googleapis.com/**', (route) => {
 ```
 
 Mocked Services:
-- **Google Sheets**: Member CRUD, approval workflow, data persistence
+- **Supabase**: Member CRUD, approval workflow, data persistence
 - **Gemini AI**: Bio generation, member matching
 - **Resend**: Email confirmation, magic links, introductions
 - **Vercel Blob**: Avatar/voice file uploads
@@ -701,8 +711,9 @@ Mocked Services:
 - **Custom Intros**: Optional 500-char personal messages in intro emails
 - **Love Matching**: Fully anonymous flow with accept/refuse/ignore, 3-day timeout
 - **Enhanced Dashboard**: `/history` with Outgoing/Incoming tabs, love match sections
-- **News Board**: Public `/news` feed with ISR, Google Sheets CMS, category filtering, Markdown
+- **News Board**: Public `/news` feed with ISR, Supabase CMS, category filtering, Markdown
 - **Monthly Quotas**: Premium tier changed from 50/day to 100/month with 20/day soft-cap
+- **Supabase Migration**: Transitioned from Google Sheets API to Supabase Postgres with RLS policies
 
 ## Future Extensibility
 

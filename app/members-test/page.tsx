@@ -1,4 +1,4 @@
-import { getMembers } from '@/lib/google-sheets';
+import { getMembers } from '@/lib/supabase-db';
 
 // Force dynamic rendering - requires env vars at runtime
 export const dynamic = 'force-dynamic';

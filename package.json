@@ -18,15 +18,18 @@
     "migrate-live": "npx tsx scripts/migrate-live-data.ts",
     "verify-migration": "npx tsx scripts/verify-migration.ts",
     "migrate:dating": "npx tsx scripts/migrate-dating-profiles.ts",
-    "migrate:dating:dry": "npx tsx scripts/migrate-dating-profiles.ts --dry-run"
+    "migrate:dating:dry": "npx tsx scripts/migrate-dating-profiles.ts --dry-run",
+    "migrate:csv": "npx tsx scripts/migrate-csv-to-supabase.ts",
+    "migrate:csv:dry": "npx tsx scripts/migrate-csv-to-supabase.ts --dry-run"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.2.2",
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.98.0",
     "@tailwindcss/typography": "^0.5.19",
     "@vercel/blob": "^2.0.1",
     "clsx": "^2.1.1",
-    "googleapis": "^171.1.0",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
     "react": "19.2.3",

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { findMatches } from '@/lib/gemini';
-import { getActivePaidMembers, getMembers, addRequest, updateMemberFreeRequests, incrementMemberRequestCounts, incrementMemberMonthlyRequests, addRequestAudit } from '@/lib/google-sheets';
+import { getActivePaidMembers, getMembers, addRequest, updateMemberFreeRequests, incrementMemberRequestCounts, incrementMemberMonthlyRequests, addRequestAudit } from '@/lib/supabase-db';
 import { notifyAdmin } from '@/lib/discord';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';

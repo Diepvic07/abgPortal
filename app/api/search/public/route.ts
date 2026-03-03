@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getActivePaidMembers } from "@/lib/google-sheets";
+import { getActivePaidMembers } from "@/lib/supabase-db";
 import { findMatches } from "@/lib/gemini";
 import { blurText } from "@/lib/tier-utils";
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMemberByEmail } from "@/lib/google-sheets";
+import { getMemberByEmail } from "@/lib/supabase-db";
 
 type Intent = "signin" | "signup";
 type Status = "approved" | "pending" | "not_found";

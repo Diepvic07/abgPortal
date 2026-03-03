@@ -1,14 +1,14 @@
 import { NextRequest } from 'next/server';
 import { put } from '@vercel/blob';
 import { generateBio } from '@/lib/gemini';
-import { addMember, getMemberByEmail } from '@/lib/google-sheets';
+import { addMember, getMemberByEmail } from '@/lib/supabase-db';
 import { sendOnboardingConfirmation } from '@/lib/resend';
 import { notifyAdmin } from '@/lib/discord';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { Member } from '@/types';
 import { requireSession } from '@/lib/auth-middleware';
-import { updateMemberLastLogin } from '@/lib/google-sheets';
+import { updateMemberLastLogin } from '@/lib/supabase-db';
 
 export async function POST(request: NextRequest) {
   try {

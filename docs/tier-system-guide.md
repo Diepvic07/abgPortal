@@ -18,11 +18,12 @@ ABG Alumni Connect uses a two-tier membership model to balance free access with 
 
 ### How System Determines Tier
 
-Tier is determined by single boolean flag in Members sheet:
+Tier is determined by single boolean flag in members table:
 
-```
-Column S: paid = TRUE  → Premium Tier
-Column S: paid = FALSE → Basic Tier
+```sql
+SELECT paid FROM members WHERE id = ?;
+paid = TRUE  → Premium Tier
+paid = FALSE → Basic Tier
 ```
 
 **Code location:** `lib/tier-utils.ts`

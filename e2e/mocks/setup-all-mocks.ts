@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import { mockGoogleSheets, SheetsMockConfig } from './google-sheets.mock';
+import { mockSupabaseDb, SupabaseMockConfig } from './supabase-db.mock';
 import { mockGeminiAPI, GeminiMockConfig } from './gemini.mock';
 import { mockResendAPI, ResendMockConfig } from './resend.mock';
 import { mockDiscordWebhooks } from './discord.mock';
@@ -7,7 +7,7 @@ import { mockVercelBlob } from './blob.mock';
 import { TestMember } from '../fixtures/test-data';
 
 export interface AllMocksConfig {
-  sheets?: SheetsMockConfig;
+  supabase?: SupabaseMockConfig;
   gemini?: GeminiMockConfig;
   resend?: ResendMockConfig;
   members?: TestMember[];
@@ -17,7 +17,7 @@ export async function setupAllMocks(page: Page, config: AllMocksConfig = {}) {
   const { members = [] } = config;
 
   await Promise.all([
-    mockGoogleSheets(page, { members, ...config.sheets }),
+    mockSupabaseDb(page, { members, ...config.supabase }),
     mockGeminiAPI(page, { matchMembers: members, ...config.gemini }),
     mockResendAPI(page, config.resend),
     mockDiscordWebhooks(page),

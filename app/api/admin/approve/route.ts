@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getMemberById, updateMember } from "@/lib/google-sheets";
+import { getMemberById, updateMember } from "@/lib/supabase-db";
 import { isAdminAsync } from "@/lib/admin-utils-server";
 import { sendApprovalEmail } from "@/lib/resend";
 import { notifyAdmin } from "@/lib/discord";

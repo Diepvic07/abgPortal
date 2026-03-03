@@ -6,8 +6,8 @@ Member matching platform with approval workflow and tier management. All admin o
 
 ## Access Points
 
-- **Admin Dashboard:** `/admin` (approval, tier management, CSV import docs)
-- **Google Sheets:** Backup database with Members, Requests, Connections tabs
+- **Admin Dashboard:** `/admin` (approval, tier management, member directory)
+- **Supabase Database:** `/admin/members` page queries Postgres directly
 - **Discord Channel:** Real-time alerts for new members, requests, connections
 
 ## Admin Dashboard (`/admin`)
@@ -97,21 +97,20 @@ If Reject:  approval_status = "rejected"
 
 ### Live Data Migration (`npm run migrate-live`)
 
-Use this **one-time script** to migrate production data from CSV to Google Sheets during initial deployment.
+Use this **one-time script** to migrate production data from CSV to Supabase Postgres during initial deployment.
 
 #### What It Does
-1. **Clears all existing data** - Deletes all rows from Members, Requests, Connections, DatingProfiles, and RequestAudit sheets
-2. **Updates headers** - Sets 42-column Member sheet headers matching the system schema
-3. **Imports CSV data** - Reads `docs/abg_members_portal_data.csv` and maps all fields
-4. **Auto-approves members** - Sets `approval_status = "approved"` (skip manual approval)
-5. **Marks members as CSV imported** - Sets `is_csv_imported = TRUE` for tracking
-6. **Creates admin account** - Adds `diepvic@gmail.com` as Premium tier admin
-7. **Sets Basic tier** - All members start as Basic tier; admins upgrade manually
+1. **Clears all existing data** - Deletes all rows from members, requests, connections tables in Supabase
+2. **Imports CSV data** - Reads `docs/abg_members_portal_data.csv` and maps all fields
+3. **Auto-approves members** - Sets `approval_status = "approved"` (skip manual approval)
+4. **Marks members as CSV imported** - Sets `is_csv_imported = TRUE` for tracking
+5. **Creates admin account** - Adds `diepvic@gmail.com` as Premium tier admin
+6. **Sets Basic tier** - All members start as Basic tier; admins upgrade manually
 
 #### CSV File Format
 Location: `/docs/abg_members_portal_data.csv`
 
-Mapping from CSV columns to Member sheet:
+Mapping from CSV columns to members table:
 | CSV Column | Index | Maps To | Notes |
 |------------|-------|---------|-------|
 | Submission ID | 0 | id | Unique member identifier |
@@ -124,7 +123,6 @@ Mapping from CSV columns to Member sheet:
 | 3 things to learn | 17 | looking_for | What they need |
 | Bio | 18 | bio | Professional bio |
 | Avatar URL | 6 | avatar_url | Profile photo URL |
-| City | 7 | city | City (optional) |
 | Country | 19 | country | Country of residence |
 | Phone | 9 | phone | Phone number (optional) |
 | Facebook | 10 | facebook_url | Facebook profile (optional) |
@@ -135,14 +133,14 @@ Mapping from CSV columns to Member sheet:
 
 #### Prerequisites
 - CSV file at `/docs/abg_members_portal_data.csv`
-- All required env vars set (GOOGLE_SHEETS_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY)
-- **WARNING: All existing data will be deleted. Back up your Google Sheets before running.**
+- All required env vars set (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)
+- **WARNING: All existing data will be deleted. Back up your Supabase database before running.**
 
 #### Step-by-Step
 **1. Backup Current Data (CRITICAL)**
 ```bash
-# Take a screenshot or export current Google Sheets manually
-# Data cannot be recovered after migration
+# Export Supabase data via dashboard or pg_dump
+supabase db pull  # or use Supabase dashboard export
 ```
 
 **2. Verify CSV File**
@@ -162,15 +160,13 @@ Expected output:
 ABG Live Data Migration
 ==================================================
 
-Clearing all sheets...
-  ✓ Cleared Members
-  ✓ Cleared Requests
-  ✓ Cleared Connections
-  ✓ Cleared DatingProfiles
-  ✓ Cleared RequestAudit
+Connecting to Supabase...
+  ✓ Connected
 
-Updating Members headers...
-  ✓ Headers updated (42 columns)
+Clearing all tables...
+  ✓ Cleared members
+  ✓ Cleared requests
+  ✓ Cleared connections
 
 Parsing CSV file...
   Found 442 rows in CSV
@@ -179,7 +175,7 @@ Parsing CSV file...
 Adding admin account...
   ✓ Admin account added (diepvic@gmail.com)
 
-Inserting members into Google Sheets...
+Inserting members into Supabase...
   ✓ Inserted 443 members
 
 ==================================================
@@ -195,15 +191,15 @@ All members have:
   - is_csv_imported = TRUE (except admin)
 
 Next steps:
-  1. Verify member count in Google Sheets
+  1. Verify member count in Supabase dashboard
   2. Test login with a sample member email
   3. Mark premium members via admin panel
 ```
 
-**4. Verify in Google Sheets**
-1. Open your Google Sheet
-2. Go to Members tab → Should show 443 rows (442 members + 1 admin)
-3. Check columns are populated correctly (A:AP)
+**4. Verify in Supabase**
+1. Go to Supabase dashboard → SQL Editor
+2. Run: `SELECT COUNT(*) FROM members;` → Should show 443
+3. Run: `SELECT name, email, approval_status FROM members LIMIT 5;` → Verify data
 
 **5. Test Login**
 ```bash
@@ -221,8 +217,8 @@ Next steps:
 | Feature | migrate-live | import-members |
 |---------|--------------|-----------------|
 | Purpose | One-time production migration | Ongoing member imports |
-| Clears data | YES (all sheets) | NO (appends only) |
-| Updates headers | YES | NO |
+| Clears data | YES (all tables) | NO (appends only) |
+| Updates schema | N/A (predefined) | NO |
 | Auto-approves | YES | YES |
 | Creates admin | YES | NO |
 | Use case | Initial deployment | Adding members later |
@@ -235,8 +231,8 @@ Next steps:
 
 **"Migration failed" with API error**
 - Verify all env vars are set correctly
-- Check Google Sheets exists and service account has Editor access
-- Ensure sheet has tabs named: Members, Requests, Connections, DatingProfiles, RequestAudit
+- Check Supabase project is accessible and keys are valid
+- Ensure database migrations have been run: `supabase migration up`
 
 **Partial import (missing some members)**
 - Re-run script - it appends and will add missing rows
@@ -303,7 +299,7 @@ For **approved members only**:
 ### Monitor Requests
 
 - Discord notifies on each new request
-- Visit Google Sheets → Requests tab for full history
+- View request history in Supabase dashboard → requests table
 - Status meanings:
   - `pending` - Waiting for matches
   - `matched` - AI found matches, awaiting selection
@@ -396,85 +392,84 @@ Members are created with:
 4. Previous requests still count against 1 free request limit
 
 **View Connection History:**
-1. Go to Google Sheets → Connections tab
-2. Columns: from_id, to_id, intro_sent, feedback, created_at
-3. Filter by member ID or date range
+1. Go to Supabase dashboard → connections table
+2. Columns: id, request_id, from_id, to_id, intro_sent, feedback, created_at
+3. Filter by member ID or date range via SQL queries
 
-## Google Sheets Structure
+## Database Structure (Supabase Postgres)
 
-### Members Sheet (Columns A-AP)
+### Members Table
 
-**Core Identity (A-F)**
-| Column | Field | Type | Notes |
-|--------|-------|------|-------|
-| A | id | String | Unique ID |
-| B | name | String | Full name |
-| C | email | String | Primary key, login email |
-| D | role | String | Job title |
-| E | company | String | Company name |
-| F | expertise | String | Areas of expertise |
+**Core Identity**
+| Field | Type | Notes |
+|-------|------|-------|
+| id | TEXT | Unique ID (primary key) |
+| name | TEXT | Full name |
+| email | TEXT | Login email (unique) |
+| role | TEXT | Job title |
+| company | TEXT | Company name |
+| expertise | TEXT | Areas of expertise |
 
-**Profile Content (G-J)**
-| Column | Field | Type | Notes |
-|--------|-------|------|-------|
-| G | can_help_with | String | What they offer/expert in |
-| H | looking_for | String | What they need |
-| I | bio | String | AI-generated professional bio |
-| J | voice_url | String | Voice intro URL (optional) |
+**Profile Content**
+| Field | Type | Notes |
+|-------|------|-------|
+| can_help_with | TEXT | What they offer/expert in |
+| looking_for | TEXT | What they need |
+| bio | TEXT | AI-generated professional bio |
+| voice_url | TEXT | Voice intro URL (optional) |
+| avatar_url | TEXT | Profile photo URL |
 
-**Contact Details (K-Q)**
-| Column | Field | Type | Notes |
-|--------|-------|------|-------|
-| K | phone | String | Phone number |
-| L | facebook_url | String | Facebook profile URL |
-| M | linkedin_url | String | LinkedIn profile URL |
-| N | company_website | String | Company website URL |
-| O | avatar_url | String | Profile photo URL |
-| P | country | String | Country of residence |
-| Q | city | String | City |
+**Contact Details**
+| Field | Type | Notes |
+|-------|------|-------|
+| phone | TEXT | Phone number |
+| facebook_url | TEXT | Facebook profile URL |
+| linkedin_url | TEXT | LinkedIn profile URL |
+| company_website | TEXT | Company website URL |
+| country | TEXT | Country of residence |
 
-**Membership & Tier (R-V)**
-| Column | Field | Type | Notes |
-|--------|-------|------|-------|
-| R | status | String | active/inactive |
-| S | paid | Boolean | TRUE=Premium, FALSE=Basic |
-| T | free_requests_used | Number | Count (basic tier: 0 or 1) |
-| U | total_requests_count | Number | Lifetime requests made |
-| V | requests_today | Number | Requests made today (resets daily) |
+**Membership & Tier**
+| Field | Type | Notes |
+|-------|------|-------|
+| status | TEXT | active/inactive |
+| paid | BOOLEAN | TRUE=Premium, FALSE=Basic |
+| free_requests_used | INTEGER | Count (basic tier: 0 or 1) |
+| total_requests_count | INTEGER | Lifetime requests made |
+| requests_today | INTEGER | Requests made today (resets daily) |
 
-**Payment Status (W-X)**
-| Column | Field | Type | Notes |
-|--------|-------|------|-------|
-| W | payment_status | String | unpaid/pending/paid/expired |
-| X | membership_expiry | String | ISO date when paid membership ends |
+**Payment Status**
+| Field | Type | Notes |
+|-------|------|-------|
+| payment_status | TEXT | unpaid/pending/paid/expired |
+| membership_expiry | TIMESTAMPTZ | When paid membership ends |
 
-**Authentication (Y-AB)**
-| Column | Field | Type | Notes |
-|--------|-------|------|-------|
-| Y | auth_provider | String | magic_link or google |
-| Z | auth_provider_id | String | Provider's user ID |
-| AA | last_login | String | ISO timestamp of last login |
-| AB | account_status | String | active/suspended/banned |
+**Authentication**
+| Field | Type | Notes |
+|-------|------|-------|
+| auth_provider | TEXT | magic_link or google |
+| auth_provider_id | TEXT | Provider's user ID |
+| last_login | TIMESTAMPTZ | ISO timestamp of last login |
+| account_status | TEXT | active/suspended/banned |
 
-**Profile Customization (AC-AH)**
-| Column | Field | Type | Notes |
-|--------|-------|------|-------|
-| AC | abg_class | String | ABG cohort/class (e.g., "Class 2024") |
-| AD | nickname | String | Nickname (optional) |
-| AE | display_nickname_in_search | Boolean | Show nickname in search |
-| AF | display_nickname_in_match | Boolean | Show nickname in match results |
-| AG | display_nickname_in_email | Boolean | Show nickname in intro emails |
-| AH | discord_username | String | Discord handle (optional) |
+**Profile Customization**
+| Field | Type | Notes |
+|-------|------|-------|
+| abg_class | TEXT | ABG cohort/class (e.g., "Class 2024") |
+| nickname | TEXT | Nickname (optional) |
+| display_nickname_in_search | BOOLEAN | Show nickname in search |
+| display_nickname_in_match | BOOLEAN | Show nickname in match results |
+| display_nickname_in_email | BOOLEAN | Show nickname in intro emails |
+| discord_username | TEXT | Discord handle (optional) |
 
-**Job Market Preferences (AI-AN)**
-| Column | Field | Type | Notes |
-|--------|-------|------|-------|
-| AI | open_to_work | Boolean | Open to job offers |
-| AJ | job_preferences | String | Job search criteria |
-| AK | hiring | Boolean | Currently hiring |
-| AL | hiring_preferences | String | Hiring criteria |
-| AM | gender | String | Female/Male/Undisclosed |
-| AN | relationship_status | String | Personal relationship status |
+**Job Market Preferences**
+| Field | Type | Notes |
+|-------|------|-------|
+| open_to_work | BOOLEAN | Open to job offers |
+| job_preferences | TEXT | Job search criteria |
+| hiring | BOOLEAN | Currently hiring |
+| hiring_preferences | TEXT | Hiring criteria |
+| gender | TEXT | Female/Male/Undisclosed |
+| relationship_status | TEXT | Personal relationship status |
 
 **Admin & Import (AO-AP)**
 | Column | Field | Type | Notes |
@@ -558,34 +553,42 @@ Located in Vercel Dashboard → Settings → Environment Variables:
 
 | Variable | Purpose |
 |----------|---------|
-| GOOGLE_SHEETS_ID | Spreadsheet ID from URL |
-| GOOGLE_SERVICE_ACCOUNT_EMAIL | Service account email |
-| GOOGLE_PRIVATE_KEY | Service account private key |
+| NEXT_PUBLIC_SUPABASE_URL | Supabase project URL |
+| NEXT_PUBLIC_SUPABASE_ANON_KEY | Supabase anon key (public) |
+| SUPABASE_SERVICE_ROLE_KEY | Supabase service role key (secret) |
 | GEMINI_API_KEY | Google AI Studio API key |
 | RESEND_API_KEY | Resend email API key |
 | DISCORD_WEBHOOK_URL | Discord webhook for notifications |
 | BLOB_READ_WRITE_TOKEN | Vercel Blob storage token |
+| GOOGLE_CLIENT_ID | Google OAuth client ID |
+| GOOGLE_CLIENT_SECRET | Google OAuth client secret |
+| NEXTAUTH_SECRET | NextAuth JWT secret |
+| NEXTAUTH_URL | NextAuth callback URL |
+| EMAIL_FROM | Email from address |
 
 ## Deployment Checklist
 
-### Google Cloud & Sheets Setup
-- [ ] Create Google Cloud project
-- [ ] Enable Google Sheets API & Google Drive API
-- [ ] Create service account and download JSON key
-- [ ] Extract `GOOGLE_SERVICE_ACCOUNT_EMAIL` and `GOOGLE_PRIVATE_KEY`
-- [ ] Create Google Sheet with 3 tabs: Members, Requests, Connections
-- [ ] Share sheet with service account email (Editor role)
-- [ ] Set up column headers in all tabs (optional if using seed script)
-- [ ] Get `GOOGLE_SHEETS_ID` from sheet URL
+### Supabase Database Setup
+- [ ] Create Supabase project
+- [ ] Get `NEXT_PUBLIC_SUPABASE_URL` from project settings
+- [ ] Get `NEXT_PUBLIC_SUPABASE_ANON_KEY` from API keys
+- [ ] Get `SUPABASE_SERVICE_ROLE_KEY` from API keys
+- [ ] Run database migrations: `supabase migration up`
+- [ ] Verify tables created: members, requests, connections, request_audits, love_match_requests, news
+- [ ] Enable Row Level Security (RLS) policies (already in migration)
 
-### Authentication Setup
+### Google OAuth Setup
+- [ ] Create Google Cloud project
 - [ ] Create Google OAuth 2.0 credentials
 - [ ] Extract `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
-- [ ] Set OAuth redirect URIs: `http://localhost:3000/api/auth/callback/google`
+- [ ] Set OAuth redirect URIs: `https://your-domain.com/api/auth/callback/google`
+- [ ] Also set: `http://localhost:3000/api/auth/callback/google` (for local dev)
+
+### Email & Auth Setup
 - [ ] Set up Resend email account
 - [ ] Create API key: `RESEND_API_KEY`
-- [ ] Generate verified "From" email or domain
-- [ ] Set `EMAIL_FROM` (e.g., `ABG Connect <onboarding@your-domain.com>`)
+- [ ] Verify "From" email or domain
+- [ ] Set `EMAIL_FROM` (e.g., `ABG Connect <noreply@your-domain.com>`)
 - [ ] Generate `NEXTAUTH_SECRET` (use: `openssl rand -base64 32`)
 - [ ] Set `NEXTAUTH_URL` for environment
 
@@ -608,7 +611,8 @@ Located in Vercel Dashboard → Settings → Environment Variables:
 ### Post-Deployment
 - [ ] Run live data migration: `npm run migrate-live` (for initial ABG member import)
   - OR run seed script: `npm run seed` (for test data only)
-- [ ] Verify member count in Google Sheets (should be 442+ members)
+- [ ] Verify member count in Supabase (should be 442+ members)
+  - Query: `SELECT COUNT(*) FROM members;`
 - [ ] Test login with sample member email
 - [ ] Mark premium members via admin panel
 - [ ] Test complete flow:

@@ -1,5 +1,5 @@
 import { NewsArticle } from '@/types';
-import { getNewsArticles, getNewsArticleBySlug } from './google-sheets';
+import { getNewsArticles, getNewsArticleBySlug } from './supabase-db';
 import { SAMPLE_NEWS_ARTICLES } from './news-sample-data';
 
 export async function getPublishedNews(category?: string): Promise<NewsArticle[]> {

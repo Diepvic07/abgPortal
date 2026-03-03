@@ -8,7 +8,7 @@ import {
   getRequestById,
   getLoveMatchRequestsByUserId,
   updateLoveMatchRequest,
-} from '@/lib/google-sheets';
+} from '@/lib/supabase-db';
 import { formatDate } from '@/lib/utils';
 
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;

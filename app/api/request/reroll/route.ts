@@ -10,7 +10,7 @@ import {
   incrementMemberMonthlyRequests,
   updateMemberFreeRequests,
   addRequestAudit,
-} from '@/lib/google-sheets';
+} from '@/lib/supabase-db';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth-middleware';

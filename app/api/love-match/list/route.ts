@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/auth-middleware';
-import { getLoveMatchRequestsByUserId, updateLoveMatchRequest } from '@/lib/google-sheets';
+import { getLoveMatchRequestsByUserId, updateLoveMatchRequest } from '@/lib/supabase-db';
 import { formatDate } from '@/lib/utils';
 import { successResponse, handleApiError } from '@/lib/api-response';
 import { LoveMatchRequest } from '@/types';

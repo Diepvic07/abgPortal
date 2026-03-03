@@ -1,5 +1,5 @@
 import { notifyAdmin } from './discord';
-import { getMemberById } from './google-sheets';
+import { getMemberById } from './supabase-db';
 
 const RAPID_FIRE_THRESHOLD = 5; // 5 requests
 const RAPID_FIRE_WINDOW_MS = 60 * 1000; // 1 minute

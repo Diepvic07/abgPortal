@@ -3,7 +3,7 @@
  * Use this in API routes where you need to check admin status with database lookup
  */
 
-import { getMemberByEmail } from '@/lib/google-sheets';
+import { getMemberByEmail } from '@/lib/supabase-db';
 import { isAdminByEmail } from '@/lib/admin-utils';
 
 /**

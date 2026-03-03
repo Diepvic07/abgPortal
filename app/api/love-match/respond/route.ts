@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/auth-middleware';
-import { getLoveMatchRequestById, updateLoveMatchRequest, getMemberById } from '@/lib/google-sheets';
+import { getLoveMatchRequestById, updateLoveMatchRequest, getMemberById } from '@/lib/supabase-db';
 import { sendLoveMatchAcceptEmail } from '@/lib/resend';
 import { notifyAdmin } from '@/lib/discord';
 import { formatDate } from '@/lib/utils';

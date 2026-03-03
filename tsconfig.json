@@ -30,5 +30,22 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "scripts/seed-csv-data.ts",
+    "scripts/seed-dating-data.ts",
+    "scripts/seed-test-data.ts",
+    "scripts/seed-news-articles.ts",
+    "scripts/seed-news-vietnamese.ts",
+    "scripts/check-sheet.ts",
+    "scripts/check-news-rows.ts",
+    "scripts/fix-news-image.ts",
+    "scripts/create-new-sheets.ts",
+    "scripts/migrate-auth-fields.ts",
+    "scripts/migrate-dating-profiles.ts",
+    "scripts/migrate-live-data.ts",
+    "scripts/verify-migration.ts",
+    "scripts/import-csv-members.ts",
+    "test-sheets-direct.ts"
+  ]
 }

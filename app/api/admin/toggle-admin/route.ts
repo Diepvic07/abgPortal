@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { updateMember, getMemberById } from "@/lib/google-sheets";
+import { updateMember, getMemberById } from "@/lib/supabase-db";
 import { isAdminAsync } from "@/lib/admin-utils-server";
 
 export async function POST(request: Request) {

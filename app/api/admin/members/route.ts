@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getMembers } from "@/lib/google-sheets";
+import { getMembers } from "@/lib/supabase-db";
 import { isAdminAsync } from "@/lib/admin-utils-server";
 import { isAdmin } from "@/lib/admin-utils";
 

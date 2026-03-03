@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getAuthenticatedMember, requireAuth } from '@/lib/auth-middleware';
-import { updateMember, getMemberById } from '@/lib/google-sheets';
+import { updateMember, getMemberById } from '@/lib/supabase-db';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 
 // GET /api/profile - Get current user's profile

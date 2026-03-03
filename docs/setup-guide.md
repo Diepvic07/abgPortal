@@ -2,51 +2,41 @@
 
 This guide will help you obtain all the necessary API keys and configure the environment for the ABG Alumni Connect platform.
 
-## 1. Google Sheets Configuration
+## 1. Supabase Configuration
 
-### Step A: Create the Spreadsheet
-1.  Go to [Google Sheets](https://sheets.new) and create a new spreadsheet.
-2.  **Name**: You can name it anything, e.g., "**ABG Alumni Database**".
-3.  **Create Tabs**: Rename the default tab and create new ones so you have exactly these 3 tabs (case-sensitive):
-    *   `Members`
-    *   `Requests`
-    *   `Connections`
-4.  **Get ID**: Look at the URL of your spreadsheet:
-    `https://docs.google.com/spreadsheets/d/TOTAL_GIBBERISH_ID_HERE/edit...`
-    *   Copy the long string between `/d/` and `/edit`.
-    *   Paste this into `.env.local` as `GOOGLE_SHEETS_ID`.
+### Step A: Create a Supabase Project
+1.  Go to [Supabase](https://supabase.com) and sign in or create an account.
+2.  Click **New Project** → Enter project name (e.g., "ABG Connect").
+3.  Choose a strong database password.
+4.  Select your region (closest to your users).
+5.  Click **Create new project** and wait for initialization (2-3 minutes).
 
-### Step B: Google Cloud Credentials (`GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`)
-1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2.  **Create Project**: Click the project dropdown (top left) → "New Project" → Name it "ABG Connect" → Create.
-3.  **Enable Sheets API**:
-    *   Go to "APIs & Services" → "Library".
-    *   Search for "**Google Sheets API**".
-    *   Click **Enable**.
-4.  **Create Service Account**:
-    *   Go to "APIs & Services" → "Credentials".
-    *   Click "+ CREATE CREDENTIALS" → "Service Account".
-    *   Name: `abg-bot` (or similar).
-    *   Click **Create and Continue** → **Done** (skip role assignment for now).
-5.  **Get Email**:
-    *   You will see an email like `abg-bot@your-project.iam.gserviceaccount.com`.
-    *   Copy this email and paste it into `.env.local` as `GOOGLE_SERVICE_ACCOUNT_EMAIL`.
-6.  **Get Private Key**:
-    *   Click on the service account email to open details.
-    *   Go to the **Keys** tab.
-    *   Click "Add Key" → "Create new key" → **JSON**.
-    *   A file will download. Open it with a text editor.
-    *   Copy the `private_key` value (it starts with `-----BEGIN PRIVATE KEY-----`).
-    *   Paste this into `.env.local` as `GOOGLE_PRIVATE_KEY`.
-        *   *Note: Ensure it is all on one line or properly quoted if your environment requires it, but usually pasting the multiline string inside quotes works for `.env` files.*
-7.  **Share Sheet**:
-    *   Go back to your Google Sheet.
-    *   Click **Share** (top right).
-    *   Paste the **Service Account Email** (`abg-bot@...`) into the box.
-    *   Make sure "Editor" is selected.
-    *   Click **Send** (uncheck "Notify people" if you want).
+### Step B: Get Supabase API Keys
+1.  Go to **Project Settings** → **API**.
+2.  Under **Project API keys**, you will see:
+    *   **URL** → Copy and paste into `.env.local` as `NEXT_PUBLIC_SUPABASE_URL`
+    *   **anon (public)** → Copy and paste as `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+    *   **service_role (secret)** → Copy and paste as `SUPABASE_SERVICE_ROLE_KEY`
+3.  Verify all three keys are set in `.env.local`.
+
+### Step C: Deploy Database Migrations
+1.  Ensure you have the Supabase CLI installed:
+    ```bash
+    npm install -g supabase
+    ```
+2.  Link your local project to Supabase:
+    ```bash
+    supabase link --project-ref your-project-ref
+    ```
+3.  Run migrations:
+    ```bash
+    supabase migration up
+    ```
+4.  Verify tables exist in Supabase dashboard: **SQL Editor** → Run queries to check `members`, `requests`, `connections` tables.
 
 ## 2. Google OAuth Credentials (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`)
+
+**Note:** This is for login authentication only. Database is now managed by Supabase Postgres.
 
 1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
 2.  Select your ABG Connect project (same as for Sheets API).

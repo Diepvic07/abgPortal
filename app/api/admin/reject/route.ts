@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getMemberById, deleteMember } from "@/lib/google-sheets";
+import { getMemberById, deleteMember } from "@/lib/supabase-db";
 import { isAdminAsync } from "@/lib/admin-utils-server";
 import { sendRejectionEmail } from "@/lib/resend";
 

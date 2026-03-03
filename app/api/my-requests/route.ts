@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getMemberByEmail, getRequestsByMemberId, getMemberById } from '@/lib/google-sheets';
+import { getMemberByEmail, getRequestsByMemberId, getMemberById } from '@/lib/supabase-db';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 
 export async function POST(request: NextRequest) {

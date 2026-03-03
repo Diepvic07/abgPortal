@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/auth-middleware';
-import { getMemberById, createLoveMatchRequest } from '@/lib/google-sheets';
+import { getMemberById, createLoveMatchRequest } from '@/lib/supabase-db';
 import { canMakeRequest } from '@/lib/tier-utils';
 import { isDatingProfileComplete } from '@/lib/dating-utils';
 import { sendLoveMatchNotificationEmail } from '@/lib/resend';

@@ -1,6 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { getMemberByEmail, updateMemberLastLogin } from "./google-sheets";
+import { getMemberByEmail, updateMemberLastLogin } from "./supabase-db";
 
 // Validate required environment variables
 const requiredEnvVars = {

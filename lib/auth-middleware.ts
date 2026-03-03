@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from '@/lib/auth';
-import { getMemberByEmail } from '@/lib/google-sheets';
+import { getMemberByEmail } from '@/lib/supabase-db';
 import { NextRequest } from 'next/server';
 
 export async function getAuthenticatedMember(request?: NextRequest) {

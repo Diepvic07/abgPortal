@@ -19,11 +19,12 @@ Smart, low-effort peer connections powered by AI, augmented with an automated in
 - **Frontend/Backend:** Next.js 14 (App Router), deployed on Vercel
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
-- **Database / CMS:** Google Sheets API (used as a lightweight CMS/DB for users and News)
+- **Database:** Supabase Postgres (with RLS policies for secure data isolation)
+- **CMS:** Supabase news table (for News content management)
 - **AI Integration:** Google Gemini 1.5 Flash (for matching logic and profile generation)
 - **Emails:** Resend API
 - **Notifications:** Discord Webhooks
-- **Storage:** Vercel Blob (for avatars/images) or direct Google Drive links (for News images)
+- **Storage:** Vercel Blob (for avatars/images)
 
 ---
 
@@ -82,12 +83,12 @@ To balance free access with sustainable operations, the platform enforces a two-
 
 ### 3.6 News & Announcements Board
 - **Public Visibility:** News page (`/news`) is fully public. Both members and unauthenticated visitors can view feed and individual articles.
-- **Headless CMS:** Dedicated "News" tab in Google Sheets as lightweight CMS.
-- **Data Structure:** Each article row has: ID, Title, Date, Content (Markdown), Image URL (optional), Category, Is_Published.
-- **Categories & Filtering:** Horizontal filter bar sorts articles by category (Edu, Business, Event, Course, etc.).
+- **Headless CMS:** Supabase `news` table as lightweight CMS.
+- **Data Structure:** Each article row has: id, title, slug, content (Markdown), image_url (optional), category, is_published, published_date.
+- **Categories & Filtering:** Horizontal filter bar sorts articles by category (Edu, Business, Event, Course, Announcement).
 - **UI (Tailwind CSS):** Premium professional design with clean white spaces, subtle borders, soft shadows, blue brand colors, modern typography, Markdown rendering (via `prose` classes).
 - **Card Components:** Responsive grid with image handling (cover photo on hover scale) and text-only fallback.
-- **Performance:** Next.js ISR fetches Google Sheets periodically (1-hour revalidation), ensuring fast loads and respecting API rate limits.
+- **Performance:** Next.js ISR queries Supabase periodically (1-hour revalidation), ensuring fast loads and optimized database queries.
 
 ### 3.7 Administrator Operations
 - **Admin Dashboard (`/admin`):**

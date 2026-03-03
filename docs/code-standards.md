@@ -354,11 +354,11 @@ export async function POST(request: Request) {
 }
 ```
 
-## Database (Google Sheets) Patterns
+## Database (Supabase Postgres) Patterns
 
 ### CRUD Operations
 
-All database operations use `lib/google-sheets.ts`:
+All database operations use `lib/supabase-db.ts`:
 
 ```typescript
 import {
@@ -366,13 +366,14 @@ import {
   createMember,
   updateMember,
   getAllMembers
-} from '@/lib/google-sheets';
+} from '@/lib/supabase-db';
 
 // Read
 const member = await getMember('member-123');
 
 // Create
 const newMember = await createMember({
+  id: 'unique-id',
   email: 'user@example.com',
   name: 'John Doe',
   // ... other fields
@@ -598,10 +599,11 @@ test(matching): add tier limit validation tests
 - Avoid unnecessary re-renders
 
 ### API Performance
-- Batch Sheets API calls when possible (minimize round trips)
+- Use Supabase query filters to minimize data transfer
 - Cache member profiles in context/state
 - Rate limiting on public endpoints
 - Compress large data transfers
+- Leverage Supabase indexes on frequently queried columns (email, approval_status, paid)
 
 ### Bundle Size
 - Monitor bundle size with `next/bundle-analyzer`

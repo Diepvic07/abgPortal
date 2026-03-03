@@ -109,7 +109,7 @@ See [admin-operations-guide.md](./admin-operations-guide.md#data-migration)
 
 ## Data Models
 
-### Member (Google Sheets)
+### Member (Supabase Postgres)
 Primary entity with approval and tier fields:
 - `approval_status` (pending/approved/rejected)
 - `is_csv_imported` (TRUE/FALSE)
@@ -120,17 +120,22 @@ Primary entity with approval and tier fields:
 Connection requests with matching:
 - `status` (pending/matched/connected/declined)
 - `matched_ids` (comma-separated match member IDs)
-- See [codebase-summary.md](./codebase-summary.md#google-sheets-schema-cloud-storage)
+- See [codebase-summary.md](./codebase-summary.md#database-schema)
 
 ### Connections
 Completed introductions:
 - `from_id`, `to_id` (member IDs)
 - `intro_sent` (TRUE/FALSE)
-- See [codebase-summary.md](./codebase-summary.md#google-sheets-schema-cloud-storage)
+- See [codebase-summary.md](./codebase-summary.md#database-schema)
 
 ## Environment Variables
 
 Full list in [setup-guide.md](./setup-guide.md) with setup instructions.
+
+**Required for Database:**
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
 **Required for Auth:**
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
@@ -163,6 +168,6 @@ For issues not covered here:
 
 ## Last Updated
 
-These docs were last updated on **2026-02-06** with complete Auth & Tier System implementation details.
+These docs were last updated on **2026-03-03** with Supabase migration and database infrastructure updates.
 
-For changes and additions, see the report: `plans/reports/docs-manager-260206-1358-auth-tier-system-docs.md`
+For changes and additions, see the report: `plans/reports/docs-manager-260303-1629-supabase-migration.md`

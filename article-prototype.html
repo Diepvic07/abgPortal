@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article View | ABG Alumni Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --brand-primary: #1e3a8a;
+            --brand-secondary: #3b82f6;
+        }
+
+        /* Styling for markdown content */
+        .prose a {
+            color: #3b82f6;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+
+        .prose ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .prose p {
+            margin-bottom: 1.25rem;
+            line-height: 1.75;
+        }
+
+        .prose strong {
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .prose blockquote {
+            border-left: 4px solid #e5e7eb;
+            padding-left: 1rem;
+            font-style: italic;
+            color: #6b7280;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- Mock Navigation Bar -->
+    <nav class="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-gray-900 tracking-tight">ABG <span
+                            class="text-blue-600">Alumni</span></span>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="news-prototype.html"
+                        class="text-gray-500 hover:text-gray-900 text-sm font-medium transition-colors flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Back to News
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Article Body -->
+    <main class="bg-white min-h-screen pb-24">
+
+        <!-- Article Header -->
+        <header class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20 pb-8 border-b border-gray-100">
+
+            <!-- Metadata Row -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-4">
+                    <!-- Category Badge -->
+                    <span
+                        class="bg-emerald-50 text-emerald-700 text-sm font-bold px-3 py-1.5 rounded-full border border-emerald-100 uppercase tracking-wide">
+                        Business
+                    </span>
+                    <time datetime="2026-02-20" class="text-sm text-gray-500 font-medium flex items-center">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        Published Feb 20, 2026
+                    </time>
+                </div>
+
+                <!-- Share Buttons (Optional Mockup) -->
+                <div class="hidden sm:flex items-center space-x-3 text-gray-400">
+                    <button class="hover:text-blue-600 transition-colors"><svg class="w-5 h-5" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                        </svg></button>
+                    <button class="hover:text-blue-800 transition-colors"><svg class="w-5 h-5" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                        </svg></button>
+                    <button class="hover:text-gray-900 transition-colors"><svg class="w-5 h-5" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                            </path>
+                        </svg></button>
+                </div>
+            </div>
+
+            <!-- Title -->
+            <h1
+                class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight leading-tight md:leading-tight mb-8">
+                Member Spotlight: How John found his technical co-founder in 48 hours
+            </h1>
+
+            <!-- Author / Admin Mock -->
+            <div class="flex items-center mb-8">
+                <div
+                    class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold shrink-0">
+                    AD
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-semibold text-gray-900">ABG Admin Team</p>
+                    <p class="text-xs text-gray-500">Community Management</p>
+                </div>
+            </div>
+
+        </header>
+
+        <!-- Optional Hero Image (If Column E was filled in Sheets) -->
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+            <div class="aspect-video w-full rounded-2xl overflow-hidden bg-gray-100 shadow-sm border border-gray-100">
+                <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80"
+                    alt="Two coworkers talking" class="w-full h-full object-cover">
+            </div>
+            <p class="text-center text-sm text-gray-500 mt-3 italic">John (left) and Sarah (right) meeting for the first
+                time after connecting on the platform.</p>
+        </div>
+
+        <!-- Article Content (This is where the parsed Markdown from Google Sheets goes) -->
+        <article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 prose prose-lg md:prose-xl text-gray-700">
+
+            <p class="lead text-2xl text-gray-900 font-medium leading-relaxed mb-8">
+                Finding the right technical co-founder is often cited as the hardest part of building a tech startup.
+                But for John D., an ABG Alumni, it only took 48 hours using our precise, noise-free matching algorithm.
+            </p>
+
+            <p>
+                John had been looking for a CTO for 6 months using standard job boards, LinkedIn Outreach, and Facebook
+                groups. <em>"The problem wasn't a lack of engineers,"</em> John explained. <em>"The problem was finding
+                    an engineer who shared the ABG core values and had the specific fintech background I needed. My
+                    inbox was full of noise."</em>
+            </p>
+
+            <h2 class="text-3xl font-bold text-gray-900 mt-12 mb-6">The Process</h2>
+
+            <p>
+                Last Tuesday, John decided to try the new <strong>ABG Alumni Connect</strong> platform. He selected the
+                "Partner Matching" category and typed a simple request:
+            </p>
+
+            <blockquote>
+                "I am a non-technical founder building a B2B payments platform. I have secured pre-seed funding and need
+                a technical co-founder (CTO) with Node.js experience and a deep understanding of Vietnamese payment
+                gateways."
+            </blockquote>
+
+            <p>
+                Within seconds, the AI returned 5 highly relevant profiles. While the names and current companies were
+                masked to protect privacy, the "Reason for Match" generated by our AI was exceptionally clear.
+            </p>
+
+            <h2 class="text-3xl font-bold text-gray-900 mt-12 mb-6">The Connection</h2>
+
+            <p>
+                John saw a profile that perfectly matched his needs and clicked 'Connect'. Because he was a Pro member,
+                he drafted a custom introductory note.
+            </p>
+
+            <ul>
+                <li><strong>Tuesday 2:00 PM:</strong> John sends the connection request.</li>
+                <li><strong>Tuesday 4:30 PM:</strong> Sarah (the masked CTO) reads the anonymous request, sees the
+                    business proposition, and clicks "Accept."</li>
+                <li><strong>Wednesday:</strong> Sarah and John exchange emails via the automated introduction thread.
+                </li>
+                <li><strong>Thursday 9:00 AM:</strong> They meet for coffee. By Friday, they shook hands on a
+                    partnership.</li>
+            </ul>
+
+            <h2 class="text-3xl font-bold text-gray-900 mt-12 mb-6">Why it Worked</h2>
+
+            <p>
+                By restricting the pool to vetted ABG Alumni, the foundational trust is already established. The AI
+                simply acts as a hyper-efficient router, ensuring that busy professionals only see requests that are
+                highly relevant to their skills and interests.
+            </p>
+
+            <p>
+                Are you looking for a co-founder, a mentor, or a new role? <a href="#">Run your first search on ABG
+                    Alumni Connect today.</a>
+            </p>
+
+        </article>
+
+        <!-- Post-Article Navigation -->
+        <div
+            class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-12 border-t border-gray-100 flex justify-between items-center text-blue-600 font-semibold text-sm">
+            <a href="#" class="flex items-center hover:text-blue-800 transition-colors group">
+                <svg class="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Previous Article
+            </a>
+            <a href="#" class="flex items-center hover:text-blue-800 transition-colors group">
+                Next Article
+                <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3">
+                    </path>
+                </svg>
+            </a>
+        </div>
+
+    </main>
+
+    <!-- Mock Footer -->
+    <footer class="bg-gray-900 py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
+            <div class="flex justify-center space-x-6 mb-4">
+                <a href="#" class="hover:text-white transition-colors">Home</a>
+                <a href="#" class="hover:text-white transition-colors">Find Matches</a>
+                <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
+            </div>
+            <p>&copy; 2026 ABG Alumni Connect. Private Community.</p>
+        </div>
+    </footer>
+
+</body>
+
+</html>

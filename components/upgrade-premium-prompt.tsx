@@ -8,11 +8,11 @@ import Link from 'next/link';
 const PAYMENT_CONFIG = {
   price: '1,000,000 VND',
   priceDescription: { vi: 'Phí thành viên / năm', en: 'Annual membership fee' },
-  bank: 'Vietcombank',
-  accountNumber: '0071000911911',
-  accountName: 'NGUYEN VAN A',
-  qrCodeUrl: '/images/payment-qr.png',
-  contact: { vi: 'Liên hệ Admin qua Discord hoặc email: admin@abgalumni.com', en: 'Contact Admin via Discord or email: admin@abgalumni.com' },
+  bank: 'TPBank',
+  accountNumber: '158 8888 6666',
+  accountName: 'VU DINH HIEU',
+  qrCodeUrl: 'https://img.glotdojo.com/insecure/fit/0/0/sm/1/plain/https://ejoy.sgp1.digitaloceanspaces.com/ghost/QR_TPbank.jpg',
+  contact: { vi: 'Liên hệ Admin qua Discord hoặc email: bdh.alumni@abg.edu.vn', en: 'Contact Admin via Discord or email: bdh.alumni@abg.edu.vn' },
 };
 
 const PREMIUM_BENEFITS = {

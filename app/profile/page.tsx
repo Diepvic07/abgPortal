@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { getMemberByEmail } from '@/lib/google-sheets';
+import { getMemberByEmail } from '@/lib/supabase-db';
 import { getMembershipStatus } from '@/types';
 import { ProfileViewDisplay } from '@/components/profile/profile-view-display';
 import { ProfileEditFormComponent } from '@/components/profile/profile-edit-form-component';
