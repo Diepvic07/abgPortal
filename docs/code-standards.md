@@ -43,11 +43,20 @@ Tests are located in `/e2e` directory organized by feature:
 e2e/tests/
 ├── auth/              # Authentication flows
 ├── onboarding/        # Signup and bio generation
-├── matching/          # Connection matching requests
+├── matching/          # Connection matching requests (love, job, hiring, partner)
+├── love-match/        # Love match privacy workflows
+├── news/              # News board and article content
 ├── admin/             # Admin dashboard operations
 ├── user-flows/        # Complete user journeys
 └── edge-cases/        # Error handling and boundaries
 ```
+
+**Page Objects** (in `e2e/pages/`):
+- `base.page.ts` — Common utilities for all pages
+- `login.page.ts`, `signup.page.ts` — Auth pages
+- `profile.page.ts`, `history.page.ts` — Member pages
+- `admin.page.ts` — Admin dashboard
+- `onboard.page.ts`, `request.page.ts`, `news.page.ts` — Feature pages
 
 #### Test Naming Convention
 - File: `{feature}.spec.ts` (e.g., `google-oauth.spec.ts`)
@@ -76,39 +85,45 @@ export class LoginPage extends BasePage {
 - Reusable methods across multiple tests
 - BasePage provides common utilities (navigate, waitForLoad, expectToastMessage)
 
-#### Fixtures & Test Data
+#### Authentication Setup
 
-**Pre-built Fixtures:**
+**JWT-based Auth Helper (recommended):**
 
 ```typescript
-// Authenticated page with member session
-test('should view profile', async ({ authenticatedPage }) => {
-  const { page, member } = authenticatedPage;
-  await page.goto('/profile');
-  // member is logged-in TestMember with approved status
-});
+import { setupE2EAuth } from '../../fixtures/auth-helpers';
 
-// Admin page with admin session
-test('should approve member', async ({ adminPage }) => {
-  const { page, admin } = adminPage;
-  // admin has isAdmin: true and premium tier
+test.beforeEach(async ({ page, context }) => {
+  const member = createTestMember({ tier: 'premium' });
+
+  // Sets up both server-side (getServerSession) and client-side (useSession) auth
+  await setupE2EAuth(page, context, {
+    id: member.id,
+    email: member.email,
+    name: member.name,
+    tier: member.tier,
+  });
+
+  await setupAllMocks(page, {});
 });
 ```
 
 **Test Data Factories:**
 
+All factories support optional overrides:
+
 ```typescript
-// Create member with overrides
-const member = createTestMember({
-  status: 'pending',
-  tier: 'premium',
-});
-
-// Create pending member
+// Members
+const member = createTestMember({ tier: 'premium', status: 'approved' });
 const pending = createPendingMember();
-
-// Create admin
 const admin = createTestAdmin();
+const datingMember = createDatingMember({ gender: 'Female' });
+
+// Requests & Matches
+const match = createTestMatch('member-id', 'John Doe', 85);
+const loveMatch = createTestLoveMatch({ status: 'accepted' });
+
+// Content
+const article = createTestArticle({ category: 'Business' });
 ```
 
 #### Mock Strategy for External APIs
@@ -152,44 +167,54 @@ test('should send confirmation email', async ({ authenticatedPage }) => {
 
 #### Common Test Patterns
 
-**Authentication Flow:**
+**News Board with Auth:**
 ```typescript
-// Use provided fixture
-test('should sign in with email', async ({ authenticatedPage }) => {
-  const { page, member } = authenticatedPage;
-  await page.goto('/profile');
-  await expect(page).toHaveURL('/profile');
-});
-```
-
-**Admin Operations:**
-```typescript
-test('should approve pending member', async ({ adminPage }) => {
-  const { page, admin } = adminPage;
-  await setupAllMocks(page, {
-    members: [pendingMember]
+test('displays news articles', async ({ page, context }) => {
+  const member = createTestMember();
+  await setupE2EAuth(page, context, {
+    id: member.id,
+    email: member.email,
+    name: member.name,
   });
+  await setupAllMocks(page, {});
 
-  await page.goto('/admin');
-  await adminPage.approveMember(pendingMember.id);
-  await expect(page.locator('text=Approved')).toBeVisible();
+  await page.goto('/news');
+  await expect(page.getByRole('heading', { name: /news/i })).toBeVisible();
 });
 ```
 
-**Tier Restrictions:**
+**Matching Requests with Tier Validation:**
 ```typescript
-test('should prevent basic tier from making multiple requests', async ({ authenticatedPage }) => {
+test('enforce tier limit on requests', async ({ page, context }) => {
   const basicMember = createTestMember({ tier: 'basic' });
-  await setupAllMocks(page, { members: [basicMember] });
+  await setupE2EAuth(page, context, {
+    id: basicMember.id,
+    email: basicMember.email,
+    tier: 'basic',
+  });
+  await setupAllMocks(page, {});
+
+  const requestPage = new RequestPage(page);
+  await page.goto('/request');
 
   // First request succeeds
-  await requestPage.submitRequest('Looking for mentor');
+  await requestPage.submitRequest('category', 'Looking for mentor');
   await expect(page.locator('text=Match results')).toBeVisible();
+});
+```
 
-  // Second request fails
-  await page.goto('/request');
-  await requestPage.submitRequest('Another request');
-  await expect(page.locator('text=Request limit')).toBeVisible();
+**Love Match Privacy Flow:**
+```typescript
+test('requires consent before sharing love match profile', async ({ page, context }) => {
+  const member = createDatingMember({ gender: 'Male' });
+  await setupE2EAuth(page, context, {
+    id: member.id,
+    email: member.email,
+  });
+  await setupAllMocks(page, {});
+
+  await page.goto('/love-match');
+  // Test privacy consent flow...
 });
 ```
 
