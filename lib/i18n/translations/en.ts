@@ -366,6 +366,42 @@ export const en = {
     },
   },
 
+  // News pages
+  news: {
+    pageTitle: 'Community News & Updates',
+    pageSubtitle: 'Stay updated with the latest news, events, and opportunities from the ABG Alumni community.',
+    // Category filter
+    categories: {
+      all: 'All News',
+      edu: 'Edu',
+      business: 'Business',
+      event: 'Event',
+      course: 'Course',
+      announcement: 'Announcement',
+    },
+    // Info bar
+    showingArticles: 'Showing {category} articles',
+    itemCount: '{count} Items',
+    // Card actions
+    readFullStory: 'Read full story',
+    loadMore: 'Load More Articles',
+    noArticles: 'No articles found in this category.',
+    // Article detail
+    backToNews: 'Back to News',
+    published: 'Published',
+    by: 'By',
+    shareArticle: 'Share this article',
+    shareTwitter: 'Share on Twitter',
+    shareLinkedIn: 'Share on LinkedIn',
+    copyLink: 'Copy link',
+    linkCopied: 'Link copied!',
+    // Article navigation
+    previousArticle: 'Previous Article',
+    nextArticle: 'Next Article',
+    // Author
+    communityManagement: 'Community Management',
+  },
+
   // History page
   history: {
     title: 'Connection History',

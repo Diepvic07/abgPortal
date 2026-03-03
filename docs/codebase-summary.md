@@ -119,13 +119,13 @@ abg-alumni-connect/
 │   │   ├── love-match-modal.tsx
 │   │   └── love-match-request-form.tsx
 │   ├── news/
-│   │   ├── news-card.tsx
-│   │   ├── news-card-grid.tsx
-│   │   ├── news-detail-page.tsx
-│   │   ├── news-filter-bar.tsx
-│   │   ├── news-hero-section.tsx
-│   │   ├── news-loading-skeleton.tsx
-│   │   └── news-markdown-renderer.tsx
+│   │   ├── news-hero-section.tsx       # Hero banner with background image
+│   │   ├── news-category-filter.tsx    # Category filter bar (swipeable)
+│   │   ├── news-card.tsx               # Individual news card component
+│   │   ├── news-grid.tsx               # Grid layout for news cards
+│   │   ├── article-header.tsx          # Article detail page header with metadata
+│   │   ├── article-content.tsx         # Article body with Markdown rendering
+│   │   └── article-navigation.tsx      # Previous/Next article navigation
 │   ├── landing/
 │   │   ├── public-search-section.tsx
 │   │   ├── auth-section.tsx
@@ -145,8 +145,8 @@ abg-alumni-connect/
 │   ├── google-sheets.ts           # Sheets CRUD operations
 │   ├── gemini.ts                  # AI text generation & matching
 │   ├── tier-utils.ts              # Tier limits & enforcement
-│   ├── news-service.ts            # News CMS service with ISR (NEW)
-│   ├── news-utils.ts              # News parsing/formatting (NEW)
+│   ├── news-service.ts            # News CMS service with fallback to sample data
+│   ├── news-sample-data.ts        # Fallback sample articles (when Sheets is empty)
 │   ├── resend.ts                  # Email sending
 │   ├── discord.ts                 # Webhook notifications
 │   └── utils.ts                   # Helper functions

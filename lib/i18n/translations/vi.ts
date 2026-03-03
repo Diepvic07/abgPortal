@@ -368,6 +368,42 @@ export const vi: Translations = {
     },
   },
 
+  // News pages
+  news: {
+    pageTitle: 'Tin Tức & Cập Nhật Cộng Đồng',
+    pageSubtitle: 'Cập nhật tin tức, sự kiện và cơ hội mới nhất từ cộng đồng ABG Alumni.',
+    // Category filter
+    categories: {
+      all: 'Tất cả',
+      edu: 'Giáo dục',
+      business: 'Kinh doanh',
+      event: 'Sự kiện',
+      course: 'Khoá học',
+      announcement: 'Thông báo',
+    },
+    // Info bar
+    showingArticles: 'Đang hiển thị bài viết {category}',
+    itemCount: '{count} bài',
+    // Card actions
+    readFullStory: 'Đọc bài đầy đủ',
+    loadMore: 'Xem thêm bài viết',
+    noArticles: 'Không có bài viết nào trong danh mục này.',
+    // Article detail
+    backToNews: 'Quay lại tin tức',
+    published: 'Đăng ngày',
+    by: 'Bởi',
+    shareArticle: 'Chia sẻ bài viết',
+    shareTwitter: 'Chia sẻ lên Twitter',
+    shareLinkedIn: 'Chia sẻ lên LinkedIn',
+    copyLink: 'Sao chép liên kết',
+    linkCopied: 'Đã sao chép!',
+    // Article navigation
+    previousArticle: 'Bài trước',
+    nextArticle: 'Bài tiếp theo',
+    // Author
+    communityManagement: 'Quản lý Cộng đồng',
+  },
+
   // History page
   history: {
     title: 'Lịch sử kết nối',

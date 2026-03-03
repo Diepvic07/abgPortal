@@ -29,10 +29,10 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 w-full">
+    <div className="news-page-wrapper">
       <NewsHeroSection />
       <NewsCategoryFilter activeCategory={category ?? 'All'} />
-      <NewsGrid articles={articles} />
+      <NewsGrid articles={articles} activeCategory={category ?? 'All'} />
     </div>
   );
 }

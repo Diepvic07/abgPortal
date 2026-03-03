@@ -17,7 +17,6 @@ export async function generateStaticParams() {
     const articles = await getPublishedNews();
     return articles.map((a) => ({ slug: a.slug }));
   } catch {
-    // News sheet may not exist yet — return empty for ISR fallback
     return [];
   }
 }
@@ -26,7 +25,6 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   const { slug } = await params;
   const article = await getNewsBySlug(slug);
   if (!article) return { title: 'Article Not Found' };
-
   return {
     title: `${article.title} | ABG Alumni Connect`,
     description: article.excerpt,
@@ -45,25 +43,26 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
   const article = await getNewsBySlug(slug);
   if (!article) notFound();
-
   const { prev, next } = await getAdjacentArticles(slug);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 w-full">
-      <ArticleHeader article={article} />
-      {article.image_url && (
-        <div className="relative w-full h-64 md:h-80 rounded-xl overflow-hidden mb-8">
-          <Image
-            src={article.image_url}
-            alt={article.title}
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-      )}
-      <ArticleContent content={article.content} />
-      <ArticleNavigation prev={prev} next={next} />
+    <div className="news-page-wrapper bg-white">
+      <div className="py-8 md:py-12">
+        <ArticleHeader article={article} />
+
+        {/* Hero image */}
+        {article.image_url && (
+          <div className="max-w-5xl mx-auto px-4 mb-10">
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-sm">
+              <Image src={article.image_url} alt={article.title} fill
+                className="object-cover" priority />
+            </div>
+          </div>
+        )}
+
+        <ArticleContent content={article.content} />
+        <ArticleNavigation prev={prev} next={next} />
+      </div>
     </div>
   );
 }
