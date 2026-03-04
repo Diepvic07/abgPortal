@@ -222,7 +222,7 @@ export function AdminArticleEditor({ articleId, onBack }: AdminArticleEditorProp
           {errors.author_name && <p className="text-xs text-red-500 mt-1">{errors.author_name}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">URL Path <span className="text-gray-400 font-normal">(auto-generated)</span></label>
           <input
             type="text"
             value={form.slug}
@@ -239,31 +239,34 @@ export function AdminArticleEditor({ articleId, onBack }: AdminArticleEditorProp
 
       {/* Vietnamese section */}
       <div className="border border-green-200 rounded-lg p-4 space-y-4">
-        <h3 className="text-sm font-semibold text-green-700">Vietnamese (Primary)</h3>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Title VI</label>
+          <h3 className="text-sm font-semibold text-green-700">Vietnamese (Primary)</h3>
+          <p className="text-xs text-gray-500 mt-1">Write the article in Vietnamese first. You can translate to English later using AI.</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
           <input
             type="text"
             value={form.title_vi}
             onChange={(e) => updateField("title_vi", e.target.value)}
             className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.title_vi ? "border-red-300" : "border-gray-300"}`}
-            placeholder="Vietnamese title"
+            placeholder="Enter article title in Vietnamese"
           />
           {errors.title_vi && <p className="text-xs text-red-500 mt-1">{errors.title_vi}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt VI</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
           <textarea
             value={form.excerpt_vi}
             onChange={(e) => updateField("excerpt_vi", e.target.value)}
             rows={3}
             className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.excerpt_vi ? "border-red-300" : "border-gray-300"}`}
-            placeholder="Brief summary in Vietnamese"
+            placeholder="A short description of this article (shown in article list)"
           />
           {errors.excerpt_vi && <p className="text-xs text-red-500 mt-1">{errors.excerpt_vi}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Content VI (Markdown)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Article Content</label>
           {errors.content_vi && <p className="text-xs text-red-500 mb-1">{errors.content_vi}</p>}
           <AdminMarkdownEditor
             value={form.content_vi}
@@ -283,29 +286,32 @@ export function AdminArticleEditor({ articleId, onBack }: AdminArticleEditorProp
 
       {/* English section */}
       <div className="border border-blue-200 rounded-lg p-4 space-y-4">
-        <h3 className="text-sm font-semibold text-blue-700">English</h3>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Title EN</label>
+          <h3 className="text-sm font-semibold text-blue-700">English Translation</h3>
+          <p className="text-xs text-gray-500 mt-1">Auto-filled by AI translation above, or edit manually. Leave empty if not publishing in English.</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
           <input
             type="text"
             value={form.title}
             onChange={(e) => updateField("title", e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="English title"
+            placeholder="Will be filled by AI translation"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt EN</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
           <textarea
             value={form.excerpt}
             onChange={(e) => updateField("excerpt", e.target.value)}
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Brief summary in English"
+            placeholder="Will be filled by AI translation"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Content EN (Markdown)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Article Content</label>
           <AdminMarkdownEditor
             value={form.content}
             onChange={(val) => updateField("content", val)}
@@ -315,7 +321,9 @@ export function AdminArticleEditor({ articleId, onBack }: AdminArticleEditorProp
       </div>
 
       {/* Publishing controls */}
-      <div className="flex flex-wrap items-center gap-6 p-4 bg-gray-50 rounded-lg">
+      <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+        <p className="text-xs text-gray-500">Check the boxes below to make the article visible to users. You can publish in one or both languages.</p>
+        <div className="flex flex-wrap items-center gap-6">
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
@@ -343,6 +351,7 @@ export function AdminArticleEditor({ articleId, onBack }: AdminArticleEditorProp
           />
           <span className="text-sm text-gray-700">Featured</span>
         </label>
+        </div>
       </div>
 
       {/* Bottom actions */}
