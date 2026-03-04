@@ -5,7 +5,6 @@ export class AdminPage extends BasePage {
   readonly memberTable: Locator;
   readonly approveButton: Locator;
   readonly rejectButton: Locator;
-  readonly tierSelect: Locator;
   readonly searchInput: Locator;
   readonly pendingTab: Locator;
   readonly approvedTab: Locator;
@@ -13,12 +12,11 @@ export class AdminPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.memberTable = page.locator('table');
-    this.approveButton = page.getByRole('button', { name: /approve/i });
-    this.rejectButton = page.getByRole('button', { name: /reject/i });
-    this.tierSelect = page.getByLabel(/tier/i);
+    this.approveButton = page.getByText('Approve');
+    this.rejectButton = page.getByText('Reject');
     this.searchInput = page.getByPlaceholder(/search/i);
-    this.pendingTab = page.getByRole('tab', { name: /pending/i });
-    this.approvedTab = page.getByRole('tab', { name: /approved/i });
+    this.pendingTab = page.getByRole('button', { name: /pending/i });
+    this.approvedTab = page.getByRole('button', { name: /member status/i });
   }
 
   async goto() {
@@ -29,7 +27,7 @@ export class AdminPage extends BasePage {
     await this.memberTable
       .locator('tr')
       .nth(rowIndex + 1)
-      .getByRole('button', { name: /approve/i })
+      .getByText('Approve')
       .click();
   }
 
@@ -37,16 +35,17 @@ export class AdminPage extends BasePage {
     await this.memberTable
       .locator('tr')
       .nth(rowIndex + 1)
-      .getByRole('button', { name: /reject/i })
+      .getByText('Reject')
       .click();
   }
 
   async setTier(rowIndex: number, tier: 'basic' | 'premium') {
-    await this.memberTable
-      .locator('tr')
-      .nth(rowIndex + 1)
-      .getByLabel(/tier/i)
-      .selectOption(tier);
+    const row = this.memberTable.locator('tr').nth(rowIndex + 1);
+    if (tier === 'premium') {
+      await row.getByText('Upgrade').click();
+    } else {
+      await row.getByText('Downgrade').click();
+    }
   }
 
   async searchMembers(query: string) {

@@ -49,7 +49,6 @@ export async function PATCH(request: NextRequest) {
       'display_nickname_in_search',
       'display_nickname_in_match',
       'display_nickname_in_email',
-      'discord_username',
       'payment_status', // Only 'pending' allowed from client
       // Dating profile fields
       'self_description',

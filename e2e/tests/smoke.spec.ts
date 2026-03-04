@@ -8,11 +8,11 @@ test.describe('Smoke Tests', () => {
 
   test('login page accessible', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByRole('heading')).toBeVisible();
+    await expect(page.locator('h1').first()).toBeVisible();
   });
 
   test('signup page accessible', async ({ page }) => {
     await page.goto('/signup');
-    await expect(page.getByRole('heading')).toBeVisible();
+    await expect(page.locator('h1').first()).toBeVisible();
   });
 });

@@ -6,7 +6,6 @@ import {
   getRequestById,
 } from '@/lib/supabase-db';
 import { sendIntroEmail } from '@/lib/resend';
-import { notifyAdmin } from '@/lib/discord';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { Connection } from '@/types';
@@ -77,11 +76,6 @@ export async function POST(request: NextRequest) {
     };
 
     await addConnection(connection);
-
-    await notifyAdmin('connection_made', {
-      from_name: requester.name,
-      to_name: targetName,
-    });
 
     return successResponse({
       message: 'Introduction email sent to both parties',

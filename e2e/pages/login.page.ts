@@ -9,9 +9,9 @@ export class LoginPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.emailInput = page.getByLabel(/email/i);
-    this.submitButton = page.getByRole('button', { name: /send|sign in|magic/i });
-    this.googleButton = page.getByRole('button', { name: /google/i });
+    this.emailInput = page.locator('#email');
+    this.submitButton = page.getByRole('button', { name: /continue with email/i });
+    this.googleButton = page.getByRole('button', { name: /continue with google/i });
     this.errorMessage = page.locator('[role="alert"]');
   }
 

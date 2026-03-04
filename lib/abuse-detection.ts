@@ -1,6 +1,3 @@
-import { notifyAdmin } from './discord';
-import { getMemberById } from './supabase-db';
-
 const RAPID_FIRE_THRESHOLD = 5; // 5 requests
 const RAPID_FIRE_WINDOW_MS = 60 * 1000; // 1 minute
 
@@ -24,10 +21,7 @@ export async function checkForAbuse(memberId: string, requestText: string) {
 
     // Check for rapid fire
     if (requestHistory[memberId].length > RAPID_FIRE_THRESHOLD) {
-        await notifyAdmin('abuse_detected', {
-            requester_name: memberId,
-            request_text: `ABUSE DETECTED: Rapid fire requests (${requestHistory[memberId].length} in 1 min).`,
-        });
+        console.warn(`[Abuse] Rapid fire requests from ${memberId}: ${requestHistory[memberId].length} in 1 min`);
         return { shouldSuspend: true, reason: 'Rapid fire requests detected' };
     }
 

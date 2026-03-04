@@ -3,13 +3,25 @@ import { AdminPage } from '../../pages/admin.page';
 import { setupAllMocks } from '../../mocks/setup-all-mocks';
 import { createTestMember, createTestAdmin, createPendingMember } from '../../fixtures/test-data';
 
+// Helper: convert test fixture members to admin API shape
+function toAdminMember(m: ReturnType<typeof createTestMember>) {
+  return {
+    ...m,
+    approval_status: m.status,
+    paid: m.tier === 'premium',
+    is_admin: false,
+    is_csv_imported: false,
+    created_at: new Date().toISOString(),
+  };
+}
+
 test.describe('Admin Member List', () => {
   let adminPage: AdminPage;
-  const members = [
-    createPendingMember(),
-    createTestMember({ status: 'approved', name: 'Approved User' }),
-    createTestMember({ status: 'rejected', name: 'Rejected User' }),
-  ];
+  const pendingMember = createPendingMember();
+  const approvedMember = createTestMember({ status: 'approved', name: 'Approved User' });
+  const rejectedMember = createTestMember({ status: 'rejected', name: 'Rejected User' });
+  const members = [pendingMember, approvedMember, rejectedMember];
+  const adminMembers = members.map(toAdminMember);
 
   test.beforeEach(async ({ page, context }) => {
     adminPage = new AdminPage(page);
@@ -39,7 +51,7 @@ test.describe('Admin Member List', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ members }),
+        body: JSON.stringify({ members: adminMembers }),
       });
     });
 
@@ -50,59 +62,38 @@ test.describe('Admin Member List', () => {
     await adminPage.goto();
 
     await expect(adminPage.memberTable).toBeVisible();
+    // Default tab is "pending" — shows only pending members (1 row) + header
     const rows = adminPage.memberTable.locator('tr');
-    await expect(rows).toHaveCount(members.length + 1);
+    await expect(rows).toHaveCount(2); // 1 header + 1 pending member
   });
 
-  test('shows member details', async ({ page }) => {
+  test('shows member details in pending tab', async ({ page }) => {
     await adminPage.goto();
 
-    for (const member of members) {
-      await expect(page.getByText(member.name)).toBeVisible();
-      await expect(page.getByText(member.email)).toBeVisible();
-    }
+    // Default pending tab shows the pending member
+    await expect(page.getByText(pendingMember.name)).toBeVisible();
+    await expect(page.getByText(pendingMember.email)).toBeVisible();
   });
 
-  test('filters by pending status', async ({ page }) => {
-    await page.route('**/api/admin/members?status=pending', (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ members: members.filter((m) => m.status === 'pending') }),
-      });
-    });
-
+  test('filters by pending status (default tab)', async ({ page }) => {
     await adminPage.goto();
-    await adminPage.filterByStatus('pending');
 
-    await expect(page.getByText('Pending')).toBeVisible();
+    // The page loads with pending tab active by default
+    await expect(page.getByText(pendingMember.name)).toBeVisible();
   });
 
-  test('filters by approved status', async ({ page }) => {
-    await page.route('**/api/admin/members?status=approved', (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ members: members.filter((m) => m.status === 'approved') }),
-      });
-    });
-
+  test('filters by member status tab shows all members', async ({ page }) => {
     await adminPage.goto();
+    // Click "Member Status" tab to see all members
     await adminPage.filterByStatus('approved');
 
     await expect(page.getByText('Approved User')).toBeVisible();
   });
 
   test('searches members by name', async ({ page }) => {
-    await page.route('**/api/admin/members?search=Approved', (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ members: members.filter((m) => m.name.includes('Approved')) }),
-      });
-    });
-
     await adminPage.goto();
+    // Switch to Member Status tab first (shows all members)
+    await adminPage.filterByStatus('approved');
     await adminPage.searchMembers('Approved');
 
     await expect(page.getByText('Approved User')).toBeVisible();
@@ -118,6 +109,6 @@ test.describe('Admin Member List', () => {
     });
 
     await adminPage.goto();
-    await expect(page.getByText(/no members|empty/i)).toBeVisible();
+    await expect(page.getByText(/no pending applications|no members|empty/i)).toBeVisible();
   });
 });

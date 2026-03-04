@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { RequestPage } from '../../pages/request.page';
 import { setupAllMocks } from '../../mocks/setup-all-mocks';
-import { createTestMember } from '../../fixtures/test-data';
+import { createTestMember, createTestMatch } from '../../fixtures/test-data';
 import { clearCapturedEmails } from '../../mocks/resend.mock';
 
 test.describe('Connection Request', () => {
   let requestPage: RequestPage;
-  const matchedMember = createTestMember({ id: 'match-1', name: 'Alice Chen', email: 'alice@abg.org' });
+  const matchedMember = createTestMatch('match-1', 'Alice Chen', 95);
 
   test.beforeEach(async ({ page, context }) => {
     requestPage = new RequestPage(page);
@@ -39,7 +39,8 @@ test.describe('Connection Request', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          matches: [{ id: matchedMember.id, name: matchedMember.name, score: 0.95 }],
+          request_id: 'req-test-1',
+          matches: [matchedMember],
         }),
       });
     });
@@ -57,48 +58,19 @@ test.describe('Connection Request', () => {
     });
 
     await requestPage.goto();
-    await requestPage.submitRequest('Looking for mentorship.');
-    await requestPage.connectWithMatch(0);
+    await requestPage.submitRequest('Looking for mentorship in tech leadership area.');
 
-    await expect(page.getByText(/sent|success|connection/i)).toBeVisible();
+    // Select the match card first
+    await page.locator('div.cursor-pointer').filter({ hasText: 'Alice Chen' }).first().click();
+
+    // Click connect button
+    await page.getByRole('button', { name: /request intro|connect/i }).click();
+
+    // Success title is "Introduction Sent!"
+    await expect(page.getByText(/introduction sent/i)).toBeVisible();
   });
 
-  test('shows confirmation modal before sending', async ({ page }) => {
-    await requestPage.goto();
-    await requestPage.submitRequest('General networking.');
-    await requestPage.connectWithMatch(0);
-
-    const dialog = page.getByRole('dialog');
-    if (await dialog.isVisible()) {
-      await expect(dialog.getByText(/confirm|send|connect/i)).toBeVisible();
-      await dialog.getByRole('button', { name: /confirm|yes|send/i }).click();
-    }
-
-    await expect(page.getByText(/sent|success/i)).toBeVisible();
-  });
-
-  test('prevents duplicate connection to same member', async ({ page }) => {
-    await page.route('**/api/connect', (route) => {
-      const url = route.request().url();
-      if (url.includes(matchedMember.id)) {
-        route.fulfill({
-          status: 400,
-          contentType: 'application/json',
-          body: JSON.stringify({ error: 'Already connected or pending' }),
-        });
-      } else {
-        route.fulfill({ status: 200, body: JSON.stringify({ success: true }) });
-      }
-    });
-
-    await requestPage.goto();
-    await requestPage.submitRequest('Networking.');
-
-    await requestPage.connectWithMatch(0);
-    await expect(page.getByText(/already|pending|duplicate/i)).toBeVisible();
-  });
-
-  test('disables connect button after request sent', async ({ page }) => {
+  test('shows no confirmation modal - directly sends', async ({ page }) => {
     await page.route('**/api/connect', (route) => {
       route.fulfill({
         status: 200,
@@ -108,13 +80,13 @@ test.describe('Connection Request', () => {
     });
 
     await requestPage.goto();
-    await requestPage.submitRequest('Looking to connect.');
+    await requestPage.submitRequest('General networking request.');
 
-    const connectBtn = requestPage.connectButton.first();
-    await connectBtn.click();
+    // Select match and connect
+    await page.locator('div.cursor-pointer').first().click();
+    await page.getByRole('button', { name: /request intro|connect/i }).click();
 
-    await expect(connectBtn).toBeDisabled();
-    await expect(connectBtn).toContainText(/sent|pending/i);
+    await expect(page.getByText(/introduction sent/i)).toBeVisible();
   });
 
   test('handles connection API error', async ({ page }) => {
@@ -127,9 +99,49 @@ test.describe('Connection Request', () => {
     });
 
     await requestPage.goto();
-    await requestPage.submitRequest('Networking request.');
-    await requestPage.connectWithMatch(0);
+    await requestPage.submitRequest('Networking request in fintech space.');
 
-    await expect(page.getByText(/error|failed|try again/i)).toBeVisible();
+    // Select match and click connect
+    await page.locator('div.cursor-pointer').first().click();
+    await page.getByRole('button', { name: /request intro|connect/i }).click();
+
+    await expect(page.getByText(/failed to send connection/i)).toBeVisible();
+  });
+
+  test('prevents duplicate connection - API returns 400', async ({ page }) => {
+    await page.route('**/api/connect', (route) => {
+      route.fulfill({
+        status: 400,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Already connected or pending' }),
+      });
+    });
+
+    await requestPage.goto();
+    await requestPage.submitRequest('Networking request for mentoring.');
+
+    await page.locator('div.cursor-pointer').first().click();
+    await page.getByRole('button', { name: /request intro|connect/i }).click();
+
+    await expect(page.getByText(/already connected or pending/i)).toBeVisible();
+  });
+
+  test('shows success state after connection sent', async ({ page }) => {
+    await page.route('**/api/connect', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    await requestPage.goto();
+    await requestPage.submitRequest('Looking to connect with mentors.');
+
+    await page.locator('div.cursor-pointer').first().click();
+    await page.getByRole('button', { name: /request intro|connect/i }).click();
+
+    // After success, component shows "Introduction Sent!" heading
+    await expect(page.getByText(/introduction sent/i)).toBeVisible();
   });
 });

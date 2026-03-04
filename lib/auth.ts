@@ -1,6 +1,8 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import EmailProvider from "next-auth/providers/email";
 import { getMemberByEmail, updateMemberLastLogin } from "./supabase-db";
+import { SupabaseVerificationAdapter } from "./nextauth-supabase-adapter";
 
 // Validate required environment variables
 const requiredEnvVars = {
@@ -22,6 +24,7 @@ if (typeof window === 'undefined') {
 
 export const authOptions: NextAuthOptions = {
     debug: process.env.NODE_ENV === 'development',
+    adapter: SupabaseVerificationAdapter(),
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -33,6 +36,17 @@ export const authOptions: NextAuthOptions = {
                     response_type: "code"
                 }
             }
+        }),
+        EmailProvider({
+            server: {
+                host: 'smtp.resend.com',
+                port: 465,
+                auth: {
+                    user: 'resend',
+                    pass: process.env.RESEND_API_KEY!,
+                },
+            },
+            from: process.env.EMAIL_FROM || 'ABG Connect <onboarding@resend.dev>',
         }),
     ],
     callbacks: {

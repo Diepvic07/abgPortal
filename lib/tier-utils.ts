@@ -79,7 +79,7 @@ export function canMakeRequest(member: Member): {
 
 /**
  * Filter profile fields based on viewer's tier
- * Basic: limited info (no phone, linkedin, voice)
+ * Basic: limited info (no phone, linkedin)
  * Premium: full access
  */
 export function filterProfileByTier(
@@ -95,7 +95,6 @@ export function filterProfileByTier(
   const {
     phone,
     linkedin_url,
-    voice_url,
     ...limitedProfile
   } = profile;
 
@@ -103,7 +102,6 @@ export function filterProfileByTier(
     ...limitedProfile,
     phone: undefined,
     linkedin_url: undefined,
-    voice_url: undefined,
   };
 }
 

@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { getMemberById, updateMember } from "@/lib/supabase-db";
 import { isAdminAsync } from "@/lib/admin-utils-server";
 import { sendApprovalEmail } from "@/lib/resend";
-import { notifyAdmin } from "@/lib/discord";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,14 +29,6 @@ export async function POST(request: NextRequest) {
 
     // Send approval email
     await sendApprovalEmail(member.email, member.name);
-
-    // Notify admin channel
-    await notifyAdmin("new_member", {
-      name: member.name,
-      email: member.email,
-      role: member.role,
-      company: member.company,
-    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -105,10 +105,8 @@ test.describe('Updated Tier Limits', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: {
-            matches: [createTestMatch('m2', 'Bob Kim', 88)],
-            warning: warningMessage,
-          },
+          matches: [createTestMatch('m2', 'Bob Kim', 88)],
+          warning: warningMessage,
         }),
       });
     });

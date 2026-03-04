@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { RequestCategory } from '@/types';
@@ -80,6 +81,13 @@ export function RequestHistoryList({ requests }: RequestHistoryListProps) {
           </svg>
         </div>
         <p className="text-gray-600">{t.history.noRequests}</p>
+        <p className="text-gray-400 text-sm mt-1">{t.myRequests.noRequestsHelp}</p>
+        <Link
+          href="/request"
+          className="mt-4 inline-block text-brand hover:underline text-sm font-medium"
+        >
+          Find Connection
+        </Link>
       </div>
     );
   }

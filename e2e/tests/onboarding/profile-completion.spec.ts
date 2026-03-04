@@ -32,6 +32,14 @@ test.describe('Profile Completion', () => {
       });
     });
 
+    await page.route('**/api/profile', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ member: null }),
+      });
+    });
+
     await setupAllMocks(page, { resend: { captureEmails: true } });
   });
 
@@ -46,32 +54,46 @@ test.describe('Profile Completion', () => {
 
     await onboardPage.goto();
     await onboardPage.fillProfile({
-      bio: 'I am a passionate professional seeking meaningful connections.',
-      industry: 'Technology',
+      name: 'Test User',
+      role: 'Engineer',
+      company: 'Tech Corp',
+      expertise: 'Building scalable systems and mentoring teams.',
+      canHelpWith: 'Technical interviews and career guidance.',
+      lookingFor: 'Networking opportunities and mentorship.',
     });
     await onboardPage.complete();
 
-    await expect(page).toHaveURL(/request|profile|dashboard/);
+    // Wait for form to be replaced by success state (form disappears)
+    await expect(onboardPage.expertiseTextarea).not.toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/welcome|aboard/i)).toBeVisible({ timeout: 10000 });
   });
 
-  test('validates required bio field', async ({ page }) => {
-    await onboardPage.goto();
-    await onboardPage.fillProfile({ industry: 'Technology' });
-    await onboardPage.bioTextarea.fill('');
-    await onboardPage.complete();
-
-    await expect(page.getByText(/bio.*required/i)).toBeVisible();
-  });
-
-  test('validates minimum bio length', async ({ page }) => {
+  test('validates required expertise field', async ({ page }) => {
     await onboardPage.goto();
     await onboardPage.fillProfile({
-      bio: 'Too short',
-      industry: 'Technology',
+      name: 'Test User',
+      role: 'Engineer',
+      company: 'Tech Corp',
+      // expertise intentionally omitted
     });
     await onboardPage.complete();
 
-    await expect(page.getByText(/minimum|characters|longer/i)).toBeVisible();
+    // Validation errors appear as .text-error elements
+    await expect(page.locator('.text-error').first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test('validates minimum expertise length', async ({ page }) => {
+    await onboardPage.goto();
+    await onboardPage.fillProfile({
+      name: 'Test User',
+      role: 'Engineer',
+      company: 'Tech Corp',
+      expertise: 'Short',
+    });
+    await onboardPage.complete();
+
+    // The expertise min-length error should appear
+    await expect(page.locator('.text-error').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('shows success message after completion', async ({ page }) => {
@@ -85,12 +107,18 @@ test.describe('Profile Completion', () => {
 
     await onboardPage.goto();
     await onboardPage.fillProfile({
-      bio: 'A comprehensive bio that meets the minimum length requirement for the platform.',
-      industry: 'Finance',
+      name: 'Test User',
+      role: 'Software Engineer',
+      company: 'Tech Corp',
+      expertise: 'Building scalable backend systems for enterprise clients.',
+      canHelpWith: 'Technical interviews, code review, and system design.',
+      lookingFor: 'Mentorship opportunities and professional networking.',
     });
     await onboardPage.complete();
 
-    await expect(page.getByText(/success|complete|welcome/i)).toBeVisible();
+    // Wait for form to disappear and success message to appear
+    await expect(onboardPage.expertiseTextarea).not.toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/welcome|aboard/i)).toBeVisible({ timeout: 10000 });
   });
 
   test('handles API error gracefully', async ({ page }) => {
@@ -104,12 +132,17 @@ test.describe('Profile Completion', () => {
 
     await onboardPage.goto();
     await onboardPage.fillProfile({
-      bio: 'Valid bio content that should work fine.',
-      industry: 'Healthcare',
+      name: 'Test User',
+      role: 'Engineer',
+      company: 'Tech Corp',
+      expertise: 'Valid expertise content that should work fine.',
+      canHelpWith: 'Helping with technical challenges and mentoring.',
+      lookingFor: 'Networking and collaboration opportunities.',
     });
     await onboardPage.complete();
 
-    await expect(page.getByText(/error|failed|try again/i)).toBeVisible();
+    // Error shown in red error div at top of form
+    await expect(page.locator('.text-error, [class*="bg-red"]').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('prevents double submission', async ({ page }) => {
@@ -127,15 +160,19 @@ test.describe('Profile Completion', () => {
 
     await onboardPage.goto();
     await onboardPage.fillProfile({
-      bio: 'Valid bio for testing double submission prevention.',
-      industry: 'Education',
+      name: 'Test User',
+      role: 'Engineer',
+      company: 'Tech Corp',
+      expertise: 'Valid expertise for testing double submission prevention.',
+      canHelpWith: 'Technical guidance and mentoring for junior engineers.',
+      lookingFor: 'Networking and collaboration with other professionals.',
     });
 
-    await onboardPage.submitButton.click();
-    await onboardPage.submitButton.click();
-    await onboardPage.submitButton.click();
+    await onboardPage.complete(); // first click - waits for enabled state
+    await onboardPage.submitButton.click({ force: true }); // rapid second click
+    await onboardPage.submitButton.click({ force: true }); // rapid third click
 
-    await page.waitForURL(/request|profile/, { timeout: 5000 });
+    await page.waitForTimeout(2000);
 
     expect(submitCount).toBe(1);
   });

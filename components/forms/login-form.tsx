@@ -8,6 +8,7 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
   const router = useRouter();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -46,13 +47,27 @@ export function LoginForm() {
       }
 
       // Send magic link
-      await signIn("email", { email, callbackUrl: "/request" });
+      const result = await signIn("email", { email, redirect: false, callbackUrl: "/request" });
+      if (result?.error) {
+        setError("Could not send email. Please try again.");
+      } else {
+        setEmailSent(true);
+      }
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (emailSent) {
+    return (
+      <div className="text-center py-6 space-y-2">
+        <p className="text-green-600 font-medium">Magic link sent!</p>
+        <p className="text-sm text-gray-500">Check your email and click the link to sign in.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -25,7 +25,6 @@ function memberToRow(m: TestMember) {
     looking_for: '',
     bio: m.bio,
     avatar_url: null,
-    voice_url: null,
     status: 'active',
     paid: m.paid ?? (m.tier === 'premium'),
     free_requests_used: m.free_requests_used ?? 0,

@@ -28,7 +28,6 @@ function createOnboardingSchema(t: { onboard: { validation: Record<string, strin
     display_nickname_in_search: z.boolean().optional(),
     display_nickname_in_match: z.boolean().optional(),
     display_nickname_in_email: z.boolean().optional(),
-    discord_username: z.string().max(100).optional(),
     open_to_work: z.boolean().optional(),
     job_preferences: z.string().optional(),
     hiring: z.boolean().optional(),
@@ -46,7 +45,6 @@ export function MemberOnboardingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [voiceFile, setVoiceFile] = useState<File | null>(null);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedBio, setGeneratedBio] = useState<string | null>(null);
@@ -144,10 +142,6 @@ export function MemberOnboardingForm() {
 
       if (avatarFile) {
         formData.append('avatar', avatarFile);
-      }
-
-      if (voiceFile) {
-        formData.append('voice', voiceFile);
       }
 
       const response = await fetch('/api/onboard', {
@@ -535,35 +529,6 @@ export function MemberOnboardingForm() {
             <option value="Married">{t.onboard.form.relationshipMarried}</option>
           </select>
         </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-text-primary mb-1">
-          {t.onboard.form.discordUsername}
-        </label>
-        <input
-          {...register('discord_username')}
-          className="w-full px-4 py-3 border border-border rounded-md focus:ring-2 focus:ring-brand focus:border-brand transition-colors"
-          placeholder="username"
-        />
-        <p className="text-sm text-text-secondary mt-1">
-          {t.onboard.form.discordHelp}
-        </p>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-text-primary mb-1">
-          {t.onboard.form.voice}
-        </label>
-        <input
-          type="file"
-          accept="audio/*"
-          onChange={(e) => setVoiceFile(e.target.files?.[0] || null)}
-          className="w-full px-4 py-3 border border-border rounded-md"
-        />
-        <p className="text-sm text-text-secondary mt-1">
-          {t.onboard.form.voiceHelp}
-        </p>
       </div>
 
       <button

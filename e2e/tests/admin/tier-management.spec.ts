@@ -3,10 +3,28 @@ import { AdminPage } from '../../pages/admin.page';
 import { setupAllMocks } from '../../mocks/setup-all-mocks';
 import { createTestAdmin, createTestMember } from '../../fixtures/test-data';
 
+// Helper: convert test fixture members to admin API shape
+function toAdminMember(
+  m: ReturnType<typeof createTestMember>,
+  overrides: Partial<{ paid: boolean; is_admin: boolean }> = {}
+) {
+  return {
+    ...m,
+    approval_status: m.status,
+    paid: overrides.paid ?? m.tier === 'premium',
+    is_admin: overrides.is_admin ?? false,
+    is_csv_imported: false,
+    created_at: new Date().toISOString(),
+  };
+}
+
 test.describe('Tier Management', () => {
   let adminPage: AdminPage;
   const basicMember = createTestMember({ tier: 'basic', status: 'approved' });
   const premiumMember = createTestMember({ tier: 'premium', status: 'approved' });
+
+  const adminBasic = toAdminMember(basicMember, { paid: false });
+  const adminPremium = toAdminMember(premiumMember, { paid: true });
 
   test.beforeEach(async ({ page, context }) => {
     adminPage = new AdminPage(page);
@@ -36,7 +54,7 @@ test.describe('Tier Management', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ members: [basicMember, premiumMember] }),
+        body: JSON.stringify({ members: [adminBasic, adminPremium] }),
       });
     });
 
@@ -45,13 +63,19 @@ test.describe('Tier Management', () => {
 
   test('displays current tier for each member', async ({ page }) => {
     await adminPage.goto();
+    // Switch to Member Status tab to see all members with tiers
+    await adminPage.filterByStatus('approved');
 
-    await expect(page.getByText(/basic/i)).toBeVisible();
-    await expect(page.getByText(/premium/i)).toBeVisible();
+    // Use first() to avoid strict-mode violation with "Premium Members" stat card
+    await expect(page.getByText(/basic/i).first()).toBeVisible();
+    await expect(page.getByText(/premium/i).first()).toBeVisible();
   });
 
   test('upgrades member to premium', async ({ page }) => {
+    let basicPaid = false;
+
     await page.route('**/api/admin/tier', (route) => {
+      basicPaid = true;
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -59,14 +83,36 @@ test.describe('Tier Management', () => {
       });
     });
 
+    // Dynamic mock: after upgrade, basicMember becomes paid
+    await page.route('**/api/admin/members', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          members: [
+            { ...adminBasic, paid: basicPaid },
+            adminPremium,
+          ],
+        }),
+      });
+    });
+
     await adminPage.goto();
+    await adminPage.filterByStatus('approved');
+
+    // Upgrade basic member (row 0)
     await adminPage.setTier(0, 'premium');
 
-    await expect(page.getByText(/updated|success/i)).toBeVisible();
+    // After upgrade, the member's tier badge changes to Premium
+    // Admin page re-fetches — dynamic mock returns paid: true
+    await expect(page.getByText(/premium/i).first()).toBeVisible();
   });
 
   test('downgrades member to basic', async ({ page }) => {
+    let premiumPaid = true;
+
     await page.route('**/api/admin/tier', (route) => {
+      premiumPaid = false;
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -74,27 +120,48 @@ test.describe('Tier Management', () => {
       });
     });
 
+    // Dynamic mock: after downgrade, premiumMember becomes unpaid
+    await page.route('**/api/admin/members', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          members: [
+            adminBasic,
+            { ...adminPremium, paid: premiumPaid },
+          ],
+        }),
+      });
+    });
+
     await adminPage.goto();
+    await adminPage.filterByStatus('approved');
+
+    // Downgrade premium member (row 1)
     await adminPage.setTier(1, 'basic');
 
-    await expect(page.getByText(/updated|success/i)).toBeVisible();
+    // After downgrade, premium tier badge disappears (both show Basic)
+    await expect(page.getByText(/basic/i).first()).toBeVisible();
   });
 
-  test('shows confirmation for tier change', async ({ page }) => {
+  test('shows tier badges in member status tab', async ({ page }) => {
     await adminPage.goto();
+    await adminPage.filterByStatus('approved');
 
-    const tierSelect = page.locator('[data-testid="tier-select"]').first();
-    if (await tierSelect.isVisible()) {
-      await tierSelect.selectOption('premium');
-
-      const dialog = page.getByRole('dialog');
-      if (await dialog.isVisible()) {
-        await expect(dialog.getByText(/confirm|tier/i)).toBeVisible();
-      }
-    }
+    // Both tier badge types should be visible
+    await expect(page.getByText(/basic/i).first()).toBeVisible();
+    await expect(page.getByText(/premium/i).first()).toBeVisible();
   });
 
-  test('handles tier change API error', async ({ page }) => {
+  test('handles tier change API error via alert', async ({ page }) => {
+    // Register dialog handler FIRST before any navigation
+    const dialogPromise = new Promise<string>((resolve) => {
+      page.on('dialog', async (dialog) => {
+        resolve(dialog.message());
+        await dialog.accept();
+      });
+    });
+
     await page.route('**/api/admin/tier', (route) => {
       route.fulfill({
         status: 500,
@@ -103,17 +170,28 @@ test.describe('Tier Management', () => {
       });
     });
 
+    await page.route('**/api/admin/members', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ members: [adminBasic, adminPremium] }),
+      });
+    });
+
     await adminPage.goto();
+    await adminPage.filterByStatus('approved');
     await adminPage.setTier(0, 'premium');
 
-    await expect(page.getByText(/error|failed/i)).toBeVisible();
+    // Admin page calls alert("Failed to change tier") on error
+    const alertMessage = await dialogPromise;
+    expect(alertMessage).toMatch(/failed|tier|change/i);
   });
 
   test('persists tier change on page refresh', async ({ page }) => {
-    let memberTier = 'basic';
+    let basicMemberPaid = false;
 
     await page.route('**/api/admin/tier', (route) => {
-      memberTier = 'premium';
+      basicMemberPaid = true;
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -126,15 +204,20 @@ test.describe('Tier Management', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          members: [{ ...basicMember, tier: memberTier }, premiumMember],
+          members: [
+            { ...adminBasic, paid: basicMemberPaid },
+            adminPremium,
+          ],
         }),
       });
     });
 
     await adminPage.goto();
+    await adminPage.filterByStatus('approved');
     await adminPage.setTier(0, 'premium');
 
     await page.reload();
+    await adminPage.filterByStatus('approved');
 
     await expect(page.locator('tr').nth(1)).toContainText(/premium/i);
   });

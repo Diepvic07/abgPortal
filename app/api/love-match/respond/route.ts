@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/auth-middleware';
 import { getLoveMatchRequestById, updateLoveMatchRequest, getMemberById } from '@/lib/supabase-db';
 import { sendLoveMatchAcceptEmail } from '@/lib/resend';
-import { notifyAdmin } from '@/lib/discord';
 import { formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 
@@ -63,11 +62,6 @@ export async function POST(request: NextRequest) {
           console.error('Love match accept email failed (non-fatal):', emailErr);
         }
       }
-
-      await notifyAdmin('love_match_accepted', {
-        from_name: fromMember?.nickname || fromMember?.name || loveMatch.from_id,
-        to_name: member.nickname || member.name,
-      });
 
       return successResponse({ message: 'Love match accepted! Introduction emails sent to both parties.' });
     }

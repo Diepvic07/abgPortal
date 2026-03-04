@@ -1,29 +1,48 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from './base.page';
 
 export class SignupPage extends BasePage {
   readonly nameInput: Locator;
-  readonly emailInput: Locator;
-  readonly chapterSelect: Locator;
+  readonly roleInput: Locator;
+  readonly companyInput: Locator;
+  readonly expertiseTextarea: Locator;
   readonly submitButton: Locator;
+  readonly genderSelect: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.nameInput = page.getByLabel(/name/i);
-    this.emailInput = page.getByLabel(/email/i);
-    this.chapterSelect = page.getByLabel(/chapter/i);
-    this.submitButton = page.getByRole('button', { name: /submit|apply|sign up/i });
+    this.nameInput = page.locator('input[name="name"]');
+    this.roleInput = page.locator('input[name="role"]');
+    this.companyInput = page.locator('input[name="company"]');
+    this.expertiseTextarea = page.locator('textarea[name="expertise"]');
+    this.submitButton = page.locator('button[type="submit"]');
+    this.genderSelect = page.locator('select[name="gender"]');
   }
 
   async goto() {
     await this.navigate('/signup');
+    // Wait for form submit button to appear
+    await expect(this.submitButton).toBeVisible({ timeout: 15000 });
   }
 
-  async fillSignupForm(data: { name: string; email: string; chapter?: string }) {
+  async fillSignupForm(data: {
+    name: string;
+    email?: string;
+    chapter?: string;
+    role?: string;
+    company?: string;
+    expertise?: string;
+  }) {
     await this.nameInput.fill(data.name);
-    await this.emailInput.fill(data.email);
-    if (data.chapter) {
-      await this.chapterSelect.selectOption(data.chapter);
+    if (data.role) await this.roleInput.fill(data.role);
+    if (data.company) await this.companyInput.fill(data.company);
+    if (data.expertise) await this.expertiseTextarea.fill(data.expertise);
+
+    // If authenticated (Complete Profile button), set gender to valid enum value
+    // to avoid zod enum validation failure on the empty string default
+    const btnText = await this.submitButton.textContent();
+    if (btnText?.includes('Complete') || btnText?.includes('Profile')) {
+      await this.genderSelect.selectOption('Female');
     }
   }
 

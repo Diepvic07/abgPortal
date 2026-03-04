@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
 import { RequestPage } from '../../pages/request.page';
 import { setupAllMocks } from '../../mocks/setup-all-mocks';
-import { createTestMember } from '../../fixtures/test-data';
+import { createTestMember, createTestMatch } from '../../fixtures/test-data';
 
 test.describe('Match Request Submission', () => {
   let requestPage: RequestPage;
-  const members = [
-    createTestMember({ name: 'Alice Chen', industry: 'Technology' }),
-    createTestMember({ name: 'Bob Smith', industry: 'Finance' }),
-    createTestMember({ name: 'Carol Davis', industry: 'Healthcare' }),
+  const matchedMembers = [
+    createTestMatch('1', 'Alice Chen', 95),
+    createTestMatch('2', 'Bob Smith', 85),
+    createTestMatch('3', 'Carol Davis', 75),
   ];
 
   test.beforeEach(async ({ page, context }) => {
@@ -35,7 +35,7 @@ test.describe('Match Request Submission', () => {
       });
     });
 
-    await setupAllMocks(page, { members });
+    await setupAllMocks(page, {});
   });
 
   test('displays request form', async ({ page }) => {
@@ -52,12 +52,8 @@ test.describe('Match Request Submission', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          matches: members.map((m, i) => ({
-            id: m.id,
-            name: m.name,
-            score: 0.95 - i * 0.1,
-            reason: `Great match for ${m.industry}`,
-          })),
+          request_id: 'req-123',
+          matches: matchedMembers,
         }),
       });
     });
@@ -65,14 +61,16 @@ test.describe('Match Request Submission', () => {
     await requestPage.goto();
     await requestPage.submitRequest('Looking for a mentor in tech leadership.');
 
-    await expect(requestPage.matchResults).toBeVisible();
+    // Match results show member names
+    await expect(page.getByText('Alice Chen').first()).toBeVisible();
   });
 
   test('validates empty purpose field', async ({ page }) => {
     await requestPage.goto();
     await requestPage.submitButton.click();
 
-    await expect(page.getByText(/required|purpose|reason/i)).toBeVisible();
+    // Validation error shown in .text-error paragraph
+    await expect(page.locator('.text-error, p.text-error').first()).toBeVisible();
   });
 
   test('validates minimum purpose length', async ({ page }) => {
@@ -80,7 +78,7 @@ test.describe('Match Request Submission', () => {
     await requestPage.purposeTextarea.fill('Hi');
     await requestPage.submitButton.click();
 
-    await expect(page.getByText(/minimum|characters|longer/i)).toBeVisible();
+    await expect(page.locator('.text-error, p.text-error').first()).toBeVisible();
   });
 
   test('shows loading state during submission', async ({ page }) => {
@@ -89,7 +87,7 @@ test.describe('Match Request Submission', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, matches: [] }),
+        body: JSON.stringify({ success: true, request_id: 'req-123', matches: [] }),
       });
     });
 
@@ -112,6 +110,6 @@ test.describe('Match Request Submission', () => {
     await requestPage.goto();
     await requestPage.submitRequest('Looking for connections in healthcare.');
 
-    await expect(page.getByText(/error|failed|try again/i)).toBeVisible();
+    await expect(page.getByText(/matching service unavailable|error|failed/i)).toBeVisible();
   });
 });

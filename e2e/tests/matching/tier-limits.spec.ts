@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { RequestPage } from '../../pages/request.page';
 import { setupAllMocks } from '../../mocks/setup-all-mocks';
-import { createTestMember } from '../../fixtures/test-data';
+import { createTestMember, createTestMatch } from '../../fixtures/test-data';
 
 test.describe('Tier-Based Request Limits', () => {
   let requestPage: RequestPage;
@@ -34,24 +34,13 @@ test.describe('Tier-Based Request Limits', () => {
       await setupAllMocks(page, {});
     });
 
-    test('shows remaining requests count', async ({ page }) => {
-      await page.route('**/api/profile', (route) => {
-        route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            tier: 'basic',
-            requestsRemaining: 3,
-            requestsUsed: 2,
-          }),
-        });
-      });
-
+    test('shows request form for basic tier user', async ({ page }) => {
       await requestPage.goto();
-      await expect(page.getByText(/3 requests remaining|2.*5/i)).toBeVisible();
+      await expect(requestPage.purposeTextarea).toBeVisible();
+      await expect(requestPage.submitButton).toBeVisible();
     });
 
-    test('blocks request when limit reached', async ({ page }) => {
+    test('blocks request when limit reached - shows upgrade paywall', async ({ page }) => {
       await page.route('**/api/request', (route) => {
         route.fulfill({
           status: 403,
@@ -64,27 +53,28 @@ test.describe('Tier-Based Request Limits', () => {
       });
 
       await requestPage.goto();
-      await requestPage.submitRequest('Another request.');
+      await requestPage.submitRequest('Another request for mentoring help.');
 
-      await expect(requestPage.tierLimitMessage).toBeVisible();
-      await expect(page.getByText(/limit|upgrade|premium/i)).toBeVisible();
+      // 403 triggers FakeResultsPaywall with upgrade prompt
+      await expect(page.getByText(/upgrade to premium/i)).toBeVisible();
     });
 
-    test('shows upgrade prompt when approaching limit', async ({ page }) => {
-      await page.route('**/api/profile', (route) => {
+    test('shows upgrade paywall text when approaching limit', async ({ page }) => {
+      await page.route('**/api/request', (route) => {
         route.fulfill({
-          status: 200,
+          status: 403,
           contentType: 'application/json',
           body: JSON.stringify({
-            tier: 'basic',
-            requestsRemaining: 1,
-            requestsUsed: 4,
+            error: 'Request limit reached',
+            upgrade_required: true,
           }),
         });
       });
 
       await requestPage.goto();
-      await expect(page.getByText(/1 request remaining|upgrade/i)).toBeVisible();
+      await requestPage.submitRequest('Need guidance on career growth.');
+
+      await expect(page.getByText(/upgrade to premium/i).first()).toBeVisible();
     });
   });
 
@@ -116,36 +106,43 @@ test.describe('Tier-Based Request Limits', () => {
       await setupAllMocks(page, {});
     });
 
-    test('shows unlimited status for premium', async ({ page }) => {
-      await page.route('**/api/profile', (route) => {
-        route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ tier: 'premium', requestsRemaining: null }),
-        });
-      });
+    test('allows requests for premium user', async ({ page }) => {
+      const match = createTestMatch('m1', 'Alice Chen', 90);
 
-      await requestPage.goto();
-      await expect(page.getByText(/unlimited|premium/i)).toBeVisible();
-    });
-
-    test('allows unlimited requests', async ({ page }) => {
       await page.route('**/api/request', (route) => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ success: true, matches: [] }),
+          body: JSON.stringify({ success: true, request_id: 'req-1', matches: [match] }),
         });
       });
 
       await requestPage.goto();
+      await requestPage.submitRequest('Looking for a business mentor in tech.');
 
-      for (let i = 0; i < 3; i++) {
-        await requestPage.submitRequest(`Request number ${i + 1}`);
-        await expect(page.getByText(/no matches|results/i)).toBeVisible();
-      }
+      await expect(page.getByText('Alice Chen').first()).toBeVisible();
+    });
 
-      await expect(requestPage.tierLimitMessage).not.toBeVisible();
+    test('allows multiple requests without limit', async ({ page }) => {
+      let callCount = 0;
+      const match = createTestMatch('m1', 'Alice Chen', 90);
+
+      await page.route('**/api/request', (route) => {
+        callCount++;
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, request_id: `req-${callCount}`, matches: [match] }),
+        });
+      });
+
+      await requestPage.goto();
+      await requestPage.submitRequest('First request for networking help.');
+
+      await expect(page.getByText('Alice Chen').first()).toBeVisible();
+
+      // No tier limit message shown
+      await expect(page.getByText(/upgrade to premium/i)).not.toBeVisible();
     });
   });
 });

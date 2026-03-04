@@ -4,7 +4,6 @@ import { getMemberById, createLoveMatchRequest } from '@/lib/supabase-db';
 import { canMakeRequest } from '@/lib/tier-utils';
 import { isDatingProfileComplete } from '@/lib/dating-utils';
 import { sendLoveMatchNotificationEmail } from '@/lib/resend';
-import { notifyAdmin } from '@/lib/discord';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { LoveMatchRequest } from '@/types';
@@ -94,12 +93,6 @@ export async function POST(request: NextRequest) {
     } catch (emailErr) {
       console.error('Love match notification email failed (non-fatal):', emailErr);
     }
-
-    // Discord admin notification
-    await notifyAdmin('new_request', {
-      requester_name: member.nickname || member.name,
-      request_text: `[LOVE MATCH] Interest sent to ${target.nickname || target.name}`,
-    });
 
     return successResponse({
       love_match_id: loveMatchId,

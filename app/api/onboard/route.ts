@@ -3,7 +3,6 @@ import { put } from '@vercel/blob';
 import { generateBio } from '@/lib/gemini';
 import { addMember, getMemberByEmail } from '@/lib/supabase-db';
 import { sendOnboardingConfirmation } from '@/lib/resend';
-import { notifyAdmin } from '@/lib/discord';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { Member } from '@/types';
@@ -31,7 +30,6 @@ export async function POST(request: NextRequest) {
     const can_help_with = formData.get('can_help_with') as string;
     const looking_for = formData.get('looking_for') as string;
     const avatarFile = formData.get('avatar') as File | null;
-    const voiceFile = formData.get('voice') as File | null;
     const locale = (formData.get('locale') as 'en' | 'vi') || 'en';
     const gender = formData.get('gender') as 'Female' | 'Male' | 'Undisclosed' | undefined;
     const relationship_status = formData.get('relationship_status') as string | undefined;
@@ -44,7 +42,6 @@ export async function POST(request: NextRequest) {
     const display_nickname_in_search = formData.get('display_nickname_in_search') === 'true';
     const display_nickname_in_match = formData.get('display_nickname_in_match') === 'true';
     const display_nickname_in_email = formData.get('display_nickname_in_email') === 'true';
-    const discord_username = formData.get('discord_username') as string | undefined;
 
 
     if (!name || !email || !role || !company || !expertise || !can_help_with || !looking_for) {
@@ -63,14 +60,6 @@ export async function POST(request: NextRequest) {
         access: 'public',
       });
       avatar_url = blob.url;
-    }
-
-    let voice_url: string | undefined;
-    if (voiceFile && voiceFile.size > 0) {
-      const blob = await put(`voices/${generateId()}.webm`, voiceFile, {
-        access: 'public',
-      });
-      voice_url = blob.url;
     }
 
     const bio = await generateBio({
@@ -95,7 +84,6 @@ export async function POST(request: NextRequest) {
       looking_for,
       bio,
       avatar_url,
-      voice_url,
       status: 'active',
       paid: false,
       free_requests_used: 0,
@@ -117,7 +105,6 @@ export async function POST(request: NextRequest) {
       display_nickname_in_search,
       display_nickname_in_match,
       display_nickname_in_email,
-      discord_username,
       payment_status: 'unpaid',
       // New signups require approval
       approval_status: 'pending',
@@ -149,14 +136,6 @@ export async function POST(request: NextRequest) {
     await updateMemberLastLogin(email);
 
     await sendOnboardingConfirmation(email, name, bio, locale);
-
-    // Notify admin of new signup requiring approval
-    await notifyAdmin('new_signup', {
-      name,
-      email,
-      role,
-      company,
-    });
 
     return successResponse({
       message: 'Profile created successfully',

@@ -78,7 +78,9 @@ test.describe('Love Match Privacy Workflow', () => {
 
   // Test 2: Pre-send privacy notice — love match connect button text differs
   test('love match connect button shows love-specific text', async ({ page, context }) => {
-    const matchedMember = createDatingMember({ id: 'match-target-id', name: 'Jane Doe' });
+    // For love matches, names are masked: "Jane Doe" → "J*** D***"
+    // Use a recognizable nickname instead, which also gets masked: "Moonbeam" → "M***"
+    const matchedMember = createDatingMember({ id: 'match-target-id', name: 'Jane Doe', nickname: 'Moonbeam' });
 
     await setupE2EAuth(page, context, { id: currentUser.id, email: currentUser.email, tier: 'premium' });
 
@@ -106,6 +108,7 @@ test.describe('Love Match Privacy Workflow', () => {
             member: {
               id: matchedMember.id,
               name: matchedMember.name,
+              nickname: matchedMember.nickname,
               role: 'Designer',
               company: 'ArtCo',
               bio: matchedMember.bio,
@@ -125,21 +128,22 @@ test.describe('Love Match Privacy Workflow', () => {
     // Select love category — profile check fires asynchronously
     await page.locator('button[type="button"]').filter({ hasText: /romantic partner/i }).click();
 
-    // Fill and submit (Playwright auto-waits for textarea to be actionable)
+    // Fill and submit — wait for button to be enabled after async profile check
     await page.locator('textarea[name="request_text"]').fill('Looking for a genuine connection with shared values.');
+    await expect(page.locator('form button[type="submit"]')).toBeEnabled({ timeout: 10000 });
     await page.locator('form button[type="submit"]').click();
 
-    // Match results should appear
-    await expect(page.getByText(matchedMember.name).first()).toBeVisible();
+    // Match results appear — love match shows masked nickname "M***" (maskName uses nickname)
+    await expect(page.getByText(/M\*\*\*/).first()).toBeVisible({ timeout: 10000 });
 
     // The connect button for love category should show love-specific text
-    // (it's always visible at the bottom, not just after selecting a match)
     await expect(page.getByRole('button', { name: /send love match request/i })).toBeVisible();
   });
 
   // Test 3: Sends love match connect request and shows success
   test('sends love match connect and shows success', async ({ page, context }) => {
-    const matchedMember = createDatingMember({ id: 'match-target-2', name: 'Alex Kim' });
+    // For love matches, names are masked — use nickname so we can identify the card
+    const matchedMember = createDatingMember({ id: 'match-target-2', name: 'Alex Kim', nickname: 'Stardust' });
 
     await setupE2EAuth(page, context, { id: currentUser.id, email: currentUser.email, tier: 'premium' });
 
@@ -167,6 +171,7 @@ test.describe('Love Match Privacy Workflow', () => {
             member: {
               id: matchedMember.id,
               name: matchedMember.name,
+              nickname: matchedMember.nickname,
               role: 'Engineer',
               company: 'TechCo',
               bio: matchedMember.bio,
@@ -194,19 +199,20 @@ test.describe('Love Match Privacy Workflow', () => {
     // Select love category — profile check fires asynchronously
     await page.locator('button[type="button"]').filter({ hasText: /romantic partner/i }).click();
 
-    // Fill and submit
+    // Fill and submit — wait for button to be enabled after async profile check
     await page.locator('textarea[name="request_text"]').fill('Seeking a meaningful relationship with someone genuine.');
+    await expect(page.locator('form button[type="submit"]')).toBeEnabled({ timeout: 10000 });
     await page.locator('form button[type="submit"]').click();
 
-    // Wait for match results
-    await expect(page.getByText(matchedMember.name).first()).toBeVisible();
+    // Love match shows masked nickname "S***" (maskName uses nickname first)
+    await expect(page.getByText(/S\*\*\*/).first()).toBeVisible({ timeout: 10000 });
 
-    // Select match card then click connect
-    await page.locator('div.cursor-pointer').filter({ hasText: matchedMember.name }).first().click();
+    // Select first match card then click connect
+    await page.locator('div.cursor-pointer').first().click();
     await page.getByRole('button', { name: /send love match request/i }).click();
 
     // Check success message
-    await expect(page.getByText(/introduction sent/i)).toBeVisible();
+    await expect(page.getByText(/introduction sent/i)).toBeVisible({ timeout: 10000 });
   });
 
   // Test 4: Requires complete dating profile before love match

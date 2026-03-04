@@ -20,7 +20,6 @@ function createProfileEditSchema(t: { onboard: { validation: Record<string, stri
     country: z.string().optional(),
     abg_class: z.string().optional(),
     nickname: z.string().optional(),
-    discord_username: z.string().optional(),
     linkedin_url: z.string().url().optional().or(z.literal('')),
     facebook_url: z.string().url().optional().or(z.literal('')),
     company_website: z.string().url().optional().or(z.literal('')),
@@ -82,7 +81,6 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
       country: member.country || '',
       abg_class: member.abg_class || '',
       nickname: member.nickname || '',
-      discord_username: member.discord_username || '',
       linkedin_url: member.linkedin_url || '',
       facebook_url: member.facebook_url || '',
       company_website: member.company_website || '',
@@ -553,14 +551,6 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
                 {errors.company_website && <p className="text-red-600 text-sm mt-1">{errors.company_website.message}</p>}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Discord Username</label>
-                <input
-                  {...register('discord_username')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand focus:border-brand"
-                  placeholder="username#1234"
-                />
-              </div>
             </div>
           </section>
 

@@ -75,7 +75,7 @@ test.describe('Reroll Matches', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: { matches: newMatches },
+          matches: newMatches,
         }),
       });
     });
@@ -118,9 +118,7 @@ test.describe('Reroll Matches', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: {
-            matches: [createTestMatch('m4', 'Diana Tran', 90)],
-          },
+          matches: [createTestMatch('m4', 'Diana Tran', 90)],
         }),
       });
     });
@@ -158,10 +156,8 @@ test.describe('Reroll Matches', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: {
-            matches: [createTestMatch('m4', 'Diana Tran', 90)],
-            warning: warningMessage,
-          },
+          matches: [createTestMatch('m4', 'Diana Tran', 90)],
+          warning: warningMessage,
         }),
       });
     });
