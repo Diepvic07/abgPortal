@@ -85,7 +85,7 @@ return { allowed: true, remaining: limit - used };
 
 When a Basic tier member views another member's profile:
 - **Visible**: Name (blurred), role (blurred), company (blurred), expertise
-- **Hidden**: Phone number, LinkedIn URL, voice recording
+- **Hidden**: Phone number, LinkedIn URL
 - **UX**: Fields show as "••••••" with message: "Upgrade to see full profile"
 
 **Code location:** `lib/tier-utils.ts` `filterProfileByTier()`
@@ -99,7 +99,6 @@ export function filterProfileByTier(profile: Member, viewerTier: TierType) {
     ...limitedProfile,
     phone: undefined,
     linkedin_url: undefined,
-    voice_url: undefined,
   };
 }
 ```
@@ -207,7 +206,6 @@ Premium tier members see complete profiles:
 - All text fields visible
 - Phone number visible
 - LinkedIn URL clickable
-- Voice recording playable
 - All optional fields shown
 
 ### Daily & Monthly Resets

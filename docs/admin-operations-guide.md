@@ -8,7 +8,6 @@ Member matching platform with approval workflow and tier management. All admin o
 
 - **Admin Dashboard:** `/admin` (approval, tier management, member directory)
 - **Supabase Database:** `/admin/members` page queries Postgres directly
-- **Discord Channel:** Real-time alerts for new members, requests, connections
 
 ## Admin Dashboard (`/admin`)
 
@@ -48,8 +47,6 @@ View all members in system. Filter available by status, tier, import source.
 New member signs up via form or magic link
          ↓
 approval_status = "pending"
-         ↓
-Discord notifies admin
          ↓
 Admin views /admin → Pending tab
          ↓
@@ -245,8 +242,7 @@ Next steps:
 
 ### Morning Checklist
 
-1. **Check Discord Alerts** - Review overnight sign-ups, requests, connections
-2. **Review Pending Members** - Visit `/admin` → Pending tab
+1. **Review Pending Members** - Visit `/admin` → Pending tab
 3. **Approve Qualified Members** - Check role, company, email legitimacy
 4. **Reject Suspicious** - Flag spam accounts, incomplete profiles
 5. **Monitor Request Volume** - Check for unusual activity patterns
@@ -258,7 +254,6 @@ Next steps:
 3. Review member details (name, role, company, ABG class)
 4. Click **Approve** if legitimate
 5. Member receives confirmation and can login
-6. Discord alert sent confirming approval
 
 ### Reject Problem Members
 
@@ -267,7 +262,6 @@ Next steps:
 3. Confirmation dialog appears (action cannot be undone)
 4. Click confirm
 5. Member blocked, sees `/auth/rejected` page
-6. Discord alert sent confirming rejection
 
 **Rejection Reasons:**
 - Fake email address (not company domain)
@@ -298,7 +292,6 @@ For **approved members only**:
 
 ### Monitor Requests
 
-- Discord notifies on each new request
 - View request history in Supabase dashboard → requests table
 - Status meanings:
   - `pending` - Waiting for matches
@@ -364,7 +357,6 @@ Members are created with:
 1. Go to `/admin` → All Members tab
 2. Filter by status "approved" and "CSV" badge
 3. Spot-check a few members
-4. Discord alert sent for each new member
 
 **Common Issues:**
 - "Email already exists" → Member already imported, skip is correct
@@ -416,7 +408,6 @@ Members are created with:
 | can_help_with | TEXT | What they offer/expert in |
 | looking_for | TEXT | What they need |
 | bio | TEXT | AI-generated professional bio |
-| voice_url | TEXT | Voice intro URL (optional) |
 | avatar_url | TEXT | Profile photo URL |
 
 **Contact Details**
@@ -459,7 +450,6 @@ Members are created with:
 | display_nickname_in_search | BOOLEAN | Show nickname in search |
 | display_nickname_in_match | BOOLEAN | Show nickname in match results |
 | display_nickname_in_email | BOOLEAN | Show nickname in intro emails |
-| discord_username | TEXT | Discord handle (optional) |
 
 **Job Market Preferences**
 | Field | Type | Notes |
@@ -541,12 +531,6 @@ Members are created with:
 - Verify UTF-8 encoding (not ANSI)
 - Try dry-run first: `npm run import-members -- --dry-run`
 
-### Discord Not Receiving Notifications
-- Check webhook URL in Vercel env vars
-- Verify Discord channel still exists and bot has access
-- Test webhook manually in Discord channel settings
-- Regenerate webhook URL if needed
-
 ## Environment Variables
 
 Located in Vercel Dashboard → Settings → Environment Variables:
@@ -558,7 +542,6 @@ Located in Vercel Dashboard → Settings → Environment Variables:
 | SUPABASE_SERVICE_ROLE_KEY | Supabase service role key (secret) |
 | GEMINI_API_KEY | Google AI Studio API key |
 | RESEND_API_KEY | Resend email API key |
-| DISCORD_WEBHOOK_URL | Discord webhook for notifications |
 | BLOB_READ_WRITE_TOKEN | Vercel Blob storage token |
 | GOOGLE_CLIENT_ID | Google OAuth client ID |
 | GOOGLE_CLIENT_SECRET | Google OAuth client secret |
@@ -594,10 +577,7 @@ Located in Vercel Dashboard → Settings → Environment Variables:
 
 ### AI & Integrations
 - [ ] Get `GEMINI_API_KEY` from Google AI Studio
-- [ ] Create Discord server and admin channel
-- [ ] Create Discord webhook in channel
-- [ ] Extract `DISCORD_WEBHOOK_URL`
-- [ ] Set up Vercel Blob (if voice features needed)
+- [ ] Set up Vercel Blob (for avatar uploads)
 - [ ] Extract `BLOB_READ_WRITE_TOKEN`
 
 ### Vercel Deployment
@@ -605,7 +585,6 @@ Located in Vercel Dashboard → Settings → Environment Variables:
 - [ ] Connect GitHub repository
 - [ ] Add all environment variables to Vercel project
 - [ ] Deploy to production
-- [ ] Verify all webhooks working (test Discord alert)
 - [ ] Test authentication flow (magic link and OAuth)
 
 ### Post-Deployment
@@ -622,7 +601,6 @@ Located in Vercel Dashboard → Settings → Environment Variables:
   - [ ] Connection request (basic tier)
   - [ ] Tier upgrade to premium
   - [ ] Admin dashboard access
-- [ ] Verify Discord notifications
 - [ ] Monitor error logs in Vercel dashboard
 
 ## Support

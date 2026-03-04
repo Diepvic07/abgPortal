@@ -19,7 +19,7 @@ AI-powered member matching platform for ABG Alumni community (~300 users).
 - **Member Onboarding**: Form with AI-generated bio via Gemini
 - **Admin Dashboard**: `/admin` for member approval, tier management, CSV bulk import
 - **Email Introductions**: Automated intro emails to both parties via Resend
-- **Admin Notifications**: Discord webhooks for new members/requests/connections
+- **Admin Notifications**: Email alerts for new members/requests/connections
 - **CSV Import**: Bulk import pre-approved members with single command
 
 ## Tech Stack
@@ -30,8 +30,7 @@ AI-powered member matching platform for ABG Alumni community (~300 users).
 - **Database**: Google Sheets API
 - **AI**: Gemini 1.5 Flash
 - **Email**: Resend
-- **Notifications**: Discord Webhooks
-- **Storage**: Vercel Blob (voice uploads)
+- **Storage**: Vercel Blob (avatar uploads)
 - **Hosting**: Vercel
 
 ## Getting Started
@@ -60,8 +59,7 @@ Required variables (see [setup-guide.md](docs/setup-guide.md) for detailed instr
 - `GEMINI_API_KEY` - From Google AI Studio
 - `RESEND_API_KEY` - From Resend dashboard
 - `EMAIL_FROM` - Email address for sending (e.g., `ABG Connect <onboarding@resend.dev>`)
-- `DISCORD_WEBHOOK_URL` - Discord channel webhook
-- `BLOB_READ_WRITE_TOKEN` - Vercel Blob token
+- `BLOB_READ_WRITE_TOKEN` - Vercel Blob token (avatar storage)
 - `NEXTAUTH_SECRET` - Random secret for JWT signing
 - `NEXTAUTH_URL` - Full callback URL (http://localhost:3000 for local)
 
@@ -158,7 +156,6 @@ lib/
   gemini.ts                # AI text generation
   tier-utils.ts            # Tier limits & enforcement
   resend.ts                # Email sending
-  discord.ts               # Webhook notifications
   news-service.ts          # News CMS service with ISR (NEW)
   news-utils.ts            # News parsing/formatting helpers (NEW)
   utils.ts                 # Helpers (UUID, dates, cn)
@@ -220,8 +217,7 @@ See [docs/admin-operations-guide.md](docs/admin-operations-guide.md) for full de
 2. Gemini AI generates professional bio
 3. Member saved to Sheets with `approval_status = "pending"`
 4. Confirmation email sent via Resend
-5. Admin notified via Discord
-6. Member waits in pending state, cannot access platform
+5. Member waits in pending state, cannot access platform
 
 ### Admin Approval Workflow
 1. Admin visits `/admin` dashboard

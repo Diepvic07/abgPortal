@@ -44,7 +44,6 @@ ABG Alumni Connect is an AI-powered member matching platform for ABG Alumni comm
 - **Performance**: Next.js ISR (1-hour revalidation) for fast, rate-limited loads
 
 ### 6. Notifications
-- **Discord Webhooks**: New members, requests, connections, love match responses
 - **Email via Resend**: Confirmation, introductions, love match notifications, magic links
 - **Status Updates**: Admin alerts for important actions, love match timeouts
 
@@ -61,9 +60,8 @@ ABG Alumni Connect is an AI-powered member matching platform for ABG Alumni comm
 | **Markdown** | react-markdown with prose styling |
 | **AI** | Google Gemini 1.5 Flash |
 | **Email** | Resend |
-| **Storage** | Vercel Blob (voice/avatar) |
+| **Storage** | Vercel Blob (avatar) |
 | **Hosting** | Vercel |
-| **Notifications** | Discord Webhooks |
 
 ## Project Structure
 
@@ -153,7 +151,6 @@ abg-alumni-connect/
 │   ├── news-service.ts            # News CMS service with fallback to sample data
 │   ├── news-sample-data.ts        # Fallback sample articles (when Sheets is empty)
 │   ├── resend.ts                  # Email sending
-│   ├── discord.ts                 # Webhook notifications
 │   └── utils.ts                   # Helper functions
 │
 ├── types/index.ts                 # TypeScript interfaces
@@ -198,7 +195,6 @@ interface Member {
   looking_for: string;
   bio: string;
   avatar_url?: string;
-  voice_url?: string;
 
   // Tier & payment
   paid: boolean;                    // true = premium, false = basic
@@ -310,7 +306,7 @@ interface Member {
 ### 1. Member Onboarding
 ```
 User fills form → Validate email → Gemini generates bio →
-Save to Sheets → Email confirmation → Discord alert →
+Save to Sheets → Email confirmation →
 User in "pending" approval status
 ```
 
@@ -394,7 +390,7 @@ Members skip approval queue, ready to use immediately
 ### Basic Tier (paid = false)
 - **Cost**: Free
 - **Requests**: 3 lifetime total
-- **Profile Visibility**: Limited (no phone, LinkedIn, voice)
+- **Profile Visibility**: Limited (no phone, LinkedIn)
 - **Match Results**: Blurred names/roles/companies, visible reasons
 - **Match Score**: Not visible (Premium feature)
 - **Access**: Full app after approval
@@ -462,7 +458,6 @@ npm run import-members                  # Execute import
 | `GOOGLE_CLIENT_SECRET` | String | Google OAuth client secret |
 | `GEMINI_API_KEY` | String | Google AI API key |
 | `RESEND_API_KEY` | String | Resend email API key |
-| `DISCORD_WEBHOOK_URL` | String | Discord webhook for alerts |
 | `BLOB_READ_WRITE_TOKEN` | String | Vercel Blob storage token |
 | `EMAIL_FROM` | String | From address for emails |
 | `NEXTAUTH_SECRET` | String | JWT signing secret |
@@ -517,7 +512,6 @@ npm run import-members                  # Execute import
 - Email verification required for magic link authentication
 - Approval workflow prevents unauthorized member access
 - Account suspension available for abuse prevention
-- Discord webhooks for audit trail of admin actions
 - NextAuth JWT session strategy with 30-day expiry
 
 ## E2E Testing Infrastructure
@@ -549,8 +543,7 @@ e2e/
 │   ├── supabase.mock.ts     # Supabase database mock
 │   ├── gemini.mock.ts       # Gemini AI mock
 │   ├── resend.mock.ts       # Email service mock
-│   ├── blob.mock.ts         # Storage service mock
-│   └── discord.mock.ts      # Discord webhook mock
+│   └── blob.mock.ts         # Storage service mock
 └── tests/                   # Test suites
     ├── smoke.spec.ts        # Critical path smoke tests
     ├── auth/                # Authentication tests
@@ -673,8 +666,7 @@ Mocked Services:
 - **Supabase**: Member CRUD, approval workflow, data persistence
 - **Gemini AI**: Bio generation, member matching
 - **Resend**: Email confirmation, magic links, introductions
-- **Vercel Blob**: Avatar/voice file uploads
-- **Discord**: Admin notifications
+- **Vercel Blob**: Avatar file uploads
 
 ### CI/CD Pipeline Integration
 

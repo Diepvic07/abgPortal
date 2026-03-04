@@ -23,7 +23,6 @@ Smart, low-effort peer connections powered by AI, augmented with an automated in
 - **CMS:** Supabase news table (for News content management)
 - **AI Integration:** Google Gemini 1.5 Flash (for matching logic and profile generation)
 - **Emails:** Resend API
-- **Notifications:** Discord Webhooks
 - **Storage:** Vercel Blob (for avatars/images)
 
 ---
@@ -96,7 +95,7 @@ To balance free access with sustainable operations, the platform enforces a two-
   - **Member Management:** View all members, filter by status, and monitor key metrics.
   - **Tier Management:** Manually upgrade or downgrade approved members between Basic and Premium tiers.
 - **News Management:** Admins publish/unpublish news articles directly via the Google Sheet "News" tab without needing to access a separate CMS platform.
-- **Notifications:** Admins receive real-time alerts via a Discord Webhook when new members onboard, new matches are requested, and when connections are accepted.
+- **Notifications:** Admins receive real-time email alerts when new members onboard, new matches are requested, and when connections are accepted.
 
 ---
 
@@ -107,7 +106,7 @@ To balance free access with sustainable operations, the platform enforces a two-
 2. System checks email; routes to `/signup`.
 3. User completes form (name, role, what they offer/seek).
 4. Gemini generates a bio; profile is saved as `pending`.
-5. Admin is notified via Discord and approves the user via `/admin`.
+5. Admin approves the user via `/admin`.
 6. User can now log in via Google or Magic Link and access the platform.
 
 ### 4.2 Connection Request (Pro User, Standard Flow)

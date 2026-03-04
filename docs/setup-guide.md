@@ -106,17 +106,8 @@ This guide will help you obtain all the necessary API keys and configure the env
     EMAIL_FROM=ABG Connect <noreply@your-domain.com>
     ```
 
-## 6. Discord Notifications (`DISCORD_WEBHOOK_URL`)
-1.  Open Discord and go to the server/channel where you want notifications (e.g., `#admin-alerts`).
-2.  Click the **Gear icon** (Edit Channel) next to the channel name.
-3.  Go to **Integrations** → **Webhooks**.
-4.  Click **New Webhook**.
-5.  Name it "ABG Bot".
-6.  Click **Copy Webhook URL**.
-7.  Paste it into `.env.local` as `DISCORD_WEBHOOK_URL`.
-
-## 7. Vercel Blob (`BLOB_READ_WRITE_TOKEN`)
-*Used for storing voice introductions. If you are deploying to Vercel, this is easiest to get via the Vercel Dashboard.*
+## 6. Vercel Blob (`BLOB_READ_WRITE_TOKEN`)
+*Used for storing avatar images. If you are deploying to Vercel, this is easiest to get via the Vercel Dashboard.*
 
 **Option A: If deploying now**
 1.  Deploy the project to Vercel (see deployment guide).
@@ -126,4 +117,4 @@ This guide will help you obtain all the necessary API keys and configure the env
 5.  Find `BLOB_READ_WRITE_TOKEN`, copy the value, and paste it into your local `.env.local` if you want to test locally.
 
 **Option B: Skip for now**
-If you don't need voice features immediately for local testing, you can leave this blank or put a dummy value, but voice upload features will fail.
+If you don't need avatar upload features immediately for local testing, you can leave this blank or put a dummy value, but avatar uploads will fail.
