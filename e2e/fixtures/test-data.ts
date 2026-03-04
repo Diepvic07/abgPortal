@@ -96,7 +96,8 @@ export interface TestNewsArticle {
   image_url?: string;
   author_name: string;
   published_date: string;
-  is_published: boolean;
+  is_published_vi: boolean;
+  is_published_en: boolean;
   is_featured: boolean;
   created_at: string;
 }
@@ -113,7 +114,8 @@ export function createTestArticle(overrides: Partial<TestNewsArticle> = {}): Tes
     image_url: 'https://via.placeholder.com/800x400',
     author_name: 'Test Author',
     published_date: new Date().toISOString(),
-    is_published: true,
+    is_published_vi: true,
+    is_published_en: true,
     is_featured: false,
     created_at: new Date().toISOString(),
     ...overrides,

@@ -60,6 +60,10 @@ export function LanguageProvider({ children, defaultLocale = 'en' }: LanguagePro
       // localStorage not available
     }
 
+    // Set cookie for server-side locale access
+    const secure = window.location.protocol === 'https:' ? ';Secure' : '';
+    document.cookie = `locale=${locale};path=/;max-age=31536000;SameSite=Lax${secure}`;
+
     // Update HTML lang attribute
     document.documentElement.lang = locale;
   }, [locale, mounted]);

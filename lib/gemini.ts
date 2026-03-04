@@ -217,6 +217,50 @@ Return ONLY valid JSON array, no markdown:
   }
 }
 
+export async function translateNewsArticle(input: {
+  title_vi: string;
+  excerpt_vi: string;
+  content_vi: string;
+  instructions?: string;
+}): Promise<{ title: string; excerpt: string; content: string }> {
+  const instructionContext = input.instructions
+    ? `\nAdditional context from editor: ${input.instructions}`
+    : '';
+
+  const prompt = `You are a professional Vietnamese-to-English translator for a business alumni community news portal.
+
+Translate the following Vietnamese news article into natural, professional English.
+Preserve all Markdown formatting in the content field.
+Do not add any content that wasn't in the original.
+${instructionContext}
+
+Vietnamese Title: ${input.title_vi}
+
+Vietnamese Excerpt: ${input.excerpt_vi}
+
+Vietnamese Content:
+${input.content_vi}
+
+Return ONLY valid JSON, no markdown wrapping:
+{"title": "English title", "excerpt": "English excerpt", "content": "English content with markdown preserved"}`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const text = result.response.text().trim();
+    const jsonStr = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const parsed = JSON.parse(jsonStr);
+
+    return {
+      title: parsed.title || '',
+      excerpt: parsed.excerpt || '',
+      content: parsed.content || '',
+    };
+  } catch (error) {
+    console.error('Gemini translateNewsArticle error:', error);
+    throw new Error('Translation failed. Please try again.');
+  }
+}
+
 export async function transcribeVoice(audioBase64: string): Promise<string> {
   const prompt = 'Transcribe this audio accurately. Return only the transcription, no extra text.';
 

@@ -19,7 +19,6 @@ function mapRowToMember(row: Record<string, unknown>): Member {
     looking_for: row.looking_for as string,
     bio: row.bio as string,
     avatar_url: nullToUndefined(row.avatar_url as string | null),
-    voice_url: nullToUndefined(row.voice_url as string | null),
     status: (row.status as 'active' | 'inactive') || 'active',
     paid: row.paid as boolean,
     free_requests_used: (row.free_requests_used as number) || 0,
@@ -46,7 +45,6 @@ function mapRowToMember(row: Record<string, unknown>): Member {
     display_nickname_in_search: (row.display_nickname_in_search as boolean) || false,
     display_nickname_in_match: (row.display_nickname_in_match as boolean) || false,
     display_nickname_in_email: (row.display_nickname_in_email as boolean) || false,
-    discord_username: nullToUndefined(row.discord_username as string | null),
     payment_status: ((row.payment_status as string) || 'unpaid') as 'unpaid' | 'pending' | 'paid' | 'expired',
     membership_expiry: nullToUndefined(row.membership_expiry as string | null),
     approval_status: ((row.approval_status as string) || 'approved') as 'pending' | 'approved' | 'rejected',
@@ -121,7 +119,8 @@ function mapRowToNewsArticle(row: Record<string, unknown>): NewsArticle {
     image_url: nullToUndefined(row.image_url as string | null),
     author_name: (row.author_name as string) || 'ABG Admin',
     published_date: (row.published_date as string) || '',
-    is_published: (row.is_published as boolean) || false,
+    is_published_vi: (row.is_published_vi as boolean) || false,
+    is_published_en: (row.is_published_en as boolean) || false,
     is_featured: (row.is_featured as boolean) || false,
     created_at: row.created_at as string,
     title_vi: nullToUndefined(row.title_vi as string | null),
@@ -186,7 +185,6 @@ export async function addMember(member: Member): Promise<void> {
     looking_for: member.looking_for,
     bio: member.bio,
     avatar_url: member.avatar_url ?? null,
-    voice_url: member.voice_url ?? null,
     status: member.status,
     paid: member.paid,
     free_requests_used: member.free_requests_used,
@@ -213,7 +211,6 @@ export async function addMember(member: Member): Promise<void> {
     display_nickname_in_search: member.display_nickname_in_search ?? false,
     display_nickname_in_match: member.display_nickname_in_match ?? false,
     display_nickname_in_email: member.display_nickname_in_email ?? false,
-    discord_username: member.discord_username ?? null,
     payment_status: member.payment_status ?? 'unpaid',
     membership_expiry: member.membership_expiry ?? null,
     approval_status: member.approval_status ?? 'approved',
@@ -525,9 +522,63 @@ export async function updateLoveMatchRequest(
 
 // ==================== News ====================
 
-export async function getNewsArticles(category?: string): Promise<NewsArticle[]> {
+// Admin: get all articles (published + drafts)
+export async function getAllNewsArticles(filters?: {
+  category?: string;
+  search?: string;
+}): Promise<NewsArticle[]> {
   const db = createServerSupabaseClient();
-  let query = db.from('news').select('*').eq('is_published', true).order('published_date', { ascending: false });
+  let query = db.from('news').select('*').order('created_at', { ascending: false });
+  if (filters?.category && filters.category !== 'All') {
+    query = query.eq('category', filters.category);
+  }
+  if (filters?.search) {
+    const safe = filters.search.replace(/[%_'\\]/g, '\\$&');
+    query = query.or(`title.ilike.%${safe}%,title_vi.ilike.%${safe}%`);
+  }
+  const { data, error } = await query;
+  if (error) throw new Error(`Failed to get all news: ${error.message}`);
+  return (data || []).map(row => mapRowToNewsArticle(row as unknown as Record<string, unknown>));
+}
+
+export async function getNewsArticleById(id: string): Promise<NewsArticle | null> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('news').select('*').eq('id', id).maybeSingle();
+  if (error) throw new Error(`Failed to get news by id: ${error.message}`);
+  return data ? mapRowToNewsArticle(data as unknown as Record<string, unknown>) : null;
+}
+
+export async function createNewsArticle(article: Omit<NewsArticle, 'created_at'>): Promise<NewsArticle> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('news').insert({
+    ...article,
+    image_url: article.image_url ?? null,
+    title_vi: article.title_vi ?? null,
+    excerpt_vi: article.excerpt_vi ?? null,
+    content_vi: article.content_vi ?? null,
+    created_at: new Date().toISOString(),
+  }).select().single();
+  if (error) throw new Error(`Failed to create news: ${error.message}`);
+  return mapRowToNewsArticle(data as unknown as Record<string, unknown>);
+}
+
+export async function updateNewsArticle(id: string, updates: Partial<Omit<NewsArticle, 'id' | 'created_at'>>): Promise<NewsArticle> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('news').update(updates).eq('id', id).select().single();
+  if (error) throw new Error(`Failed to update news: ${error.message}`);
+  return mapRowToNewsArticle(data as unknown as Record<string, unknown>);
+}
+
+export async function deleteNewsArticle(id: string): Promise<void> {
+  const db = createServerSupabaseClient();
+  const { error } = await db.from('news').delete().eq('id', id);
+  if (error) throw new Error(`Failed to delete news: ${error.message}`);
+}
+
+export async function getNewsArticles(category?: string, locale: string = 'vi'): Promise<NewsArticle[]> {
+  const db = createServerSupabaseClient();
+  const publishField = locale === 'en' ? 'is_published_en' : 'is_published_vi';
+  let query = db.from('news').select('*').eq(publishField, true).order('published_date', { ascending: false });
   if (category && category !== 'All') {
     query = query.eq('category', category);
   }
@@ -539,11 +590,12 @@ export async function getNewsArticles(category?: string): Promise<NewsArticle[]>
   return (data || []).map(row => mapRowToNewsArticle(row as unknown as Record<string, unknown>));
 }
 
-export async function getNewsArticleBySlug(slug: string): Promise<NewsArticle | null> {
+export async function getNewsArticleBySlug(slug: string, locale: string = 'vi'): Promise<NewsArticle | null> {
   const db = createServerSupabaseClient();
+  const publishField = locale === 'en' ? 'is_published_en' : 'is_published_vi';
   const { data, error } = await db.from('news').select('*')
     .eq('slug', slug)
-    .eq('is_published', true)
+    .eq(publishField, true)
     .maybeSingle();
   if (error) {
     console.error('[SupabaseDB] getNewsArticleBySlug error:', error);

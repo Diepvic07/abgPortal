@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminMemberDirectory } from "@/components/admin/admin-member-directory";
+import { AdminNewsManager } from "@/components/admin/admin-news-manager";
 
 interface AdminMember {
   id: string;
@@ -25,12 +26,13 @@ export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [members, setMembers] = useState<AdminMember[]>([]);
-  const [activeTab, setActiveTab] = useState<"pending" | "status" | "directory">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "status" | "directory" | "news">("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [editingExpiry, setEditingExpiry] = useState<string | null>(null);
   const [expiryValue, setExpiryValue] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -158,7 +160,20 @@ export default function AdminPage() {
   };
 
   const pendingMembers = members.filter((m) => m.approval_status === "pending");
-  const displayMembers = activeTab === "pending" ? pendingMembers : activeTab === "status" ? members : [];
+  const filterBySearch = (list: AdminMember[]) => {
+    if (!searchQuery.trim()) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter((m) =>
+      m.name?.toLowerCase().includes(q) ||
+      m.email?.toLowerCase().includes(q) ||
+      m.role?.toLowerCase().includes(q) ||
+      m.company?.toLowerCase().includes(q) ||
+      m.abg_class?.toLowerCase().includes(q)
+    );
+  };
+  const displayMembers = filterBySearch(
+    activeTab === "pending" ? pendingMembers : activeTab === "status" ? members : []
+  );
 
   if (status === "loading" || isLoading) {
     return (
@@ -184,7 +199,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto py-8 px-4">
+      <div className="max-w-[1400px] mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
           <div className="flex items-center gap-4">
@@ -226,9 +241,35 @@ export default function AdminPage() {
           >
             Member Directory
           </button>
+          <button
+            onClick={() => setActiveTab("news")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === "news"
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            News
+          </button>
         </div>
 
-        {activeTab === "directory" ? (
+        {activeTab !== "directory" && activeTab !== "news" && (
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Search by name, email, role, company, class..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        )}
+
+        {activeTab === "news" ? (
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <AdminNewsManager />
+          </div>
+        ) : activeTab === "directory" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">
             <AdminMemberDirectory />
           </div>
@@ -236,15 +277,18 @@ export default function AdminPage() {
         <>
         {/* Members table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-auto max-h-[70vh]">
+            <table className="w-full min-w-[900px]">
               <thead>
-                <tr className="bg-gray-50 border-b">
+                <tr className="bg-gray-50 border-b sticky top-0 z-10">
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
                     Name
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                    Email
+                    Actions
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                    Tier
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
                     Role
@@ -253,20 +297,14 @@ export default function AdminPage() {
                     Status
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                    Tier
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                    Admin
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                    Actions
+                    Email
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {displayMembers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                       {activeTab === "pending"
                         ? "No pending applications"
                         : "No members found"}
@@ -275,6 +313,7 @@ export default function AdminPage() {
                 ) : (
                   displayMembers.map((member, index) => (
                     <tr key={`${member.id}-${member.email}-${index}`} className="hover:bg-gray-50">
+                      {/* Name */}
                       <td className="px-4 py-3">
                         <div>
                           <p className="font-medium text-gray-900">{member.name}</p>
@@ -283,93 +322,9 @@ export default function AdminPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {member.email}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {member.role || "-"}
-                        {member.company && (
-                          <span className="text-gray-400"> at {member.company}</span>
-                        )}
-                      </td>
+                      {/* Actions - stacked vertically */}
                       <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                            member.approval_status === "approved"
-                              ? "bg-green-100 text-green-800"
-                              : member.approval_status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {member.approval_status}
-                        </span>
-                        {member.is_csv_imported && (
-                          <span className="ml-1 inline-flex px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-                            CSV
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                            member.paid
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          {member.paid ? "Premium" : "Basic"}
-                        </span>
-                        {member.paid && member.membership_expiry && (
-                          <div className="mt-1">
-                            {editingExpiry === member.id ? (
-                              <div className="flex items-center gap-1">
-                                <input
-                                  type="date"
-                                  value={expiryValue}
-                                  onChange={(e) => setExpiryValue(e.target.value)}
-                                  className="text-xs border rounded px-1 py-0.5 w-28"
-                                />
-                                <button
-                                  onClick={() => handleExpiryUpdate(member.id)}
-                                  disabled={actionLoading === member.id}
-                                  className="text-xs text-green-600 hover:text-green-800"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={() => setEditingExpiry(null)}
-                                  className="text-xs text-gray-400 hover:text-gray-600"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setEditingExpiry(member.id);
-                                  setExpiryValue(new Date(member.membership_expiry!).toISOString().split("T")[0]);
-                                }}
-                                className="text-xs text-gray-400 hover:text-gray-600"
-                                title="Click to edit expiry date"
-                              >
-                                Exp: {new Date(member.membership_expiry).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {member.is_admin ? (
-                          <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            Admin
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-1">
                           {member.approval_status === "pending" && (
                             <>
                               <button
@@ -419,6 +374,93 @@ export default function AdminPage() {
                             </>
                           )}
                         </div>
+                      </td>
+                      {/* Tier + Admin merged */}
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span
+                            className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              member.paid
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-gray-100 text-gray-600"
+                            }`}
+                          >
+                            {member.paid ? "Premium" : "Basic"}
+                          </span>
+                          {member.is_admin && (
+                            <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                        {member.paid && member.membership_expiry && (
+                          <div className="mt-1">
+                            {editingExpiry === member.id ? (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="date"
+                                  value={expiryValue}
+                                  onChange={(e) => setExpiryValue(e.target.value)}
+                                  className="text-xs border rounded px-1 py-0.5 w-28"
+                                />
+                                <button
+                                  onClick={() => handleExpiryUpdate(member.id)}
+                                  disabled={actionLoading === member.id}
+                                  className="text-xs text-green-600 hover:text-green-800"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => setEditingExpiry(null)}
+                                  className="text-xs text-gray-400 hover:text-gray-600"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setEditingExpiry(member.id);
+                                  setExpiryValue(new Date(member.membership_expiry!).toISOString().split("T")[0]);
+                                }}
+                                className="text-xs text-gray-400 hover:text-gray-600"
+                                title="Click to edit expiry date"
+                              >
+                                Exp: {new Date(member.membership_expiry).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      {/* Role */}
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {member.role || "-"}
+                        {member.company && (
+                          <span className="text-gray-400"> at {member.company}</span>
+                        )}
+                      </td>
+                      {/* Status */}
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                            member.approval_status === "approved"
+                              ? "bg-green-100 text-green-800"
+                              : member.approval_status === "pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {member.approval_status}
+                        </span>
+                        {member.is_csv_imported && (
+                          <span className="ml-1 inline-flex px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
+                            CSV
+                          </span>
+                        )}
+                      </td>
+                      {/* Email */}
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {member.email}
                       </td>
                     </tr>
                   ))

@@ -43,7 +43,7 @@ export async function mockGoogleSheets(page: Page, config: SheetsMockConfig = {}
           values: newsArticles.map((a) => [
             a.id, a.title, a.slug, a.category, a.excerpt, a.content,
             a.image_url || '', a.author_name, a.published_date,
-            a.is_published ? 'TRUE' : 'FALSE', a.is_featured ? 'TRUE' : 'FALSE',
+            a.is_published_vi ? 'TRUE' : 'FALSE', a.is_published_en ? 'TRUE' : 'FALSE', a.is_featured ? 'TRUE' : 'FALSE',
             a.created_at,
           ]),
         }),

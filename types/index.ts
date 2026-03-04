@@ -150,10 +150,10 @@ export interface NewsArticle {
   image_url?: string;
   author_name: string;
   published_date: string;
-  is_published: boolean;
+  is_published_vi: boolean;
+  is_published_en: boolean;
   is_featured: boolean;
   created_at: string;
-  // Vietnamese localized fields (Google Sheets columns M-O)
   title_vi?: string;
   excerpt_vi?: string;
   content_vi?: string;

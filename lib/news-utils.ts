@@ -1,4 +1,5 @@
 import { NewsArticle, NewsCategory } from '@/types';
+import slugifyLib from 'slugify';
 
 /** Returns localized title/excerpt/content for an article, falling back to English. */
 export function localizeArticle(
@@ -16,12 +17,7 @@ export function localizeArticle(
 }
 
 export function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
+  return slugifyLib(title, { lower: true, strict: true, locale: 'vi' });
 }
 
 export function getCategoryColor(category: NewsCategory): string {

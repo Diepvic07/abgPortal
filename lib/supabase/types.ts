@@ -235,7 +235,8 @@ export interface Database {
           image_url: string | null;
           author_name: string;
           published_date: string | null;
-          is_published: boolean;
+          is_published_vi: boolean;
+          is_published_en: boolean;
           is_featured: boolean;
           created_at: string;
           title_vi: string | null;
@@ -252,7 +253,8 @@ export interface Database {
           image_url?: string | null;
           author_name?: string;
           published_date?: string | null;
-          is_published?: boolean;
+          is_published_vi?: boolean;
+          is_published_en?: boolean;
           is_featured?: boolean;
           created_at?: string;
           title_vi?: string | null;
