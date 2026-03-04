@@ -130,10 +130,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Professional / Job / Hiring
-    const allMembers = await getActivePaidMembers();
-    let availableMembers = allMembers.filter(m => m.id !== requester.id);
-    if (type === 'job') availableMembers = availableMembers.filter(m => m.hiring);
-    else if (type === 'hiring') availableMembers = availableMembers.filter(m => m.open_to_work);
+    const paidMembers = await getActivePaidMembers();
+    let availableMembers = paidMembers.filter(m => m.id !== requester.id);
+    if (type === 'job') {
+      const hiringMembers = availableMembers.filter(m => m.hiring);
+      if (hiringMembers.length > 0) availableMembers = hiringMembers;
+    } else if (type === 'hiring') {
+      const openToWorkMembers = availableMembers.filter(m => m.open_to_work);
+      if (openToWorkMembers.length > 0) availableMembers = openToWorkMembers;
+    }
+
+    // Fallback: broaden to all active members if paid-only yields none
+    if (availableMembers.length === 0) {
+      const allMembersData = await getMembers();
+      availableMembers = allMembersData.filter(m =>
+        m.id !== requester.id && m.status === 'active'
+      );
+    }
 
     newMatches = await findMatches(
       originalRequest.request_text,

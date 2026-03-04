@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { findMatches } from '@/lib/gemini';
 import { getActivePaidMembers, getMembers, addRequest, updateMemberFreeRequests, incrementMemberRequestCounts, incrementMemberMonthlyRequests, addRequestAudit } from '@/lib/supabase-db';
-import { notifyAdmin } from '@/lib/discord';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { getTranslations, type Locale } from '@/lib/i18n';
@@ -31,11 +30,7 @@ export async function POST(request: NextRequest) {
     // Check for abuse
     const abuse = await checkForAbuse(requester.id, request_text);
     if (abuse.shouldSuspend) {
-      await notifyAdmin('abuse_detected', {
-        requester_name: requester.name,
-        request_text: `Account flagged for: ${abuse.reason}`,
-      });
-      // Optionally could return error here if we want to block them immediately
+      console.warn(`[Abuse] Account flagged for: ${abuse.reason}`, { member: requester.name });
     }
 
     // Audit helper
@@ -91,9 +86,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    let matchResults = [];
-    let finalMatches = [];
-    let enrichedMatches = [];
+    let matchResults: { id: string; reason: string; match_score?: number }[] = [];
+    let finalMatches: { id: string; reason: string; match_score?: number }[] = [];
+    let enrichedMatches: unknown[] = [];
 
     // 3. Fetch candidates based on type
     if (type === 'dating') {
@@ -112,19 +107,27 @@ export async function POST(request: NextRequest) {
       const allMembers = await getMembers();
       const oppositeGender = requester.gender === 'Male' ? 'Female' : 'Male';
 
-      const availableMembers = allMembers.filter(m =>
+      let availableMembers = allMembers.filter(m =>
         m.id !== requester.id &&
         m.gender === oppositeGender &&
         (m.relationship_status === 'Single' || m.relationship_status === 'Single (Available)') &&
         m.status === 'active'
       );
 
+      // Fallback: broaden to any active opposite-gender member if strict filter yields none
       if (availableMembers.length === 0) {
-        return Response.json({
-          matches: [],
-          request_id: 'no-matches',
-          message: 'No profiles match your preferences currently.'
-        });
+        availableMembers = allMembers.filter(m =>
+          m.id !== requester.id &&
+          m.gender === oppositeGender &&
+          m.status === 'active'
+        );
+      }
+
+      // Last resort: any active member except self
+      if (availableMembers.length === 0) {
+        availableMembers = allMembers.filter(m =>
+          m.id !== requester.id && m.status === 'active'
+        ).slice(0, 5);
       }
 
       // Build dating profiles from Member data for AI matching
@@ -149,13 +152,16 @@ export async function POST(request: NextRequest) {
         created_at: m.created_at,
       }));
 
-      matchResults = await findDatingMatches(request_text, datingProfiles, locale);
+      if (datingProfiles.length > 0) {
+        matchResults = await findDatingMatches(request_text, datingProfiles, locale);
+      }
 
-      if (matchResults.length === 0) {
-        // Fallback
+      if (matchResults.length === 0 && availableMembers.length > 0) {
+        // Fallback: return up to 3 members with low score
         finalMatches = availableMembers.slice(0, 3).map(m => ({
           id: m.id,
-          reason: 'New community member open to connection.'
+          reason: 'New community member open to connection.',
+          match_score: 30,
         }));
       } else {
         finalMatches = matchResults;
@@ -185,56 +191,53 @@ export async function POST(request: NextRequest) {
 
     } else {
       // Professional, Job, or Hiring Logic
-      const allMembers = await getActivePaidMembers();
-      let availableMembers = allMembers.filter(m => m.id !== requester.id);
+      const paidMembers = await getActivePaidMembers();
+      let availableMembers = paidMembers.filter(m => m.id !== requester.id);
 
       // Filter based on request type
       if (type === 'job') {
-        // User looking for job -> Find members who are HIRING
-        availableMembers = availableMembers.filter(m => m.hiring);
+        const hiringMembers = availableMembers.filter(m => m.hiring);
+        // Fallback to all paid members if no one is explicitly hiring
+        if (hiringMembers.length > 0) availableMembers = hiringMembers;
       } else if (type === 'hiring') {
-        // User looking for candidates -> Find members who are OPEN TO WORK
-        availableMembers = availableMembers.filter(m => m.open_to_work);
+        const openToWorkMembers = availableMembers.filter(m => m.open_to_work);
+        // Fallback to all paid members if no one is explicitly open to work
+        if (openToWorkMembers.length > 0) availableMembers = openToWorkMembers;
       }
 
+      // Fallback: broaden to all active members if paid-only yields none
       if (availableMembers.length === 0) {
-        let msg = 'No members available for matching';
-        if (type === 'job') msg = 'No members currently hiring found.';
-        if (type === 'hiring') msg = 'No members currently looking for work found.';
-
-        return Response.json({
-          matches: [],
-          request_id: 'no-candidates',
-          message: msg
-        });
+        const allMembers = await getMembers();
+        availableMembers = allMembers.filter(m =>
+          m.id !== requester.id && m.status === 'active'
+        );
       }
 
-      matchResults = await findMatches(
-        request_text,
-        availableMembers.map(m => ({
-          id: m.id,
-          name: m.name,
-          role: m.role,
-          company: m.company,
-          expertise: m.expertise,
-          can_help_with: m.can_help_with,
-          looking_for: m.looking_for,
-          bio: m.bio,
-          // Include new fields in context if relevant
-          job_preferences: m.job_preferences,
-          hiring_preferences: m.hiring_preferences,
-        })),
-        locale
-      );
+      matchResults = availableMembers.length > 0
+        ? await findMatches(
+            request_text,
+            availableMembers.map(m => ({
+              id: m.id,
+              name: m.name,
+              role: m.role,
+              company: m.company,
+              expertise: m.expertise,
+              can_help_with: m.can_help_with,
+              looking_for: m.looking_for,
+              bio: m.bio,
+              job_preferences: m.job_preferences,
+              hiring_preferences: m.hiring_preferences,
+            })),
+            locale
+          )
+        : [];
 
       finalMatches = matchResults;
-      if (matchResults.length === 0) {
-        const fallbackMembers = availableMembers
+      if (matchResults.length === 0 && availableMembers.length > 0) {
+        finalMatches = availableMembers
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
           .slice(0, 3)
-          .map(m => ({ id: m.id, reason: 'Recommended community member.' }));
-
-        finalMatches = fallbackMembers;
+          .map(m => ({ id: m.id, reason: 'Recommended community member.', match_score: 30 }));
       }
 
       enrichedMatches = finalMatches
@@ -272,11 +275,6 @@ export async function POST(request: NextRequest) {
     } else {
       await updateMemberFreeRequests(requester.id, requester.free_requests_used + 1);
     }
-
-    await notifyAdmin('new_request', {
-      requester_name: requester.name,
-      request_text: `[${type.toUpperCase()}] ${request_text}`,
-    });
 
     // Soft block for basic tier with limit reached - show blurred matches
     if (shouldSoftBlock) {

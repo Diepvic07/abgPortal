@@ -47,8 +47,8 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
         throw new Error(result.error || 'Failed to get new matches');
       }
 
-      if (result.data?.matches?.length > 0) {
-        const newMatches = result.data.matches as MatchWithMember[];
+      if (result.matches?.length > 0) {
+        const newMatches = result.matches as MatchWithMember[];
         setMatches(newMatches);
         setAllShownIds(prev => [...prev, ...newMatches.map(m => m.id)]);
         setSelectedId(null);
@@ -58,8 +58,8 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
         setError('No more matches available. Try adjusting your request.');
       }
 
-      if (result.data?.warning) {
-        setError(result.data.warning);
+      if (result.warning) {
+        setError(result.warning);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reroll');
