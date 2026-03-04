@@ -1,6 +1,6 @@
 'use client';
 
-import { Member } from '@/types';
+import { Member, getAvatarMemberStatus } from '@/types';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { getCountryFlag } from '@/lib/country-flags';
 
@@ -18,7 +18,7 @@ export function AdminMemberCard({ member, onSelect }: AdminMemberCardProps) {
       className="w-full text-left rounded-lg border border-gray-700 bg-gray-800 p-4 hover:border-blue-500 hover:bg-gray-750 transition-colors"
     >
       <div className="flex items-start gap-3">
-        <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="lg" />
+        <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="lg" memberStatus={getAvatarMemberStatus(member)} />
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-white truncate">{member.name}</h3>
           {member.expertise && (

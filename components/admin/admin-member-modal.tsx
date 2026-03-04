@@ -1,6 +1,6 @@
 'use client';
 
-import { Member } from '@/types';
+import { Member, getAvatarMemberStatus } from '@/types';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { getCountryFlag } from '@/lib/country-flags';
 
@@ -42,7 +42,7 @@ export function AdminMemberModal({ member, onClose }: AdminMemberModalProps) {
         <div className="flex flex-col sm:flex-row gap-6">
           {/* Avatar */}
           <div className="flex-shrink-0 flex flex-col items-center gap-2">
-            <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="xl" className="!w-24 !h-24 !text-2xl" />
+            <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="xl" memberStatus={getAvatarMemberStatus(member)} className="!w-24 !h-24 !text-2xl" />
             {member.abg_class && (
               <span className="text-xs bg-blue-900 text-blue-300 px-2 py-0.5 rounded">{member.abg_class}</span>
             )}
@@ -62,7 +62,6 @@ export function AdminMemberModal({ member, onClose }: AdminMemberModalProps) {
               <DetailRow label="Bio" value={member.bio} />
               <DetailRow label="Email" value={member.email} />
               <DetailRow label="Phone" value={member.phone} />
-              <DetailRow label="Discord" value={member.discord_username} />
             </dl>
 
             {/* Social Links */}

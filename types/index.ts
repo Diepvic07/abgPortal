@@ -9,7 +9,6 @@ export interface Member {
   looking_for: string;
   bio: string;
   avatar_url?: string;
-  voice_url?: string;
   status: 'active' | 'inactive';
   paid: boolean;
   free_requests_used: number;
@@ -38,7 +37,6 @@ export interface Member {
   display_nickname_in_search?: boolean;
   display_nickname_in_match?: boolean;
   display_nickname_in_email?: boolean;
-  discord_username?: string;
   payment_status?: 'unpaid' | 'pending' | 'paid' | 'expired';
   membership_expiry?: string;
   // Approval fields (columns AO-AP)
@@ -87,6 +85,13 @@ export function getMembershipStatus(member: Member): MembershipStatus {
   }
 
   return 'premium';
+}
+
+// Derive display status for avatar badge: admin > pro > basic
+export function getAvatarMemberStatus(member: Member): 'basic' | 'pro' | 'admin' {
+  if (member.is_admin) return 'admin';
+  if (member.paid || member.payment_status === 'paid') return 'pro';
+  return 'basic';
 }
 
 export type RequestCategory = 'love' | 'job' | 'hiring' | 'partner';

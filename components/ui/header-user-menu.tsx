@@ -7,6 +7,7 @@ import { useTranslation } from '@/lib/i18n';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { MembershipBadge } from '@/components/ui/membership-badge';
 import type { Member, MembershipStatus } from '@/types';
+import { getAvatarMemberStatus } from '@/types';
 import { isAdmin } from '@/lib/admin-utils';
 
 interface HeaderUserMenuProps {
@@ -36,6 +37,8 @@ export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps
     await signOut({ callbackUrl: '/' });
   };
 
+  const avatarStatus = getAvatarMemberStatus(member);
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -43,7 +46,7 @@ export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps
         className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         aria-label="User menu"
       >
-        <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="sm" />
+        <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="sm" memberStatus={avatarStatus} />
         <svg
           className="w-4 h-4 text-white"
           fill="none"
@@ -63,7 +66,7 @@ export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps
         <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
           <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center gap-3 mb-2">
-              <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="md" />
+              <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="md" memberStatus={avatarStatus} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{member.name}</p>
                 <p className="text-xs text-gray-500 truncate">{member.email}</p>

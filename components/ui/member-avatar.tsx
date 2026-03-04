@@ -1,9 +1,12 @@
 'use client';
 
+export type AvatarMemberStatus = 'basic' | 'pro' | 'admin';
+
 interface MemberAvatarProps {
   name: string;
   avatarUrl?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  memberStatus?: AvatarMemberStatus;
   className?: string;
 }
 
@@ -52,30 +55,51 @@ const sizeClasses = {
   xl: 'w-16 h-16 text-lg',
 };
 
-export function MemberAvatar({ name, avatarUrl, size = 'md', className = '' }: MemberAvatarProps) {
+const statusConfig: Record<AvatarMemberStatus, { bg: string; text: string; label: string }> = {
+  basic: { bg: 'bg-gray-500', text: 'text-white', label: 'Basic' },
+  pro: { bg: 'bg-emerald-500', text: 'text-white', label: 'Pro' },
+  admin: { bg: 'bg-purple-600', text: 'text-white', label: 'Admin' },
+};
+
+// Text badge sizes relative to avatar size
+const badgeSizeClasses = {
+  sm: 'text-[8px] leading-none px-1 py-px -bottom-1 left-1/2 -translate-x-1/2',
+  md: 'text-[9px] leading-none px-1 py-px -bottom-1 left-1/2 -translate-x-1/2',
+  lg: 'text-[10px] leading-none px-1.5 py-0.5 -bottom-1.5 left-1/2 -translate-x-1/2',
+  xl: 'text-xs leading-none px-2 py-0.5 -bottom-1.5 left-1/2 -translate-x-1/2',
+};
+
+export function MemberAvatar({ name, avatarUrl, size = 'md', memberStatus, className = '' }: MemberAvatarProps) {
   const sizeClass = sizeClasses[size];
 
-  // Show uploaded avatar if available
-  if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={name}
-        className={`${sizeClass} rounded-full object-cover ${className}`}
-      />
-    );
-  }
-
-  // Show letter-based avatar
-  const initials = getInitials(name);
-  const bgColor = getColorFromName(name);
-
-  return (
+  const avatarContent = avatarUrl ? (
+    <img
+      src={avatarUrl}
+      alt={name}
+      className={`${sizeClass} rounded-full object-cover ${className}`}
+    />
+  ) : (
     <div
-      className={`${sizeClass} ${bgColor} rounded-full flex items-center justify-center text-white font-semibold ${className}`}
+      className={`${sizeClass} ${getColorFromName(name)} rounded-full flex items-center justify-center text-white font-semibold ${className}`}
       title={name}
     >
-      {initials}
+      {getInitials(name)}
+    </div>
+  );
+
+  if (!memberStatus) return avatarContent;
+
+  const { bg, text, label } = statusConfig[memberStatus];
+  const badgeSize = badgeSizeClasses[size];
+
+  return (
+    <div className="relative inline-flex flex-shrink-0 mb-1">
+      {avatarContent}
+      <span
+        className={`absolute ${badgeSize} ${bg} ${text} font-semibold rounded-full whitespace-nowrap`}
+      >
+        {label}
+      </span>
     </div>
   );
 }

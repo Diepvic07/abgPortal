@@ -5,6 +5,7 @@ import { useTranslation } from '@/lib/i18n';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { MembershipBadge } from '@/components/ui/membership-badge';
 import type { Member, MembershipStatus } from '@/types';
+import { getAvatarMemberStatus } from '@/types';
 
 interface ProfileViewDisplayProps {
   member: Member;
@@ -28,7 +29,7 @@ export function ProfileViewDisplay({ member, membershipStatus }: ProfileViewDisp
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-4">
-            <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="xl" />
+            <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="xl" memberStatus={getAvatarMemberStatus(member)} />
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{member.name}</h1>
               {member.nickname && (
