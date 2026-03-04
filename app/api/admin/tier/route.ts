@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { memberId, tier } = await request.json();
+    const { memberId, tier, membershipExpiry } = await request.json();
 
     if (!memberId || !tier) {
       return NextResponse.json({ error: "Member ID and tier required" }, { status: 400 });
@@ -27,11 +27,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
 
-    // Update paid status based on tier
-    await updateMember(memberId, {
+    // Update paid status and set expiry for premium (default: +1 year, or admin-specified date)
+    const updates: Record<string, unknown> = {
       paid: tier === "premium",
       payment_status: tier === "premium" ? "paid" : "unpaid",
-    });
+    };
+    if (tier === "premium") {
+      if (membershipExpiry) {
+        updates.membership_expiry = new Date(membershipExpiry).toISOString();
+      } else {
+        const expiry = new Date();
+        expiry.setFullYear(expiry.getFullYear() + 1);
+        updates.membership_expiry = expiry.toISOString();
+      }
+    }
+    await updateMember(memberId, updates);
 
     return NextResponse.json({ success: true, tier });
   } catch (error) {

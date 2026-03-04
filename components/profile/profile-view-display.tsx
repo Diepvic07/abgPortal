@@ -36,6 +36,11 @@ export function ProfileViewDisplay({ member, membershipStatus }: ProfileViewDisp
               )}
               <div className="flex items-center gap-2 mt-2">
                 <MembershipBadge status={membershipStatus} size="md" />
+                {member.membership_expiry && (membershipStatus === 'premium' || membershipStatus === 'grace-period') && (
+                  <span className="text-xs text-gray-500">
+                    {t.profile.membership.expiresOn} {formatDate(member.membership_expiry)}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -176,7 +181,7 @@ export function ProfileViewDisplay({ member, membershipStatus }: ProfileViewDisp
         )}
 
         {/* Social Links Section */}
-        {(member.linkedin_url || member.facebook_url || member.company_website || member.discord_username) && (
+        {(member.linkedin_url || member.facebook_url || member.company_website) && (
           <section className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">{t.profile.sections.social}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -217,12 +222,6 @@ export function ProfileViewDisplay({ member, membershipStatus }: ProfileViewDisp
                   >
                     {member.company_website}
                   </a>
-                </div>
-              )}
-              {member.discord_username && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Discord</label>
-                  <p className="text-gray-900">{member.discord_username}</p>
                 </div>
               )}
             </div>

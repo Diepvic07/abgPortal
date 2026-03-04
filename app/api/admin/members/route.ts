@@ -29,6 +29,7 @@ export async function GET() {
       is_admin: isAdmin(m),
       created_at: m.created_at,
       abg_class: m.abg_class,
+      membership_expiry: m.membership_expiry,
     }));
 
     // Deduplicate by email, keeping the entry with most recent created_at

@@ -70,6 +70,12 @@ export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps
               </div>
             </div>
             <MembershipBadge status={membershipStatus} size="sm" />
+            {member.membership_expiry && (membershipStatus === 'premium' || membershipStatus === 'grace-period') && (
+              <p className="text-xs text-gray-400 mt-1">
+                {t.profile.membership.expiresOn}{' '}
+                {new Date(member.membership_expiry).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+              </p>
+            )}
           </div>
 
           <div className="py-1">

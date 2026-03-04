@@ -17,6 +17,7 @@ interface AdminMember {
   is_admin: boolean;
   created_at: string;
   abg_class?: string;
+  membership_expiry?: string;
 }
 
 export default function AdminPage() {
@@ -27,6 +28,8 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [editingExpiry, setEditingExpiry] = useState<string | null>(null);
+  const [expiryValue, setExpiryValue] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -107,6 +110,26 @@ export default function AdminPage() {
       await fetchMembers();
     } catch {
       alert("Failed to change tier");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleExpiryUpdate = async (id: string) => {
+    if (!expiryValue) return;
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/tier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: id, tier: "premium", membershipExpiry: expiryValue }),
+      });
+      if (!res.ok) throw new Error("Failed to update expiry");
+      setEditingExpiry(null);
+      setExpiryValue("");
+      await fetchMembers();
+    } catch {
+      alert("Failed to update expiry date");
     } finally {
       setActionLoading(null);
     }
@@ -283,6 +306,44 @@ export default function AdminPage() {
                         >
                           {member.paid ? "Premium" : "Basic"}
                         </span>
+                        {member.paid && member.membership_expiry && (
+                          <div className="mt-1">
+                            {editingExpiry === member.id ? (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="date"
+                                  value={expiryValue}
+                                  onChange={(e) => setExpiryValue(e.target.value)}
+                                  className="text-xs border rounded px-1 py-0.5 w-28"
+                                />
+                                <button
+                                  onClick={() => handleExpiryUpdate(member.id)}
+                                  disabled={actionLoading === member.id}
+                                  className="text-xs text-green-600 hover:text-green-800"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => setEditingExpiry(null)}
+                                  className="text-xs text-gray-400 hover:text-gray-600"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setEditingExpiry(member.id);
+                                  setExpiryValue(new Date(member.membership_expiry!).toISOString().split("T")[0]);
+                                }}
+                                className="text-xs text-gray-400 hover:text-gray-600"
+                                title="Click to edit expiry date"
+                              >
+                                Exp: {new Date(member.membership_expiry).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         {member.is_admin ? (
