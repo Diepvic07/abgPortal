@@ -14,7 +14,7 @@ function DetailRow({ label, value }: { label: string; value?: string }) {
   return (
     <div>
       <dt className="text-xs text-gray-500 uppercase tracking-wide">{label}</dt>
-      <dd className="text-sm text-gray-200 whitespace-pre-line">{value}</dd>
+      <dd className="text-sm text-gray-700 whitespace-pre-line">{value}</dd>
     </div>
   );
 }
@@ -22,7 +22,7 @@ function DetailRow({ label, value }: { label: string; value?: string }) {
 function LinkButton({ href, label }: { href: string; label: string }) {
   return (
     <a href={href} target="_blank" rel="noopener noreferrer"
-      className="inline-block rounded bg-gray-700 px-3 py-1 text-xs text-blue-400 hover:bg-gray-600 transition-colors">
+      className="inline-block rounded bg-gray-100 px-3 py-1 text-xs text-blue-600 hover:bg-gray-200 transition-colors">
       {label}
     </a>
   );
@@ -35,23 +35,23 @@ export function AdminMemberModal({ member, onClose }: AdminMemberModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-6"
+      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-gray-200 bg-white p-6 shadow-xl"
         onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-white text-xl">&times;</button>
+        <button onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-gray-700 text-xl">&times;</button>
 
         <div className="flex flex-col sm:flex-row gap-6">
           {/* Avatar */}
           <div className="flex-shrink-0 flex flex-col items-center gap-2">
             <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="xl" memberStatus={getAvatarMemberStatus(member)} className="!w-24 !h-24 !text-2xl" />
             {member.abg_class && (
-              <span className="text-xs bg-blue-900 text-blue-300 px-2 py-0.5 rounded">{member.abg_class}</span>
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{member.abg_class}</span>
             )}
           </div>
 
           {/* Details */}
           <div className="flex-1 space-y-3">
-            <h2 className="text-xl font-bold text-white">{member.name}</h2>
-            {member.country && <p className="text-sm text-gray-400">{flag} {member.country}</p>}
+            <h2 className="text-xl font-bold text-gray-900">{member.name}</h2>
+            {member.country && <p className="text-sm text-gray-500">{flag} {member.country}</p>}
 
             <dl className="space-y-3">
               <DetailRow label="Industry" value={member.expertise} />

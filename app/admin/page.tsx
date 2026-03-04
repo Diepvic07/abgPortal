@@ -229,7 +229,7 @@ export default function AdminPage() {
         </div>
 
         {activeTab === "directory" ? (
-          <div className="bg-gray-950 rounded-xl p-6 text-white">
+          <div className="bg-white rounded-xl shadow-sm p-6">
             <AdminMemberDirectory />
           </div>
         ) : (

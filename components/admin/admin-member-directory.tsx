@@ -66,12 +66,12 @@ export function AdminMemberDirectory() {
     <div className="space-y-6">
       <AdminMemberFilters filters={filters} onFilterChange={handleFilterChange} dropdownOptions={dropdownOptions} />
 
-      <div className="text-sm text-gray-400">
+      <div className="text-sm text-gray-500">
         Showing {members.length} of {total} members
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading members...</div>
+        <div className="text-center py-12 text-gray-500">Loading members...</div>
       ) : members.length === 0 ? (
         <div className="text-center py-12 text-gray-500">No members found</div>
       ) : (

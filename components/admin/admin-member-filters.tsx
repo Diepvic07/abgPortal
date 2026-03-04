@@ -35,8 +35,8 @@ export function AdminMemberFilters({ filters, onFilterChange, dropdownOptions }:
     onFilterChange({ name: '', role: '', company: '', country: '', abg_class: '', expertise: '' });
   };
 
-  const inputClass = 'w-full rounded-md bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none';
-  const selectClass = 'w-full rounded-md bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none';
+  const inputClass = 'w-full rounded-md bg-white border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none';
+  const selectClass = 'w-full rounded-md bg-white border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none';
 
   return (
     <div className="space-y-3">
@@ -62,7 +62,7 @@ export function AdminMemberFilters({ filters, onFilterChange, dropdownOptions }:
           {dropdownOptions.industries.map(i => <option key={i} value={i}>{i}</option>)}
         </select>
       </div>
-      <button onClick={clearAll} className="text-sm text-gray-400 hover:text-white underline">
+      <button onClick={clearAll} className="text-sm text-gray-500 hover:text-gray-700 underline">
         Clear all filters
       </button>
     </div>
