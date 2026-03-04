@@ -184,6 +184,12 @@ export async function POST(request: NextRequest) {
               ? `${member.self_description}${member.core_values ? `. Values: ${member.core_values}` : ''}`
               : '',
             avatar_url: member.avatar_url || '',
+            gender: member.gender || '',
+            self_description: member.self_description || '',
+            interests: member.interests || '',
+            core_values: member.core_values || '',
+            ideal_day: member.ideal_day || '',
+            qualities_looking_for: member.qualities_looking_for || '',
             status: 'active',
           }
         };

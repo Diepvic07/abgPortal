@@ -158,6 +158,12 @@ export function ConnectionRequestForm() {
     }
   };
 
+  const handleNewSearch = () => {
+    setMatches(null);
+    setRequestId(null);
+    setError(null);
+  };
+
   // Show real results for authenticated users with valid requests
   if (matches && requestId) {
     return (
@@ -165,6 +171,7 @@ export function ConnectionRequestForm() {
         matches={matches}
         requestId={requestId}
         category={matchType}
+        onNewSearch={handleNewSearch}
       />
     );
   }

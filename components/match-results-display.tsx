@@ -13,9 +13,10 @@ interface MatchResultsDisplayProps {
   matches: MatchWithMember[];
   requestId: string;
   category?: string;
+  onNewSearch?: () => void;
 }
 
-export function MatchResultsDisplay({ matches: initialMatches, requestId, category }: MatchResultsDisplayProps) {
+export function MatchResultsDisplay({ matches: initialMatches, requestId, category, onNewSearch }: MatchResultsDisplayProps) {
   const { t, locale } = useTranslation();
   const [matches, setMatches] = useState<MatchWithMember[]>(initialMatches);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -30,6 +31,21 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
   const [allShownIds, setAllShownIds] = useState<string[]>(initialMatches.map(m => m.id));
 
   const isLove = category === 'love';
+
+  /** Mask name for love matches: "Nguyễn Văn An" → "N*** V*** A***" */
+  const maskName = (member: Member): string => {
+    const name = member.nickname || member.name || '';
+    if (!name) return 'Anonymous';
+    return name.split(/\s+/).map(part =>
+      part.charAt(0) + '***'
+    ).join(' ');
+  };
+
+  const genderLabel = (member: Member): string | null => {
+    if (member.gender === 'Male') return '♂';
+    if (member.gender === 'Female') return '♀';
+    return null;
+  };
 
   const handleReroll = async () => {
     setIsRerolling(true);
@@ -154,8 +170,11 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
+                  {isLove && genderLabel(match.member) && (
+                    <span className="text-lg" title={match.member.gender}>{genderLabel(match.member)}</span>
+                  )}
                   <h3 className="font-semibold text-text-primary">
-                    {match.member.name}
+                    {isLove ? maskName(match.member) : match.member.name}
                   </h3>
                   {match.match_score && (
                     <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
@@ -163,9 +182,11 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-text-secondary">
-                  {match.member.role} at {match.member.company}
-                </p>
+                {!isLove && (
+                  <p className="text-sm text-text-secondary">
+                    {match.member.role} at {match.member.company}
+                  </p>
+                )}
               </div>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                 selectedId === match.id
@@ -180,16 +201,36 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
               </div>
             </div>
 
-            <p className="mt-3 text-sm text-text-secondary">
-              {match.member.bio}
-            </p>
+            {isLove ? (
+              <div className="mt-3 space-y-2 text-sm">
+                {match.member.self_description && (
+                  <p className="text-text-secondary"><span className="font-medium text-text-primary">About:</span> {match.member.self_description}</p>
+                )}
+                {match.member.interests && (
+                  <p className="text-text-secondary"><span className="font-medium text-text-primary">Interests:</span> {match.member.interests}</p>
+                )}
+                {match.member.core_values && (
+                  <p className="text-text-secondary"><span className="font-medium text-text-primary">Values:</span> {match.member.core_values}</p>
+                )}
+                {match.member.ideal_day && (
+                  <p className="text-text-secondary"><span className="font-medium text-text-primary">Ideal day:</span> {match.member.ideal_day}</p>
+                )}
+                {match.member.qualities_looking_for && (
+                  <p className="text-text-secondary"><span className="font-medium text-text-primary">Looking for:</span> {match.member.qualities_looking_for}</p>
+                )}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-text-secondary">
+                {match.member.bio}
+              </p>
+            )}
 
             <div className="mt-3 p-3 bg-bg-primary rounded-lg">
               <p className="text-sm font-medium text-text-primary">{t.matches.whyMatched}</p>
               <p className="text-sm text-text-secondary mt-1">{match.reason}</p>
             </div>
 
-            {match.member.expertise && (
+            {!isLove && match.member.expertise && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {match.member.expertise.split(',').slice(0, 3).map((skill, i) => (
                   <span
@@ -273,6 +314,18 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
           )}
         </button>
       </div>
+
+      {onNewSearch && (
+        <button
+          onClick={onNewSearch}
+          className="w-full py-3 px-6 text-text-secondary hover:text-brand hover:underline cursor-pointer text-sm font-medium transition-colors flex items-center justify-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span>Start a New Search</span>
+        </button>
+      )}
 
       <p className="text-xs text-text-secondary text-center">
         Rerolling counts against your request quota. {t.matches.footerNote}

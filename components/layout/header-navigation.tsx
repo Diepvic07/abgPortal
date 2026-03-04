@@ -87,9 +87,11 @@ export function HeaderNavigation() {
 
         {/* Desktop navigation */}
         <nav className="hidden md:flex items-center gap-6">
-          <Link href="/onboard" className="text-sm text-white/80 hover:text-white transition-colors">
-            {t.nav.join}
-          </Link>
+          {status !== 'authenticated' && (
+            <Link href="/onboard" className="text-sm text-white/80 hover:text-white transition-colors">
+              {t.nav.join}
+            </Link>
+          )}
           <Link href="/request" className="text-sm text-white/80 hover:text-white transition-colors">
             {t.nav.findConnection}
           </Link>
@@ -112,13 +114,15 @@ export function HeaderNavigation() {
           onClick={(e) => e.stopPropagation()}
         >
           <nav className="flex flex-col p-4 gap-1">
-            <Link
-              href="/onboard"
-              className="text-sm text-white/90 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t.nav.join}
-            </Link>
+            {status !== 'authenticated' && (
+              <Link
+                href="/onboard"
+                className="text-sm text-white/90 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {t.nav.join}
+              </Link>
+            )}
             <Link
               href="/request"
               className="text-sm text-white/90 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
