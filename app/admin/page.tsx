@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AdminMemberDirectory } from "@/components/admin/admin-member-directory";
 
 interface AdminMember {
   id: string;
@@ -24,7 +25,7 @@ export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [members, setMembers] = useState<AdminMember[]>([]);
-  const [activeTab, setActiveTab] = useState<"pending" | "all">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "status" | "directory">("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -157,7 +158,7 @@ export default function AdminPage() {
   };
 
   const pendingMembers = members.filter((m) => m.approval_status === "pending");
-  const displayMembers = activeTab === "pending" ? pendingMembers : members;
+  const displayMembers = activeTab === "pending" ? pendingMembers : activeTab === "status" ? members : [];
 
   if (status === "loading" || isLoading) {
     return (
@@ -187,9 +188,6 @@ export default function AdminPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
           <div className="flex items-center gap-4">
-            <Link href="/admin/members" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-              Member Directory
-            </Link>
             <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
               Back to App
             </Link>
@@ -209,17 +207,33 @@ export default function AdminPage() {
             Pending ({pendingMembers.length})
           </button>
           <button
-            onClick={() => setActiveTab("all")}
+            onClick={() => setActiveTab("status")}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === "all"
+              activeTab === "status"
                 ? "bg-blue-600 text-white"
                 : "bg-white text-gray-700 hover:bg-gray-100"
             }`}
           >
-            All Members ({members.length})
+            Member Status ({members.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("directory")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === "directory"
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            Member Directory
           </button>
         </div>
 
+        {activeTab === "directory" ? (
+          <div className="bg-gray-950 rounded-xl p-6 text-white">
+            <AdminMemberDirectory />
+          </div>
+        ) : (
+        <>
         {/* Members table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -443,6 +457,8 @@ export default function AdminPage() {
             <p className="text-sm text-gray-500">CSV Imported</p>
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );
