@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from './supabase/server';
-import { Member, ConnectionRequest, Connection, LoveMatchRequest, NewsArticle, NewsCategory } from '@/types';
+import { Member, ConnectionRequest, Connection, LoveMatchRequest, NewsArticle, NewsCategory, ContactRequest, PaymentRecord } from '@/types';
 
 // ==================== Helpers ====================
 
@@ -62,6 +62,8 @@ function mapRowToMember(row: Record<string, unknown>): Member {
     dating_profile_complete: (row.dating_profile_complete as boolean) || false,
     requests_this_month: (row.requests_this_month as number) || 0,
     month_reset_date: nullToUndefined(row.month_reset_date as string | null),
+    searches_this_month: (row.searches_this_month as number) || 0,
+    search_month_reset_date: nullToUndefined(row.search_month_reset_date as string | null),
   };
 }
 
@@ -228,6 +230,8 @@ export async function addMember(member: Member): Promise<void> {
     dating_profile_complete: member.dating_profile_complete ?? false,
     requests_this_month: member.requests_this_month ?? 0,
     month_reset_date: member.month_reset_date ?? null,
+    searches_this_month: member.searches_this_month ?? 0,
+    search_month_reset_date: member.search_month_reset_date ?? null,
   });
   if (error) {
     console.error(`[SupabaseDB] addMember error for ${member.email}:`, error);
@@ -518,6 +522,177 @@ export async function updateLoveMatchRequest(
     throw new Error(`Failed to update love match request: ${error.message}`);
   }
   return true;
+}
+
+// ==================== Contact Requests ====================
+
+function mapRowToContactRequest(row: Record<string, unknown>): ContactRequest {
+  return {
+    id: row.id as string,
+    requester_id: row.requester_id as string,
+    target_id: row.target_id as string,
+    message: row.message as string,
+    status: (row.status as ContactRequest['status']) || 'pending',
+    feedback: nullToUndefined(row.feedback as string | null),
+    token: row.token as string,
+    created_at: row.created_at as string,
+    responded_at: nullToUndefined(row.responded_at as string | null),
+  };
+}
+
+export async function createContactRequest(data: ContactRequest): Promise<void> {
+  const db = createServerSupabaseClient();
+  const { error } = await db.from('contact_requests').insert({
+    id: data.id,
+    requester_id: data.requester_id,
+    target_id: data.target_id,
+    message: data.message,
+    status: data.status,
+    feedback: data.feedback ?? null,
+    token: data.token,
+    created_at: data.created_at,
+    responded_at: data.responded_at ?? null,
+  });
+  if (error) {
+    console.error('[SupabaseDB] createContactRequest error:', error);
+    throw new Error(`Failed to create contact request: ${error.message}`);
+  }
+}
+
+export async function getContactRequestByToken(token: string): Promise<ContactRequest | null> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('contact_requests').select('*').eq('token', token).maybeSingle();
+  if (error) {
+    console.error('[SupabaseDB] getContactRequestByToken error:', error);
+    throw new Error(`Failed to get contact request: ${error.message}`);
+  }
+  return data ? mapRowToContactRequest(data as unknown as Record<string, unknown>) : null;
+}
+
+export async function getContactRequestsByMemberId(memberId: string): Promise<ContactRequest[]> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('contact_requests').select('*')
+    .or(`requester_id.eq.${memberId},target_id.eq.${memberId}`)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('[SupabaseDB] getContactRequestsByMemberId error:', error);
+    throw new Error(`Failed to get contact requests: ${error.message}`);
+  }
+  return (data || []).map(row => mapRowToContactRequest(row as unknown as Record<string, unknown>));
+}
+
+export async function updateContactRequestStatus(
+  id: string,
+  status: ContactRequest['status'],
+  feedback?: string
+): Promise<boolean> {
+  const db = createServerSupabaseClient();
+  const updates: Record<string, unknown> = {
+    status,
+    responded_at: new Date().toISOString(),
+  };
+  if (feedback !== undefined) updates.feedback = feedback;
+  const { error } = await db.from('contact_requests').update(updates).eq('id', id);
+  if (error) {
+    console.error('[SupabaseDB] updateContactRequestStatus error:', error);
+    throw new Error(`Failed to update contact request: ${error.message}`);
+  }
+  return true;
+}
+
+export async function getContactRequestsByRequesterAndTarget(
+  requesterId: string,
+  targetId: string
+): Promise<ContactRequest[]> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('contact_requests').select('*')
+    .eq('requester_id', requesterId)
+    .eq('target_id', targetId)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('[SupabaseDB] getContactRequestsByRequesterAndTarget error:', error);
+    return [];
+  }
+  return (data || []).map(row => mapRowToContactRequest(row as unknown as Record<string, unknown>));
+}
+
+export async function countTodayContactRequests(requesterId: string): Promise<number> {
+  const db = createServerSupabaseClient();
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const { count, error } = await db.from('contact_requests')
+    .select('*', { count: 'exact', head: true })
+    .eq('requester_id', requesterId)
+    .gte('created_at', todayStart.toISOString());
+  if (error) {
+    console.error('[SupabaseDB] countTodayContactRequests error:', error);
+    return 0;
+  }
+  return count || 0;
+}
+
+// ==================== Payment Records ====================
+
+function mapRowToPaymentRecord(row: Record<string, unknown>): PaymentRecord {
+  return {
+    id: row.id as string,
+    member_id: row.member_id as string,
+    amount_vnd: (row.amount_vnd as number) || 0,
+    admin_id: row.admin_id as string,
+    notes: nullToUndefined(row.notes as string | null),
+    created_at: row.created_at as string,
+  };
+}
+
+export async function createPaymentRecord(data: PaymentRecord): Promise<void> {
+  const db = createServerSupabaseClient();
+  const { error } = await db.from('payment_records').insert({
+    id: data.id,
+    member_id: data.member_id,
+    amount_vnd: data.amount_vnd,
+    admin_id: data.admin_id,
+    notes: data.notes ?? null,
+    created_at: data.created_at,
+  });
+  if (error) {
+    console.error('[SupabaseDB] createPaymentRecord error:', error);
+    throw new Error(`Failed to create payment record: ${error.message}`);
+  }
+}
+
+export async function getPaymentRecords(): Promise<PaymentRecord[]> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('payment_records').select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('[SupabaseDB] getPaymentRecords error:', error);
+    throw new Error(`Failed to get payment records: ${error.message}`);
+  }
+  return (data || []).map(row => mapRowToPaymentRecord(row as unknown as Record<string, unknown>));
+}
+
+// ==================== Member Search Counter ====================
+
+export async function incrementMemberSearchCount(id: string): Promise<void> {
+  const member = await getMemberById(id);
+  if (!member) return;
+  const db = createServerSupabaseClient();
+
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const existingMonth = member.search_month_reset_date || '';
+
+  const newCount = existingMonth === currentMonth
+    ? (member.searches_this_month || 0) + 1
+    : 1;
+
+  const { error } = await db.from('members').update({
+    searches_this_month: newCount,
+    search_month_reset_date: currentMonth,
+  }).eq('id', id);
+  if (error) {
+    console.error('[SupabaseDB] incrementMemberSearchCount error:', error);
+  }
 }
 
 // ==================== News ====================

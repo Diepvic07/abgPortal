@@ -95,6 +95,11 @@ export function HeaderNavigation() {
           <Link href="/request" className="text-sm text-white/80 hover:text-white transition-colors">
             {t.nav.findConnection}
           </Link>
+          {status === 'authenticated' && (
+            <Link href="/members" className="text-sm text-white/80 hover:text-white transition-colors">
+              Members
+            </Link>
+          )}
           <Link href="/news" className="text-sm text-white/80 hover:text-white transition-colors">
             News
           </Link>
@@ -130,6 +135,15 @@ export function HeaderNavigation() {
             >
               {t.nav.findConnection}
             </Link>
+            {status === 'authenticated' && (
+              <Link
+                href="/members"
+                className="text-sm text-white/90 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Members
+              </Link>
+            )}
             <Link
               href="/news"
               className="text-sm text-white/90 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"

@@ -6,8 +6,9 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { LoveMatchRequest, RequestCategory } from '@/types';
 import { RequestHistoryList } from './history-request-list-display';
 import { IncomingMatchesList } from './history-incoming-matches-list-display';
+import { ContactRequestsTab } from './contact-requests-tab';
 
-type TabType = 'requests' | 'incoming';
+type TabType = 'requests' | 'incoming' | 'contacts';
 type StatusFilter = 'all' | 'pending' | 'matched' | 'connected' | 'declined';
 type DateFilter = 0 | 7 | 30;
 
@@ -149,6 +150,16 @@ export function HistoryPageClient() {
                   </span>
                 )}
               </button>
+              <button
+                onClick={() => setActiveTab('contacts')}
+                className={`flex-1 px-4 sm:px-6 py-3.5 text-sm font-semibold border-b-3 transition-all ${
+                  activeTab === 'contacts'
+                    ? 'border-brand text-brand bg-brand/10 border-b-[3px]'
+                    : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Contacts
+              </button>
             </div>
           </div>
 
@@ -195,6 +206,8 @@ export function HistoryPageClient() {
               <div className="py-12">
                 <LoadingSpinner size="lg" text={t.common.loading} />
               </div>
+            ) : activeTab === 'contacts' ? (
+              <ContactRequestsTab />
             ) : activeTab === 'requests' ? (
               <div className="space-y-8">
                 <RequestHistoryList requests={requests} />
