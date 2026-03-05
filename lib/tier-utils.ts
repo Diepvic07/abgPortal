@@ -13,7 +13,22 @@ export const TIER_LIMITS = {
 export type TierType = "basic" | "premium";
 
 export function getMemberTier(member: Member): TierType {
-  return member.paid ? "premium" : "basic";
+  if (!member.paid) return "basic";
+  // Immediate downgrade when expired (no grace period)
+  if (member.membership_expiry) {
+    const expiry = new Date(member.membership_expiry);
+    if (new Date() > expiry) {
+      return "basic";
+    }
+  }
+  return "premium";
+}
+
+export function getDaysUntilExpiry(member: Member): number | null {
+  if (!member.membership_expiry) return null;
+  const expiry = new Date(member.membership_expiry);
+  const now = new Date();
+  return Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 /**

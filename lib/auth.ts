@@ -80,6 +80,20 @@ export const authOptions: NextAuthOptions = {
 
                 // Approved - update last login and allow
                 await updateMemberLastLogin(user.email);
+
+                // Auto-downgrade expired premium members
+                if (member.paid && member.membership_expiry) {
+                  const expiry = new Date(member.membership_expiry);
+                  if (new Date() > expiry) {
+                    const { updateMember } = await import('./supabase-db');
+                    await updateMember(member.id, {
+                      paid: false,
+                      payment_status: 'expired' as const,
+                    });
+                    console.log(`[Auth] Auto-downgraded expired member: ${member.email}`);
+                  }
+                }
+
                 return true;
             } catch (error) {
                 console.error("Sign in error:", error);

@@ -7,6 +7,7 @@ interface MembershipBadgeProps {
   status: MembershipStatus;
   size?: 'sm' | 'md';
   className?: string;
+  expiryDate?: string;
 }
 
 const statusConfig: Record<MembershipStatus, { color: string; bgColor: string }> = {
@@ -22,16 +23,20 @@ const sizeClasses = {
   md: 'text-sm px-3 py-1',
 };
 
-export function MembershipBadge({ status, size = 'md', className = '' }: MembershipBadgeProps) {
+export function MembershipBadge({ status, size = 'md', className = '', expiryDate }: MembershipBadgeProps) {
   const { t } = useTranslation();
   const { color, bgColor } = statusConfig[status];
   const sizeClass = sizeClasses[size];
+
+  const expiryLabel = status === 'premium' && expiryDate
+    ? ` - Exp: ${new Date(expiryDate).toLocaleDateString('vi-VN')}`
+    : '';
 
   return (
     <span
       className={`inline-flex items-center rounded-full font-medium ${color} ${bgColor} ${sizeClass} ${className}`}
     >
-      {t.profile.membership[status as keyof typeof t.profile.membership]}
+      {t.profile.membership[status as keyof typeof t.profile.membership]}{expiryLabel}
     </span>
   );
 }
