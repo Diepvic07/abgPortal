@@ -457,6 +457,220 @@ export async function sendLoveMatchAcceptEmail(data: {
 }
 
 /**
+ * Send contact request email to target member
+ */
+export async function sendContactRequestEmail(data: {
+  target_email: string;
+  target_name: string;
+  requester_name: string;
+  requester_role: string;
+  requester_company: string;
+  message: string;
+  accept_url: string;
+  decline_url: string;
+}): Promise<void> {
+  const resend = getResendClient();
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: data.target_email,
+    subject: `[ABG Connect] ${data.requester_name} muốn kết nối với bạn`,
+    html: `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { border-bottom: 2px solid #007bff; padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { margin: 0; font-size: 24px; color: #007bff; }
+    .requester-info { background: #f8f9fa; border-left: 4px solid #007bff; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+    .message-box { background: #e8f4fd; border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-style: italic; }
+    .actions { margin: 24px 0; }
+    .btn { display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-right: 12px; }
+    .btn-accept { background: #22c55e; color: white; }
+    .btn-decline { background: #9ca3af; color: white; }
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>ABG Alumni Connect</h1>
+    </div>
+
+    <p>Xin chào <strong>${data.target_name}</strong>,</p>
+
+    <p>Một thành viên ABG Alumni muốn kết nối với bạn:</p>
+
+    <div class="requester-info">
+      <strong>${data.requester_name}</strong><br>
+      ${data.requester_role}${data.requester_company ? ` tại ${data.requester_company}` : ''}
+    </div>
+
+    <p><strong>Lời nhắn:</strong></p>
+    <div class="message-box">${data.message}</div>
+
+    <p>Nếu bạn chấp nhận, thông tin liên hệ của bạn sẽ được chia sẻ với họ.</p>
+
+    <div class="actions">
+      <a href="${data.accept_url}" class="btn btn-accept">Chấp nhận</a>
+      <a href="${data.decline_url}" class="btn btn-decline">Từ chối</a>
+    </div>
+
+    <p>Trân trọng,<br>ABG Alumni Connect</p>
+
+    <div class="footer">
+      <p>ABG Alumni Community</p>
+    </div>
+  </div>
+</body>
+</html>
+    `,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: Contact request email not sent.', error.message);
+      return;
+    }
+    console.error('Failed to send contact request email:', error);
+    throw new Error(`Failed to send email: ${error.message}`);
+  }
+}
+
+/**
+ * Send contact accepted email to requester — reveals target's contact info
+ */
+export async function sendContactAcceptedEmail(data: {
+  requester_email: string;
+  requester_name: string;
+  target_name: string;
+  target_role: string;
+  target_company: string;
+  target_phone?: string;
+  target_email: string;
+}): Promise<void> {
+  const resend = getResendClient();
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: data.requester_email,
+    subject: `[ABG Connect] ${data.target_name} đã chấp nhận yêu cầu kết nối`,
+    html: `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { border-bottom: 2px solid #22c55e; padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { margin: 0; font-size: 24px; color: #22c55e; }
+    .contact-card { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0; }
+    .contact-card h3 { margin: 0 0 8px; color: #166534; }
+    .contact-card p { margin: 4px 0; font-size: 14px; }
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>ABG Alumni Connect</h1>
+    </div>
+
+    <p>Xin chào <strong>${data.requester_name}</strong>,</p>
+
+    <p>Tin vui! <strong>${data.target_name}</strong> đã chấp nhận yêu cầu kết nối của bạn. Đây là thông tin liên hệ của họ:</p>
+
+    <div class="contact-card">
+      <h3>${data.target_name}</h3>
+      <p>${data.target_role}${data.target_company ? ` tại ${data.target_company}` : ''}</p>
+      <p>Email: <a href="mailto:${data.target_email}">${data.target_email}</a></p>
+      ${data.target_phone ? `<p>Điện thoại: ${data.target_phone}</p>` : ''}
+    </div>
+
+    <p>Hãy liên hệ và bắt đầu kết nối nhé!</p>
+
+    <p>Trân trọng,<br>ABG Alumni Connect</p>
+
+    <div class="footer">
+      <p>ABG Alumni Community</p>
+    </div>
+  </div>
+</body>
+</html>
+    `,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: Contact accepted email not sent.', error.message);
+      return;
+    }
+    console.error('Failed to send contact accepted email:', error);
+    throw new Error(`Failed to send email: ${error.message}`);
+  }
+}
+
+/**
+ * Send contact declined email to requester — no target details revealed
+ */
+export async function sendContactDeclinedEmail(data: {
+  requester_email: string;
+  requester_name: string;
+}): Promise<void> {
+  const resend = getResendClient();
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: data.requester_email,
+    subject: `[ABG Connect] Cập nhật yêu cầu kết nối`,
+    html: `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { border-bottom: 2px solid #007bff; padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { margin: 0; font-size: 24px; color: #007bff; }
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>ABG Alumni Connect</h1>
+    </div>
+
+    <p>Xin chào <strong>${data.requester_name}</strong>,</p>
+
+    <p>Yêu cầu kết nối của bạn hiện không được chấp nhận vào lúc này.</p>
+
+    <p>Bạn có thể tiếp tục khám phá và kết nối với các thành viên khác trong cộng đồng ABG Alumni.</p>
+
+    <p>Trân trọng,<br>ABG Alumni Connect</p>
+
+    <div class="footer">
+      <p>ABG Alumni Community</p>
+    </div>
+  </div>
+</body>
+</html>
+    `,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: Contact declined email not sent.', error.message);
+      return;
+    }
+    console.error('Failed to send contact declined email:', error);
+    throw new Error(`Failed to send email: ${error.message}`);
+  }
+}
+
+/**
  * Send rejection notification email
  */
 export async function sendRejectionEmail(to: string, name: string): Promise<void> {
