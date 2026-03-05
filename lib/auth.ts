@@ -1,8 +1,14 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider from "next-auth/providers/email";
+import { Resend } from "resend";
 import { getMemberByEmail, updateMemberLastLogin } from "./supabase-db";
 import { SupabaseVerificationAdapter } from "./nextauth-supabase-adapter";
+import { getMagicLinkEmailHtml, getMagicLinkEmailText } from "./auth-email-template";
+
+// Per-email cooldown: 1 magic link per 60 seconds
+const MAGIC_LINK_COOLDOWN_MS = 60 * 1000;
+const emailLastSent: Record<string, number> = {};
 
 // Validate required environment variables
 const requiredEnvVars = {
@@ -38,15 +44,40 @@ export const authOptions: NextAuthOptions = {
             }
         }),
         EmailProvider({
-            server: {
-                host: 'smtp.resend.com',
-                port: 465,
-                auth: {
-                    user: 'resend',
-                    pass: process.env.RESEND_API_KEY!,
-                },
-            },
             from: process.env.EMAIL_FROM || 'ABG Connect <onboarding@resend.dev>',
+            async sendVerificationRequest({ identifier: email, url, provider }) {
+                // Enforce per-email cooldown to prevent spam/abuse
+                const normalizedEmail = email.trim().toLowerCase();
+                const now = Date.now();
+                const lastSent = emailLastSent[normalizedEmail];
+                if (lastSent && now - lastSent < MAGIC_LINK_COOLDOWN_MS) {
+                    const waitSec = Math.ceil((MAGIC_LINK_COOLDOWN_MS - (now - lastSent)) / 1000);
+                    throw new Error(`Please wait ${waitSec} seconds before requesting another magic link.`);
+                }
+
+                const resend = new Resend(process.env.RESEND_API_KEY);
+                const { host } = new URL(url);
+                const { error } = await resend.emails.send({
+                    from: provider.from,
+                    to: email,
+                    subject: `Sign in to ABG Alumni Connect`,
+                    html: getMagicLinkEmailHtml(url, host),
+                    text: getMagicLinkEmailText(url),
+                });
+
+                if (error) {
+                    // Resend test mode: can only send to account owner's email
+                    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+                        console.warn('[Auth] Resend test mode: cannot send magic link to', email);
+                        throw new Error('Resend đang ở chế độ test. Chỉ gửi được đến email đã xác minh. Hãy dùng Google Sign-In.');
+                    }
+                    console.error('[Auth] Failed to send magic link:', error);
+                    throw new Error(`Không thể gửi email: ${error.message}`);
+                }
+
+                // Only record timestamp after successful send
+                emailLastSent[normalizedEmail] = Date.now();
+            },
         }),
     ],
     callbacks: {

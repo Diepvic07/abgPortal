@@ -46,10 +46,14 @@ export function LoginForm() {
         return;
       }
 
-      // Send magic link
+      // Send magic link (server enforces 60s per-email cooldown)
       const result = await signIn("email", { email, redirect: false, callbackUrl: "/request" });
       if (result?.error) {
-        setError("Could not send email. Please try again.");
+        if (result.error.includes("wait") || result.error.includes("seconds")) {
+          setError(result.error);
+        } else {
+          setError("Could not send email. Please try again.");
+        }
       } else {
         setEmailSent(true);
       }
