@@ -60,6 +60,8 @@ export interface Database {
           dating_profile_complete: boolean;
           requests_this_month: number;
           month_reset_date: string | null;
+          searches_this_month: number;
+          search_month_reset_date: string | null;
           updated_at: string;
         };
         Insert: {
@@ -118,6 +120,8 @@ export interface Database {
           dating_profile_complete?: boolean;
           requests_this_month?: number;
           month_reset_date?: string | null;
+          searches_this_month?: number;
+          search_month_reset_date?: string | null;
         };
         Update: Partial<Database['public']['Tables']['members']['Insert']>;
         Relationships: [];
@@ -222,6 +226,52 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['love_match_requests']['Insert']>;
+        Relationships: [];
+      };
+      contact_requests: {
+        Row: {
+          id: string;
+          requester_id: string;
+          target_id: string;
+          message: string;
+          status: string;
+          feedback: string | null;
+          token: string;
+          created_at: string;
+          responded_at: string | null;
+        };
+        Insert: {
+          id: string;
+          requester_id: string;
+          target_id: string;
+          message?: string;
+          status?: string;
+          feedback?: string | null;
+          token: string;
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['contact_requests']['Insert']>;
+        Relationships: [];
+      };
+      payment_records: {
+        Row: {
+          id: string;
+          member_id: string;
+          amount_vnd: number;
+          admin_id: string;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          member_id: string;
+          amount_vnd: number;
+          admin_id: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['payment_records']['Insert']>;
         Relationships: [];
       };
       news: {

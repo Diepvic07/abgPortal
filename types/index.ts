@@ -58,6 +58,9 @@ export interface Member {
   // Monthly tracking fields (columns BB-BC, indices 53-54)
   requests_this_month?: number;      // BB (53) - monthly usage for Pro
   month_reset_date?: string;         // BC (54) - ISO date of current tracking month
+  // Search tracking fields (premium plan)
+  searches_this_month?: number;
+  search_month_reset_date?: string;
 }
 
 // Membership status for badge display
@@ -135,6 +138,27 @@ export interface LoveMatchRequest {
   to_profile_shared?: string;
   viewed_at?: string;
   resolved_at?: string;
+  created_at: string;
+}
+
+export interface ContactRequest {
+  id: string;
+  requester_id: string;
+  target_id: string;
+  message: string;
+  status: 'pending' | 'accepted' | 'declined';
+  feedback?: string;
+  token: string;
+  created_at: string;
+  responded_at?: string;
+}
+
+export interface PaymentRecord {
+  id: string;
+  member_id: string;
+  amount_vnd: number;
+  admin_id: string;
+  notes?: string;
   created_at: string;
 }
 
