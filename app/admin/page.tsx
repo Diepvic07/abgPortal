@@ -7,6 +7,7 @@ import Link from "next/link";
 import { AdminMemberDirectory } from "@/components/admin/admin-member-directory";
 import { AdminNewsManager } from "@/components/admin/admin-news-manager";
 import { AdminPaymentReport } from "@/components/admin/admin-payment-report";
+import { PaymentUpgradeModal } from "@/components/admin/payment-upgrade-modal";
 
 interface AdminMember {
   id: string;
@@ -34,6 +35,7 @@ export default function AdminPage() {
   const [editingExpiry, setEditingExpiry] = useState<string | null>(null);
   const [expiryValue, setExpiryValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [upgradeTarget, setUpgradeTarget] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -101,29 +103,29 @@ export default function AdminPage() {
     }
   };
 
-  const handleTierChange = async (id: string, currentPaid: boolean) => {
+  const handleTierChange = (id: string, currentPaid: boolean, memberName: string) => {
     const newTier = currentPaid ? "basic" : "premium";
 
-    let amount_vnd: number | undefined;
-    let notes: string | undefined;
-
     if (newTier === "premium") {
-      const amountStr = window.prompt("Enter payment amount (VND):");
-      if (!amountStr) return;
-      amount_vnd = parseInt(amountStr, 10);
-      if (isNaN(amount_vnd) || amount_vnd <= 0) {
-        alert("Invalid amount");
-        return;
-      }
-      notes = window.prompt("Notes (optional):") || "";
+      setUpgradeTarget({ id, name: memberName });
+      return;
     }
 
+    executeTierChange(id, newTier);
+  };
+
+  const executeTierChange = async (
+    id: string,
+    tier: string,
+    amount_vnd?: number,
+    notes?: string
+  ) => {
     setActionLoading(id);
     try {
       const res = await fetch("/api/admin/tier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: id, tier: newTier, amount_vnd, notes }),
+        body: JSON.stringify({ memberId: id, tier, amount_vnd, notes }),
       });
       if (!res.ok) throw new Error("Failed to change tier");
       await fetchMembers();
@@ -376,7 +378,7 @@ export default function AdminPage() {
                           {member.approval_status === "approved" && (
                             <>
                               <button
-                                onClick={() => handleTierChange(member.id, member.paid)}
+                                onClick={() => handleTierChange(member.id, member.paid, member.name)}
                                 disabled={actionLoading === member.id}
                                 className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
                               >
@@ -532,6 +534,19 @@ export default function AdminPage() {
         </>
         )}
       </div>
+
+      {/* Payment Upgrade Modal */}
+      <PaymentUpgradeModal
+        isOpen={!!upgradeTarget}
+        memberName={upgradeTarget?.name || ""}
+        onClose={() => setUpgradeTarget(null)}
+        onConfirm={(amount, notes) => {
+          if (upgradeTarget) {
+            setUpgradeTarget(null);
+            executeTierChange(upgradeTarget.id, "premium", amount, notes);
+          }
+        }}
+      />
     </div>
   );
 }
