@@ -152,6 +152,9 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
         <p className="text-text-secondary">
           {t.matches.selectPrompt}
         </p>
+        <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-1.5 mt-3 inline-block">
+          ⚠ {t.matches.aiDisclaimer}
+        </p>
       </div>
 
       {error && (

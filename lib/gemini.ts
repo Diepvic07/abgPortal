@@ -4,6 +4,11 @@ import { DatingProfile } from '@/types/dating';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+// Low temperature for matching to produce more consistent/deterministic results
+const matchingModel = genAI.getGenerativeModel({
+  model: 'gemini-flash-latest',
+  generationConfig: { temperature: 0.3 },
+});
 
 export async function generateBio(data: {
   name: string;
@@ -135,7 +140,7 @@ Return ONLY valid JSON array, no markdown:
   }
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await matchingModel.generateContent(prompt);
     const text = result.response.text().trim();
 
     // Clean JSON if wrapped in markdown
@@ -235,7 +240,7 @@ Return ONLY valid JSON array, no markdown:
 [{"id": "profile_id", "reason": "Why they match", "match_score": 85}]`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await matchingModel.generateContent(prompt);
     const text = result.response.text().trim();
     const jsonStr = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     let matches: { id: string; reason: string; match_score: number }[] = JSON.parse(jsonStr);

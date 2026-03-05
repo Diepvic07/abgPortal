@@ -105,6 +105,9 @@ export function PublicSearchSection() {
                 <p className="text-text-secondary text-sm mb-4">
                   {result.message}
                 </p>
+                <p className="text-xs text-amber-600 mb-4">
+                  ⚠ {t.matches.aiDisclaimer}
+                </p>
                 <button
                   onClick={scrollToAuth}
                   className="px-8 py-3 bg-brand text-white font-medium rounded-lg hover:bg-brand-dark transition-colors"

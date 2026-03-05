@@ -202,6 +202,7 @@ export const vi: Translations = {
     requestIntro: 'Nhờ giới thiệu',
     sendingIntro: 'Đang bắn tin...',
     footerNote: 'Cả bạn và người ấy sẽ nhận được email giới thiệu',
+    aiDisclaimer: 'Kết quả được tạo bởi AI và có thể thay đổi giữa các lần tìm kiếm. Điểm tương thích chỉ mang tính tham khảo.',
     success: {
       title: 'Đã bắn tin giới thiệu!',
       message: 'Đã gửi mail cho cả hai rồi nhé. Check inbox ngay và luôn!',
