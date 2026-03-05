@@ -24,6 +24,10 @@ export const vi: Translations = {
   // Footer
   footer: {
     community: 'Hội anh chị em ABG Alumni',
+    terms: 'Điều khoản dịch vụ',
+    privacy: 'Chính sách quyền riêng tư',
+    dataPolicy: 'Chính sách bảo vệ dữ liệu',
+    address: 'Read Station, Huỳnh Thúc Kháng, Hà Nội',
   },
 
   // Landing page

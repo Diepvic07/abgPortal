@@ -22,6 +22,10 @@ export const en = {
   // Footer
   footer: {
     community: 'ABG Alumni Community',
+    terms: 'Terms of Service',
+    privacy: 'Privacy Policy',
+    dataPolicy: 'Data Protection Policy',
+    address: 'Read Station, Huynh Thuc Khang, Ha Noi',
   },
 
   // Landing page

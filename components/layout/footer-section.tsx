@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 
 // Social icon components
@@ -82,6 +83,26 @@ export function FooterSection() {
 
         {/* Divider */}
         <div className="border-t border-white/10 pt-6">
+          {/* Legal links */}
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mb-4">
+            <Link href="/terms" className="text-white/50 hover:text-white/80 text-sm transition-colors">
+              {t.footer.terms}
+            </Link>
+            <span className="text-white/30">·</span>
+            <Link href="/privacy" className="text-white/50 hover:text-white/80 text-sm transition-colors">
+              {t.footer.privacy}
+            </Link>
+            <span className="text-white/30">·</span>
+            <Link href="/data-policy" className="text-white/50 hover:text-white/80 text-sm transition-colors">
+              {t.footer.dataPolicy}
+            </Link>
+          </div>
+
+          {/* Address */}
+          <p className="text-white/40 text-sm text-center mb-4">
+            {t.footer.address}
+          </p>
+
           <p className="text-white/40 text-sm text-center">
             {t.footer.community}
           </p>
