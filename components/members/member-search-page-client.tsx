@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { MemberSearchResultCard } from "./member-search-result-card";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -14,10 +14,19 @@ export function MemberSearchPageClient() {
   const [filters, setFilters] = useState({ name: "", company: "", expertise: "", abg_class: "" });
   const [results, setResults] = useState<SearchResult[]>([]);
   const [tier, setTier] = useState<string>("");
+  const [abgClasses, setAbgClasses] = useState<string[]>([]);
   const [searchQuota, setSearchQuota] = useState<{ remaining: number | null; limit: number | null }>({ remaining: null, limit: null });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetch("/api/search/members").then(r => r.json()).then(d => {
+        if (d.classes) setAbgClasses(d.classes);
+      }).catch(() => {});
+    }
+  }, [status]);
 
   const handleSearch = async () => {
     const hasQuery = query.trim().length >= 2;
@@ -132,14 +141,14 @@ export function MemberSearchPageClient() {
                 placeholder="Expertise"
                 className="px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
-              <input
-                type="text"
+              <select
                 value={filters.abg_class}
                 onChange={(e) => setFilters({ ...filters, abg_class: e.target.value })}
-                onKeyDown={handleKeyDown}
-                placeholder="ABG Class"
-                className="px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
-              />
+                className="px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+              >
+                <option value="">All Classes</option>
+                {abgClasses.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
 
             {/* Search quota for Basic tier */}

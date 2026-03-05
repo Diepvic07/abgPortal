@@ -6,6 +6,21 @@ import { checkSearchRateLimit, checkSearchQuota, getSearchQuotaInfo, filterSearc
 import { addRequestAudit, incrementMemberSearchCount } from "@/lib/supabase-db";
 import { Member } from "@/types";
 
+export async function GET(request: NextRequest) {
+  try {
+    await requireAuth(request);
+    const db = createServerSupabaseClient();
+    const { data } = await db.from("members").select("abg_class").eq("status", "active").eq("approval_status", "approved");
+    const classes = [...new Set((data || []).map(m => m.abg_class).filter(Boolean))].sort() as string[];
+    return NextResponse.json({ classes });
+  } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+    return NextResponse.json({ error: "Failed to fetch filter options" }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
   const userAgent = request.headers.get("user-agent") || "";
@@ -108,8 +123,7 @@ export async function POST(request: NextRequest) {
       dbQuery = dbQuery.ilike("expertise", `%${s}%`);
     }
     if (filters?.abg_class) {
-      const s = filters.abg_class.trim().slice(0, 50).replace(/[%_'\\]/g, "\\$&");
-      dbQuery = dbQuery.ilike("abg_class", `%${s}%`);
+      dbQuery = dbQuery.eq("abg_class", filters.abg_class.trim());
     }
 
     const { data, error } = await dbQuery;
