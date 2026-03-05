@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getMemberTier } from "@/lib/tier-utils";
 import { checkSearchRateLimit, checkSearchQuota, getSearchQuotaInfo, filterSearchResultByTier } from "@/lib/search-utils";
 import { addRequestAudit, incrementMemberSearchCount } from "@/lib/supabase-db";
+import { vietnameseIncludes } from "@/lib/vietnamese-utils";
 import { Member } from "@/types";
 
 export async function GET(request: NextRequest) {
@@ -98,39 +99,42 @@ export async function POST(request: NextRequest) {
     let dbQuery = db.from("members").select("*")
       .eq("status", "active")
       .eq("approval_status", "approved")
-      .neq("id", member.id)
-      .limit(10);
+      .neq("id", member.id);
 
-    // Apply text query across multiple fields
-    if (hasQuery) {
-      const safe = query!.trim().slice(0, 200).replace(/[%_'\\]/g, "\\$&");
-      dbQuery = dbQuery.or(
-        `name.ilike.%${safe}%,role.ilike.%${safe}%,company.ilike.%${safe}%,expertise.ilike.%${safe}%,bio.ilike.%${safe}%`
-      );
-    }
-
-    // Apply specific filters (AND logic)
-    if (filters?.name) {
-      const s = filters.name.trim().slice(0, 100).replace(/[%_'\\]/g, "\\$&");
-      dbQuery = dbQuery.ilike("name", `%${s}%`);
-    }
-    if (filters?.company) {
-      const s = filters.company.trim().slice(0, 100).replace(/[%_'\\]/g, "\\$&");
-      dbQuery = dbQuery.ilike("company", `%${s}%`);
-    }
-    if (filters?.expertise) {
-      const s = filters.expertise.trim().slice(0, 100).replace(/[%_'\\]/g, "\\$&");
-      dbQuery = dbQuery.ilike("expertise", `%${s}%`);
-    }
+    // Class filter stays at DB level (exact match, no diacritics issue)
     if (filters?.abg_class) {
       dbQuery = dbQuery.eq("abg_class", filters.abg_class.trim());
     }
 
+    // Fetch broader set for JS-level Vietnamese-aware filtering
+    dbQuery = dbQuery.limit(500);
     const { data, error } = await dbQuery;
     if (error) throw error;
 
+    // Apply text search with Vietnamese diacritics normalization
+    type MemberRow = Record<string, string | null>;
+    let filtered = (data || []) as MemberRow[];
+    if (hasQuery) {
+      const q = query!.trim().slice(0, 200);
+      filtered = filtered.filter(m =>
+        [m.name, m.role, m.company, m.expertise, m.bio]
+          .filter((f): f is string => Boolean(f))
+          .some(f => vietnameseIncludes(f, q))
+      );
+    }
+    if (filters?.name) {
+      filtered = filtered.filter(m => m.name && vietnameseIncludes(m.name, filters.name!.trim()));
+    }
+    if (filters?.company) {
+      filtered = filtered.filter(m => m.company && vietnameseIncludes(m.company, filters.company!.trim()));
+    }
+    if (filters?.expertise) {
+      filtered = filtered.filter(m => m.expertise && vietnameseIncludes(m.expertise, filters.expertise!.trim()));
+    }
+    filtered = filtered.slice(0, 10);
+
     const viewerTier = getMemberTier(member);
-    const results = (data || []).map((row) =>
+    const results = filtered.map((row) =>
       filterSearchResultByTier(row as unknown as Member, viewerTier)
     );
 

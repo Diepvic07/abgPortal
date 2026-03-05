@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { isAdminAsync } from '@/lib/admin-utils-server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { vietnameseIncludes } from '@/lib/vietnamese-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,24 +22,29 @@ export async function GET(request: NextRequest) {
 
     const supabase = createServerSupabaseClient();
 
-    let query = supabase
+    let dbQuery = supabase
       .from('members')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: true });
 
-    if (name) query = query.ilike('name', `%${name}%`);
-    if (role) query = query.ilike('role', `%${role}%`);
-    if (company) query = query.ilike('company', `%${company}%`);
-    if (country) query = query.eq('country', country);
-    if (abg_class) query = query.eq('abg_class', abg_class);
-    if (expertise) query = query.ilike('expertise', `%${expertise}%`);
+    // Exact-match filters stay at DB level
+    if (country) dbQuery = dbQuery.eq('country', country);
+    if (abg_class) dbQuery = dbQuery.eq('abg_class', abg_class);
 
-    const { data: members, error, count } = await query;
-
+    const { data: rawMembers, error } = await dbQuery;
     if (error) {
       console.error('[AdminSearch] Query error:', error);
       return NextResponse.json({ error: 'Failed to search members' }, { status: 500 });
     }
+
+    // Apply text filters with Vietnamese diacritics normalization
+    type MemberRow = Record<string, string | null>;
+    let members = (rawMembers || []) as MemberRow[];
+    if (name) members = members.filter(m => m.name && vietnameseIncludes(m.name, name));
+    if (role) members = members.filter(m => m.role && vietnameseIncludes(m.role, role));
+    if (company) members = members.filter(m => m.company && vietnameseIncludes(m.company, company));
+    if (expertise) members = members.filter(m => m.expertise && vietnameseIncludes(m.expertise, expertise));
+    const count = members.length;
 
     // Get distinct values for dropdown filters
     const { data: allMembers } = await supabase
