@@ -63,31 +63,40 @@ export async function findMatches(
 
   let prompt = '';
 
-  const matchCount = Math.min(5, filtered.length);
+  const matchCount = Math.min(10, filtered.length);
+  const minMatches = Math.min(3, filtered.length);
+
+  const minMatchInstruction = locale === 'vi'
+    ? `QUAN TRỌNG: Bạn PHẢI trả về ít nhất ${minMatches} kết quả. Nếu không đủ người phù hợp hoàn hảo, hãy bao gồm cả những người phù hợp một phần với điểm match_score thấp hơn. Luôn trả về ${minMatches}-${matchCount} kết quả.`
+    : `IMPORTANT: You MUST return at least ${minMatches} results. If there aren't enough perfect matches, include partial matches with lower match_score. Always return ${minMatches}-${matchCount} results.`;
 
   if (type === 'job') {
     prompt = locale === 'vi'
       ? `Bạn là một chuyên gia tư vấn nghề nghiệp. Thành viên này đang tìm việc: "${requestText}"
          Đây là danh sách các nhà tuyển dụng tiềm năng (thành viên đang Hiring):
          ${membersJson}
-         Chọn tối đa ${matchCount} nhà tuyển dụng phù hợp nhất dựa trên nhu cầu tuyển dụng của họ (hiring_preferences) và chuyên môn.
+         Chọn ${minMatches}-${matchCount} nhà tuyển dụng phù hợp nhất dựa trên nhu cầu tuyển dụng của họ (hiring_preferences) và chuyên môn.
+         ${minMatchInstruction}
          Giải thích ngắn gọn tại sao nên ứng tuyển. Cho điểm match_score từ 0-100.`
       : `You are a career consultant. This member is looking for a job: "${requestText}"
          Here are potential employers (members who are Hiring):
          ${membersJson}
-         Select up to ${matchCount} best matching employers based on their hiring_preferences and expertise.
+         Select ${minMatches}-${matchCount} best matching employers based on their hiring_preferences and expertise.
+         ${minMatchInstruction}
          Briefly explain why they should apply. Include match_score (0-100).`;
   } else if (type === 'hiring') {
     prompt = locale === 'vi'
       ? `Bạn là một chuyên gia tuyển dụng. Thành viên này đang muốn tuyển nhân sự: "${requestText}"
           Đây là danh sách các ứng viên tiềm năng (thành viên Open to Work):
           ${membersJson}
-          Chọn tối đa ${matchCount} ứng viên phù hợp nhất dựa trên mong muốn tìm việc của họ (job_preferences) và chuyên môn.
+          Chọn ${minMatches}-${matchCount} ứng viên phù hợp nhất dựa trên mong muốn tìm việc của họ (job_preferences) và chuyên môn.
+          ${minMatchInstruction}
           Giải thích ngắn gọn tại sao nên phỏng vấn họ. Cho điểm match_score từ 0-100.`
       : `You are a recruitment expert. This member is hiring: "${requestText}"
           Here are potential candidates (members Open to Work):
           ${membersJson}
-          Select up to ${matchCount} best candidates based on their job_preferences and expertise.
+          Select ${minMatches}-${matchCount} best candidates based on their job_preferences and expertise.
+          ${minMatchInstruction}
           Briefly explain why they are a good fit. Include match_score (0-100).`;
   } else {
     // Professional / Partner
@@ -98,7 +107,8 @@ export async function findMatches(
 Đây là danh sách các thành viên hiện có:
 ${membersJson}
 
-Hãy chọn tối đa ${matchCount} người phù hợp nhất dựa trên chuyên môn và những gì họ có thể giúp.
+Hãy chọn ${minMatches}-${matchCount} người phù hợp nhất dựa trên chuyên môn và những gì họ có thể giúp.
+${minMatchInstruction}
 Với mỗi người, hãy giải thích trong 1-2 câu tiếng Việt TẠI SAO họ phù hợp với yêu cầu này. Cho điểm match_score từ 0-100.
 
 Trả về CHỈ một mảng JSON hợp lệ, không dùng markdown:
@@ -109,7 +119,8 @@ Trả về CHỈ một mảng JSON hợp lệ, không dùng markdown:
 Here are available members:
 ${membersJson}
 
-Select up to ${matchCount} best matches based on their expertise and what they can help with.
+Select ${minMatches}-${matchCount} best matches based on their expertise and what they can help with.
+${minMatchInstruction}
 For each, explain in 1-2 sentences WHY they're relevant to this specific request. Include match_score (0-100).
 
 Return ONLY valid JSON array, no markdown:
@@ -131,7 +142,21 @@ Return ONLY valid JSON array, no markdown:
     const jsonStr = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
     try {
-      return JSON.parse(jsonStr);
+      let matches: { id: string; reason: string; match_score: number }[] = JSON.parse(jsonStr);
+
+      // Ensure minimum results by padding with unmatched candidates
+      if (matches.length < minMatches) {
+        const matchedIds = new Set(matches.map(m => m.id));
+        const remaining = filtered.filter(m => !matchedIds.has(m.id));
+        const padding = remaining.slice(0, minMatches - matches.length).map(m => ({
+          id: m.id,
+          reason: locale === 'vi' ? 'Thành viên cộng đồng có thể hỗ trợ.' : 'Community member who may be able to help.',
+          match_score: 40,
+        }));
+        matches = [...matches, ...padding];
+      }
+
+      return matches;
     } catch {
       console.error('Failed to parse Gemini response:', text);
       return [];
@@ -139,7 +164,7 @@ Return ONLY valid JSON array, no markdown:
   } catch (error) {
     console.error('Gemini findMatches error:', error);
     // Fallback: return the first 5 members as matches
-    return filtered.slice(0, 5).map(m => ({
+    return filtered.slice(0, minMatches).map(m => ({
       id: m.id,
       reason: "Matched based on availability (AI unavailable).",
       match_score: 50,
@@ -160,6 +185,7 @@ export async function findDatingMatches(
   if (filtered.length === 0) return [];
 
   const matchCount = Math.min(5, filtered.length);
+  const minMatches = Math.min(3, filtered.length);
 
   // Use Nickname instead of real name for privacy
   const profilesJson = JSON.stringify(filtered.map(p => ({
@@ -176,6 +202,10 @@ export async function findDatingMatches(
     qualities: p.qualities_looking_for,
   })));
 
+  const minMatchInstruction = locale === 'vi'
+    ? `QUAN TRỌNG: Bạn PHẢI trả về ít nhất ${minMatches} kết quả. Nếu không đủ người phù hợp hoàn hảo, hãy bao gồm cả những người phù hợp một phần với điểm match_score thấp hơn. Luôn trả về ${minMatches}-${matchCount} kết quả.`
+    : `IMPORTANT: You MUST return at least ${minMatches} results. If there aren't enough perfect matches, include partial matches with lower match_score. Always return ${minMatches}-${matchCount} results.`;
+
   const prompt = locale === 'vi'
     ? `Bạn là người mai mối cho một cộng đồng alumni chất lượng cao. Một thành viên đang tìm kiếm người yêu:
 "${requestText}"
@@ -183,7 +213,8 @@ export async function findDatingMatches(
 Đây là các hồ sơ hẹn hò ẩn danh:
 ${profilesJson}
 
-Hãy chọn tối đa ${matchCount} người phù hợp nhất dựa trên sự tương đồng về giá trị sống, sở thích, nơi ở và tính cách.
+Hãy chọn ${minMatches}-${matchCount} người phù hợp nhất dựa trên sự tương đồng về giá trị sống, sở thích, nơi ở và tính cách.
+${minMatchInstruction}
 Với mỗi người, hãy giải thích trong 1-2 câu tiếng Việt TẠI SAO họ là một cặp đôi phù hợp. Cho điểm match_score từ 0-100.
 Hãy tập trung vào "Ideal Day" (Ngày lý tưởng), "Core Values" (Giá trị cốt lõi), và "Interests" (Sở thích) của họ.
 
@@ -195,7 +226,8 @@ Trả về CHỈ một mảng JSON hợp lệ, không dùng markdown:
 Here are the anonymous dating profiles:
 ${profilesJson}
 
-Select up to ${matchCount} best matches based on compatibility of values, interests, location, and personality.
+Select ${minMatches}-${matchCount} best matches based on compatibility of values, interests, location, and personality.
+${minMatchInstruction}
 For each, explain in 1-2 sentences WHY they're a good match. Include match_score (0-100).
 Focus on their "Ideal Day", "Core Values", and "Interests".
 
@@ -206,10 +238,24 @@ Return ONLY valid JSON array, no markdown:
     const result = await model.generateContent(prompt);
     const text = result.response.text().trim();
     const jsonStr = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    return JSON.parse(jsonStr);
+    let matches: { id: string; reason: string; match_score: number }[] = JSON.parse(jsonStr);
+
+    // Ensure minimum results by padding with unmatched profiles
+    if (matches.length < minMatches) {
+      const matchedIds = new Set(matches.map(m => m.id));
+      const remaining = filtered.filter(p => !matchedIds.has(p.id));
+      const padding = remaining.slice(0, minMatches - matches.length).map(p => ({
+        id: p.id,
+        reason: locale === 'vi' ? 'Thành viên cộng đồng có tiềm năng kết nối.' : 'Community member with connection potential.',
+        match_score: 40,
+      }));
+      matches = [...matches, ...padding];
+    }
+
+    return matches;
   } catch (error) {
     console.error('Gemini findDatingMatches error:', error);
-    return filtered.slice(0, 5).map(p => ({
+    return filtered.slice(0, minMatches).map(p => ({
       id: p.id,
       reason: "Matched based on shared community interest.",
       match_score: 50,

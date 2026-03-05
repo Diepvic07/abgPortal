@@ -30,6 +30,12 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
   const [isRerolling, setIsRerolling] = useState(false);
   const [allShownIds, setAllShownIds] = useState<string[]>(initialMatches.map(m => m.id));
 
+  // Show more state - initially display 5 matches
+  const INITIAL_DISPLAY_COUNT = 5;
+  const [showAll, setShowAll] = useState(false);
+  const visibleMatches = showAll ? matches : matches.slice(0, INITIAL_DISPLAY_COUNT);
+  const hasMore = matches.length > INITIAL_DISPLAY_COUNT;
+
   const isLove = category === 'love';
 
   /** Mask name for love matches: "Nguyễn Văn An" → "N*** V*** A***" */
@@ -70,6 +76,7 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
         setSelectedId(null);
         setShowIntroInput(false);
         setCustomIntro('');
+        setShowAll(false);
       } else {
         setError('No more matches available. Try adjusting your request.');
       }
@@ -154,7 +161,7 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
       )}
 
       <div className="space-y-4">
-        {matches.map((match) => (
+        {visibleMatches.map((match) => (
           <div
             key={match.id}
             onClick={() => {
@@ -244,6 +251,19 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
             )}
           </div>
         ))}
+
+        {/* Show more / Show less toggle */}
+        {hasMore && (
+          <button
+            type="button"
+            onClick={() => setShowAll(prev => !prev)}
+            className="w-full py-2.5 text-sm font-medium text-brand hover:text-brand-dark border border-border rounded-lg hover:bg-bg-surface transition-colors"
+          >
+            {showAll
+              ? `Show less`
+              : `Show ${matches.length - INITIAL_DISPLAY_COUNT} more matches`}
+          </button>
+        )}
       </div>
 
       {/* Custom Intro Section */}

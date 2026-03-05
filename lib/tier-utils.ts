@@ -3,10 +3,12 @@ import { Member } from "@/types";
 export const TIER_LIMITS = {
   basic: {
     lifetime_requests: 3,
+    max_results_per_request: 3,
   },
   premium: {
-    monthly_limit: 100,
-    daily_soft_cap: 20,
+    monthly_limit: 50,
+    daily_soft_cap: 10,
+    max_results_per_request: 10,
   },
 } as const;
 

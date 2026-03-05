@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { findMatches } from '@/lib/gemini';
-import { getActivePaidMembers, getMembers, addRequest, updateMemberFreeRequests, incrementMemberRequestCounts, incrementMemberMonthlyRequests, addRequestAudit } from '@/lib/supabase-db';
+import { getMembers, addRequest, updateMemberFreeRequests, incrementMemberRequestCounts, incrementMemberMonthlyRequests, addRequestAudit } from '@/lib/supabase-db';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { getTranslations, type Locale } from '@/lib/i18n';
@@ -89,6 +89,11 @@ export async function POST(request: NextRequest) {
     let matchResults: { id: string; reason: string; match_score?: number }[] = [];
     let finalMatches: { id: string; reason: string; match_score?: number }[] = [];
     let enrichedMatches: unknown[] = [];
+
+    // Cap results based on tier
+    const maxResults = memberTier === 'premium'
+      ? TIER_LIMITS.premium.max_results_per_request
+      : TIER_LIMITS.basic.max_results_per_request;
 
     // 3. Fetch candidates based on type
     if (type === 'dating') {
@@ -197,26 +202,19 @@ export async function POST(request: NextRequest) {
 
     } else {
       // Professional, Job, or Hiring Logic
-      const paidMembers = await getActivePaidMembers();
-      let availableMembers = paidMembers.filter(m => m.id !== requester.id);
+      // Use all active members as candidates so AI search covers the full community
+      const allMembers = await getMembers();
+      let availableMembers = allMembers.filter(m => m.id !== requester.id && m.status === 'active');
 
       // Filter based on request type
       if (type === 'job') {
         const hiringMembers = availableMembers.filter(m => m.hiring);
-        // Fallback to all paid members if no one is explicitly hiring
+        // Fallback to all active members if no one is explicitly hiring
         if (hiringMembers.length > 0) availableMembers = hiringMembers;
       } else if (type === 'hiring') {
         const openToWorkMembers = availableMembers.filter(m => m.open_to_work);
-        // Fallback to all paid members if no one is explicitly open to work
+        // Fallback to all active members if no one is explicitly open to work
         if (openToWorkMembers.length > 0) availableMembers = openToWorkMembers;
-      }
-
-      // Fallback: broaden to all active members if paid-only yields none
-      if (availableMembers.length === 0) {
-        const allMembers = await getMembers();
-        availableMembers = allMembers.filter(m =>
-          m.id !== requester.id && m.status === 'active'
-        );
       }
 
       matchResults = availableMembers.length > 0
@@ -257,6 +255,10 @@ export async function POST(request: NextRequest) {
         })
         .filter(Boolean);
     }
+
+    // Cap results based on tier
+    finalMatches = finalMatches.slice(0, maxResults);
+    enrichedMatches = enrichedMatches.slice(0, maxResults);
 
     const connectionRequest: ConnectionRequest = {
       id: generateId(),

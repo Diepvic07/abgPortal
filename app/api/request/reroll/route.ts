@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server';
 import { findMatches, findDatingMatches } from '@/lib/gemini';
 import {
   getMembers,
-  getActivePaidMembers,
   getRequestById,
   getMemberById,
   updateRequestMatchedIds,
@@ -14,7 +13,7 @@ import {
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth-middleware';
-import { canMakeRequest, getMemberTier } from '@/lib/tier-utils';
+import { canMakeRequest, getMemberTier, TIER_LIMITS } from '@/lib/tier-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,6 +41,10 @@ export async function POST(request: NextRequest) {
     const allExcludeIds = [...new Set([...exclude_ids, ...(originalRequest.matched_ids?.split(',') || [])])];
 
     let newMatches: { id: string; reason: string; match_score?: number }[] = [];
+    const memberTier = getMemberTier(requester);
+    const maxResults = memberTier === 'premium'
+      ? TIER_LIMITS.premium.max_results_per_request
+      : TIER_LIMITS.basic.max_results_per_request;
 
     if (type === 'dating') {
       const allMembers = await getMembers();
@@ -105,6 +108,10 @@ export async function POST(request: NextRequest) {
         };
       }).filter(Boolean);
 
+      // Cap results by tier
+      newMatches = newMatches.slice(0, maxResults);
+      const cappedEnrichedMatches = enrichedMatches.slice(0, maxResults);
+
       // Update request's matched_ids
       const newIds = newMatches.map(m => m.id).join(',');
       const updatedIds = originalRequest.matched_ids ? `${originalRequest.matched_ids},${newIds}` : newIds;
@@ -130,28 +137,21 @@ export async function POST(request: NextRequest) {
       });
 
       return successResponse({
-        matches: enrichedMatches,
+        matches: cappedEnrichedMatches,
         warning: requestStatus.warning,
       });
     }
 
     // Professional / Job / Hiring
-    const paidMembers = await getActivePaidMembers();
-    let availableMembers = paidMembers.filter(m => m.id !== requester.id);
+    // Use all active members as candidates so AI search covers the full community
+    const allMembersData = await getMembers();
+    let availableMembers = allMembersData.filter(m => m.id !== requester.id && m.status === 'active');
     if (type === 'job') {
       const hiringMembers = availableMembers.filter(m => m.hiring);
       if (hiringMembers.length > 0) availableMembers = hiringMembers;
     } else if (type === 'hiring') {
       const openToWorkMembers = availableMembers.filter(m => m.open_to_work);
       if (openToWorkMembers.length > 0) availableMembers = openToWorkMembers;
-    }
-
-    // Fallback: broaden to all active members if paid-only yields none
-    if (availableMembers.length === 0) {
-      const allMembersData = await getMembers();
-      availableMembers = allMembersData.filter(m =>
-        m.id !== requester.id && m.status === 'active'
-      );
     }
 
     newMatches = await findMatches(
@@ -171,6 +171,10 @@ export async function POST(request: NextRequest) {
       if (!member) return null;
       return { ...match, member };
     }).filter(Boolean);
+
+    // Cap results by tier
+    newMatches = newMatches.slice(0, maxResults);
+    const cappedMatches = enrichedMatches.slice(0, maxResults);
 
     // Update matched_ids
     const newIds = newMatches.map(m => m.id).join(',');
@@ -197,7 +201,7 @@ export async function POST(request: NextRequest) {
     });
 
     return successResponse({
-      matches: enrichedMatches,
+      matches: cappedMatches,
       warning: requestStatus.warning,
     });
   } catch (error) {

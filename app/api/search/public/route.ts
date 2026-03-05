@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getActivePaidMembers } from "@/lib/supabase-db";
+import { getMembers } from "@/lib/supabase-db";
 import { findMatches } from "@/lib/gemini";
 import { blurText } from "@/lib/tier-utils";
 
@@ -61,7 +61,8 @@ export async function POST(request: NextRequest) {
     // Sanitize query - limit length and remove suspicious patterns
     const sanitizedQuery = query.trim().slice(0, 500);
 
-    const members = await getActivePaidMembers();
+    const allMembers = await getMembers();
+    const members = allMembers.filter(m => m.status === 'active');
 
     if (members.length === 0) {
       return NextResponse.json({
