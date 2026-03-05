@@ -103,6 +103,9 @@ export function HeaderNavigation() {
           <Link href="/news" className="text-sm text-white/80 hover:text-white transition-colors">
             News
           </Link>
+          <Link href="/faq" className="text-sm text-white/80 hover:text-white transition-colors">
+            {t.nav.faq}
+          </Link>
           <LanguageSwitcherDropdown />
           {status === 'authenticated' && member && !isLoadingMember ? (
             <HeaderUserMenu member={member} membershipStatus={getMembershipStatus(member)} />
@@ -150,6 +153,13 @@ export function HeaderNavigation() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               News
+            </Link>
+            <Link
+              href="/faq"
+              className="text-sm text-white/90 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {t.nav.faq}
             </Link>
             <div className="px-4 py-3">
               <LanguageSwitcherDropdown />
