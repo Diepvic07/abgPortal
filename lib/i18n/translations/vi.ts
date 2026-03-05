@@ -18,6 +18,7 @@ export const vi: Translations = {
     findConnection: 'Kiếm kèo kết nối',
     profile: 'Hồ sơ',
     history: 'Lịch sử',
+    faq: 'FAQ',
   },
 
   // Footer
@@ -141,6 +142,7 @@ export const vi: Translations = {
       orDivider: 'hoặc',
       emailGoogleNote: 'Email sẽ được tự động điền từ tài khoản Google của bạn',
       emailRequired: 'Nhập email để nhận magic link hoặc đăng nhập bằng Google',
+      autoApproveNote: 'Lưu ý: Nếu bạn dùng email đã đăng ký lớp ABG, tài khoản sẽ được duyệt tự động. Nếu không, bạn cần chờ admin phê duyệt.',
     },
     success: {
       title: 'Chào mừng người anh em!',
@@ -433,6 +435,52 @@ export const vi: Translations = {
     nextArticle: 'Bài tiếp theo',
     // Author
     communityManagement: 'Quản lý Cộng đồng',
+  },
+
+  // FAQ page
+  faq: {
+    pageTitle: 'Câu Hỏi Thường Gặp',
+    pageSubtitle: 'Tất cả những gì bạn cần biết về ABG Alumni Connect',
+    categories: {
+      basics: 'Thông tin cơ bản',
+      features: 'Tính năng & Ghép đôi',
+      privacy: 'Quyền riêng tư & Bảo mật',
+      premium: 'Premium & Thanh toán',
+    },
+    q1: 'ABG Alumni Connect là gì?',
+    a1: 'ABG Alumni Connect là nền tảng kết nối thông minh dành riêng cho anh chị em ABG Alumni (~300 thành viên). Hệ thống dùng AI để giúp bạn tìm đúng người cho công việc, kinh doanh, tuyển dụng, hay cả hẹn hò trong cộng đồng mình.',
+    q2: 'Ai có thể tham gia ABG Alumni Connect?',
+    a2: 'Chỉ thành viên ABG Alumni đã xác minh mới được tham gia. Khi đăng ký, hồ sơ sẽ qua bước duyệt của admin. Nếu bạn dùng email đã đăng ký lớp ABG thì có thể được duyệt tự động.',
+    q3: 'Đăng ký và được duyệt như thế nào?',
+    a3: 'Đăng ký bằng Google hoặc Magic Link (email), điền đủ 8 thông tin bắt buộc, rồi gửi hồ sơ chờ duyệt. Admin thường duyệt trong vòng 24 giờ. Bạn sẽ nhận email thông báo khi được duyệt.',
+    q4: 'AI ghép đôi hoạt động như thế nào?',
+    a4: 'AI (dùng Google Gemini) phân tích yêu cầu của bạn và so sánh với tất cả hồ sơ thành viên để tìm top 5 người phù hợp nhất, mỗi người được chấm điểm từ 0-100. Thành viên Premium có thể xem điểm tương thích đầy đủ.',
+    q5: 'Có những loại kết nối nào?',
+    a5: 'Có 4 loại: Love (hẹn hò), Job (tìm việc), Hiring (tuyển dụng), và Partner (hợp tác kinh doanh). Chọn loại phù hợp khi gửi yêu cầu.',
+    q6: 'Love Matching là gì và hoạt động ra sao?',
+    a6: 'Love Matching là tính năng hẹn hò ẩn danh. Khi bạn gửi yêu cầu, đối phương chỉ thấy hồ sơ ẩn danh (không tên, không ảnh). Họ có 3 ngày để chấp nhận, từ chối, hoặc để hết hạn. Nếu chấp nhận, danh tính cả hai được tiết lộ và email giới thiệu được gửi đi.',
+    q7: 'Có thể tìm lại kết quả ghép đôi không?',
+    a7: 'Được! Bấm "Tìm lại" để AI tìm kết quả mới. Lưu ý mỗi lần tìm lại sẽ tính vào lượt của bạn (Basic: 3 lượt cả đời, Premium: 100 lượt/tháng).',
+    q8: 'Ai có thể xem thông tin hồ sơ của tôi?',
+    a8: 'Chỉ thành viên đã được duyệt mới xem được hồ sơ. Thành viên Basic thấy tên bị mờ và thông tin hạn chế. Thành viên Premium thấy đầy đủ. SĐT, LinkedIn và thông tin nhạy cảm chỉ hiển thị cho Premium.',
+    q9: 'Tính năng hẹn hò ẩn danh bảo vệ danh tính như thế nào?',
+    a9: 'Khi bạn gửi yêu cầu love match, người nhận chỉ thấy hồ sơ đã ẩn danh - không tên, không ảnh, không thông tin nhận dạng. Danh tính chỉ được tiết lộ khi đối phương chấp nhận.',
+    q10: 'Dữ liệu cá nhân có an toàn không?',
+    a10: 'An toàn. Toàn bộ dữ liệu được lưu trên Supabase với chính sách Row Level Security (RLS), hosted trên Vercel với hạ tầng bảo mật doanh nghiệp. Chúng tôi không chia sẻ dữ liệu với bên thứ ba.',
+    q11: 'Có thể kiểm soát thông tin hiển thị (cài đặt biệt danh) không?',
+    a11: 'Được. Bạn có thể đặt biệt danh và chọn nơi hiển thị thay cho tên thật: trong kết quả tìm kiếm, gợi ý ghép đôi, và email giới thiệu. Cài đặt tại phần quyền riêng tư trong hồ sơ.',
+    q12: 'Basic và Premium khác nhau thế nào?',
+    a12: 'Basic cho bạn 3 lượt miễn phí (cả đời) với kết quả bị mờ. Premium cho 100 lượt/tháng, xem hồ sơ đầy đủ không mờ, thấy điểm tương thích, và truy cập toàn bộ thông tin thành viên.',
+    q13: 'Mỗi gói có bao nhiêu lượt yêu cầu?',
+    a13: 'Basic: 3 lượt tổng cộng (cả đời). Premium: 100 lượt/tháng, tự động reset hàng tháng. Mỗi lần tìm kiếm hoặc tìm lại tính là 1 lượt.',
+    q14: 'Nâng cấp Premium như thế nào và chấp nhận thanh toán gì?',
+    a14: 'Vào hồ sơ hoặc trang nâng cấp và làm theo hướng dẫn. Hiện tại chỉ nhận chuyển khoản ngân hàng. Chuyển đúng số tiền với mã tham chiếu được cung cấp.',
+    q15: 'Xác minh thanh toán mất bao lâu?',
+    a15: 'Admin xác minh thanh toán trong vòng 24 giờ. Sau khi xác nhận, tài khoản Premium được kích hoạt ngay và bạn sẽ nhận email thông báo.',
+    q16: 'Premium hết hạn khi nào?',
+    a16: 'Tài khoản Premium có ngày hết hạn cố định (hiện tại là 31/12/2026). Sau khi hết hạn, tài khoản tự động chuyển về gói Basic.',
+    q17: 'Có được hoàn tiền không?',
+    a17: 'Không hoàn tiền sau khi Premium đã được kích hoạt. Vui lòng xem kỹ quyền lợi các gói trước khi nâng cấp. Liên hệ admin nếu có trường hợp đặc biệt.',
   },
 
   // History page

@@ -16,6 +16,7 @@ export const en = {
     findConnection: 'Find Connection',
     profile: 'Profile',
     history: 'History',
+    faq: 'FAQ',
   },
 
   // Footer
@@ -139,6 +140,7 @@ export const en = {
       orDivider: 'or',
       emailGoogleNote: 'Your email will be automatically filled from your Google account',
       emailRequired: 'Enter your email to receive a magic link or sign in with Google',
+      autoApproveNote: 'Note: If you use the email registered to your ABG class, you will be automatically approved. Otherwise, you need to wait for admin approval.',
     },
     success: {
       title: 'Welcome aboard!',
@@ -431,6 +433,52 @@ export const en = {
     nextArticle: 'Next Article',
     // Author
     communityManagement: 'Community Management',
+  },
+
+  // FAQ page
+  faq: {
+    pageTitle: 'Frequently Asked Questions',
+    pageSubtitle: 'Everything you need to know about ABG Alumni Connect',
+    categories: {
+      basics: 'Platform Basics',
+      features: 'Features & Matching',
+      privacy: 'Privacy & Security',
+      premium: 'Premium & Payments',
+    },
+    q1: 'What is ABG Alumni Connect?',
+    a1: 'ABG Alumni Connect is an AI-powered networking platform exclusively for ABG Alumni members (~300 people). It helps you find the right connections for career advice, business partnerships, hiring, and even dating within our trusted community.',
+    q2: 'Who can join ABG Alumni Connect?',
+    a2: 'Only verified ABG Alumni members can join. When you sign up, your profile goes through an admin approval process. If you use the email registered with your ABG class, you may be auto-approved.',
+    q3: 'How do I sign up and get approved?',
+    a3: 'Sign up using Google or Magic Link (email), fill in your profile with 8 required fields, then submit for review. Admin typically reviews within 24 hours. You will be notified by email once approved.',
+    q4: 'How does AI matching work?',
+    a4: 'Our AI (powered by Google Gemini) analyzes your request and compares it against all member profiles to find the top 5 most relevant matches, each scored from 0-100. Premium members can see the full match scores.',
+    q5: 'What types of connections can I request?',
+    a5: 'There are 4 categories: Love (dating), Job (job hunting), Hiring (recruitment), and Partner (business partnerships or networking). Choose the one that fits your need when submitting a request.',
+    q6: 'What is Love Matching and how does it work?',
+    a6: 'Love Matching is our anonymous dating feature. When you send a love match request, the other person receives an anonymized preview of your profile. They have 3 days to accept, refuse, or let it expire. If they accept, both identities are revealed and an intro email is sent.',
+    q7: 'Can I reroll/refresh my match results?',
+    a7: 'Yes! Click "Run Again" to get fresh AI matches. Note that each reroll counts against your request quota (3 lifetime for Basic, 100/month for Premium).',
+    q8: 'Who can see my profile information?',
+    a8: 'Only approved members can view profiles. Basic tier members see blurred names and limited details. Premium members see full profiles. Your phone, LinkedIn, and other sensitive info are only visible to Premium members.',
+    q9: 'How does anonymous love matching protect my identity?',
+    a9: 'When you send a love match request, the receiver only sees an anonymized profile preview - no name, no photo, no identifying details. Your identity is only revealed if the other person accepts the match.',
+    q10: 'Is my personal data safe?',
+    a10: 'Yes. All data is stored on Supabase with Row Level Security (RLS) policies, hosted on Vercel with enterprise-grade infrastructure. We never share your data with third parties.',
+    q11: 'Can I control what information is shown (nickname settings)?',
+    a11: 'Yes. You can set a nickname and choose where it appears instead of your full name: in search results, match suggestions, and introduction emails. Configure this in your profile privacy settings.',
+    q12: 'What is the difference between Basic and Premium?',
+    a12: 'Basic gives you 3 free lifetime requests with blurred match results. Premium gives you 100 requests per month, full unblurred profiles, visible match scores, and access to all member details.',
+    q13: 'How many requests do I get on each tier?',
+    a13: 'Basic: 3 requests total (lifetime). Premium: 100 requests per month, with the counter resetting monthly. Each search or reroll counts as one request.',
+    q14: 'How do I upgrade to Premium and what payment methods are accepted?',
+    a14: 'Go to your profile or the upgrade page and follow the payment instructions. Currently we accept bank transfer only. Transfer the displayed amount with the provided reference code.',
+    q15: 'How long does payment verification take?',
+    a15: 'Admin verifies payments within 24 hours. Once confirmed, your Premium membership is activated immediately and you will receive an email notification.',
+    q16: 'When does my Premium membership expire?',
+    a16: 'Premium memberships have a fixed expiration date (currently December 31, 2026). After expiry, your account automatically downgrades to Basic tier.',
+    q17: 'Can I get a refund?',
+    a17: 'Refunds are not available for Premium memberships once activated. Please review the tier benefits carefully before upgrading. Contact admin if you have special circumstances.',
   },
 
   // History page
