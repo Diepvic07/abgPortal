@@ -295,12 +295,26 @@ export async function POST(request: NextRequest) {
         matches: blurredMatches,
         upgrade_required: true,
         message: 'Upgrade to premium to see full profiles and make unlimited connections.',
+        quota: { remaining: 0, total: TIER_LIMITS.basic.lifetime_requests, tier: 'basic' },
       });
     }
+
+    // Calculate updated remaining after increment (uses pre-increment snapshot, display-only)
+    const updatedRemaining = memberTier === 'premium'
+      ? TIER_LIMITS.premium.monthly_limit - ((requester.requests_this_month || 0) + 1)
+      : TIER_LIMITS.basic.lifetime_requests - (requester.free_requests_used + 1);
+    const totalLimit = memberTier === 'premium'
+      ? TIER_LIMITS.premium.monthly_limit
+      : TIER_LIMITS.basic.lifetime_requests;
 
     return successResponse({
       request_id: connectionRequest.id,
       matches: enrichedMatches,
+      quota: {
+        remaining: Math.max(0, updatedRemaining),
+        total: totalLimit,
+        tier: memberTier,
+      },
     });
   } catch (error) {
     return handleApiError(error);

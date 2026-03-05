@@ -35,6 +35,7 @@ export function ConnectionRequestForm() {
   const [requestId, setRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paywallType, setPaywallType] = useState<PaywallType>(null);
+  const [quota, setQuota] = useState<{ remaining: number; total: number; tier: 'basic' | 'premium' } | null>(null);
   // Dating profile completion state
   const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
   const [userGender, setUserGender] = useState<string | undefined>();
@@ -151,6 +152,7 @@ export function ConnectionRequestForm() {
 
       setMatches(result.matches);
       setRequestId(result.request_id);
+      if (result.quota) setQuota(result.quota);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.common.error);
     } finally {
@@ -172,6 +174,8 @@ export function ConnectionRequestForm() {
         requestId={requestId}
         category={matchType}
         onNewSearch={handleNewSearch}
+        quota={quota}
+        onQuotaUpdate={setQuota}
       />
     );
   }
@@ -200,10 +204,10 @@ export function ConnectionRequestForm() {
 
   // Render tab buttons (extracted to reuse)
   const categories: { key: RequestCategory; label: string; icon: string; desc: string; color: string }[] = [
-    { key: 'love', label: t.dating.findPartner || 'Love Matching', icon: '❤️', desc: 'Find a romantic partner within the verified alumni network', color: 'pink-500' },
-    { key: 'job', label: t.dating.findJob || 'Job Hunting', icon: '💼', desc: 'Discover open roles or connect with mentors/recruiters', color: 'brand' },
-    { key: 'hiring', label: t.dating.findCandidates || 'Recruitment', icon: '👥', desc: 'Find talent for available job positions', color: 'brand' },
-    { key: 'partner', label: t.dating.professionalNetwork || 'Partner Matching', icon: '🤝', desc: 'Connect for business partnerships or networking', color: 'brand' },
+    { key: 'love', label: t.dating.findPartner, icon: '\u2764\uFE0F', desc: t.dating.loveDesc, color: 'pink-500' },
+    { key: 'job', label: t.dating.findJob, icon: '\uD83D\uDCBC', desc: t.dating.jobDesc, color: 'brand' },
+    { key: 'hiring', label: t.dating.findCandidates, icon: '\uD83D\uDC65', desc: t.dating.hiringDesc, color: 'brand' },
+    { key: 'partner', label: t.dating.professionalNetwork, icon: '\uD83E\uDD1D', desc: t.dating.partnerDesc, color: 'brand' },
   ];
 
   const renderTabs = () => (
@@ -241,10 +245,10 @@ export function ConnectionRequestForm() {
 
         <div className="bg-pink-50 border border-pink-200 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-pink-900 mb-2">
-            {t.dating.completeProfile || 'Complete Your Profile'}
+            {t.dating.completeProfile}
           </h3>
           <p className="text-pink-700 mb-4">
-            {t.dating.completeProfileDescription || 'To use the dating feature, please provide your gender and confirm your availability status.'}
+            {t.dating.completeProfileDescription}
           </p>
 
           {completionError && (
@@ -263,12 +267,12 @@ export function ConnectionRequestForm() {
                 defaultValue={userGender || ''}
                 className="w-full px-4 py-3 border border-pink-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
               >
-                <option value="">{t.dating.selectGender || 'Select your gender'}</option>
+                <option value="">{t.dating.selectGender}</option>
                 <option value="Female">{t.onboard.form.genderFemale}</option>
                 <option value="Male">{t.onboard.form.genderMale}</option>
               </select>
               <p className="text-pink-600 text-xs mt-1">
-                {t.dating.genderNote || 'Note: "Undisclosed" is not available for dating feature'}
+                {t.dating.genderNote}
               </p>
             </div>
 
@@ -281,12 +285,12 @@ export function ConnectionRequestForm() {
                 defaultValue={userStatus || ''}
                 className="w-full px-4 py-3 border border-pink-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
               >
-                <option value="">{t.dating.selectStatus || 'Select status'}</option>
+                <option value="">{t.dating.selectStatus}</option>
                 <option value="Single">{t.onboard.form.relationshipSingle}</option>
                 <option value="Single (Available)">{t.onboard.form.relationshipAvailable}</option>
               </select>
               <p className="text-pink-600 text-xs mt-1">
-                {t.dating.statusNote || 'Only single members can use the dating feature'}
+                {t.dating.statusNote}
               </p>
             </div>
 
@@ -301,7 +305,7 @@ export function ConnectionRequestForm() {
                   <span>{t.common.loading}</span>
                 </>
               ) : (
-                t.dating.saveAndContinue || 'Save & Continue'
+                t.dating.saveAndContinue
               )}
             </button>
           </form>

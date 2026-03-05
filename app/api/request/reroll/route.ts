@@ -136,9 +136,22 @@ export async function POST(request: NextRequest) {
         request_type: 'reroll_dating',
       });
 
+      // Calculate updated remaining after increment
+      const datingRemaining = memberTier === 'premium'
+        ? TIER_LIMITS.premium.monthly_limit - ((requester.requests_this_month || 0) + 1)
+        : TIER_LIMITS.basic.lifetime_requests - (requester.free_requests_used + 1);
+      const datingTotalLimit = memberTier === 'premium'
+        ? TIER_LIMITS.premium.monthly_limit
+        : TIER_LIMITS.basic.lifetime_requests;
+
       return successResponse({
         matches: cappedEnrichedMatches,
         warning: requestStatus.warning,
+        quota: {
+          remaining: Math.max(0, datingRemaining),
+          total: datingTotalLimit,
+          tier: memberTier,
+        },
       });
     }
 
@@ -200,9 +213,22 @@ export async function POST(request: NextRequest) {
       request_type: `reroll_${type}`,
     });
 
+    // Calculate updated remaining after increment
+    const updatedRemaining = memberTier === 'premium'
+      ? TIER_LIMITS.premium.monthly_limit - ((requester.requests_this_month || 0) + 1)
+      : TIER_LIMITS.basic.lifetime_requests - (requester.free_requests_used + 1);
+    const totalLimit = memberTier === 'premium'
+      ? TIER_LIMITS.premium.monthly_limit
+      : TIER_LIMITS.basic.lifetime_requests;
+
     return successResponse({
       matches: cappedMatches,
       warning: requestStatus.warning,
+      quota: {
+        remaining: Math.max(0, updatedRemaining),
+        total: totalLimit,
+        tier: memberTier,
+      },
     });
   } catch (error) {
     return handleApiError(error);

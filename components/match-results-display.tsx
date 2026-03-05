@@ -9,14 +9,22 @@ interface MatchWithMember extends MatchResult {
   member: Member;
 }
 
+interface QuotaInfo {
+  remaining: number;
+  total: number;
+  tier: 'basic' | 'premium';
+}
+
 interface MatchResultsDisplayProps {
   matches: MatchWithMember[];
   requestId: string;
   category?: string;
   onNewSearch?: () => void;
+  quota?: QuotaInfo | null;
+  onQuotaUpdate?: (quota: QuotaInfo) => void;
 }
 
-export function MatchResultsDisplay({ matches: initialMatches, requestId, category, onNewSearch }: MatchResultsDisplayProps) {
+export function MatchResultsDisplay({ matches: initialMatches, requestId, category, onNewSearch, quota, onQuotaUpdate }: MatchResultsDisplayProps) {
   const { t, locale } = useTranslation();
   const [matches, setMatches] = useState<MatchWithMember[]>(initialMatches);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -38,18 +46,18 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
 
   const isLove = category === 'love';
 
-  /** Mask name for love matches: "Nguyễn Văn An" → "N*** V*** A***" */
+  /** Mask name for love matches: "Nguyen Van An" -> "N*** V*** A***" */
   const maskName = (member: Member): string => {
     const name = member.nickname || member.name || '';
-    if (!name) return 'Anonymous';
+    if (!name) return t.matches.anonymous;
     return name.split(/\s+/).map(part =>
       part.charAt(0) + '***'
     ).join(' ');
   };
 
   const genderLabel = (member: Member): string | null => {
-    if (member.gender === 'Male') return '♂';
-    if (member.gender === 'Female') return '♀';
+    if (member.gender === 'Male') return '\u2642';
+    if (member.gender === 'Female') return '\u2640';
     return null;
   };
 
@@ -66,7 +74,7 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to get new matches');
+        throw new Error(result.error || t.common.error);
       }
 
       if (result.matches?.length > 0) {
@@ -78,14 +86,13 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
         setCustomIntro('');
         setShowAll(false);
       } else {
-        setError('No more matches available. Try adjusting your request.');
+        setError(t.matches.noMoreMatches);
       }
 
-      if (result.warning) {
-        setError(result.warning);
-      }
+      if (result.quota) onQuotaUpdate?.(result.quota);
+      if (result.warning) setError(result.warning);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reroll');
+      setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setIsRerolling(false);
     }
@@ -145,6 +152,7 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
 
   return (
     <div className="space-y-6">
+      {/* Header + AI Credit Balance */}
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-text-primary mb-2">
           {titleText}
@@ -152,8 +160,22 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
         <p className="text-text-secondary">
           {t.matches.selectPrompt}
         </p>
+
+        {/* AI Credit Balance Badge */}
+        {quota && (
+          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-xs font-medium text-blue-700">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            {interpolate(t.matches.creditRemaining, { remaining: quota.remaining, total: quota.total })}
+            <span className="text-blue-500">
+              ({quota.tier === 'premium' ? t.matches.creditPremium : t.matches.creditFree})
+            </span>
+          </div>
+        )}
+
         <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-1.5 mt-3 inline-block">
-          ⚠ {t.matches.aiDisclaimer}
+          {t.matches.aiDisclaimer}
         </p>
       </div>
 
@@ -186,15 +208,15 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
                   <h3 className="font-semibold text-text-primary">
                     {isLove ? maskName(match.member) : match.member.name}
                   </h3>
-                  {match.match_score && (
+                  {match.match_score != null && (
                     <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
-                      {match.match_score}% match
+                      {interpolate(t.matches.matchScore, { score: match.match_score })}
                     </span>
                   )}
                 </div>
                 {!isLove && (
                   <p className="text-sm text-text-secondary">
-                    {match.member.role} at {match.member.company}
+                    {interpolate(t.matches.roleAt, { role: match.member.role, company: match.member.company })}
                   </p>
                 )}
               </div>
@@ -214,19 +236,19 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
             {isLove ? (
               <div className="mt-3 space-y-2 text-sm">
                 {match.member.self_description && (
-                  <p className="text-text-secondary"><span className="font-medium text-text-primary">About:</span> {match.member.self_description}</p>
+                  <p className="text-text-secondary"><span className="font-medium text-text-primary">{t.matches.aboutLabel}</span> {match.member.self_description}</p>
                 )}
                 {match.member.interests && (
-                  <p className="text-text-secondary"><span className="font-medium text-text-primary">Interests:</span> {match.member.interests}</p>
+                  <p className="text-text-secondary"><span className="font-medium text-text-primary">{t.matches.interestsLabel}</span> {match.member.interests}</p>
                 )}
                 {match.member.core_values && (
-                  <p className="text-text-secondary"><span className="font-medium text-text-primary">Values:</span> {match.member.core_values}</p>
+                  <p className="text-text-secondary"><span className="font-medium text-text-primary">{t.matches.valuesLabel}</span> {match.member.core_values}</p>
                 )}
                 {match.member.ideal_day && (
-                  <p className="text-text-secondary"><span className="font-medium text-text-primary">Ideal day:</span> {match.member.ideal_day}</p>
+                  <p className="text-text-secondary"><span className="font-medium text-text-primary">{t.matches.idealDayLabel}</span> {match.member.ideal_day}</p>
                 )}
                 {match.member.qualities_looking_for && (
-                  <p className="text-text-secondary"><span className="font-medium text-text-primary">Looking for:</span> {match.member.qualities_looking_for}</p>
+                  <p className="text-text-secondary"><span className="font-medium text-text-primary">{t.matches.lookingForLabel}</span> {match.member.qualities_looking_for}</p>
                 )}
               </div>
             ) : (
@@ -263,8 +285,8 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
             className="w-full py-2.5 text-sm font-medium text-brand hover:text-brand-dark border border-border rounded-lg hover:bg-bg-surface transition-colors"
           >
             {showAll
-              ? `Show less`
-              : `Show ${matches.length - INITIAL_DISPLAY_COUNT} more matches`}
+              ? t.matches.showLess
+              : interpolate(t.matches.showMore, { count: matches.length - INITIAL_DISPLAY_COUNT })}
           </button>
         )}
       </div>
@@ -278,19 +300,19 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
               onClick={() => setShowIntroInput(true)}
               className="text-sm text-brand hover:text-brand-dark underline"
             >
-              Add a personal introduction message (optional)
+              {t.matches.addIntroMessage}
             </button>
           ) : (
             <div className="space-y-2">
               <label className="block text-sm font-medium text-text-primary">
-                Personal introduction (optional, max 500 chars)
+                {t.matches.introLabel}
               </label>
               <textarea
                 value={customIntro}
                 onChange={(e) => setCustomIntro(e.target.value.slice(0, 500))}
                 rows={3}
                 className="w-full px-4 py-3 border border-border rounded-md focus:ring-2 focus:ring-brand focus:border-brand text-sm"
-                placeholder="Write a personal message to introduce yourself..."
+                placeholder={t.matches.introPlaceholder}
               />
               <p className="text-xs text-text-secondary text-right">{customIntro.length}/500</p>
             </div>
@@ -313,7 +335,7 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
               <span>{t.matches.sendingIntro}</span>
             </>
           ) : (
-            isLove ? 'Send Love Match Request' : t.matches.requestIntro
+            isLove ? t.matches.sendLoveMatch : t.matches.requestIntro
           )}
         </button>
 
@@ -325,14 +347,14 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
           {isRerolling ? (
             <>
               <LoadingSpinner size="sm" />
-              <span>Refreshing...</span>
+              <span>{t.matches.refreshing}</span>
             </>
           ) : (
             <>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              <span>Run Again</span>
+              <span>{t.matches.runAgain}</span>
             </>
           )}
         </button>
@@ -346,12 +368,12 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <span>Start a New Search</span>
+          <span>{t.matches.startNewSearch}</span>
         </button>
       )}
 
       <p className="text-xs text-text-secondary text-center">
-        Rerolling counts against your request quota. {t.matches.footerNote}
+        {t.matches.rerollNote} {t.matches.footerNote}
       </p>
     </div>
   );
