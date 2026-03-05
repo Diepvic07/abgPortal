@@ -42,7 +42,21 @@ export class AdminPage extends BasePage {
   async setTier(rowIndex: number, tier: 'basic' | 'premium') {
     const row = this.memberTable.locator('tr').nth(rowIndex + 1);
     if (tier === 'premium') {
+      // Upgrading triggers two sequential window.prompt() dialogs
+      // Set up a handler that auto-accepts both prompts
+      const dialogHandler = async (dialog: import('@playwright/test').Dialog) => {
+        if (dialog.type() === 'prompt') {
+          const isAmount = dialog.message().toLowerCase().includes('amount');
+          await dialog.accept(isAmount ? '500000' : 'Test upgrade');
+        } else {
+          await dialog.accept();
+        }
+      };
+      this.page.on('dialog', dialogHandler);
       await row.getByText('Upgrade').click();
+      // Wait for API call to complete and page to refresh
+      await this.page.waitForTimeout(500);
+      this.page.removeListener('dialog', dialogHandler);
     } else {
       await row.getByText('Downgrade').click();
     }

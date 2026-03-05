@@ -154,12 +154,17 @@ test.describe('Tier Management', () => {
   });
 
   test('handles tier change API error via alert', async ({ page }) => {
-    // Register dialog handler FIRST before any navigation
-    const dialogPromise = new Promise<string>((resolve) => {
-      page.on('dialog', async (dialog) => {
-        resolve(dialog.message());
+    // Collect all dialog messages; accept prompts, then capture the alert
+    const dialogMessages: string[] = [];
+    page.on('dialog', async (dialog) => {
+      dialogMessages.push(dialog.message());
+      if (dialog.type() === 'prompt') {
+        // Accept amount prompt with valid value, notes prompt with empty
+        const isAmount = dialog.message().toLowerCase().includes('amount');
+        await dialog.accept(isAmount ? '500000' : '');
+      } else {
         await dialog.accept();
-      });
+      }
     });
 
     await page.route('**/api/admin/tier', (route) => {
@@ -180,11 +185,17 @@ test.describe('Tier Management', () => {
 
     await adminPage.goto();
     await adminPage.filterByStatus('approved');
-    await adminPage.setTier(0, 'premium');
 
-    // Admin page calls alert("Failed to change tier") on error
-    const alertMessage = await dialogPromise;
-    expect(alertMessage).toMatch(/failed|tier|change/i);
+    // Click upgrade directly (don't use setTier which has its own dialog handler)
+    const row = page.locator('table tr').nth(1);
+    await row.getByText('Upgrade').click();
+
+    // Wait for the error alert to appear (after prompts + failed API call)
+    await page.waitForTimeout(1000);
+
+    // The last dialog should be the error alert
+    const alertMessage = dialogMessages.find(m => /failed|tier|change/i.test(m));
+    expect(alertMessage).toBeTruthy();
   });
 
   test('persists tier change on page refresh', async ({ page }) => {
