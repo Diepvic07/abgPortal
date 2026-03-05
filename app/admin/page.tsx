@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminMemberDirectory } from "@/components/admin/admin-member-directory";
 import { AdminNewsManager } from "@/components/admin/admin-news-manager";
+import { AdminPaymentReport } from "@/components/admin/admin-payment-report";
 
 interface AdminMember {
   id: string;
@@ -26,7 +27,7 @@ export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [members, setMembers] = useState<AdminMember[]>([]);
-  const [activeTab, setActiveTab] = useState<"pending" | "status" | "directory" | "news">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "status" | "directory" | "news" | "payments">("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -102,12 +103,27 @@ export default function AdminPage() {
 
   const handleTierChange = async (id: string, currentPaid: boolean) => {
     const newTier = currentPaid ? "basic" : "premium";
+
+    let amount_vnd: number | undefined;
+    let notes: string | undefined;
+
+    if (newTier === "premium") {
+      const amountStr = window.prompt("Enter payment amount (VND):");
+      if (!amountStr) return;
+      amount_vnd = parseInt(amountStr, 10);
+      if (isNaN(amount_vnd) || amount_vnd <= 0) {
+        alert("Invalid amount");
+        return;
+      }
+      notes = window.prompt("Notes (optional):") || "";
+    }
+
     setActionLoading(id);
     try {
       const res = await fetch("/api/admin/tier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: id, tier: newTier }),
+        body: JSON.stringify({ memberId: id, tier: newTier, amount_vnd, notes }),
       });
       if (!res.ok) throw new Error("Failed to change tier");
       await fetchMembers();
@@ -251,9 +267,19 @@ export default function AdminPage() {
           >
             News
           </button>
+          <button
+            onClick={() => setActiveTab("payments")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === "payments"
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            Payments
+          </button>
         </div>
 
-        {activeTab !== "directory" && activeTab !== "news" && (
+        {activeTab !== "directory" && activeTab !== "news" && activeTab !== "payments" && (
           <div className="mb-4">
             <input
               type="text"
@@ -265,7 +291,11 @@ export default function AdminPage() {
           </div>
         )}
 
-        {activeTab === "news" ? (
+        {activeTab === "payments" ? (
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <AdminPaymentReport />
+          </div>
+        ) : activeTab === "news" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">
             <AdminNewsManager />
           </div>
