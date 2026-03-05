@@ -11,7 +11,6 @@ import { FakeResultsPaywall } from '@/components/fake-results-paywall';
 import { MatchResult, Member, RequestCategory } from '@/types';
 import { useTranslation } from '@/lib/i18n';
 
-// Create schema with translated messages
 function createRequestSchema(t: { request: { validation: Record<string, string> } }) {
   return z.object({
     request_text: z.string().min(20, t.request.validation.requestMin),
@@ -26,6 +25,49 @@ interface MatchWithMember extends MatchResult {
 
 type PaywallType = 'sign-in' | 'upgrade' | null;
 
+const CATEGORY_STYLES = {
+  love: {
+    gradient: 'from-pink-500 to-rose-500',
+    bg: 'bg-gradient-to-br from-pink-50 to-rose-50',
+    border: 'border-pink-200',
+    activeBorder: 'border-pink-400 ring-2 ring-pink-400/20',
+    text: 'text-pink-700',
+    iconBg: 'bg-pink-100',
+    focusRing: 'focus:ring-pink-400 focus:border-pink-400',
+    button: 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-pink-500/25',
+  },
+  job: {
+    gradient: 'from-brand to-brand-light',
+    bg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
+    border: 'border-blue-200',
+    activeBorder: 'border-brand ring-2 ring-brand/20',
+    text: 'text-brand',
+    iconBg: 'bg-blue-100',
+    focusRing: 'focus:ring-brand focus:border-brand',
+    button: 'bg-gradient-to-r from-brand to-brand-light hover:from-brand-dark hover:to-brand shadow-brand/25',
+  },
+  hiring: {
+    gradient: 'from-emerald-500 to-teal-500',
+    bg: 'bg-gradient-to-br from-emerald-50 to-teal-50',
+    border: 'border-emerald-200',
+    activeBorder: 'border-emerald-400 ring-2 ring-emerald-400/20',
+    text: 'text-emerald-700',
+    iconBg: 'bg-emerald-100',
+    focusRing: 'focus:ring-emerald-400 focus:border-emerald-400',
+    button: 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/25',
+  },
+  partner: {
+    gradient: 'from-amber-500 to-orange-500',
+    bg: 'bg-gradient-to-br from-amber-50 to-orange-50',
+    border: 'border-amber-200',
+    activeBorder: 'border-amber-400 ring-2 ring-amber-400/20',
+    text: 'text-amber-700',
+    iconBg: 'bg-amber-100',
+    focusRing: 'focus:ring-amber-400 focus:border-amber-400',
+    button: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/25',
+  },
+} as const;
+
 export function ConnectionRequestForm() {
   const { t, locale } = useTranslation();
   const { status } = useSession();
@@ -36,7 +78,6 @@ export function ConnectionRequestForm() {
   const [error, setError] = useState<string | null>(null);
   const [paywallType, setPaywallType] = useState<PaywallType>(null);
   const [quota, setQuota] = useState<{ remaining: number; total: number; tier: 'basic' | 'premium' } | null>(null);
-  // Dating profile completion state
   const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
   const [userGender, setUserGender] = useState<string | undefined>();
   const [userStatus, setUserStatus] = useState<string | undefined>();
@@ -44,10 +85,8 @@ export function ConnectionRequestForm() {
   const [isCompletingProfile, setIsCompletingProfile] = useState(false);
   const [completionError, setCompletionError] = useState<string | null>(null);
 
-  // Memoize schema to recreate when language changes
   const schema = useMemo(() => createRequestSchema(t), [t]);
 
-  // Check profile when dating tab selected
   useEffect(() => {
     if (matchType === 'love' && status === 'authenticated' && !profileCheckDone) {
       fetch('/api/profile')
@@ -57,11 +96,8 @@ export function ConnectionRequestForm() {
             const { gender, relationship_status } = data.member;
             setUserGender(gender);
             setUserStatus(relationship_status);
-
             const validGender = gender === 'Male' || gender === 'Female';
-            // Accept both "Single" and "Single (Available)" per validation session
             const validStatus = relationship_status === 'Single' || relationship_status === 'Single (Available)';
-
             setNeedsProfileCompletion(!validGender || !validStatus);
           }
           setProfileCheckDone(true);
@@ -70,7 +106,6 @@ export function ConnectionRequestForm() {
     }
   }, [matchType, status, profileCheckDone]);
 
-  // Reset profile check when switching away from dating
   useEffect(() => {
     if (matchType !== 'love') {
       setProfileCheckDone(false);
@@ -78,7 +113,6 @@ export function ConnectionRequestForm() {
     }
   }, [matchType]);
 
-  // Handle dating profile completion form submission
   const handleProfileCompletion = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -105,7 +139,6 @@ export function ConnectionRequestForm() {
         throw new Error(result.error || t.common.error);
       }
 
-      // Success - re-check profile
       setNeedsProfileCompletion(false);
       setProfileCheckDone(false);
     } catch (err) {
@@ -120,7 +153,6 @@ export function ConnectionRequestForm() {
   });
 
   const onSubmit = async (data: RequestData) => {
-    // If user is not authenticated, show sign-in paywall with fake results
     if (status === 'unauthenticated') {
       setPaywallType('sign-in');
       return;
@@ -141,8 +173,6 @@ export function ConnectionRequestForm() {
       const result = await response.json();
 
       if (!response.ok) {
-        // Check if error is due to free request limit reached (403)
-        // Show upgrade paywall for any 403 payment-related error
         if (response.status === 403) {
           setPaywallType('upgrade');
           return;
@@ -166,7 +196,6 @@ export function ConnectionRequestForm() {
     setError(null);
   };
 
-  // Show real results for authenticated users with valid requests
   if (matches && requestId) {
     return (
       <MatchResultsDisplay
@@ -180,7 +209,6 @@ export function ConnectionRequestForm() {
     );
   }
 
-  // Show fake results with paywall overlay
   if (paywallType) {
     return (
       <FakeResultsPaywall
@@ -191,7 +219,6 @@ export function ConnectionRequestForm() {
     );
   }
 
-  // Show loading spinner only during initial session check
   if (status === 'loading') {
     return (
       <div className="flex items-center justify-center py-12">
@@ -200,108 +227,134 @@ export function ConnectionRequestForm() {
     );
   }
 
-  const isDating = matchType === 'love';
+  const style = CATEGORY_STYLES[matchType];
 
-  // Render tab buttons (extracted to reuse)
-  const categories: { key: RequestCategory; label: string; icon: string; desc: string; color: string }[] = [
-    { key: 'love', label: t.dating.findPartner, icon: '\u2764\uFE0F', desc: t.dating.loveDesc, color: 'pink-500' },
-    { key: 'job', label: t.dating.findJob, icon: '\uD83D\uDCBC', desc: t.dating.jobDesc, color: 'brand' },
-    { key: 'hiring', label: t.dating.findCandidates, icon: '\uD83D\uDC65', desc: t.dating.hiringDesc, color: 'brand' },
-    { key: 'partner', label: t.dating.professionalNetwork, icon: '\uD83E\uDD1D', desc: t.dating.partnerDesc, color: 'brand' },
+  const categories: { key: RequestCategory; label: string; icon: string; desc: string }[] = [
+    { key: 'love', label: t.dating.findPartner, icon: '\u2764\uFE0F', desc: t.dating.loveDesc },
+    { key: 'job', label: t.dating.findJob, icon: '\uD83D\uDCBC', desc: t.dating.jobDesc },
+    { key: 'hiring', label: t.dating.findCandidates, icon: '\uD83D\uDC65', desc: t.dating.hiringDesc },
+    { key: 'partner', label: t.dating.professionalNetwork, icon: '\uD83E\uDD1D', desc: t.dating.partnerDesc },
   ];
 
   const renderTabs = () => (
-    <div className="grid grid-cols-2 gap-3 mb-8">
-      {categories.map(cat => (
-        <button
-          key={cat.key}
-          onClick={() => setMatchType(cat.key)}
-          className={`p-4 rounded-xl border-2 text-left transition-all ${matchType === cat.key
-            ? cat.key === 'love'
-              ? 'border-pink-500 bg-pink-50 shadow-md ring-2 ring-pink-500/20'
-              : 'border-brand bg-blue-50 shadow-md ring-2 ring-brand/20'
-            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+    <div className="grid grid-cols-2 gap-3" role="tablist">
+      {categories.map(cat => {
+        const isActive = matchType === cat.key;
+        const catStyle = CATEGORY_STYLES[cat.key];
+        return (
+          <button
+            key={cat.key}
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => setMatchType(cat.key)}
+            className={`relative p-4 rounded-2xl border text-left transition-all duration-200 group overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+              isActive
+                ? `${catStyle.bg} ${catStyle.activeBorder} shadow-lg`
+                : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
             }`}
-          type="button"
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg">{cat.icon}</span>
-            <span className={`text-sm font-semibold ${matchType === cat.key
-              ? cat.key === 'love' ? 'text-pink-700' : 'text-brand'
-              : 'text-gray-700'
-              }`}>{cat.label}</span>
-          </div>
-          <p className="text-xs text-gray-500 leading-relaxed">{cat.desc}</p>
-        </button>
-      ))}
+            type="button"
+          >
+            {isActive && (
+              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${catStyle.gradient}`} aria-hidden="true" />
+            )}
+            <div className="flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${
+                  isActive ? catStyle.iconBg : 'bg-gray-100 group-hover:bg-gray-200'
+                }`}
+              >
+                {cat.icon}
+              </span>
+              <div className="min-w-0">
+                <span className={`block text-sm font-semibold leading-tight ${
+                  isActive ? catStyle.text : 'text-gray-800'
+                }`}>
+                  {cat.label}
+                </span>
+                <p className={`text-xs mt-1 leading-relaxed ${
+                  isActive ? 'text-gray-600' : 'text-gray-500 group-hover:text-gray-600'
+                }`}>
+                  {cat.desc}
+                </p>
+              </div>
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 
-  // Show profile completion form for dating if needed
+  // Profile completion form for dating
   if (matchType === 'love' && needsProfileCompletion && status === 'authenticated') {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         {renderTabs()}
 
-        <div className="bg-pink-50 border border-pink-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-pink-900 mb-2">
-            {t.dating.completeProfile}
-          </h3>
-          <p className="text-pink-700 mb-4">
-            {t.dating.completeProfileDescription}
-          </p>
+        <div className="bg-gradient-to-br from-pink-50 to-rose-50 border border-pink-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <span aria-hidden="true" className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center text-lg">
+              {'\u2764\uFE0F'}
+            </span>
+            <div>
+              <h3 className="text-lg font-semibold text-pink-900">
+                {t.dating.completeProfile}
+              </h3>
+              <p className="text-sm text-pink-700">
+                {t.dating.completeProfileDescription}
+              </p>
+            </div>
+          </div>
 
           {completionError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 mb-4">
+            <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm mb-4">
               {completionError}
             </div>
           )}
 
           <form onSubmit={handleProfileCompletion} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-pink-900 mb-1">
+              <label htmlFor="gender-select" className="block text-sm font-medium text-pink-900 mb-1.5">
                 {t.onboard.form.gender} *
               </label>
               <select
+                id="gender-select"
                 name="gender"
                 defaultValue={userGender || ''}
-                className="w-full px-4 py-3 border border-pink-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                className="w-full px-4 py-3 border border-pink-200 rounded-xl bg-white focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all"
               >
                 <option value="">{t.dating.selectGender}</option>
                 <option value="Female">{t.onboard.form.genderFemale}</option>
                 <option value="Male">{t.onboard.form.genderMale}</option>
               </select>
-              <p className="text-pink-600 text-xs mt-1">
-                {t.dating.genderNote}
-              </p>
+              <p className="text-pink-500 text-xs mt-1.5">{t.dating.genderNote}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-pink-900 mb-1">
+              <label htmlFor="status-select" className="block text-sm font-medium text-pink-900 mb-1.5">
                 {t.onboard.form.relationshipStatus} *
               </label>
               <select
+                id="status-select"
                 name="relationship_status"
                 defaultValue={userStatus || ''}
-                className="w-full px-4 py-3 border border-pink-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                className="w-full px-4 py-3 border border-pink-200 rounded-xl bg-white focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all"
               >
                 <option value="">{t.dating.selectStatus}</option>
                 <option value="Single">{t.onboard.form.relationshipSingle}</option>
                 <option value="Single (Available)">{t.onboard.form.relationshipAvailable}</option>
               </select>
-              <p className="text-pink-600 text-xs mt-1">
-                {t.dating.statusNote}
-              </p>
+              <p className="text-pink-500 text-xs mt-1.5">{t.dating.statusNote}</p>
             </div>
 
             <button
               type="submit"
               disabled={isCompletingProfile}
-              className="w-full py-3 px-6 bg-pink-500 text-white rounded-md font-medium hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 px-6 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl font-medium hover:from-pink-600 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-pink-500/25"
             >
               {isCompletingProfile ? (
                 <>
-                  <LoadingSpinner size="sm" />
+                  <LoadingSpinner size="sm" className="text-white" />
                   <span>{t.common.loading}</span>
                 </>
               ) : (
@@ -315,30 +368,31 @@ export function ConnectionRequestForm() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {renderTabs()}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {error && (
-          <div className="p-4 bg-red-50 border border-error/20 rounded-lg text-error">
-            {error}
+          <div role="alert" className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-3">
+            <svg aria-hidden="true" className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <span>{error}</span>
           </div>
         )}
 
-{/* Removed redundant "signed in as" message - user status is visible in header menu */}
-
-        <div>
-          <label className="block text-sm font-medium text-text-primary mb-1">
+        <div className={`rounded-2xl border p-5 transition-all ${style.bg} ${style.border}`}>
+          <label htmlFor="request-text" className={`block text-sm font-semibold mb-2 ${style.text}`}>
             {matchType === 'love' ? t.dating.idealMatch :
               matchType === 'job' ? t.dating.jobPreferences :
                 matchType === 'hiring' ? t.dating.hiringPreferences :
                   t.request.form.requestText} *
           </label>
           <textarea
+            id="request-text"
             {...register('request_text')}
             rows={4}
-            className={`w-full px-4 py-3 border border-border rounded-md focus:ring-2 transition-colors ${isDating ? 'focus:ring-pink-500 focus:border-pink-500' : 'focus:ring-brand focus:border-brand'
-              }`}
+            className={`w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 transition-all resize-none ${style.focusRing}`}
             placeholder={
               matchType === 'love'
                 ? t.dating.idealMatchPlaceholder
@@ -350,19 +404,18 @@ export function ConnectionRequestForm() {
             }
           />
           {errors.request_text && (
-            <p className="text-error text-sm mt-1">{errors.request_text.message}</p>
+            <p role="alert" className="text-red-600 text-sm mt-2">{errors.request_text.message}</p>
           )}
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full py-3.5 px-6 text-white rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 ${isDating ? 'bg-pink-500 hover:bg-pink-600' : 'bg-brand hover:bg-brand-dark'
-            }`}
+          className={`w-full py-4 px-6 text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg text-base ${style.button}`}
         >
           {isSubmitting ? (
             <>
-              <LoadingSpinner size="sm" />
+              <LoadingSpinner size="sm" className="text-white" />
               <span>{matchType === 'love' ? t.dating.searching : t.request.form.submitting}</span>
             </>
           ) : (

@@ -1,6 +1,7 @@
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   text?: string;
+  className?: string;
 }
 
 const sizes = {
@@ -9,11 +10,11 @@ const sizes = {
   lg: 'w-8 h-8',
 };
 
-export function LoadingSpinner({ size = 'md', text }: LoadingSpinnerProps) {
+export function LoadingSpinner({ size = 'md', text, className }: LoadingSpinnerProps) {
   return (
     <div className="flex items-center justify-center gap-2">
       <svg
-        className={`animate-spin text-brand ${sizes[size]}`}
+        className={`animate-spin ${className || 'text-brand'} ${sizes[size]}`}
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
