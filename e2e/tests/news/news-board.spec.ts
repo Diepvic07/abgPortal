@@ -19,10 +19,13 @@ test.describe('News Board', () => {
     await setupAllMocks(page, {});
   });
 
-  test('shows empty state when no articles exist', async ({ page }) => {
+  test('shows articles when page loads (sample data fallback)', async ({ page }) => {
     await page.goto('/news');
-    // In test env without DB, no articles → shows "No articles found in this category."
-    await expect(page.getByText(/no articles found/i)).toBeVisible({ timeout: 10000 });
+    // When DB has no articles, sample data is used as fallback — page always has content
+    // Verify the news grid renders with at least one article card
+    await expect(page.locator('.news-page-wrapper')).toBeVisible({ timeout: 10000 });
+    // Sample articles include "ABG Alumni Network Expands" — verify content renders
+    await expect(page.getByText(/ABG Alumni/i).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('displays category filter buttons with translated labels', async ({ page }) => {
@@ -45,7 +48,8 @@ test.describe('News Board', () => {
   test('All News filter removes category from URL', async ({ page }) => {
     await page.goto('/news?category=Edu');
     await page.getByRole('button', { name: 'All News' }).click();
-    await expect(page).toHaveURL(/\/news$/);
+    // Next.js client-side navigation may take longer in Firefox
+    await expect(page).toHaveURL(/\/news$/, { timeout: 10000 });
   });
 
   test('news page renders hero heading', async ({ page }) => {
