@@ -118,6 +118,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.email = token.email as string;
                 session.user.name = token.name as string;
                 session.user.image = token.picture as string;
+                (session as unknown as Record<string, unknown>).provider = token.provider as string;
             }
             return session;
         }

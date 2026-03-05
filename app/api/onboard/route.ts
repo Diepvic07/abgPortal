@@ -7,12 +7,16 @@ import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { Member } from '@/types';
 import { requireSession } from '@/lib/auth-middleware';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { updateMemberLastLogin } from '@/lib/supabase-db';
 
 export async function POST(request: NextRequest) {
   try {
     // Require session (new users won't have member record yet)
     const session = await requireSession();
+    const fullSession = await getServerSession(authOptions);
+    const authProvider = ((fullSession as unknown as Record<string, unknown>)?.provider as string) || 'google';
 
     const formData = await request.formData();
 
@@ -88,7 +92,7 @@ export async function POST(request: NextRequest) {
       paid: false,
       free_requests_used: 0,
       created_at: formatDate(),
-      auth_provider: 'google', // From OAuth flow
+      auth_provider: authProvider, // Detected from session (google or email)
       auth_provider_id: '',
       last_login: formatDate(),
       account_status: 'active',

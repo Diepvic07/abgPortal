@@ -134,7 +134,11 @@ export const en = {
       submit: 'Complete Profile',
       submitting: 'Creating your profile...',
       continueWithGoogle: 'Continue with Google',
+      sendMagicLink: 'Send Magic Link',
+      magicLinkSent: 'Magic link sent! Check your email and click the link to continue.',
+      orDivider: 'or',
       emailGoogleNote: 'Your email will be automatically filled from your Google account',
+      emailRequired: 'Enter your email to receive a magic link or sign in with Google',
     },
     success: {
       title: 'Welcome aboard!',

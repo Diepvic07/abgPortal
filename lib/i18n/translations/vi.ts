@@ -136,7 +136,11 @@ export const vi: Translations = {
       submit: 'Hoàn tất hồ sơ',
       submitting: 'Đang lên hồ sơ...',
       continueWithGoogle: 'Tiếp tục với Google',
+      sendMagicLink: 'Gửi Magic Link',
+      magicLinkSent: 'Magic link đã gửi! Kiểm tra email và nhấn link để tiếp tục.',
+      orDivider: 'hoặc',
       emailGoogleNote: 'Email sẽ được tự động điền từ tài khoản Google của bạn',
+      emailRequired: 'Nhập email để nhận magic link hoặc đăng nhập bằng Google',
     },
     success: {
       title: 'Chào mừng người anh em!',
