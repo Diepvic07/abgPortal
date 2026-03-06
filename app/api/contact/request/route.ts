@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
         target_email: target.email,
         target_name: target.name,
         requester_name: member.name,
+        requester_email: member.email,
         requester_role: member.role || "",
         requester_company: member.company || "",
         message: finalMessage,

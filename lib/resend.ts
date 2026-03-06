@@ -463,6 +463,7 @@ export async function sendContactRequestEmail(data: {
   target_email: string;
   target_name: string;
   requester_name: string;
+  requester_email: string;
   requester_role: string;
   requester_company: string;
   message: string;
@@ -531,7 +532,26 @@ export async function sendContactRequestEmail(data: {
 
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
-      console.warn('Resend Test Mode: Contact request email not sent.', error.message);
+      console.warn('Resend Test Mode: Contact request email not sent to target.', error.message);
+
+      // Fallback: send to requester so they can see the email was attempted
+      const { error: retryError } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: data.requester_email,
+        subject: `[TEST MODE] ${data.requester_name} muốn kết nối với ${data.target_name}`,
+        html: `
+          <div style="background: #fff3cd; color: #856404; padding: 12px; margin-bottom: 20px; border: 1px solid #ffeeba; border-radius: 4px;">
+            <strong>Test Mode Notice:</strong> This email was sent only to you because the target email (${data.target_email}) is unverified in Resend.
+          </div>
+          <p>Contact request to <strong>${data.target_name}</strong> (${data.target_email}) was created successfully, but the notification email could not be delivered in test mode.</p>
+          <p><strong>Accept URL:</strong> ${data.accept_url}</p>
+          <p><strong>Decline URL:</strong> ${data.decline_url}</p>
+        `,
+      });
+
+      if (retryError) {
+        console.warn('Resend Test Mode: Failed to send fallback email to requester.', retryError);
+      }
       return;
     }
     console.error('Failed to send contact request email:', error);
