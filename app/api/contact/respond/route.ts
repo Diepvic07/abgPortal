@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getContactRequestByToken, updateContactRequestStatus, getMemberById } from "@/lib/supabase-db";
+import { getContactRequestByToken, updateContactRequestStatus, getMemberById, addConnection } from "@/lib/supabase-db";
 import { sendContactAcceptedEmail, sendContactDeclinedEmail } from "@/lib/resend";
+import { generateId, formatDate } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,6 +29,23 @@ export async function GET(request: NextRequest) {
 
     if (action === "accept") {
       await updateContactRequestStatus(contactRequest.id, "accepted");
+
+      // For AI match requests, also create a Connection record
+      if (contactRequest.source === 'ai_match' && contactRequest.connection_request_id) {
+        try {
+          await addConnection({
+            id: generateId(),
+            request_id: contactRequest.connection_request_id,
+            from_id: contactRequest.requester_id,
+            to_id: contactRequest.target_id,
+            intro_sent: true,
+            created_at: formatDate(),
+          });
+        } catch (connError) {
+          console.error("Failed to create connection record for AI match:", connError);
+        }
+      }
+
       await sendContactAcceptedEmail({
         requester_email: requester.email,
         requester_name: requester.name,

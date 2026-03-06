@@ -277,13 +277,17 @@ CREATE TABLE IF NOT EXISTS contact_requests (
   feedback TEXT,
   token TEXT UNIQUE NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
-  responded_at TIMESTAMPTZ
+  responded_at TIMESTAMPTZ,
+  source TEXT DEFAULT 'direct' CHECK (source IN ('direct', 'ai_match')),
+  connection_request_id TEXT REFERENCES connection_requests(id) ON DELETE SET NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_contact_req_requester ON contact_requests(requester_id);
 CREATE INDEX IF NOT EXISTS idx_contact_req_target ON contact_requests(target_id);
 CREATE INDEX IF NOT EXISTS idx_contact_req_token ON contact_requests(token);
 CREATE INDEX IF NOT EXISTS idx_contact_req_status ON contact_requests(status);
+CREATE INDEX IF NOT EXISTS idx_contact_req_source ON contact_requests(source);
+CREATE INDEX IF NOT EXISTS idx_contact_req_conn_req ON contact_requests(connection_request_id);
 
 CREATE TABLE IF NOT EXISTS payment_records (
   id TEXT PRIMARY KEY,

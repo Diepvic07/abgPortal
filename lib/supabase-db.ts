@@ -558,6 +558,8 @@ function mapRowToContactRequest(row: Record<string, unknown>): ContactRequest {
     token: row.token as string,
     created_at: row.created_at as string,
     responded_at: nullToUndefined(row.responded_at as string | null),
+    source: nullToUndefined(row.source as ContactRequest['source'] | null),
+    connection_request_id: nullToUndefined(row.connection_request_id as string | null),
   };
 }
 
@@ -573,6 +575,8 @@ export async function createContactRequest(data: ContactRequest): Promise<void> 
     token: data.token,
     created_at: data.created_at,
     responded_at: data.responded_at ?? null,
+    source: data.source ?? 'direct',
+    connection_request_id: data.connection_request_id ?? null,
   });
   if (error) {
     console.error('[SupabaseDB] createContactRequest error:', error);

@@ -1,14 +1,12 @@
 import { NextRequest } from 'next/server';
 import {
   getMemberById,
-  addConnection,
   updateRequestStatus,
   getRequestById,
+  createContactRequest,
 } from '@/lib/supabase-db';
-import { sendIntroEmail } from '@/lib/resend';
-import { generateId, formatDate } from '@/lib/utils';
+import { sendContactRequestEmail } from '@/lib/resend';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
-import { Connection } from '@/types';
 import { requireAuth } from '@/lib/auth-middleware';
 
 export async function POST(request: NextRequest) {
@@ -32,7 +30,6 @@ export async function POST(request: NextRequest) {
     }
 
     const requester_id = connectionRequest.requester_id;
-    const request_text = connectionRequest.request_text;
 
     const requester = await getMemberById(requester_id);
     const targetMember = await getMemberById(selected_id);
@@ -41,44 +38,55 @@ export async function POST(request: NextRequest) {
       return errorResponse('Member not found', 404);
     }
 
-    // Prepare target details - use nickname for dating if available
     const targetName = targetMember.nickname || targetMember.name;
-    const targetEmail = targetMember.email;
 
     // Sanitize custom intro text (prevent XSS in email)
-    const sanitizedIntro = custom_intro_text
+    const sanitizedMessage = custom_intro_text
       ? custom_intro_text.slice(0, 500).replace(/[<>&"']/g, (c: string) =>
           ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c] || c))
-      : undefined;
+      : (locale === 'vi'
+        ? 'Xin chào! Tôi muốn kết nối với bạn qua ABG Alumni Connect.'
+        : 'Hello! I would like to connect with you via ABG Alumni Connect.');
 
-    await sendIntroEmail({
-      requester_email: requester.email,
-      requester_name: requester.name,
-      requester_role: requester.role,
-      requester_company: requester.company,
-      target_email: targetEmail,
-      target_name: targetName,
-      request_text,
-      match_reason,
-      custom_message: sanitizedIntro,
-      locale,
+    // Create a contact_request with accept/decline token (same flow as Direct Search)
+    const token = crypto.randomUUID();
+    const contactRequestId = crypto.randomUUID();
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
+    await createContactRequest({
+      id: contactRequestId,
+      requester_id: requester.id,
+      target_id: targetMember.id,
+      message: sanitizedMessage,
+      status: 'pending',
+      token,
+      created_at: new Date().toISOString(),
+      source: 'ai_match',
+      connection_request_id: request_id,
     });
 
+    // Send contact request email to target only (with Accept/Refuse buttons)
+    try {
+      await sendContactRequestEmail({
+        target_email: targetMember.email,
+        target_name: targetName,
+        requester_name: requester.name,
+        requester_email: requester.email,
+        requester_role: requester.role || '',
+        requester_company: requester.company || '',
+        message: sanitizedMessage,
+        accept_url: `${baseUrl}/api/contact/respond?token=${token}&action=accept`,
+        decline_url: `${baseUrl}/api/contact/respond?token=${token}&action=decline`,
+      });
+    } catch (emailError) {
+      console.error('AI match contact request email failed (request still created):', emailError);
+    }
+
+    // Update connection request status to 'connected' (intro was sent)
     await updateRequestStatus(request_id, 'connected', selected_id);
 
-    const connection: Connection = {
-      id: generateId(),
-      request_id,
-      from_id: requester_id,
-      to_id: selected_id,
-      intro_sent: true,
-      created_at: formatDate(),
-    };
-
-    await addConnection(connection);
-
     return successResponse({
-      message: 'Introduction email sent to both parties',
+      message: 'Introduction request sent. The recipient will choose to accept or decline.',
     });
   } catch (error) {
     return handleApiError(error);

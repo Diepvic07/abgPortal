@@ -161,6 +161,8 @@ export interface ContactRequest {
   token: string;
   created_at: string;
   responded_at?: string;
+  source?: 'direct' | 'ai_match';
+  connection_request_id?: string;
 }
 
 export interface PaymentRecord {
