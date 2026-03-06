@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getMemberById, updateMember, createPaymentRecord } from "@/lib/supabase-db";
 import { isAdminAsync } from "@/lib/admin-utils-server";
+import { sendPremiumUpgradeEmail } from "@/lib/resend";
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,6 +58,16 @@ export async function POST(request: NextRequest) {
         notes: notes || undefined,
         created_at: new Date().toISOString(),
       });
+    }
+
+    // Send premium upgrade notification email
+    if (tier === "premium" && isNewUpgrade) {
+      try {
+        await sendPremiumUpgradeEmail(member.email, member.name);
+      } catch (emailError) {
+        console.error("Failed to send premium upgrade email:", emailError);
+        // Don't fail the tier update if email fails
+      }
     }
 
     return NextResponse.json({ success: true, tier });

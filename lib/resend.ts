@@ -815,6 +815,87 @@ export async function sendContactDeclinedEmail(data: {
 }
 
 /**
+ * Send premium upgrade notification email with link to start searching
+ */
+export async function sendPremiumUpgradeEmail(to: string, name: string): Promise<void> {
+  const resend = getResendClient();
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+  const safeName = escapeHtml(name);
+
+  const emailHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <!-- Header -->
+        <tr><td style="background:linear-gradient(135deg,#7c3aed,#2563eb);padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <!-- Body -->
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Hi <strong>${safeName}</strong>,</p>
+
+          <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:20px;margin:0 0 24px;text-align:center;">
+            <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#7c3aed;text-transform:uppercase;letter-spacing:0.05em;">Your membership</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:#5b21b6;">Premium Member</p>
+          </div>
+
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+            Congratulations! Your account has been upgraded to <strong>Premium</strong>. You now have access to all premium features:
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; Up to 50 connection requests per month</td></tr>
+            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; See full member profiles (name, phone, LinkedIn)</td></tr>
+            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; Up to 10 AI-powered matches per request</td></tr>
+            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; Priority matching and support</td></tr>
+          </table>
+
+          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">
+            Start exploring the ABG Alumni network and find the connections you're looking for!
+          </p>
+
+          <!-- CTA Button -->
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td align="center" style="padding:0 0 12px;">
+              <a href="${appUrl}/request" style="display:inline-block;padding:14px 48px;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">
+                Start Finding Connections
+              </a>
+            </td></tr>
+          </table>
+        </td></tr>
+        <!-- Footer -->
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">
+            Best regards,<br><strong>ABG Alumni Connect</strong>
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: "You've been upgraded to Premium - ABG Alumni Connect",
+    html: emailHtml,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: Premium upgrade email not sent.', error.message);
+      return;
+    }
+    console.error('Failed to send premium upgrade email:', error);
+  }
+}
+
+/**
  * Send rejection notification email
  */
 export async function sendRejectionEmail(to: string, name: string): Promise<void> {
