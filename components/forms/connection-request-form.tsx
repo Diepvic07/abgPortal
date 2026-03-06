@@ -25,7 +25,46 @@ interface MatchWithMember extends MatchResult {
 
 type PaywallType = 'sign-in' | 'upgrade' | null;
 
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  partner: (
+    // Network / handshake icon
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  ),
+  love: (
+    // Heart icon
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+    </svg>
+  ),
+  job: (
+    // Briefcase icon
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+  ),
+  hiring: (
+    // Add user / recruit icon
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+    </svg>
+  ),
+};
+
+
 const CATEGORY_STYLES = {
+  partner: {
+    gradient: 'from-violet-500 to-purple-600',
+    bg: 'bg-gradient-to-br from-violet-50 to-purple-50',
+    border: 'border-violet-200',
+    activeBorder: 'border-violet-500 ring-2 ring-violet-400/20',
+    text: 'text-violet-700',
+    iconBg: 'bg-violet-100',
+    iconColor: 'text-violet-600',
+    focusRing: 'focus:ring-violet-400 focus:border-violet-400',
+    button: 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-violet-500/25',
+  },
   love: {
     gradient: 'from-pink-500 to-rose-500',
     bg: 'bg-gradient-to-br from-pink-50 to-rose-50',
@@ -33,6 +72,7 @@ const CATEGORY_STYLES = {
     activeBorder: 'border-pink-400 ring-2 ring-pink-400/20',
     text: 'text-pink-700',
     iconBg: 'bg-pink-100',
+    iconColor: 'text-pink-600',
     focusRing: 'focus:ring-pink-400 focus:border-pink-400',
     button: 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-pink-500/25',
   },
@@ -43,6 +83,7 @@ const CATEGORY_STYLES = {
     activeBorder: 'border-brand ring-2 ring-brand/20',
     text: 'text-brand',
     iconBg: 'bg-blue-100',
+    iconColor: 'text-brand',
     focusRing: 'focus:ring-brand focus:border-brand',
     button: 'bg-gradient-to-r from-brand to-brand-light hover:from-brand-dark hover:to-brand shadow-brand/25',
   },
@@ -53,18 +94,9 @@ const CATEGORY_STYLES = {
     activeBorder: 'border-emerald-400 ring-2 ring-emerald-400/20',
     text: 'text-emerald-700',
     iconBg: 'bg-emerald-100',
+    iconColor: 'text-emerald-600',
     focusRing: 'focus:ring-emerald-400 focus:border-emerald-400',
     button: 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/25',
-  },
-  partner: {
-    gradient: 'from-amber-500 to-orange-500',
-    bg: 'bg-gradient-to-br from-amber-50 to-orange-50',
-    border: 'border-amber-200',
-    activeBorder: 'border-amber-400 ring-2 ring-amber-400/20',
-    text: 'text-amber-700',
-    iconBg: 'bg-amber-100',
-    focusRing: 'focus:ring-amber-400 focus:border-amber-400',
-    button: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/25',
   },
 } as const;
 
@@ -229,11 +261,11 @@ export function ConnectionRequestForm() {
 
   const style = CATEGORY_STYLES[matchType];
 
-  const categories: { key: RequestCategory; label: string; icon: string; desc: string }[] = [
-    { key: 'love', label: t.dating.findPartner, icon: '\u2764\uFE0F', desc: t.dating.loveDesc },
-    { key: 'job', label: t.dating.findJob, icon: '\uD83D\uDCBC', desc: t.dating.jobDesc },
-    { key: 'hiring', label: t.dating.findCandidates, icon: '\uD83D\uDC65', desc: t.dating.hiringDesc },
-    { key: 'partner', label: t.dating.professionalNetwork, icon: '\uD83E\uDD1D', desc: t.dating.partnerDesc },
+  const categories: { key: RequestCategory; label: string; desc: string }[] = [
+    { key: 'partner', label: t.dating.professionalNetwork, desc: t.dating.partnerDesc },
+    { key: 'love', label: t.dating.findPartner, desc: t.dating.loveDesc },
+    { key: 'job', label: t.dating.findJob, desc: t.dating.jobDesc },
+    { key: 'hiring', label: t.dating.findCandidates, desc: t.dating.hiringDesc },
   ];
 
   const renderTabs = () => (
@@ -247,34 +279,30 @@ export function ConnectionRequestForm() {
             role="tab"
             aria-selected={isActive}
             onClick={() => setMatchType(cat.key)}
-            className={`relative p-4 rounded-2xl border text-left transition-all duration-200 group overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
-              isActive
-                ? `${catStyle.bg} ${catStyle.activeBorder} shadow-lg`
-                : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
-            }`}
+            className={`relative p-4 rounded-2xl border text-left transition-all duration-200 group overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${isActive
+              ? `${catStyle.bg} ${catStyle.activeBorder} shadow-lg`
+              : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+              }`}
             type="button"
           >
             {isActive && (
               <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${catStyle.gradient}`} aria-hidden="true" />
             )}
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3">
               <span
                 aria-hidden="true"
-                className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${
-                  isActive ? catStyle.iconBg : 'bg-gray-100 group-hover:bg-gray-200'
-                }`}
+                className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all ${isActive ? `${catStyle.iconBg} ${catStyle.iconColor}` : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200'
+                  }`}
               >
-                {cat.icon}
+                {CATEGORY_ICONS[cat.key]}
               </span>
               <div className="min-w-0">
-                <span className={`block text-sm font-semibold leading-tight ${
-                  isActive ? catStyle.text : 'text-gray-800'
-                }`}>
+                <span className={`block text-sm font-semibold leading-tight ${isActive ? catStyle.text : 'text-gray-800'
+                  }`}>
                   {cat.label}
                 </span>
-                <p className={`text-xs mt-1 leading-relaxed ${
-                  isActive ? 'text-gray-600' : 'text-gray-500 group-hover:text-gray-600'
-                }`}>
+                <p className={`text-xs mt-0.5 leading-relaxed ${isActive ? 'text-gray-600' : 'text-gray-500 group-hover:text-gray-600'
+                  }`}>
                   {cat.desc}
                 </p>
               </div>
