@@ -19,6 +19,7 @@ export const vi: Translations = {
     profile: 'Hồ sơ',
     history: 'Lịch sử',
     faq: 'FAQ',
+    payMembership: 'Thanh toán hội phí',
   },
 
   // Footer

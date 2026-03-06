@@ -81,6 +81,26 @@ export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps
             )}
           </div>
 
+          {(membershipStatus === 'basic' || membershipStatus === 'expired') && (
+            <div className="px-3 py-2 border-b border-amber-100 bg-amber-50">
+              <Link
+                href="/upgrade"
+                className="flex items-center justify-between gap-2 w-full px-3 py-2 text-sm font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  {t.nav.payMembership}
+                </span>
+                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          )}
+
           <div className="py-1">
             <Link
               href="/profile"
