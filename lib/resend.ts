@@ -599,63 +599,84 @@ export async function sendContactRequestEmail(data: {
   }
 }
 
-/**
- * Send contact accepted email to requester — reveals target's full contact info
- */
-export async function sendContactAcceptedEmail(data: {
-  requester_email: string;
-  requester_name: string;
-  target_name: string;
-  target_role: string;
-  target_company: string;
-  target_phone?: string;
-  target_email: string;
-  target_facebook_url?: string;
-  target_linkedin_url?: string;
-}): Promise<void> {
-  const resend = getResendClient();
-  const safeRequesterName = escapeHtml(data.requester_name);
-  const safeTargetName = escapeHtml(data.target_name);
-  const safeRole = escapeHtml(data.target_role);
-  const safeCompany = escapeHtml(data.target_company);
-  const safeEmail = escapeHtml(data.target_email);
-  const safePhone = data.target_phone ? escapeHtml(data.target_phone) : '';
-  const safeFacebook = data.target_facebook_url ? escapeHtml(data.target_facebook_url) : '';
-  const safeLinkedin = data.target_linkedin_url ? escapeHtml(data.target_linkedin_url) : '';
+/** Contact info for accepted email — both parties receive the other's details */
+interface ContactMemberInfo {
+  email: string;
+  name: string;
+  role: string;
+  company: string;
+  phone?: string;
+  facebook_url?: string;
+  linkedin_url?: string;
+}
+
+/** Build HTML contact card for a member */
+function buildContactCard(member: ContactMemberInfo): string {
+  const safeName = escapeHtml(member.name);
+  const safeRole = escapeHtml(member.role);
+  const safeCompany = escapeHtml(member.company);
+  const safeEmail = escapeHtml(member.email);
   const roleInfo = safeRole
     ? `${safeRole}${safeCompany ? ` tại ${safeCompany}` : ''}`
     : safeCompany || '';
 
-  // Build contact rows dynamically
-  const contactRows: string[] = [];
-  contactRows.push(`
-    <tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
-      <span style="font-size:13px;color:#6b7280;">📧 Email</span><br>
-      <a href="mailto:${safeEmail}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeEmail}</a>
-    </td></tr>`);
-  if (data.target_phone) {
-    contactRows.push(`
-    <tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
+  const rows: string[] = [];
+  rows.push(`<tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
+    <span style="font-size:13px;color:#6b7280;">📧 Email</span><br>
+    <a href="mailto:${safeEmail}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeEmail}</a>
+  </td></tr>`);
+  if (member.phone) {
+    const safePhone = escapeHtml(member.phone);
+    rows.push(`<tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
       <span style="font-size:13px;color:#6b7280;">📱 Điện thoại</span><br>
-      <a href="tel:${encodeURI(data.target_phone)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safePhone}</a>
+      <a href="tel:${encodeURI(member.phone)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safePhone}</a>
     </td></tr>`);
   }
-  if (data.target_facebook_url) {
-    contactRows.push(`
-    <tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
+  if (member.facebook_url) {
+    const safeFb = escapeHtml(member.facebook_url);
+    rows.push(`<tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
       <span style="font-size:13px;color:#6b7280;">👤 Facebook</span><br>
-      <a href="${encodeURI(data.target_facebook_url)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeFacebook}</a>
+      <a href="${encodeURI(member.facebook_url)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeFb}</a>
     </td></tr>`);
   }
-  if (data.target_linkedin_url) {
-    contactRows.push(`
-    <tr><td style="padding:8px 0;">
+  if (member.linkedin_url) {
+    const safeLi = escapeHtml(member.linkedin_url);
+    rows.push(`<tr><td style="padding:8px 0;">
       <span style="font-size:13px;color:#6b7280;">💼 LinkedIn</span><br>
-      <a href="${encodeURI(data.target_linkedin_url)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeLinkedin}</a>
+      <a href="${encodeURI(member.linkedin_url)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeLi}</a>
     </td></tr>`);
   }
 
-  const emailHtml = `
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin:0 0 24px;">
+    <tr><td style="padding:20px 24px;">
+      <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:#166534;">${safeName}</p>
+      ${roleInfo ? `<p style="margin:0 0 16px;font-size:14px;color:#4b5563;">${roleInfo}</p>` : '<div style="margin:0 0 16px;"></div>'}
+      <table width="100%" cellpadding="0" cellspacing="0">${rows.join('')}</table>
+    </td></tr>
+  </table>`;
+}
+
+/**
+ * Send contact accepted email to BOTH parties — reveals each other's full contact info
+ */
+export async function sendContactAcceptedEmail(data: {
+  requester: ContactMemberInfo;
+  target: ContactMemberInfo;
+}): Promise<void> {
+  const resend = getResendClient();
+
+  // Send personalized email to each party showing the other's contact card
+  const parties = [
+    { recipient: data.requester, otherParty: data.target },
+    { recipient: data.target, otherParty: data.requester },
+  ];
+
+  for (const { recipient, otherParty } of parties) {
+    const safeRecipientName = escapeHtml(recipient.name);
+    const safeOtherName = escapeHtml(otherParty.name);
+    const contactCard = buildContactCard(otherParty);
+
+    const emailHtml = `
 <!DOCTYPE html>
 <html lang="vi">
 <head><meta charset="UTF-8"></head>
@@ -663,34 +684,22 @@ export async function sendContactAcceptedEmail(data: {
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-        <!-- Header -->
         <tr><td style="background:#16a34a;padding:28px 40px;">
           <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
         </td></tr>
-        <!-- Body -->
         <tr><td style="padding:32px 40px;">
-          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Xin chào <strong>${safeRequesterName}</strong>,</p>
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Xin chào <strong>${safeRecipientName}</strong>,</p>
           <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">
-            Tin vui! <strong>${safeTargetName}</strong> đã chấp nhận yêu cầu kết nối của bạn.
+            Tin vui! Kết nối giữa bạn và <strong>${safeOtherName}</strong> đã được xác nhận.
           </p>
           <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">
             Dưới đây là thông tin liên hệ đầy đủ để bạn có thể bắt đầu kết nối:
           </p>
-          <!-- Contact Card -->
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin:0 0 24px;">
-            <tr><td style="padding:20px 24px;">
-              <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:#166534;">${safeTargetName}</p>
-              ${roleInfo ? `<p style="margin:0 0 16px;font-size:14px;color:#4b5563;">${roleInfo}</p>` : '<div style="margin:0 0 16px;"></div>'}
-              <table width="100%" cellpadding="0" cellspacing="0">
-                ${contactRows.join('')}
-              </table>
-            </td></tr>
-          </table>
+          ${contactCard}
           <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">
             Hãy chủ động liên hệ và bắt đầu kết nối nhé! Chúc bạn có những cuộc trò chuyện thú vị.
           </p>
         </td></tr>
-        <!-- Footer -->
         <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
           <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">
             Trân trọng,<br><strong>ABG Alumni Connect</strong>
@@ -702,49 +711,47 @@ export async function sendContactAcceptedEmail(data: {
 </body>
 </html>`;
 
-  const { error } = await resend.emails.send({
-    from: FROM_EMAIL,
-    to: data.requester_email,
-    subject: `[ABG Connect] ${data.target_name} đã chấp nhận yêu cầu kết nối`,
-    html: emailHtml,
-  });
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: recipient.email,
+      subject: `[ABG Connect] Kết nối với ${otherParty.name} đã được xác nhận`,
+      html: emailHtml,
+    });
 
-  if (error) {
-    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
-      console.warn('Resend Test Mode: Contact accepted email not sent.', error.message);
-      // Fallback: send only to verified test mode emails
-      const testRecipients = [...new Set([data.requester_email, ...TEST_MODE_EMAILS])]
-        .filter(e => TEST_MODE_EMAILS.includes(e));
-      const { error: retryError } = await resend.emails.send({
-        from: FROM_EMAIL,
-        to: testRecipients,
-        subject: `[TEST MODE] ${data.target_name} đã chấp nhận yêu cầu kết nối`,
-        html: `
-          <div style="background:#d1fae5;color:#065f46;padding:12px 16px;margin-bottom:20px;border:1px solid #a7f3d0;border-radius:8px;font-size:13px;">
-            <strong>Test Mode:</strong> Acceptance email for <strong>${escapeHtml(data.requester_email)}</strong>. Sent to admins for testing.
-          </div>
-          ${emailHtml}
-        `,
-      });
-      if (retryError) {
-        console.warn('Resend Test Mode: Failed to send accepted fallback.', retryError);
+    if (error) {
+      if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+        console.warn(`Resend Test Mode: Accepted email not sent to ${recipient.email}.`, error.message);
+        const testRecipients = [...new Set([recipient.email, ...TEST_MODE_EMAILS])]
+          .filter(e => TEST_MODE_EMAILS.includes(e));
+        if (testRecipients.length) {
+          await resend.emails.send({
+            from: FROM_EMAIL,
+            to: testRecipients,
+            subject: `[TEST MODE] Kết nối ${recipient.name} ↔ ${otherParty.name} đã xác nhận`,
+            html: `<div style="background:#d1fae5;color:#065f46;padding:12px 16px;margin-bottom:20px;border:1px solid #a7f3d0;border-radius:8px;font-size:13px;">
+              <strong>Test Mode:</strong> Acceptance email for <strong>${escapeHtml(recipient.email)}</strong>. Sent to admins for testing.
+            </div>${emailHtml}`,
+          }).catch(e => console.warn('Test mode fallback failed:', e));
+        }
+        continue;
       }
-      return;
+      console.error(`Failed to send accepted email to ${recipient.email}:`, error);
     }
-    console.error('Failed to send contact accepted email:', error);
-    throw new Error(`Failed to send email: ${error.message}`);
   }
 }
 
 /**
- * Send contact declined email to requester — no target details revealed
+ * Send contact declined email to requester — names the target (non-love-match only)
  */
 export async function sendContactDeclinedEmail(data: {
   requester_email: string;
   requester_name: string;
+  target_name: string;
 }): Promise<void> {
   const resend = getResendClient();
   const safeName = escapeHtml(data.requester_name);
+  const safeTargetName = escapeHtml(data.target_name);
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
 
   const emailHtml = `
 <!DOCTYPE html>
@@ -754,21 +761,23 @@ export async function sendContactDeclinedEmail(data: {
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-        <!-- Header -->
         <tr><td style="background:#1a56db;padding:28px 40px;">
           <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
         </td></tr>
-        <!-- Body -->
         <tr><td style="padding:32px 40px;">
           <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Xin chào <strong>${safeName}</strong>,</p>
           <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-            Cảm ơn bạn đã sử dụng ABG Alumni Connect. Yêu cầu kết nối của bạn hiện chưa được chấp nhận vào lúc này.
+            Cảm ơn bạn đã sử dụng ABG Alumni Connect. Rất tiếc, yêu cầu kết nối của bạn với <strong>${safeTargetName}</strong> hiện chưa được chấp nhận vào lúc này.
           </p>
-          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">
             Đừng lo, cộng đồng ABG Alumni có rất nhiều thành viên tài năng khác đang chờ kết nối với bạn. Hãy tiếp tục khám phá và tìm kiếm những cơ hội mới!
           </p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td align="center">
+              <a href="${appUrl}/request" style="display:inline-block;padding:12px 36px;background:#1a56db;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">Tìm kết nối mới</a>
+            </td></tr>
+          </table>
         </td></tr>
-        <!-- Footer -->
         <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
           <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">
             Trân trọng,<br><strong>ABG Alumni Connect</strong>
@@ -783,26 +792,22 @@ export async function sendContactDeclinedEmail(data: {
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: data.requester_email,
-    subject: `[ABG Connect] Cập nhật yêu cầu kết nối`,
+    subject: `[ABG Connect] Cập nhật yêu cầu kết nối với ${data.target_name}`,
     html: emailHtml,
   });
 
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
       console.warn('Resend Test Mode: Contact declined email not sent.', error.message);
-      // Fallback: send only to verified test mode emails
       const testRecipients = [...new Set([data.requester_email, ...TEST_MODE_EMAILS])]
         .filter(e => TEST_MODE_EMAILS.includes(e));
       const { error: retryError } = await resend.emails.send({
         from: FROM_EMAIL,
         to: testRecipients,
-        subject: `[TEST MODE] Cập nhật yêu cầu kết nối - ${data.requester_name}`,
-        html: `
-          <div style="background:#fee2e2;color:#991b1b;padding:12px 16px;margin-bottom:20px;border:1px solid #fecaca;border-radius:8px;font-size:13px;">
-            <strong>Test Mode:</strong> Decline email for <strong>${escapeHtml(data.requester_email)}</strong>. Sent to admins for testing.
-          </div>
-          ${emailHtml}
-        `,
+        subject: `[TEST MODE] Cập nhật yêu cầu kết nối - ${data.requester_name} → ${data.target_name}`,
+        html: `<div style="background:#fee2e2;color:#991b1b;padding:12px 16px;margin-bottom:20px;border:1px solid #fecaca;border-radius:8px;font-size:13px;">
+          <strong>Test Mode:</strong> Decline email for <strong>${escapeHtml(data.requester_email)}</strong>. Sent to admins for testing.
+        </div>${emailHtml}`,
       });
       if (retryError) {
         console.warn('Resend Test Mode: Failed to send declined fallback.', retryError);

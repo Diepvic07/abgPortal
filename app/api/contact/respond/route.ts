@@ -47,15 +47,24 @@ export async function GET(request: NextRequest) {
       }
 
       await sendContactAcceptedEmail({
-        requester_email: requester.email,
-        requester_name: requester.name,
-        target_name: target.name,
-        target_role: target.role || "",
-        target_company: target.company || "",
-        target_phone: target.phone,
-        target_email: target.email,
-        target_facebook_url: target.facebook_url,
-        target_linkedin_url: target.linkedin_url,
+        requester: {
+          email: requester.email,
+          name: requester.name,
+          role: requester.role || "",
+          company: requester.company || "",
+          phone: requester.phone,
+          facebook_url: requester.facebook_url,
+          linkedin_url: requester.linkedin_url,
+        },
+        target: {
+          email: target.email,
+          name: target.name,
+          role: target.role || "",
+          company: target.company || "",
+          phone: target.phone,
+          facebook_url: target.facebook_url,
+          linkedin_url: target.linkedin_url,
+        },
       });
       return htmlResponse("Cảm ơn bạn! Thông tin liên hệ của bạn đã được chia sẻ.", "success");
     }
@@ -65,6 +74,7 @@ export async function GET(request: NextRequest) {
     await sendContactDeclinedEmail({
       requester_email: requester.email,
       requester_name: requester.name,
+      target_name: target.name,
     });
     return htmlResponse("Yêu cầu đã được từ chối. Cảm ơn bạn đã phản hồi.", "info");
   } catch (error) {
