@@ -488,6 +488,12 @@ export const vi: Translations = {
     a16: 'Tài khoản Premium có ngày hết hạn cố định (hiện tại là 31/12/2026). Sau khi hết hạn, tài khoản tự động chuyển về gói Basic.',
     q17: 'Có được hoàn tiền không?',
     a17: 'Không hoàn tiền sau khi Premium đã được kích hoạt. Vui lòng xem kỹ quyền lợi các gói trước khi nâng cấp. Liên hệ admin nếu có trường hợp đặc biệt.',
+    q18: 'Nền tảng này có những tính năng gì?',
+    a18: 'Nền tảng cung cấp tính năng Kết nối AI (để tìm đối tác kinh doanh, tìm việc, tuyển dụng, và ghép đôi hẹn hò), Tìm kiếm danh bạ thành viên (tìm thủ công không dùng AI), và chuyên mục Tin tức cập nhật thông tin cộng đồng.',
+    q19: 'Tính năng kết nối bằng AI hoạt động thế nào?',
+    a19: 'AI sẽ phân tích nhu cầu cụ thể của bạn và so sánh với tất cả hồ sơ để tìm ra những người phù hợp nhất. Hệ thống sẽ cung cấp điểm tương thích và giải thích lý do tại sao hai bản profile lại hợp nhau.',
+    q20: 'Tính năng tìm kiếm thông thường (không dùng AI) hoạt động ra sao?',
+    a20: 'Tìm kiếm thông thường cho phép bạn tự duyệt danh bạ thành viên. Bạn có thể tra cứu theo từ khóa như tên, công ty, chức vụ hoặc chuyên môn để chủ động tìm đúng người mà không tốn lượt yêu cầu AI.',
   },
 
   // History page

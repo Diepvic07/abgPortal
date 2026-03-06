@@ -5,7 +5,7 @@ import { useTranslation } from '@/lib/i18n';
 
 const FAQ_CATEGORIES = [
   { key: 'basics' as const, questions: [1, 2, 3] },
-  { key: 'features' as const, questions: [4, 5, 6, 7] },
+  { key: 'features' as const, questions: [4, 5, 6, 7, 18, 19, 20] },
   { key: 'privacy' as const, questions: [8, 9, 10, 11] },
   { key: 'premium' as const, questions: [12, 13, 14, 15, 16, 17] },
 ] as const;
@@ -59,9 +59,8 @@ export function FaqPageClient() {
                           {t.faq[qKey] as string}
                         </span>
                         <svg
-                          className={`w-5 h-5 text-text-secondary shrink-0 transition-transform ${
-                            isOpen ? 'rotate-180' : ''
-                          }`}
+                          className={`w-5 h-5 text-text-secondary shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''
+                            }`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"

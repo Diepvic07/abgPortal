@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import type { SearchResultBasic, SearchResultPro } from "@/lib/search-utils";
 import { ContactRequestModal } from "./contact-request-modal";
+import { PaymentInfoModal } from "@/components/ui/payment-info-modal";
 
 type SearchResult = SearchResultBasic | SearchResultPro;
 
@@ -18,6 +19,7 @@ interface MemberSearchResultCardProps {
 
 export function MemberSearchResultCard({ result, viewerTier }: MemberSearchResultCardProps) {
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const isPro = isProResult(result);
 
   return (
@@ -71,12 +73,12 @@ export function MemberSearchResultCard({ result, viewerTier }: MemberSearchResul
             </button>
           ) : (
             <div className="text-center">
-              <a
-                href="/request"
+              <button
+                onClick={() => setShowPaymentModal(true)}
                 className="text-xs text-blue-600 hover:text-blue-800 underline"
               >
                 Upgrade to Pro to contact members
-              </a>
+              </button>
             </div>
           )}
         </div>
@@ -91,6 +93,13 @@ export function MemberSearchResultCard({ result, viewerTier }: MemberSearchResul
           onSuccess={() => setShowContactModal(false)}
         />
       )}
+
+      <PaymentInfoModal
+        memberId={result.id}
+        memberName={result.name}
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+      />
     </>
   );
 }

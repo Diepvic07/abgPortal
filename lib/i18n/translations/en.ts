@@ -486,6 +486,12 @@ export const en = {
     a16: 'Premium memberships have a fixed expiration date (currently December 31, 2026). After expiry, your account automatically downgrades to Basic tier.',
     q17: 'Can I get a refund?',
     a17: 'Refunds are not available for Premium memberships once activated. Please review the tier benefits carefully before upgrading. Contact admin if you have special circumstances.',
+    q18: 'What features are available on the platform?',
+    a18: 'The platform offers AI Connections (for finding business partners, jobs, hiring, and love matches), a member directory Search (for searching without AI), and a News section for community updates.',
+    q19: 'How does the AI connection work?',
+    a19: 'The AI analyzes your specific needs and compares them against all member profiles to find the most relevant matches. It provides a match score and explains why you were matched before you send a connection request.',
+    q20: 'How does the regular search (without AI) work?',
+    a20: 'The regular search allows you to browse the member directory manually. You can search by keywords like name, company, role, or expertise to find specific people without using your AI request quota.',
   },
 
   // History page
