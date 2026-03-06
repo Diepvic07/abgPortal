@@ -72,7 +72,8 @@ export function EmailCheckCard({
     try {
       const result = await signIn('email', { email: email.trim().toLowerCase(), redirect: false, callbackUrl: '/request' });
       if (result?.error) {
-        setError(result.error.includes('wait') ? result.error : t.landing.emailCheck.magicLinkError || 'Could not send magic link.');
+        const errMsg = result.error ?? '';
+        setError(errMsg.includes('wait') ? errMsg : (t.landing.emailCheck.magicLinkError || 'Could not send magic link.'));
       } else {
         setMagicLinkSent(true);
       }
