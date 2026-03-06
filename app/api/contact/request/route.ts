@@ -67,16 +67,21 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString(),
     });
 
-    await sendContactRequestEmail({
-      target_email: target.email,
-      target_name: target.name,
-      requester_name: member.name,
-      requester_role: member.role || "",
-      requester_company: member.company || "",
-      message: finalMessage,
-      accept_url: `${baseUrl}/api/contact/respond?token=${token}&action=accept`,
-      decline_url: `${baseUrl}/api/contact/respond?token=${token}&action=decline`,
-    });
+    // Send email non-blocking — don't let email failure block the contact request
+    try {
+      await sendContactRequestEmail({
+        target_email: target.email,
+        target_name: target.name,
+        requester_name: member.name,
+        requester_role: member.role || "",
+        requester_company: member.company || "",
+        message: finalMessage,
+        accept_url: `${baseUrl}/api/contact/respond?token=${token}&action=accept`,
+        decline_url: `${baseUrl}/api/contact/respond?token=${token}&action=decline`,
+      });
+    } catch (emailError) {
+      console.error("Contact request email failed (request still created):", emailError);
+    }
 
     return NextResponse.json({ success: true, requestId: id });
   } catch (error) {

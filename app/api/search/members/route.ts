@@ -106,8 +106,9 @@ export async function POST(request: NextRequest) {
       dbQuery = dbQuery.eq("abg_class", filters.abg_class.trim());
     }
 
-    // Fetch broader set for JS-level Vietnamese-aware filtering
-    dbQuery = dbQuery.limit(500);
+    // Fetch all active/approved members for JS-level Vietnamese-aware filtering
+    // Supabase default limit is 1000; explicit limit ensures coverage as membership grows
+    dbQuery = dbQuery.limit(1000);
     const { data, error } = await dbQuery;
     if (error) throw error;
 
