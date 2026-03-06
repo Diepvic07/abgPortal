@@ -31,6 +31,8 @@ export function EmailCheckCard({
   const [isLoading, setIsLoading] = useState(false);
   const [checkResult, setCheckResult] = useState<CheckResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [magicLinkLoading, setMagicLinkLoading] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,13 +48,15 @@ export function EmailCheckCard({
       });
 
       if (!res.ok) {
-        throw new Error('Failed to check email');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to check email');
       }
 
       const data: CheckResult = await res.json();
       setCheckResult(data);
-    } catch {
-      setError(t.common.error);
+    } catch (err) {
+      console.error('Email check error:', err);
+      setError(`${t.common.error}: ${err instanceof Error ? err.message : 'Unknown'}`);
     } finally {
       setIsLoading(false);
     }
@@ -60,6 +64,23 @@ export function EmailCheckCard({
 
   const handleGoogleSignIn = () => {
     signIn('google', { callbackUrl: intent === 'signup' ? '/onboard' : '/request' });
+  };
+
+  const handleMagicLink = async () => {
+    setMagicLinkLoading(true);
+    setError(null);
+    try {
+      const result = await signIn('email', { email: email.trim().toLowerCase(), redirect: false, callbackUrl: '/request' });
+      if (result?.error) {
+        setError(result.error.includes('wait') ? result.error : t.landing.emailCheck.magicLinkError || 'Could not send magic link.');
+      } else {
+        setMagicLinkSent(true);
+      }
+    } catch {
+      setError(t.common.error);
+    } finally {
+      setMagicLinkLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -106,16 +127,37 @@ export function EmailCheckCard({
 
       <p className="text-text-secondary mb-4">{checkResult.message}</p>
 
-      {checkResult.showOAuth && (
-        <button
-          onClick={handleGoogleSignIn}
-          className="w-full py-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-3 transition-colors mb-3"
-        >
-          <GoogleIcon />
-          <span className="font-medium text-gray-700">
-            {t.landing.emailCheck.googleButton}
-          </span>
-        </button>
+      {magicLinkSent && (
+        <p className="text-green-600 text-sm font-medium mb-3">
+          {t.auth.magicLinkSent || 'Magic link sent! Check your email.'}
+        </p>
+      )}
+
+      {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+
+      {checkResult.showOAuth && !magicLinkSent && (
+        <>
+          {/* Magic link option for returning members */}
+          {intent === 'signin' && (
+            <button
+              onClick={handleMagicLink}
+              disabled={magicLinkLoading}
+              className="w-full py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors mb-3"
+            >
+              {magicLinkLoading ? (t.common.loading) : (t.auth.sendMagicLink || 'Send Magic Link')}
+            </button>
+          )}
+
+          <button
+            onClick={handleGoogleSignIn}
+            className="w-full py-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-3 transition-colors mb-3"
+          >
+            <GoogleIcon />
+            <span className="font-medium text-gray-700">
+              {t.landing.emailCheck.googleButton}
+            </span>
+          </button>
+        </>
       )}
 
       {/* Show switch section link if user is in wrong section */}

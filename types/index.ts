@@ -24,6 +24,7 @@ export interface Member {
   hiring_preferences?: string;
   gender?: 'Female' | 'Male' | 'Undisclosed';
   relationship_status?: string;
+  birth_year?: string;
   // Auth and security fields
   auth_provider?: string;
   auth_provider_id?: string;
@@ -159,6 +160,18 @@ export interface PaymentRecord {
   amount_vnd: number;
   admin_id: string;
   notes?: string;
+  created_at: string;
+}
+
+export type BugReportStatus = 'open' | 'fixed' | 'wontfix';
+
+export interface BugReport {
+  id: string;
+  reporter_email: string;
+  page_url: string;
+  description: string;
+  screenshot_url?: string;
+  status: BugReportStatus;
   created_at: string;
 }
 

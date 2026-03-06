@@ -51,15 +51,13 @@ echo "Testing connection..."
 PGPASSWORD="$DB_PASSWORD" psql "$DB_URL" -c "SELECT current_database(), current_user;" 2>&1
 echo ""
 
-echo "Running migration 001: Create tables..."
-PGPASSWORD="$DB_PASSWORD" psql "$DB_URL" -f "$MIGRATION_DIR/001_create_tables.sql"
-echo "✓ Migration 001 done"
-echo ""
-
-echo "Running migration 002: RLS policies..."
-PGPASSWORD="$DB_PASSWORD" psql "$DB_URL" -f "$MIGRATION_DIR/002_rls_policies.sql"
-echo "✓ Migration 002 done"
-echo ""
+for migration in "$MIGRATION_DIR"/*.sql; do
+  migration_name="$(basename "$migration")"
+  echo "Running migration: $migration_name..."
+  PGPASSWORD="$DB_PASSWORD" psql "$DB_URL" -f "$migration"
+  echo "✓ $migration_name done"
+  echo ""
+done
 
 echo "=== Verifying tables ==="
 PGPASSWORD="$DB_PASSWORD" psql "$DB_URL" \

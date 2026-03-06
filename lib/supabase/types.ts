@@ -274,6 +274,28 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['payment_records']['Insert']>;
         Relationships: [];
       };
+      bug_reports: {
+        Row: {
+          id: string;
+          reporter_email: string;
+          page_url: string;
+          description: string;
+          screenshot_url: string | null;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          reporter_email: string;
+          page_url: string;
+          description: string;
+          screenshot_url?: string | null;
+          status?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['bug_reports']['Insert']>;
+        Relationships: [];
+      };
       news: {
         Row: {
           id: string;

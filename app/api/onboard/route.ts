@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { put } from '@vercel/blob';
 import { generateBio } from '@/lib/gemini';
-import { addMember, getMemberByEmail } from '@/lib/supabase-db';
+import { addMember, getMemberByEmail, updateMember, updateMemberLastLogin } from '@/lib/supabase-db';
 import { sendOnboardingConfirmation } from '@/lib/resend';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
@@ -9,7 +9,6 @@ import { Member } from '@/types';
 import { requireSession } from '@/lib/auth-middleware';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { updateMemberLastLogin } from '@/lib/supabase-db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,88 +52,144 @@ export async function POST(request: NextRequest) {
     }
 
     const existingMember = await getMemberByEmail(email);
+
+    let memberId: string;
+    let bio: string;
+
     if (existingMember) {
-      return errorResponse('Email already registered', 400);
-    }
-
-    let avatar_url: string | undefined;
-    if (avatarFile && avatarFile.size > 0) {
-      const ext = avatarFile.name.split('.').pop() || 'jpg';
-      const blob = await put(`avatars/${generateId()}.${ext}`, avatarFile, {
-        access: 'public',
+      // Merge with existing data, taking new inputs over existing ones if provided
+      const mergedRole = role || existingMember.role;
+      const mergedCompany = company || existingMember.company;
+      const mergedExpertise = expertise || existingMember.expertise;
+      const mergedCanHelpWith = can_help_with || existingMember.can_help_with;
+      const mergedLookingFor = looking_for || existingMember.looking_for;
+      
+      bio = await generateBio({
+        name,
+        role: mergedRole,
+        company: mergedCompany,
+        expertise: mergedExpertise,
+        can_help_with: mergedCanHelpWith,
+        looking_for: mergedLookingFor,
       });
-      avatar_url = blob.url;
+
+      let avatar_url = existingMember.avatar_url;
+      if (avatarFile && avatarFile.size > 0) {
+        const ext = avatarFile.name.split('.').pop() || 'jpg';
+        const blob = await put(`avatars/${existingMember.id}.${ext}`, avatarFile, {
+          access: 'public',
+        });
+        avatar_url = blob.url;
+      }
+
+      const updates: Partial<Omit<Member, 'id' | 'email' | 'created_at'>> = {
+        name,
+        role: mergedRole,
+        company: mergedCompany,
+        expertise: mergedExpertise,
+        can_help_with: mergedCanHelpWith,
+        looking_for: mergedLookingFor,
+        bio,
+        avatar_url,
+        open_to_work: open_to_work || existingMember.open_to_work,
+        job_preferences: job_preferences || existingMember.job_preferences,
+        hiring: hiring || existingMember.hiring,
+        hiring_preferences: hiring_preferences || existingMember.hiring_preferences,
+        gender: gender || existingMember.gender,
+        relationship_status: relationship_status || existingMember.relationship_status,
+        abg_class: abg_class || existingMember.abg_class,
+        nickname: nickname || existingMember.nickname,
+        display_nickname_in_search,
+        display_nickname_in_match,
+        display_nickname_in_email,
+        auth_provider: authProvider,
+        last_login: formatDate(),
+        approval_status: 'approved', // Auto-approve since email was found in DB
+      };
+
+      await updateMember(existingMember.id, updates);
+      memberId = existingMember.id;
+      console.log(`[API] Merged data for existing member ${email}`);
+    } else {
+      let avatar_url: string | undefined;
+      if (avatarFile && avatarFile.size > 0) {
+        const ext = avatarFile.name.split('.').pop() || 'jpg';
+        const blob = await put(`avatars/${generateId()}.${ext}`, avatarFile, {
+          access: 'public',
+        });
+        avatar_url = blob.url;
+      }
+
+      bio = await generateBio({
+        name,
+        role,
+        company,
+        expertise,
+        can_help_with,
+        looking_for,
+      });
+
+      memberId = generateId();
+
+      const member: Member = {
+        id: memberId,
+        name,
+        email,
+        role,
+        company,
+        expertise,
+        can_help_with,
+        looking_for,
+        bio,
+        avatar_url,
+        status: 'active',
+        paid: false,
+        free_requests_used: 0,
+        created_at: formatDate(),
+        auth_provider: authProvider, // Detected from session (google or email)
+        auth_provider_id: '',
+        last_login: formatDate(),
+        account_status: 'active',
+        total_requests_count: 0,
+        requests_today: 0,
+        open_to_work,
+        job_preferences,
+        hiring,
+        hiring_preferences,
+        gender,
+        relationship_status,
+        abg_class,
+        nickname,
+        display_nickname_in_search,
+        display_nickname_in_match,
+        display_nickname_in_email,
+        payment_status: 'unpaid',
+        // New signups require approval
+        approval_status: 'pending',
+        is_csv_imported: false,
+      };
+
+      await addMember(member);
+
+      // Verify member was actually added (handle silent failures and eventual consistency)
+      // Retry up to 3 times with 1s delay
+      let verifyMember: Member | null = null;
+      for (let i = 0; i < 3; i++) {
+        // Wait 1s before first check and between retries
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        verifyMember = await getMemberByEmail(email);
+        if (verifyMember) break;
+
+        console.log(`[API] Verification attempt ${i + 1} failed for ${email}, retrying...`);
+      }
+
+      if (!verifyMember) {
+        console.error(`[API] Member creation verification failed for ${email} after 3 attempts`);
+        throw new Error('Failed to verify member creation - please try again or contact support');
+      }
+      console.log(`[API] Verified member creation for ${email}`);
     }
-
-    const bio = await generateBio({
-      name,
-      role,
-      company,
-      expertise,
-      can_help_with,
-      looking_for,
-    });
-
-    const memberId = generateId();
-
-    const member: Member = {
-      id: memberId,
-      name,
-      email,
-      role,
-      company,
-      expertise,
-      can_help_with,
-      looking_for,
-      bio,
-      avatar_url,
-      status: 'active',
-      paid: false,
-      free_requests_used: 0,
-      created_at: formatDate(),
-      auth_provider: authProvider, // Detected from session (google or email)
-      auth_provider_id: '',
-      last_login: formatDate(),
-      account_status: 'active',
-      total_requests_count: 0,
-      requests_today: 0,
-      open_to_work,
-      job_preferences,
-      hiring,
-      hiring_preferences,
-      gender,
-      relationship_status,
-      abg_class,
-      nickname,
-      display_nickname_in_search,
-      display_nickname_in_match,
-      display_nickname_in_email,
-      payment_status: 'unpaid',
-      // New signups require approval
-      approval_status: 'pending',
-      is_csv_imported: false,
-    };
-
-    await addMember(member);
-
-    // Verify member was actually added (handle silent failures and eventual consistency)
-    // Retry up to 3 times with 1s delay
-    let verifyMember: Member | null = null;
-    for (let i = 0; i < 3; i++) {
-      // Wait 1s before first check and between retries
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      verifyMember = await getMemberByEmail(email);
-      if (verifyMember) break;
-
-      console.log(`[API] Verification attempt ${i + 1} failed for ${email}, retrying...`);
-    }
-
-    if (!verifyMember) {
-      console.error(`[API] Member creation verification failed for ${email} after 3 attempts`);
-      throw new Error('Failed to verify member creation - please try again or contact support');
-    }
-    console.log(`[API] Verified member creation for ${email}`);
 
     // Explicitly update last login to initialize all security fields
     await updateMemberLastLogin(email);

@@ -20,7 +20,10 @@
     "migrate:dating": "npx tsx scripts/migrate-dating-profiles.ts",
     "migrate:dating:dry": "npx tsx scripts/migrate-dating-profiles.ts --dry-run",
     "migrate:csv": "npx tsx scripts/migrate-csv-to-supabase.ts",
-    "migrate:csv:dry": "npx tsx scripts/migrate-csv-to-supabase.ts --dry-run"
+    "migrate:csv:dry": "npx tsx scripts/migrate-csv-to-supabase.ts --dry-run",
+    "migrate:xlsx": "npx tsx scripts/migrate-xlsx-to-supabase.ts",
+    "migrate:xlsx:dry": "npx tsx scripts/migrate-xlsx-to-supabase.ts --dry-run",
+    "fetch:bugs": "npx tsx scripts/fetch-bug-reports.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -42,6 +45,7 @@
     "slugify": "^1.6.6",
     "tailwind-merge": "^3.4.0",
     "uuid": "^13.0.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {

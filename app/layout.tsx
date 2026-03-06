@@ -6,6 +6,7 @@ import { LanguageProvider } from '@/lib/i18n';
 import { HeaderNavigation } from '@/components/layout/header-navigation';
 import { FooterSection } from '@/components/layout/footer-section';
 import { AuthProvider } from '@/components/providers/auth-provider';
+import { BugReportButton } from '@/components/ui/bug-report-button';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -32,6 +33,7 @@ export default function RootLayout({
                 </main>
                 <FooterSection />
               </div>
+              <BugReportButton />
             </ToastProvider>
           </LanguageProvider>
         </AuthProvider>

@@ -47,12 +47,19 @@ export function SignInButton({ className = '', variant = 'default' }: SignInButt
 
             const result = await signIn('email', { email, redirect: false, callbackUrl: '/request' });
             if (result?.error) {
-                setError(locale === 'vi' ? 'Không thể gửi email. Vui lòng thử lại.' : 'Could not send email. Please try again.');
+                console.error('Magic link sign-in error:', result.error);
+                const friendlyError = result.error === 'EmailSignin'
+                    ? (locale === 'vi'
+                        ? 'Không thể gửi magic link. Hãy thử đăng nhập bằng Google.'
+                        : 'Could not send magic link. Please try Google Sign-In instead.')
+                    : (locale === 'vi' ? `Không thể gửi email. Chi tiết: ${result.error}` : `Could not send email. Details: ${result.error}`);
+                setError(friendlyError);
             } else {
                 setEmailSent(true);
             }
-        } catch {
-            setError(locale === 'vi' ? 'Có lỗi xảy ra. Vui lòng thử lại.' : 'Something went wrong. Please try again.');
+        } catch (err) {
+            console.error('Magic link exception:', err);
+            setError(locale === 'vi' ? `Có lỗi xảy ra: ${err instanceof Error ? err.message : 'Unknown'}` : `Something went wrong: ${err instanceof Error ? err.message : 'Unknown'}`);
         } finally {
             setIsLoading(false);
         }
@@ -61,7 +68,7 @@ export function SignInButton({ className = '', variant = 'default' }: SignInButt
     if (variant === 'header') {
         const headerClass = `text-sm text-white/80 hover:text-white transition-colors ${className}`;
         return (
-            <button onClick={handleGoogleSignIn} className={headerClass}>
+            <button onClick={() => router.push('/login')} className={headerClass}>
                 {t.auth.signIn}
             </button>
         );

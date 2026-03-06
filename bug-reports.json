@@ -1,0 +1,11 @@
+[
+  {
+    "id": "8df17730-9c2d-4dc4-8e05-1c7c58cf3558",
+    "reporter_email": "diepvic@gmail.com",
+    "page_url": "http://localhost:3000/login?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Frequest&error=OAuthCallback",
+    "description": "Admin user but still see the magic link and login google. It should not show this screen",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-05T11:02:42.348+00:00"
+  }
+]

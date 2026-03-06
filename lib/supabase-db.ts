@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from './supabase/server';
-import { Member, ConnectionRequest, Connection, LoveMatchRequest, NewsArticle, NewsCategory, ContactRequest, PaymentRecord } from '@/types';
+import { Member, ConnectionRequest, Connection, LoveMatchRequest, NewsArticle, NewsCategory, ContactRequest, PaymentRecord, BugReport } from '@/types';
 
 // ==================== Helpers ====================
 
@@ -34,6 +34,7 @@ function mapRowToMember(row: Record<string, unknown>): Member {
     hiring_preferences: (row.hiring_preferences as string) || '',
     gender: nullToUndefined(row.gender as 'Female' | 'Male' | 'Undisclosed' | null),
     relationship_status: nullToUndefined(row.relationship_status as string | null),
+    birth_year: row.birth_year as string || '',
     auth_provider: nullToUndefined(row.auth_provider as string | null),
     auth_provider_id: nullToUndefined(row.auth_provider_id as string | null),
     last_login: nullToUndefined(row.last_login as string | null),
@@ -202,6 +203,7 @@ export async function addMember(member: Member): Promise<void> {
     hiring_preferences: member.hiring_preferences ?? '',
     gender: member.gender ?? null,
     relationship_status: member.relationship_status ?? null,
+    birth_year: member.birth_year ?? null,
     auth_provider: member.auth_provider ?? null,
     auth_provider_id: member.auth_provider_id ?? null,
     last_login: member.last_login ?? null,
@@ -777,4 +779,47 @@ export async function getNewsArticleBySlug(slug: string, locale: string = 'vi'):
     throw new Error(`Failed to get news article by slug: ${error.message}`);
   }
   return data ? mapRowToNewsArticle(data as unknown as Record<string, unknown>) : null;
+}
+
+// ==================== Bug Reports ====================
+
+function mapRowToBugReport(row: Record<string, unknown>): BugReport {
+  return {
+    id: row.id as string,
+    reporter_email: row.reporter_email as string,
+    page_url: row.page_url as string,
+    description: row.description as string,
+    screenshot_url: nullToUndefined(row.screenshot_url as string | null),
+    status: (row.status as BugReport['status']) || 'open',
+    created_at: row.created_at as string,
+  };
+}
+
+export async function createBugReport(report: BugReport): Promise<void> {
+  const db = createServerSupabaseClient();
+  const { error } = await db.from('bug_reports').insert({
+    id: report.id,
+    reporter_email: report.reporter_email,
+    page_url: report.page_url,
+    description: report.description,
+    screenshot_url: report.screenshot_url ?? null,
+    status: report.status,
+    created_at: report.created_at,
+  });
+  if (error) {
+    console.error('[SupabaseDB] createBugReport error:', error);
+    throw new Error(`Failed to create bug report: ${error.message}`);
+  }
+}
+
+export async function getOpenBugReports(): Promise<BugReport[]> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('bug_reports').select('*')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('[SupabaseDB] getOpenBugReports error:', error);
+    throw new Error(`Failed to get open bug reports: ${error.message}`);
+  }
+  return (data || []).map(row => mapRowToBugReport(row as unknown as Record<string, unknown>));
 }

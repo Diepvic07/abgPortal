@@ -1,7 +1,15 @@
 import { LoginForm } from "@/components/forms/login-form";
 import Link from "next/link";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const session = await getServerSession(authOptions);
+  if (session?.user) {
+    redirect("/request");
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full p-8 bg-white rounded-xl shadow-sm">

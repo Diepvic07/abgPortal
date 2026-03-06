@@ -222,3 +222,89 @@ CREATE POLICY "Anyone can read published news" ON news
 
 CREATE POLICY "Service role full access to news" ON news
   FOR ALL USING (auth.role() = 'service_role');
+
+-- ============================================
+-- Migration: 003_verification_tokens.sql
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS verification_tokens (
+  identifier TEXT NOT NULL,
+  token TEXT NOT NULL UNIQUE,
+  expires TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_verification_token ON verification_tokens(token);
+
+ALTER TABLE verification_tokens ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service role full access to verification_tokens" ON verification_tokens
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- ============================================
+-- Migration: 004_news_publish_flags.sql
+-- ============================================
+
+ALTER TABLE news ADD COLUMN IF NOT EXISTS is_published_vi BOOLEAN DEFAULT false;
+ALTER TABLE news ADD COLUMN IF NOT EXISTS is_published_en BOOLEAN DEFAULT false;
+
+UPDATE news SET is_published_vi = is_published, is_published_en = is_published
+  WHERE is_published_vi IS NULL OR is_published_en IS NULL;
+
+ALTER TABLE news DROP COLUMN IF EXISTS is_published;
+
+-- ============================================
+-- Migration: 005_news_images_bucket.sql
+-- ============================================
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'news-images',
+  'news-images',
+  true,
+  5242880,
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+) ON CONFLICT (id) DO NOTHING;
+
+-- ============================================
+-- Migration: 006_premium_plan_tables.sql
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS contact_requests (
+  id TEXT PRIMARY KEY,
+  requester_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  target_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  message TEXT NOT NULL DEFAULT '',
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
+  feedback TEXT,
+  token TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  responded_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_contact_req_requester ON contact_requests(requester_id);
+CREATE INDEX IF NOT EXISTS idx_contact_req_target ON contact_requests(target_id);
+CREATE INDEX IF NOT EXISTS idx_contact_req_token ON contact_requests(token);
+CREATE INDEX IF NOT EXISTS idx_contact_req_status ON contact_requests(status);
+
+CREATE TABLE IF NOT EXISTS payment_records (
+  id TEXT PRIMARY KEY,
+  member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  amount_vnd INTEGER NOT NULL DEFAULT 0,
+  admin_id TEXT NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_payment_records_member ON payment_records(member_id);
+CREATE INDEX IF NOT EXISTS idx_payment_records_created ON payment_records(created_at);
+
+ALTER TABLE members ADD COLUMN IF NOT EXISTS searches_this_month INTEGER DEFAULT 0;
+ALTER TABLE members ADD COLUMN IF NOT EXISTS search_month_reset_date TEXT;
+
+ALTER TABLE contact_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payment_records ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role full access to contact_requests" ON contact_requests
+  FOR ALL USING (auth.role() = 'service_role');
+
+CREATE POLICY "Service role full access to payment_records" ON payment_records
+  FOR ALL USING (auth.role() = 'service_role');

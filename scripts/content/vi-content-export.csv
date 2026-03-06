@@ -1,0 +1,341 @@
+﻿Trang,Mô tả trang,Key,Tiếng Anh (tham khảo),Tiếng Việt hiện tại,Tiếng Việt mới (CHỈNH SỬA CỘT NÀY)
+--- 🌐 Thanh điều hướng & Chân trang (Mọi trang) ---,"Menu trên cùng, logo, nút đăng nhập, chân trang — hiển thị trên mọi trang",,,,
+🌐 Thanh điều hướng & Chân trang (Mọi trang),"Menu trên cùng, logo, nút đăng nhập, chân trang — hiển thị trên mọi trang",nav.brand,ABG Alumni Connect,ABG Alumni Connect,ABG Alumni Connect
+🌐 Thanh điều hướng & Chân trang (Mọi trang),"Menu trên cùng, logo, nút đăng nhập, chân trang — hiển thị trên mọi trang",nav.join,Join,Nhập hội,Nhập hội
+🌐 Thanh điều hướng & Chân trang (Mọi trang),"Menu trên cùng, logo, nút đăng nhập, chân trang — hiển thị trên mọi trang",nav.findConnection,Find Connection,Kiếm kèo kết nối,Kiếm kèo kết nối
+🌐 Thanh điều hướng & Chân trang (Mọi trang),"Menu trên cùng, logo, nút đăng nhập, chân trang — hiển thị trên mọi trang",nav.profile,Profile,Hồ sơ,Hồ sơ
+🌐 Thanh điều hướng & Chân trang (Mọi trang),"Menu trên cùng, logo, nút đăng nhập, chân trang — hiển thị trên mọi trang",nav.history,History,Lịch sử,Lịch sử
+🌐 Thanh điều hướng & Chân trang (Mọi trang),"Menu trên cùng, logo, nút đăng nhập, chân trang — hiển thị trên mọi trang",footer.community,ABG Alumni Community,Hội anh chị em ABG Alumni,Hội anh chị em ABG Alumni
+🌐 Thanh điều hướng & Chân trang (Mọi trang),"Menu trên cùng, logo, nút đăng nhập, chân trang — hiển thị trên mọi trang",language.en,English,English,English
+🌐 Thanh điều hướng & Chân trang (Mọi trang),"Menu trên cùng, logo, nút đăng nhập, chân trang — hiển thị trên mọi trang",language.vi,Tiếng Việt,Tiếng Việt,Tiếng Việt
+--- 🔑 Đăng nhập / Xác thực ---,"Các thông báo đăng nhập, đăng xuất, lỗi phiên",,,,
+🔑 Đăng nhập / Xác thực,"Các thông báo đăng nhập, đăng xuất, lỗi phiên",auth.signIn,Sign In,Đăng nhập,Đăng nhập
+🔑 Đăng nhập / Xác thực,"Các thông báo đăng nhập, đăng xuất, lỗi phiên",auth.signOut,Sign Out,Đăng xuất,Đăng xuất
+🔑 Đăng nhập / Xác thực,"Các thông báo đăng nhập, đăng xuất, lỗi phiên",auth.signInWith,Sign in with {provider},Đăng nhập với {provider},Đăng nhập với {provider}
+🔑 Đăng nhập / Xác thực,"Các thông báo đăng nhập, đăng xuất, lỗi phiên",auth.signInRequired,Please sign in to continue,Vui lòng đăng nhập để tiếp tục,Vui lòng đăng nhập để tiếp tục
+🔑 Đăng nhập / Xác thực,"Các thông báo đăng nhập, đăng xuất, lỗi phiên",auth.signInDescription,Sign in to find your perfect match,Đăng nhập để tìm kiếm kết nối phù hợp,Đăng nhập để tìm kiếm kết nối phù hợp
+🔑 Đăng nhập / Xác thực,"Các thông báo đăng nhập, đăng xuất, lỗi phiên",auth.accountSuspended,Your account has been suspended for suspicious activity. Please contact support.,Tài khoản của bạn đã bị tạm ngưng do hoạt động đáng ngờ. Vui lòng liên hệ hỗ trợ.,Tài khoản của bạn đã bị tạm ngưng do hoạt động đáng ngờ. Vui lòng liên hệ hỗ trợ.
+🔑 Đăng nhập / Xác thực,"Các thông báo đăng nhập, đăng xuất, lỗi phiên",auth.sessionExpired,Your session has expired. Please sign in again,Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại,Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại
+🔑 Đăng nhập / Xác thực,"Các thông báo đăng nhập, đăng xuất, lỗi phiên",auth.signedIn,Signed in as {email},Đã đăng nhập với {email},Đã đăng nhập với {email}
+--- 🏠 Trang chủ (/) ---,"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",,,,
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.title,Connect with ABG Alumni,Kết nối với anh chị em ABG,Kết nối với anh chị em ABG
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.subtitle,Find the right connections in our community. Get matched with members who can help with your specific needs.,"Tìm đúng người, đúng việc trong ổ nhóm mình. Ghép đôi với những người anh em có thể gỡ rối cho bạn.","Tìm đúng người, đúng việc trong ổ nhóm mình. Ghép đôi với những người anh em có thể gỡ rối cho bạn."
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.joinCard.title,Join the Network,Nhập hội ngay,Nhập hội ngay
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.joinCard.description,Create your profile and let others know how you can help.,Lên cái hồ sơ để mọi người biết bạn có võ gì.,Lên cái hồ sơ để mọi người biết bạn có võ gì.
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.findCard.title,Find a Connection,Tìm người giúp,Tìm người giúp
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.findCard.description,Describe what you need and get matched with the right people.,"Cần gì cứ nói, để hệ thống tìm người hợp cạ cho bạn.","Cần gì cứ nói, để hệ thống tìm người hợp cạ cho bạn."
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.about.title,What is ABG Alumni Connect?,ABG Alumni Connect là gì?,ABG Alumni Connect là gì?
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.about.description,"A private networking platform exclusively for ABG Alumni members to connect, collaborate, and support each other through AI-powered matching.","Nền tảng kết nối riêng tư dành riêng cho anh chị em ABG Alumni để giao lưu, hợp tác và hỗ trợ nhau qua hệ thống ghép đôi AI.","Nền tảng kết nối riêng tư dành riêng cho anh chị em ABG Alumni để giao lưu, hợp tác và hỗ trợ nhau qua hệ thống ghép đôi AI."
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.about.benefit1Title,Exclusive Network,Mạng lưới độc quyền,Mạng lưới độc quyền
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.about.benefit1Desc,Access a curated community of ~300 ABG alumni across industries and expertise areas.,Tiếp cận cộng đồng chọn lọc ~300 alumni ABG từ nhiều ngành nghề và chuyên môn.,Tiếp cận cộng đồng chọn lọc ~300 alumni ABG từ nhiều ngành nghề và chuyên môn.
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.about.benefit2Title,AI-Powered Matching,Ghép đôi bằng AI,Ghép đôi bằng AI
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.about.benefit2Desc,Our AI analyzes your needs and matches you with the most relevant alumni who can help.,AI phân tích nhu cầu của bạn và tìm những người phù hợp nhất có thể giúp được.,AI phân tích nhu cầu của bạn và tìm những người phù hợp nhất có thể giúp được.
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.about.benefit3Title,Trusted Connections,Kết nối uy tín,Kết nối uy tín
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.about.benefit3Desc,"All members are verified ABG alumni, ensuring quality and authentic connections.","Toàn bộ thành viên đều là ABG alumni đã xác minh, đảm bảo chất lượng và kết nối chân thực.","Toàn bộ thành viên đều là ABG alumni đã xác minh, đảm bảo chất lượng và kết nối chân thực."
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.howItWorks.title,How It Works,Cách thức hoạt động,Cách thức hoạt động
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.howItWorks.subtitle,Get connected in 3 simple steps,Kết nối chỉ trong 3 bước đơn giản,Kết nối chỉ trong 3 bước đơn giản
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.howItWorks.step1Title,Create Your Profile,Tạo hồ sơ,Tạo hồ sơ
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.howItWorks.step1Desc,"Sign up with Google, fill in your expertise, and let others know how you can help.","Đăng ký bằng Google, điền chuyên môn và cho anh em biết bạn có thể giúp gì.","Đăng ký bằng Google, điền chuyên môn và cho anh em biết bạn có thể giúp gì."
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.howItWorks.step2Title,Describe Your Need,Mô tả nhu cầu,Mô tả nhu cầu
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.howItWorks.step2Desc,"Tell us what you're looking for - whether it's advice, introductions, or collaboration.","Cho biết bạn cần gì - tư vấn, giới thiệu, hay hợp tác đều được.","Cho biết bạn cần gì - tư vấn, giới thiệu, hay hợp tác đều được."
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.howItWorks.step3Title,Get Matched & Connected,Được ghép và kết nối,Được ghép và kết nối
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.howItWorks.step3Desc,Our AI finds the best matches and facilitates email introductions between you and your matches.,AI tìm người phù hợp nhất và gửi email giới thiệu cho cả hai bên.,AI tìm người phù hợp nhất và gửi email giới thiệu cho cả hai bên.
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.emailCheck.checkButton,Check & Continue,Kiểm tra & Tiếp tục,Kiểm tra & Tiếp tục
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.emailCheck.googleButton,Continue with Google,Đăng nhập với Google,Đăng nhập với Google
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.emailCheck.switchToSignup,Not a member? Join Community,Chưa có tài khoản? Đăng ký,Chưa có tài khoản? Đăng ký
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.emailCheck.switchToSignin,Already a member? Sign In,Đã là thành viên? Đăng nhập,Đã là thành viên? Đăng nhập
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.emailCheck.tryDifferentEmail,Try a different email,Thử email khác,Thử email khác
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.authSection.returningTitle,Returning Member,Thành viên cũ,Thành viên cũ
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.authSection.returningDesc,Already registered? Enter your email to sign in.,Đã đăng ký rồi? Nhập email để đăng nhập.,Đã đăng ký rồi? Nhập email để đăng nhập.
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.authSection.joinTitle,Join Community,Gia nhập cộng đồng,Gia nhập cộng đồng
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.authSection.joinDesc,New to ABG Connect? Start your application here.,Mới tham gia ABG Connect? Bắt đầu đăng ký tại đây.,Mới tham gia ABG Connect? Bắt đầu đăng ký tại đây.
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.publicSearch.title,Find a Connection,Tìm kết nối,Tìm kết nối
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.publicSearch.subtitle,Try our AI matching - no signup required,Thử tính năng ghép đôi AI - không cần đăng ký,Thử tính năng ghép đôi AI - không cần đăng ký
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.publicSearch.placeholder,"e.g., I need a marketing expert for my startup...",VD: Tôi cần chuyên gia marketing cho startup...,VD: Tôi cần chuyên gia marketing cho startup...
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.publicSearch.searchButton,Search,Tìm,Tìm
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.publicSearch.signInToSee,Sign in to see full profiles,Đăng nhập để xem đầy đủ hồ sơ,Đăng nhập để xem đầy đủ hồ sơ
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.publicSearch.teaser,Sign in to unlock full profiles and connect directly,Đăng nhập để xem đầy đủ hồ sơ và kết nối trực tiếp,Đăng nhập để xem đầy đủ hồ sơ và kết nối trực tiếp
+🏠 Trang chủ (/),"Trang đầu tiên người dùng thấy — hero banner, giới thiệu, cách hoạt động, tìm kiếm công khai",landing.divider,OR,HOẶC,HOẶC
+"--- 📝 Đăng ký / Tạo hồ sơ (/onboard, /signup) ---","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",,,,
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.title,Join ABG Alumni Connect,Gia nhập ABG Alumni Connect,Gia nhập ABG Alumni Connect
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.subtitle,Create your profile to connect with fellow members,Tạo hồ sơ để giao lưu với anh chị em khác,Tạo hồ sơ để giao lưu với anh chị em khác
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.fullName,Full Name,Tên tuổi đầy đủ,Tên tuổi đầy đủ
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.fullNamePlaceholder,John Doe,Nguyễn Văn A,Nguyễn Văn A
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.email,Email,Email,Email
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.emailPlaceholder,john@example.com,email@example.com,email@example.com
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.role,Current Role,Đang làm chức gì,Đang làm chức gì
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.rolePlaceholder,Product Manager,Product Manager,Product Manager
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.company,Company,Ở công ty nào,Ở công ty nào
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.companyPlaceholder,Acme Corp,Công ty ABC,Công ty ABC
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.expertise,Areas of Expertise,Món tủ của bạn (Chuyên môn),Món tủ của bạn (Chuyên môn)
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.expertisePlaceholder,"e.g., Product strategy, startup fundraising, SaaS metrics","VD: Rành về gọi vốn, trùm sales, chiến lược...","VD: Rành về gọi vốn, trùm sales, chiến lược..."
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.canHelpWith,What can you help others with?,Bạn có thể giúp anh em việc gì?,Bạn có thể giúp anh em việc gì?
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.canHelpWithPlaceholder,"e.g., Reviewing pitch decks, introductions to VCs, career advice","VD: Review pitch deck, kết nối nhà đầu tư, tư vấn nghề...","VD: Review pitch deck, kết nối nhà đầu tư, tư vấn nghề..."
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.lookingFor,What are you looking for?,Bạn đang cần tìm gì?,Bạn đang cần tìm gì?
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.lookingForPlaceholder,"e.g., Technical co-founders, enterprise sales connections, marketing advice","VD: Tìm Co-founder kỹ thuật, cần mối bán hàng B2B...","VD: Tìm Co-founder kỹ thuật, cần mối bán hàng B2B..."
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.avatar,Click to upload photo (optional),Bấm để up ảnh đại diện (tùy chọn),Bấm để up ảnh đại diện (tùy chọn)
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.abgClass,ABG Class,Lớp ABG,Lớp ABG
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.abgClassPlaceholder,"e.g., ABG 22, ABG Alpha 2023","VD: ABG 22, ABG Alpha 2023","VD: ABG 22, ABG Alpha 2023"
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.abgClassHelp,Enter your ABG class name (admin will verify),Nhập tên lớp ABG của bạn (admin sẽ xác minh),Nhập tên lớp ABG của bạn (admin sẽ xác minh)
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.nicknameSection,Nickname (Optional),Biệt danh (Tùy chọn),Biệt danh (Tùy chọn)
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.nickname,Nickname,Biệt danh,Biệt danh
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.nicknamePlaceholder,"e.g., Johnny",VD: Johnny,VD: Johnny
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.nicknameHelp,A friendly name others can call you,Tên thân mật để mọi người gọi bạn,Tên thân mật để mọi người gọi bạn
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.displayNicknameWhere,Show nickname instead of full name:,Hiển thị biệt danh thay vì tên đầy đủ:,Hiển thị biệt danh thay vì tên đầy đủ:
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.displayInSearch,In search results,Trong kết quả tìm kiếm,Trong kết quả tìm kiếm
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.displayInMatch,In match suggestions,Trong gợi ý ghép đôi,Trong gợi ý ghép đôi
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.displayInEmail,In introduction emails,Trong email giới thiệu,Trong email giới thiệu
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.openToWork,Open to new opportunities,Tôi đang tìm cơ hội mới (Open to work),Tôi đang tìm cơ hội mới (Open to work)
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.jobPreferences,What kind of job are you looking for?,Bạn đang tìm công việc như nào?,Bạn đang tìm công việc như nào?
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.jobPreferencesPlaceholder,"e.g., Senior Developer, Hybrid, Salary >$5000...","VD: Senior Developer, Hybrid, lương >$2000...","VD: Senior Developer, Hybrid, lương >$2000..."
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.hiring,I am hiring,Tôi đang tuyển dụng (Hiring),Tôi đang tuyển dụng (Hiring)
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.hiringPreferences,What kind of candidate are you looking for?,Bạn đang tìm ứng viên như nào?,Bạn đang tìm ứng viên như nào?
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.hiringPreferencesPlaceholder,"e.g., Marketing Manager, 3yr exp, fluent English...","VD: Marketing Manager, kinh nghiệm 3 năm, tiếng Anh tốt...","VD: Marketing Manager, kinh nghiệm 3 năm, tiếng Anh tốt..."
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.sectionCareer,Career Opportunities (Optional),Cơ hội nghề nghiệp (Tùy chọn),Cơ hội nghề nghiệp (Tùy chọn)
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.gender,Gender,Giới tính,Giới tính
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.genderFemale,Female,Nữ,Nữ
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.genderMale,Male,Nam,Nam
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.genderUndisclosed,Prefer not to say,Không tiết lộ,Không tiết lộ
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.relationshipStatus,Relationship Status,Tình trạng quan hệ,Tình trạng quan hệ
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.relationshipSingle,Single,Độc thân,Độc thân
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.relationshipAvailable,Single (Available),Độc thân (Sẵn sàng hẹn hò),Độc thân (Sẵn sàng hẹn hò)
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.relationshipInRelationship,In a Relationship,Đang yêu,Đang yêu
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.relationshipMarried,Married,Đã kết hôn,Đã kết hôn
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.relationshipPreferNotToSay,Prefer not to say,Không muốn chia sẻ,Không muốn chia sẻ
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.submit,Complete Profile,Hoàn tất hồ sơ,Hoàn tất hồ sơ
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.submitting,Creating your profile...,Đang lên hồ sơ...,Đang lên hồ sơ...
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.continueWithGoogle,Continue with Google,Tiếp tục với Google,Tiếp tục với Google
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.sendMagicLink,Send Magic Link,Gửi Magic Link,Gửi Magic Link
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.magicLinkSent,Magic link sent! Check your email and click the link to continue.,Magic link đã gửi! Kiểm tra email và nhấn link để tiếp tục.,Magic link đã gửi! Kiểm tra email và nhấn link để tiếp tục.
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.orDivider,or,hoặc,hoặc
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.emailGoogleNote,Your email will be automatically filled from your Google account,Email sẽ được tự động điền từ tài khoản Google của bạn,Email sẽ được tự động điền từ tài khoản Google của bạn
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.emailRequired,Enter your email to receive a magic link or sign in with Google,Nhập email để nhận magic link hoặc đăng nhập bằng Google,Nhập email để nhận magic link hoặc đăng nhập bằng Google
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.form.autoApproveNote,"Note: If you use the email registered to your ABG class, you will be automatically approved. Otherwise, you need to wait for admin approval.","Lưu ý: Nếu bạn dùng email đã đăng ký lớp ABG, tài khoản sẽ được duyệt tự động. Nếu không, bạn cần chờ admin phê duyệt.","Lưu ý: Nếu bạn dùng email đã đăng ký lớp ABG, tài khoản sẽ được duyệt tự động. Nếu không, bạn cần chờ admin phê duyệt."
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.success.title,Welcome aboard!,Chào mừng người anh em!,Chào mừng người anh em!
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.success.checkEmail,Check your email for confirmation.,Check mail để xác nhận nhé.,Check mail để xác nhận nhé.
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.success.generatedBio,Your generated bio:,Bio xịn xò AI viết cho bạn:,Bio xịn xò AI viết cho bạn:
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.success.completePayment,Complete Payment,Thanh toán ngay,Thanh toán ngay
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.validation.nameRequired,Name required,Nhớ điền tên nha,Nhớ điền tên nha
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.validation.emailRequired,Valid email required,Email không chuẩn rồi,Email không chuẩn rồi
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.validation.roleRequired,Role required,Chưa điền chức danh nè,Chưa điền chức danh nè
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.validation.companyRequired,Company required,Quên điền công ty rồi,Quên điền công ty rồi
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.validation.expertiseMin,Describe your expertise (min 10 chars),Kể thêm chút về món tủ đi (tối thiểu 10 ký tự),Kể thêm chút về món tủ đi (tối thiểu 10 ký tự)
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.validation.canHelpMin,What can you help with? (min 10 chars),Giúp được gì kể rõ tí nha (tối thiểu 10 ký tự),Giúp được gì kể rõ tí nha (tối thiểu 10 ký tự)
+"📝 Đăng ký / Tạo hồ sơ (/onboard, /signup)","Form đăng ký thành viên mới — điền thông tin cá nhân, chuyên môn",onboard.validation.lookingForMin,What are you looking for? (min 10 chars),Tìm gì nói rõ xíu (tối thiểu 10 ký tự),Tìm gì nói rõ xíu (tối thiểu 10 ký tự)
+--- 🔍 Tìm kết nối (/request) ---,"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",,,,
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.title,Find a Connection,Kiếm người trợ giúp,Kiếm người trợ giúp
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.subtitle,Describe what you need and we'll match you with the right people,"Cần gì cứ hú, chúng tôi sẽ tìm người hợp cạ cho bạn","Cần gì cứ hú, chúng tôi sẽ tìm người hợp cạ cho bạn"
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.form.email,Your Email,Email của bạn,Email của bạn
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.form.emailPlaceholder,your@email.com,email@example.com,email@example.com
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.form.emailHelp,Must match your registered member email,Nhớ dùng email đã đăng ký nhé,Nhớ dùng email đã đăng ký nhé
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.form.requestText,What do you need help with?,Đang bí ở đâu / Cần giúp gì?,Đang bí ở đâu / Cần giúp gì?
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.form.requestTextPlaceholder,Be specific about what you're looking for. For example: 'I'm launching a B2B SaaS product and need advice on enterprise sales strategies and introductions to potential customers in the manufacturing sector.',"Mô tả kỹ kỹ chút. Ví dụ: 'Em đang làm cái web B2B mà bí phần kéo khách doanh nghiệp, bác nào rành mảng sản xuất chỉ giáo em với.'","Mô tả kỹ kỹ chút. Ví dụ: 'Em đang làm cái web B2B mà bí phần kéo khách doanh nghiệp, bác nào rành mảng sản xuất chỉ giáo em với.'"
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.form.submit,Find Connections,Tìm đồng đội,Tìm đồng đội
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.form.submitting,Finding matches...,Đang rà soát...,Đang rà soát...
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.validation.emailRequired,Valid email required,Email sai rồi,Email sai rồi
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.validation.requestMin,Please describe your need in detail (min 20 chars),Viết dài thêm tí nữa đi (tối thiểu 20 ký tự),Viết dài thêm tí nữa đi (tối thiểu 20 ký tự)
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.validation.limitReached,Free request limit reached. Please complete membership payment to continue.,Bạn đã sử dụng hết yêu cầu miễn phí. Vui lòng hoàn tất thanh toán thành viên để tiếp tục.,Bạn đã sử dụng hết yêu cầu miễn phí. Vui lòng hoàn tất thanh toán thành viên để tiếp tục.
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.errors.limitReached,Free request limit reached. Please complete membership payment to continue.,Bạn đã sử dụng hết yêu cầu miễn phí. Vui lòng hoàn tất thanh toán thành viên để tiếp tục.,Bạn đã sử dụng hết yêu cầu miễn phí. Vui lòng hoàn tất thanh toán thành viên để tiếp tục.
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.errors.rateLimitExceeded,You have made too many requests. Please try again later.,Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.,Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.errors.dailyLimitReached,Daily request limit reached. Premium members can make up to {limit} requests per day.,Đã đạt giới hạn yêu cầu hàng ngày. Thành viên Premium có thể thực hiện tối đa {limit} yêu cầu mỗi ngày.,Đã đạt giới hạn yêu cầu hàng ngày. Thành viên Premium có thể thực hiện tối đa {limit} yêu cầu mỗi ngày.
+🔍 Tìm kết nối (/request),"Trang nhập yêu cầu tìm người — mô tả nhu cầu, chọn loại kết nối",request.errors.authRequired,Authentication required to make requests,Cần đăng nhập để thực hiện yêu cầu,Cần đăng nhập để thực hiện yêu cầu
+--- 🤝 Kết quả ghép đôi ---,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",,,,
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.title,We found {count} potential match,Tìm thấy {count} người hợp cạ,Tìm thấy {count} người hợp cạ
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.titlePlural,We found {count} potential matches,Tìm thấy {count} người hợp cạ,Tìm thấy {count} người hợp cạ
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.selectPrompt,Select someone to connect with,Chọn người muốn làm quen,Chọn người muốn làm quen
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.whyMatched,Why we matched you:,Tại sao lại hợp:,Tại sao lại hợp:
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.requestIntro,Request Introduction,Nhờ giới thiệu,Nhờ giới thiệu
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.sendLoveMatch,Send Love Match Request,Gửi yêu cầu ghép đôi,Gửi yêu cầu ghép đôi
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.sendingIntro,Sending introduction...,Đang bắn tin...,Đang bắn tin...
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.footerNote,Both you and your match will receive an email introduction,Cả bạn và người ấy sẽ nhận được email giới thiệu,Cả bạn và người ấy sẽ nhận được email giới thiệu
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.rerollNote,Rerolling counts against your request quota.,Mỗi lần tìm lại sẽ tính vào lượt sử dụng của bạn.,Mỗi lần tìm lại sẽ tính vào lượt sử dụng của bạn.
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.aiDisclaimer,Results are generated by AI and may vary between searches. Match scores are approximate.,Kết quả được tạo bởi AI và có thể thay đổi giữa các lần tìm kiếm. Điểm tương thích chỉ mang tính tham khảo.,Kết quả được tạo bởi AI và có thể thay đổi giữa các lần tìm kiếm. Điểm tương thích chỉ mang tính tham khảo.
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.showMore,Show {count} more matches,Xem thêm {count} kết quả,Xem thêm {count} kết quả
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.showLess,Show less,Thu gọn,Thu gọn
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.runAgain,Run Again,Tìm lại,Tìm lại
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.refreshing,Refreshing...,Đang tìm lại...,Đang tìm lại...
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.startNewSearch,Start a New Search,Tìm kiếm mới,Tìm kiếm mới
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.noMoreMatches,No more matches available. Try adjusting your request.,Không còn kết quả phù hợp. Hãy thử điều chỉnh yêu cầu.,Không còn kết quả phù hợp. Hãy thử điều chỉnh yêu cầu.
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.matchScore,{score}% match,{score}% phù hợp,{score}% phù hợp
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.roleAt,{role} at {company},{role} tại {company},{role} tại {company}
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.anonymous,Anonymous,Ẩn danh,Ẩn danh
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.addIntroMessage,Add a personal introduction message (optional),Thêm lời giới thiệu cá nhân (tùy chọn),Thêm lời giới thiệu cá nhân (tùy chọn)
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.introLabel,"Personal introduction (optional, max 500 chars)","Lời giới thiệu (tùy chọn, tối đa 500 ký tự)","Lời giới thiệu (tùy chọn, tối đa 500 ký tự)"
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.introPlaceholder,Write a personal message to introduce yourself...,Viết lời giới thiệu bản thân...,Viết lời giới thiệu bản thân...
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.aboutLabel,About:,Giới thiệu:,Giới thiệu:
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.interestsLabel,Interests:,Sở thích:,Sở thích:
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.valuesLabel,Values:,Giá trị:,Giá trị:
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.idealDayLabel,Ideal day:,Ngày lý tưởng:,Ngày lý tưởng:
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.lookingForLabel,Looking for:,Tìm kiếm:,Tìm kiếm:
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.creditRemaining,{remaining}/{total} requests remaining,Còn {remaining}/{total} lượt,Còn {remaining}/{total} lượt
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.creditFree,Free tier,Miễn phí,Miễn phí
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.creditPremium,Premium,Premium,Premium
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.success.title,Introduction Sent!,Đã bắn tin giới thiệu!,Đã bắn tin giới thiệu!
+🤝 Kết quả ghép đôi,"Hiển thị sau khi tìm kiếm — danh sách người phù hợp, nút gửi giới thiệu",matches.success.message,We've sent an email to both you and your match. Check your inbox!,Đã gửi mail cho cả hai rồi nhé. Check inbox ngay và luôn!,Đã gửi mail cho cả hai rồi nhé. Check inbox ngay và luôn!
+--- ❤️ Hẹn hò & Tuyển dụng (/request) ---,"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",,,,
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.professionalNetwork,Professional Network,Kết nối công việc,Kết nối công việc
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.findPartner,Find a Partner ❤️,Tìm người yêu ❤️,Tìm người yêu ❤️
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.idealMatch,Describe your ideal match ❤️,Mô tả người trong mộng ❤️,Mô tả người trong mộng ❤️
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.idealMatchPlaceholder,"e.g., I'm looking for someone who loves outdoor activities, values honesty, and enjoys deep conversations about life...","Ví dụ: Mình tìm người thích đi du lịch, yêu thiên nhiên, thích nói chuyện sâu sắc...","Ví dụ: Mình tìm người thích đi du lịch, yêu thiên nhiên, thích nói chuyện sâu sắc..."
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.findMyMatch,Find My Match ❤️,Tìm người yêu ngay ❤️,Tìm người yêu ngay ❤️
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.searching,Finding your match...,Đang tìm người ấy...,Đang tìm người ấy...
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.findJob,Find a Job 💼,Tìm việc 💼,Tìm việc 💼
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.findCandidates,Recruit 🤝,Tuyển dụng 🤝,Tuyển dụng 🤝
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.jobPreferences,What kind of job are you looking for?,Bạn đang tìm công việc như nào?,Bạn đang tìm công việc như nào?
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.jobPreferencesPlaceholder,"e.g., I am looking for a Product Manager role in a tech company...",Ví dụ: Tôi muốn tìm công việc Product Manager ở công ty công nghệ...,Ví dụ: Tôi muốn tìm công việc Product Manager ở công ty công nghệ...
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.hiringPreferences,What kind of candidate are you looking for?,Bạn đang tìm ứng viên như nào?,Bạn đang tìm ứng viên như nào?
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.hiringPreferencesPlaceholder,"e.g., Looking for a Senior React Dev with 3 years of experience...","Ví dụ: Cần tuyển Senior React Dev, kinh nghiệm 3 năm...","Ví dụ: Cần tuyển Senior React Dev, kinh nghiệm 3 năm..."
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.findJobBtn,Find Job,Tìm việc ngay,Tìm việc ngay
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.findCandidatesBtn,Find Candidates,Tìm ứng viên ngay,Tìm ứng viên ngay
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.completeProfile,Complete Your Profile,Hoàn thiện hồ sơ,Hoàn thiện hồ sơ
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.completeProfileDescription,"To use the dating feature, please provide your gender and confirm your availability status.","Để sử dụng tính năng hẹn hò, vui lòng cung cấp giới tính và trạng thái hẹn hò.","Để sử dụng tính năng hẹn hò, vui lòng cung cấp giới tính và trạng thái hẹn hò."
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.selectGender,Select your gender,Chọn giới tính,Chọn giới tính
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.selectStatus,Select status,Chọn trạng thái,Chọn trạng thái
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.genderNote,"Note: ""Undisclosed"" is not available for dating feature","Lưu ý: ""Không tiết lộ"" không khả dụng cho tính năng hẹn hò","Lưu ý: ""Không tiết lộ"" không khả dụng cho tính năng hẹn hò"
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.statusNote,Only single members can use the dating feature,Chỉ thành viên độc thân mới có thể sử dụng tính năng hẹn hò,Chỉ thành viên độc thân mới có thể sử dụng tính năng hẹn hò
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.saveAndContinue,Save & Continue,Lưu & Tiếp tục,Lưu & Tiếp tục
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.loveDesc,Find a romantic partner within the verified alumni network,Tìm người yêu trong mạng lưới alumni đã xác minh,Tìm người yêu trong mạng lưới alumni đã xác minh
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.jobDesc,Discover open roles or connect with mentors/recruiters,Khám phá cơ hội việc làm hoặc kết nối với mentor/nhà tuyển dụng,Khám phá cơ hội việc làm hoặc kết nối với mentor/nhà tuyển dụng
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.hiringDesc,Find talent for available job positions,Tìm kiếm nhân tài cho vị trí tuyển dụng,Tìm kiếm nhân tài cho vị trí tuyển dụng
+❤️ Hẹn hò & Tuyển dụng (/request),"Tab hẹn hò, tìm việc, tuyển dụng trên trang tìm kết nối",dating.partnerDesc,Connect for business partnerships or networking,Kết nối hợp tác kinh doanh hoặc mở rộng mạng lưới,Kết nối hợp tác kinh doanh hoặc mở rộng mạng lưới
+--- 👤 Hồ sơ cá nhân (/profile) ---,"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",,,,
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.title,My Profile,Hồ sơ của tôi,Hồ sơ của tôi
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.editProfile,Edit Profile,Chỉnh sửa hồ sơ,Chỉnh sửa hồ sơ
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.cancelEdit,Cancel,Hủy,Hủy
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.saveChanges,Save Changes,Lưu thay đổi,Lưu thay đổi
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.memberSince,Member since,Thành viên từ,Thành viên từ
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.sections.about,About,Giới thiệu,Giới thiệu
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.sections.expertise,Expertise & Skills,Chuyên môn & Kỹ năng,Chuyên môn & Kỹ năng
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.sections.career,Career Opportunities,Cơ hội nghề nghiệp,Cơ hội nghề nghiệp
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.sections.personal,Personal Information,Thông tin cá nhân,Thông tin cá nhân
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.sections.social,Social Links,Liên kết mạng xã hội,Liên kết mạng xã hội
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.sections.privacy,Privacy Settings,Cài đặt riêng tư,Cài đặt riêng tư
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.sections.dating,Dating Profile,Hồ sơ hẹn hò,Hồ sơ hẹn hò
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.membership.premium,Premium,Premium,Premium
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.membership.basic,Basic,Cơ bản,Cơ bản
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.membership.pending,Pending,Đang chờ,Đang chờ
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.membership.grace-period,Grace Period,Thời gian gia hạn,Thời gian gia hạn
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.membership.expired,Expired,Hết hạn,Hết hạn
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.membership.expiresOn,Expires,Hết hạn vào,Hết hạn vào
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.privacy.displayNicknameInSearch,Display nickname instead of full name in search results,Hiển thị biệt danh thay vì tên đầy đủ trong kết quả tìm kiếm,Hiển thị biệt danh thay vì tên đầy đủ trong kết quả tìm kiếm
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.privacy.displayNicknameInMatch,Display nickname instead of full name in match results,Hiển thị biệt danh thay vì tên đầy đủ trong kết quả ghép đôi,Hiển thị biệt danh thay vì tên đầy đủ trong kết quả ghép đôi
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.privacy.displayNicknameInEmail,Display nickname instead of full name in email introductions,Hiển thị biệt danh thay vì tên đầy đủ trong email giới thiệu,Hiển thị biệt danh thay vì tên đầy đủ trong email giới thiệu
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.datingDescription,Fill out this section to enhance your dating profile.,Điền phần này để hoàn thiện hồ sơ hẹn hò của bạn.,Điền phần này để hoàn thiện hồ sơ hẹn hò của bạn.
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.selfDescription,Describe yourself in 3 words,Mô tả bản thân trong 3 từ,Mô tả bản thân trong 3 từ
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.selfDescriptionPlaceholder,"e.g., Creative, Adventurous, Thoughtful","VD: Sáng tạo, Thích phiêu lưu, Chu đáo","VD: Sáng tạo, Thích phiêu lưu, Chu đáo"
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.truthLie,2 Truths & 1 Lie,2 Sự thật & 1 Lời nói dối,2 Sự thật & 1 Lời nói dối
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.truthLiePlaceholder,Share 2 truths and 1 lie about yourself,Chia sẻ 2 sự thật và 1 lời nói dối về bản thân,Chia sẻ 2 sự thật và 1 lời nói dối về bản thân
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.idealDay,My Ideal Day,Ngày lý tưởng của tôi,Ngày lý tưởng của tôi
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.idealDayPlaceholder,Describe your perfect day...,Mô tả ngày hoàn hảo của bạn...,Mô tả ngày hoàn hảo của bạn...
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.qualitiesLookingFor,Qualities I Look For,Phẩm chất tôi tìm kiếm,Phẩm chất tôi tìm kiếm
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.qualitiesPlaceholder,What qualities are you looking for in a partner?,Bạn tìm kiếm phẩm chất gì ở đối tác?,Bạn tìm kiếm phẩm chất gì ở đối tác?
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.coreValues,My Core Values,Giá trị cốt lõi của tôi,Giá trị cốt lõi của tôi
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.coreValuesPlaceholder,What values matter most to you?,Những giá trị nào quan trọng nhất với bạn?,Những giá trị nào quan trọng nhất với bạn?
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.dealBreakers,Deal Breakers,Điều không thể chấp nhận,Điều không thể chấp nhận
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.dealBreakersPlaceholder,What are your relationship deal breakers?,Điều gì là không thể chấp nhận trong mối quan hệ?,Điều gì là không thể chấp nhận trong mối quan hệ?
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.interests,Hobbies & Interests,Sở thích & Thú vui,Sở thích & Thú vui
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.interestsPlaceholder,What do you enjoy doing?,Bạn thích làm gì?,Bạn thích làm gì?
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.message,Message to Potential Matches,Lời nhắn đến người phù hợp,Lời nhắn đến người phù hợp
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.messagePlaceholder,Write a message to someone who might be interested...,Viết lời nhắn đến người có thể quan tâm đến bạn...,Viết lời nhắn đến người có thể quan tâm đến bạn...
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.otherShare,Anything else to share?,Còn gì muốn chia sẻ không?,Còn gì muốn chia sẻ không?
+👤 Hồ sơ cá nhân (/profile),"Trang xem và chỉnh sửa hồ sơ — thông tin, chuyên môn, cài đặt riêng tư",profile.dating.otherSharePlaceholder,Any other details...,Thông tin khác...,Thông tin khác...
+--- 📰 Tin tức (/news) ---,"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",,,,
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.pageTitle,Community News & Updates,Tin Tức & Cập Nhật Cộng Đồng,Tin Tức & Cập Nhật Cộng Đồng
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.pageSubtitle,"Stay updated with the latest news, events, and opportunities from the ABG Alumni community.","Cập nhật tin tức, sự kiện và cơ hội mới nhất từ cộng đồng ABG Alumni.","Cập nhật tin tức, sự kiện và cơ hội mới nhất từ cộng đồng ABG Alumni."
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.categories.all,All News,Tất cả,Tất cả
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.categories.edu,Edu,Giáo dục,Giáo dục
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.categories.business,Business,Kinh doanh,Kinh doanh
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.categories.event,Event,Sự kiện,Sự kiện
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.categories.course,Course,Khoá học,Khoá học
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.categories.announcement,Announcement,Thông báo,Thông báo
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.showingArticles,Showing {category} articles,Đang hiển thị bài viết {category},Đang hiển thị bài viết {category}
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.itemCount,{count} Items,{count} bài,{count} bài
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.readFullStory,Read full story,Đọc bài đầy đủ,Đọc bài đầy đủ
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.loadMore,Load More Articles,Xem thêm bài viết,Xem thêm bài viết
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.noArticles,No articles found in this category.,Không có bài viết nào trong danh mục này.,Không có bài viết nào trong danh mục này.
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.backToNews,Back to News,Quay lại tin tức,Quay lại tin tức
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.published,Published,Đăng ngày,Đăng ngày
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.by,By,Bởi,Bởi
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.shareArticle,Share this article,Chia sẻ bài viết,Chia sẻ bài viết
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.shareTwitter,Share on Twitter,Chia sẻ lên Twitter,Chia sẻ lên Twitter
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.shareLinkedIn,Share on LinkedIn,Chia sẻ lên LinkedIn,Chia sẻ lên LinkedIn
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.copyLink,Copy link,Sao chép liên kết,Sao chép liên kết
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.linkCopied,Link copied!,Đã sao chép!,Đã sao chép!
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.previousArticle,Previous Article,Bài trước,Bài trước
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.nextArticle,Next Article,Bài tiếp theo,Bài tiếp theo
+📰 Tin tức (/news),"Danh sách bài viết, bộ lọc danh mục, chi tiết bài viết",news.communityManagement,Community Management,Quản lý Cộng đồng,Quản lý Cộng đồng
+--- 📋 Lịch sử kết nối (/history) ---,Lịch sử yêu cầu đã gửi và người kết nối với mình,,,,
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.title,My Connection Requests,Yêu cầu kết nối của tôi,Yêu cầu kết nối của tôi
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.subtitle,View and track your connection requests,Xem và theo dõi các yêu cầu kết nối,Xem và theo dõi các yêu cầu kết nối
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.enterEmail,Enter your email to view requests,Nhập email để xem yêu cầu,Nhập email để xem yêu cầu
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.emailPlaceholder,your@email.com,email@example.com,email@example.com
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.viewRequests,View My Requests,Xem yêu cầu của tôi,Xem yêu cầu của tôi
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.loading,Loading your requests...,Đang tải dữ liệu...,Đang tải dữ liệu...
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.noRequests,No connection requests yet,Chưa có yêu cầu kết nối nào,Chưa có yêu cầu kết nối nào
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.noRequestsHelp,Submit a connection request to get started,Gửi yêu cầu kết nối để bắt đầu,Gửi yêu cầu kết nối để bắt đầu
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.requestOn,Requested on,Yêu cầu ngày,Yêu cầu ngày
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.status.pending,Pending,Đang chờ,Đang chờ
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.status.matched,Matched,Đã ghép,Đã ghép
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.status.connected,Connected,Đã kết nối,Đã kết nối
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.status.declined,Declined,Từ chối,Từ chối
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.matchedWith,Matched with,Đã ghép với,Đã ghép với
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.connectedWith,Connected with,Đã kết nối với,Đã kết nối với
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.potentialMatches,Potential matches,Các lựa chọn khả thi,Các lựa chọn khả thi
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,myRequests.backToRequests,Back to requests,Quay lại danh sách,Quay lại danh sách
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.title,Connection History,Lịch sử kết nối,Lịch sử kết nối
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.myRequests,My Requests,Yêu cầu của tôi,Yêu cầu của tôi
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.incomingMatches,Incoming Matches,Người kết nối với tôi,Người kết nối với tôi
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.noRequests,No connection requests yet,Chưa có yêu cầu kết nối nào,Chưa có yêu cầu kết nối nào
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.noIncoming,No one has connected with you yet,Chưa có ai kết nối với bạn,Chưa có ai kết nối với bạn
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.theyWereLookingFor,They were looking for:,Họ đang tìm:,Họ đang tìm:
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.filterAll,All statuses,Tất cả trạng thái,Tất cả trạng thái
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.dateAll,All time,Tất cả thời gian,Tất cả thời gian
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.dateLast7,Last 7 days,7 ngày qua,7 ngày qua
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.dateLast30,Last 30 days,30 ngày qua,30 ngày qua
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.status.pending,Pending,Đang chờ,Đang chờ
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.status.matched,Matched,Đã ghép,Đã ghép
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.status.connected,Connected,Đã kết nối,Đã kết nối
+📋 Lịch sử kết nối (/history),Lịch sử yêu cầu đã gửi và người kết nối với mình,history.status.declined,Declined,Từ chối,Từ chối
+--- 💳 Thanh toán ---,"Modal thanh toán — thông tin chuyển khoản, xác nhận",,,,
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.title,Complete Your Membership,Hoàn tất thành viên,Hoàn tất thành viên
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.qrPlaceholder,QR Code,Mã QR,Mã QR
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.qrComingSoon,Scan code coming soon,Mã QR sắp có,Mã QR sắp có
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.bankDetails,Bank Transfer Details,Thông tin chuyển khoản,Thông tin chuyển khoản
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.bank,Bank,Ngân hàng,Ngân hàng
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.accountNumber,Account Number,Số tài khoản,Số tài khoản
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.accountName,Account Name,Tên tài khoản,Tên tài khoản
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.amount,Amount,Số tiền,Số tiền
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.reference,Reference,Nội dung chuyển khoản,Nội dung chuyển khoản
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.instructions,"After transferring, click ""I've Made Payment"". Admin will verify and activate your premium membership within 24 hours.","Sau khi chuyển khoản, bấm ""Đã thanh toán"". Admin sẽ xác minh và kích hoạt tài khoản Premium trong vòng 24 giờ.","Sau khi chuyển khoản, bấm ""Đã thanh toán"". Admin sẽ xác minh và kích hoạt tài khoản Premium trong vòng 24 giờ."
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.confirmPayment,I've Made Payment,Đã thanh toán,Đã thanh toán
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.confirming,Confirming...,Đang xác nhận...,Đang xác nhận...
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.cancel,Cancel,Hủy,Hủy
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.confirmationTitle,Confirmation Sent!,Đã gửi xác nhận!,Đã gửi xác nhận!
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.confirmationMessage,Admin will verify payment and activate your Premium account within 24 hours.,Admin sẽ xác minh thanh toán và kích hoạt tài khoản Premium trong vòng 24 giờ.,Admin sẽ xác minh thanh toán và kích hoạt tài khoản Premium trong vòng 24 giờ.
+💳 Thanh toán,"Modal thanh toán — thông tin chuyển khoản, xác nhận",payment.findConnections,Find Connections Now,Tìm kết nối ngay,Tìm kết nối ngay
+--- 📧 Email tự động ---,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",,,,
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.onboarding.subject,Welcome to ABG Alumni Connect!,Welcome gia nhập ABG Alumni Connect!,Welcome gia nhập ABG Alumni Connect!
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.onboarding.greeting,"Welcome, {name}!","Chào {name},","Chào {name},"
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.onboarding.bioIntro,Your profile has been created. Here's your generated bio:,Hồ sơ đã lên sóng. Đây là bio của bạn:,Hồ sơ đã lên sóng. Đây là bio của bạn:
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.onboarding.canFind,Other members can now find and connect with you based on your expertise.,Anh em khác giờ có thể tìm thấy bạn rồi đó.,Anh em khác giờ có thể tìm thấy bạn rồi đó.
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.onboarding.readyToConnect,Ready to find connections? Visit the app to submit a request.,Muốn tìm kèo kết nối? Vào app ngay thôi.,Muốn tìm kèo kết nối? Vào app ngay thôi.
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.onboarding.regards,"Best regards,","Thân ái,","Thân ái,"
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.onboarding.signature,ABG Alumni Connect,ABG Alumni Connect,ABG Alumni Connect
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.intro.subject,ABG Connect: {requesterName} would like to connect with you,ABG Connect: {requesterName} muốn bắt sóng với bạn,ABG Connect: {requesterName} muốn bắt sóng với bạn
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.intro.greeting,"Hi {targetName},","Chào {targetName},","Chào {targetName},"
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.intro.lookingFor,{requesterName} ({requesterRole} at {requesterCompany}) is looking for:,{requesterName} ({requesterRole} tại {requesterCompany}) đang cần:,{requesterName} ({requesterRole} tại {requesterCompany}) đang cần:
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.intro.whyMatched,Why we matched you:,Lý do ghép đôi:,Lý do ghép đôi:
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.intro.replyPrompt,"If you're open to connecting, simply reply to this email - both parties are included.",Nếu ok thì cứ reply email này nhé - cả hai đều nhận được.,Nếu ok thì cứ reply email này nhé - cả hai đều nhận được.
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.intro.regards,"Best regards,","Thân ái,","Thân ái,"
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.intro.signature,ABG Alumni Connect,ABG Alumni Connect,ABG Alumni Connect
+📧 Email tự động,"Nội dung email gửi tự động — chào mừng, giới thiệu kết nối",email.intro.footer,This introduction was requested through ABG Alumni Connect. Both {requesterName} and {targetName} received this email.,Kèo này được kết nối qua ABG Alumni Connect.,Kèo này được kết nối qua ABG Alumni Connect.
+--- ⚠️ Trang lỗi ---,Thông báo khi có lỗi xảy ra,,,,
+⚠️ Trang lỗi,Thông báo khi có lỗi xảy ra,errorPage.title,Something went wrong,Toang rồi,Toang rồi
+⚠️ Trang lỗi,Thông báo khi có lỗi xảy ra,errorPage.message,We encountered an unexpected error. Please try again.,Gặp lỗi gì đó rồi. Thử lại phát xem sao.,Gặp lỗi gì đó rồi. Thử lại phát xem sao.
+⚠️ Trang lỗi,Thông báo khi có lỗi xảy ra,errorPage.retry,Try again,Thử lại,Thử lại
+--- 🔧 Chung (Dùng nhiều nơi) ---,"Nút bấm, thông báo chung xuất hiện ở nhiều trang",,,,
+🔧 Chung (Dùng nhiều nơi),"Nút bấm, thông báo chung xuất hiện ở nhiều trang",common.loading,Loading...,Đang tải nè...,Đang tải nè...
+🔧 Chung (Dùng nhiều nơi),"Nút bấm, thông báo chung xuất hiện ở nhiều trang",common.submit,Submit,Gửi,Gửi
+🔧 Chung (Dùng nhiều nơi),"Nút bấm, thông báo chung xuất hiện ở nhiều trang",common.cancel,Cancel,Thôi,Thôi
+🔧 Chung (Dùng nhiều nơi),"Nút bấm, thông báo chung xuất hiện ở nhiều trang",common.error,Something went wrong,Có biến rồi (Lỗi),Có biến rồi (Lỗi)
+🔧 Chung (Dùng nhiều nơi),"Nút bấm, thông báo chung xuất hiện ở nhiều trang",common.required,Required,Cái này bắt buộc nha,Cái này bắt buộc nha
