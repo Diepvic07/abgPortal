@@ -44,7 +44,7 @@ export const authOptions: NextAuthOptions = {
             }
         }),
         EmailProvider({
-            from: process.env.EMAIL_FROM || 'ABG Connect <bdh.alumni@abg.edu.vn>',
+            from: process.env.EMAIL_FROM || 'ABG Connect <diepvic@gmail.com>',
             async sendVerificationRequest({ identifier: email, url, provider }) {
                 // Enforce per-email cooldown to prevent spam/abuse
                 const normalizedEmail = email.trim().toLowerCase();

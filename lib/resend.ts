@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 import { getTranslations, interpolate, type Locale } from '@/lib/i18n';
 
-const FROM_EMAIL = 'ABG Connect <bdh.alumni@abg.edu.vn>';
+const FROM_EMAIL = 'ABG Connect <diepvic@gmail.com>';
 
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
