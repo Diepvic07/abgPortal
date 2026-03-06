@@ -5,6 +5,7 @@ const FROM_EMAIL = process.env.EMAIL_FROM || 'ABG Connect <onboarding@resend.dev
 
 // Test mode: emails that receive fallback notifications when Resend domain is unverified
 const TEST_MODE_EMAILS = [
+  'diepvic@gmail.com',
   'diep@ejoylearning.com',
   'ttvietduc@gmail.com',
   'quephc@gmail.com',
