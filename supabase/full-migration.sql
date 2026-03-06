@@ -279,7 +279,7 @@ CREATE TABLE IF NOT EXISTS contact_requests (
   created_at TIMESTAMPTZ DEFAULT now(),
   responded_at TIMESTAMPTZ,
   source TEXT DEFAULT 'direct' CHECK (source IN ('direct', 'ai_match')),
-  connection_request_id TEXT REFERENCES connection_requests(id) ON DELETE SET NULL
+  connection_request_id TEXT REFERENCES requests(id) ON DELETE SET NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_contact_req_requester ON contact_requests(requester_id);
