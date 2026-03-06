@@ -247,6 +247,8 @@ export const vi: Translations = {
     creditRemaining: 'Còn {remaining}/{total} lượt',
     creditFree: 'Miễn phí',
     creditPremium: 'Premium',
+    // Upgrade nudge
+    upgradeNudge: 'Mở khoá tìm kiếm không giới hạn — Nâng cấp Pro!',
     // Message language switch
     messageLanguage: 'Ngôn ngữ tin nhắn',
     messageLangEn: 'English',

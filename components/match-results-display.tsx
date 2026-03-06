@@ -7,6 +7,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useTranslation, interpolate } from '@/lib/i18n';
 import { MatchResultCard } from '@/components/match-result-card';
 import { MatchIntroModal } from '@/components/match-intro-modal';
+import { PaymentInfoModal } from '@/components/ui/payment-info-modal';
 
 interface MatchWithMember extends MatchResult {
   member: Member;
@@ -40,6 +41,8 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
   const [requesterClass, setRequesterClass] = useState('');
   const [isRerolling, setIsRerolling] = useState(false);
   const [allShownIds, setAllShownIds] = useState<string[]>(initialMatches.map(m => m.id));
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [memberId, setMemberId] = useState('');
 
   const INITIAL_DISPLAY_COUNT = 5;
   const [showAll, setShowAll] = useState(false);
@@ -51,6 +54,7 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
     if (session?.user?.email) {
       fetch('/api/profile').then(r => r.json()).then(d => {
         if (d.member?.abg_class) setRequesterClass(d.member.abg_class);
+        if (d.member?.id) setMemberId(d.member.id);
       }).catch(console.error);
     }
   }, [session]);
@@ -160,6 +164,23 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
           </div>
         )}
 
+        {/* Upgrade nudge banner for free-tier users */}
+        {quota && quota.tier === 'basic' && (
+          <button
+            type="button"
+            onClick={() => setShowPaymentModal(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-full text-xs font-medium text-amber-700 hover:from-amber-100 hover:to-orange-100 transition-all shadow-sm"
+          >
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z" clipRule="evenodd" />
+            </svg>
+            {t.matches.upgradeNudge}
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
+
         {/* AI disclaimer */}
         <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
           {t.matches.aiDisclaimer}
@@ -235,6 +256,14 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
       <p className="text-[11px] text-gray-400 text-center leading-relaxed">
         {t.matches.rerollNote} {t.matches.footerNote}
       </p>
+
+      {/* Payment modal */}
+      <PaymentInfoModal
+        memberId={memberId}
+        memberName={session?.user?.name || ''}
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+      />
 
       {/* Modal */}
       {showModal && selectedId && (

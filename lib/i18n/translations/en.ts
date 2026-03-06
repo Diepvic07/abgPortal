@@ -245,6 +245,8 @@ export const en = {
     creditRemaining: '{remaining}/{total} requests remaining',
     creditFree: 'Free tier',
     creditPremium: 'Premium',
+    // Upgrade nudge
+    upgradeNudge: 'Unlock unlimited searches — Go Pro!',
     // Message language switch
     messageLanguage: 'Message language',
     messageLangEn: 'English',
