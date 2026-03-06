@@ -19,10 +19,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Target member ID required" }, { status: 400 });
     }
 
-    // Daily limit: 5 contact requests/day
+    // Daily limit: 10 contact requests/day
     const todayCount = await countTodayContactRequests(member.id);
-    if (todayCount >= 5) {
-      return NextResponse.json({ error: "Daily contact request limit reached (5/day)" }, { status: 429 });
+    if (todayCount >= 10) {
+      return NextResponse.json({ error: "Daily contact request limit reached (10/day)" }, { status: 429 });
     }
 
     // Verify target exists and is active/approved

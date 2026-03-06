@@ -122,12 +122,12 @@ test.describe('Contact Request Flow', () => {
       await expect(page.getByText(/already.*pending/i)).toBeVisible({ timeout: 10000 });
     });
 
-    test('handles daily limit exceeded (5/day)', async ({ page }) => {
+    test('handles daily limit exceeded (10/day)', async ({ page }) => {
       await page.route('**/api/contact/request', (route) => {
         route.fulfill({
           status: 429,
           contentType: 'application/json',
-          body: JSON.stringify({ error: 'Daily contact request limit reached (5/day)' }),
+          body: JSON.stringify({ error: 'Daily contact request limit reached (10/day)' }),
         });
       });
 
@@ -139,7 +139,7 @@ test.describe('Contact Request Flow', () => {
       await expect(page.locator('textarea[placeholder="Write a message..."]')).toBeVisible({ timeout: 5000 });
       await page.getByRole('button', { name: /send request/i }).click();
 
-      await expect(page.getByText(/daily.*limit|5\/day/i)).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText(/daily.*limit|10\/day/i)).toBeVisible({ timeout: 10000 });
     });
 
     test('handles API error on send', async ({ page }) => {
