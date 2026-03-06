@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from './supabase/server';
-import { Member, ConnectionRequest, Connection, LoveMatchRequest, NewsArticle, NewsCategory, ContactRequest, PaymentRecord, BugReport } from '@/types';
+import { Member, ConnectionRequest, Connection, LoveMatchRequest, NewsArticle, NewsCategory, ContactRequest, PaymentRecord, BugReport, AbgClass } from '@/types';
 
 // ==================== Helpers ====================
 
@@ -841,4 +841,107 @@ export async function getOpenBugReports(): Promise<BugReport[]> {
     throw new Error(`Failed to get open bug reports: ${error.message}`);
   }
   return (data || []).map(row => mapRowToBugReport(row as unknown as Record<string, unknown>));
+}
+
+// ==================== ABG Classes ====================
+
+function mapRowToAbgClass(row: Record<string, unknown>): AbgClass {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    display_order: (row.display_order as number) || 0,
+    is_active: row.is_active as boolean,
+    created_at: row.created_at as string,
+  };
+}
+
+export async function getAbgClasses(activeOnly = true): Promise<AbgClass[]> {
+  const db = createServerSupabaseClient();
+  let query = db.from('abg_classes').select('*').order('display_order');
+  if (activeOnly) query = query.eq('is_active', true);
+  const { data, error } = await query;
+  if (error) {
+    console.error('[SupabaseDB] getAbgClasses error:', error);
+    throw new Error(`Failed to get ABG classes: ${error.message}`);
+  }
+  return (data || []).map(row => mapRowToAbgClass(row as unknown as Record<string, unknown>));
+}
+
+export async function createAbgClass(name: string, displayOrder: number): Promise<AbgClass> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('abg_classes').insert({
+    name,
+    display_order: displayOrder,
+  }).select().single();
+  if (error) {
+    console.error('[SupabaseDB] createAbgClass error:', error);
+    if (error.code === '23505') {
+      throw new Error('A class with this name already exists');
+    }
+    throw new Error(`Failed to create ABG class: ${error.message}`);
+  }
+  return mapRowToAbgClass(data as unknown as Record<string, unknown>);
+}
+
+export async function updateAbgClass(id: string, updates: Partial<Pick<AbgClass, 'name' | 'display_order' | 'is_active'>>): Promise<AbgClass> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('abg_classes').update(updates).eq('id', id).select().single();
+  if (error) {
+    console.error('[SupabaseDB] updateAbgClass error:', error);
+    throw new Error(`Failed to update ABG class: ${error.message}`);
+  }
+  return mapRowToAbgClass(data as unknown as Record<string, unknown>);
+}
+
+export async function deleteAbgClass(id: string): Promise<void> {
+  const db = createServerSupabaseClient();
+  const { error } = await db.from('abg_classes').delete().eq('id', id);
+  if (error) {
+    console.error('[SupabaseDB] deleteAbgClass error:', error);
+    throw new Error(`Failed to delete ABG class: ${error.message}`);
+  }
+}
+
+// Remap: update all members with oldClass to newClass
+export async function remapMemberClass(oldClass: string, newClass: string): Promise<number> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('members')
+    .update({ abg_class: newClass })
+    .eq('abg_class', oldClass)
+    .select('id');
+  if (error) {
+    console.error('[SupabaseDB] remapMemberClass error:', error);
+    throw new Error(`Failed to remap class: ${error.message}`);
+  }
+  return data?.length || 0;
+}
+
+// Get distinct abg_class values from members that don't match any canonical class
+export async function getUnmappedClasses(): Promise<{ class_name: string; member_count: number }[]> {
+  const db = createServerSupabaseClient();
+  // Get canonical class names
+  const { data: canonical, error: canonicalError } = await db.from('abg_classes').select('name');
+  if (canonicalError) {
+    console.error('[SupabaseDB] getUnmappedClasses canonical error:', canonicalError);
+    throw new Error(`Failed to get canonical classes: ${canonicalError.message}`);
+  }
+  const canonicalNames = new Set((canonical || []).map(c => c.name));
+
+  // Get all distinct abg_class values from members
+  const { data: members, error: membersError } = await db.from('members').select('abg_class');
+  if (membersError) {
+    console.error('[SupabaseDB] getUnmappedClasses members error:', membersError);
+    throw new Error(`Failed to get member classes: ${membersError.message}`);
+  }
+  const classCounts = new Map<string, number>();
+  for (const m of members || []) {
+    const cls = m.abg_class as string | null;
+    if (cls && !canonicalNames.has(cls)) {
+      classCounts.set(cls, (classCounts.get(cls) || 0) + 1);
+    }
+  }
+
+  return Array.from(classCounts.entries())
+    .map(([class_name, member_count]) => ({ class_name, member_count }))
+    .sort((a, b) => b.member_count - a.member_count);
 }

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { AdminMemberDirectory } from "@/components/admin/admin-member-directory";
 import { AdminNewsManager } from "@/components/admin/admin-news-manager";
 import { AdminPaymentReport } from "@/components/admin/admin-payment-report";
+import { AdminClassManager } from "@/components/admin/admin-class-manager";
 import { PaymentUpgradeModal } from "@/components/admin/payment-upgrade-modal";
 
 interface AdminMember {
@@ -28,7 +29,7 @@ export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [members, setMembers] = useState<AdminMember[]>([]);
-  const [activeTab, setActiveTab] = useState<"pending" | "status" | "directory" | "news" | "payments">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "status" | "directory" | "news" | "payments" | "classes">("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -274,9 +275,18 @@ export default function AdminPage() {
           >
             Payments
           </button>
+          <button
+            onClick={() => setActiveTab("classes")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === "classes"
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+          >
+            Classes
+          </button>
         </div>
 
-        {activeTab !== "directory" && activeTab !== "news" && activeTab !== "payments" && (
+        {activeTab !== "directory" && activeTab !== "news" && activeTab !== "payments" && activeTab !== "classes" && (
           <div className="mb-4">
             <input
               type="text"
@@ -288,7 +298,11 @@ export default function AdminPage() {
           </div>
         )}
 
-        {activeTab === "payments" ? (
+        {activeTab === "classes" ? (
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <AdminClassManager />
+          </div>
+        ) : activeTab === "payments" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">
             <AdminPaymentReport />
           </div>

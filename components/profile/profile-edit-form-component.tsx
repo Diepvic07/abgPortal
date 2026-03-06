@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,6 +56,15 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [abgClassOptions, setAbgClassOptions] = useState<string[]>([]);
+
+  // Fetch canonical class list for dropdown
+  useEffect(() => {
+    fetch('/api/classes').then(r => r.json()).then(data => {
+      if (data.classes) setAbgClassOptions(data.classes);
+    }).catch(() => {});
+  }, []);
+
   // Dating section state - open by default if user has any dating fields filled
   const [isDatingSectionOpen, setIsDatingSectionOpen] = useState(
     Boolean(member.self_description || member.interests || member.dating_message)
@@ -219,12 +228,14 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ABG Class</label>
-                <input
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t.onboard.form.abgClass}</label>
+                <select
                   {...register('abg_class')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand focus:border-brand"
-                  placeholder="e.g., 2020"
-                />
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand focus:border-brand bg-white"
+                >
+                  <option value="">Select your class</option>
+                  {abgClassOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
 
               <div>

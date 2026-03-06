@@ -99,6 +99,14 @@ export function getAvatarMemberStatus(member: Member): 'basic' | 'pro' | 'admin'
   return 'basic';
 }
 
+export interface AbgClass {
+  id: string;
+  name: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 export type RequestCategory = 'love' | 'job' | 'hiring' | 'partner';
 
 export interface ConnectionRequest {

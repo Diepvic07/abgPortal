@@ -336,6 +336,24 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['news']['Insert']>;
         Relationships: [];
       };
+      abg_classes: {
+        Row: {
+          id: string;
+          name: string;
+          display_order: number;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          display_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['abg_classes']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

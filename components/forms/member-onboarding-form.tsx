@@ -53,7 +53,15 @@ export function MemberOnboardingForm() {
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [magicLinkLoading, setMagicLinkLoading] = useState(false);
+  const [abgClassOptions, setAbgClassOptions] = useState<string[]>([]);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch canonical class list for dropdown
+  useEffect(() => {
+    fetch('/api/classes').then(r => r.json()).then(data => {
+      if (data.classes) setAbgClassOptions(data.classes);
+    }).catch(() => {});
+  }, []);
 
   // Memoize schema to recreate when language changes
   const schema = useMemo(() => createOnboardingSchema(t), [t]);
@@ -341,11 +349,13 @@ export function MemberOnboardingForm() {
         <label className="block text-sm font-medium text-text-primary mb-1">
           {t.onboard.form.abgClass}
         </label>
-        <input
+        <select
           {...register('abg_class')}
-          className="w-full px-4 py-3 border border-border rounded-md focus:ring-2 focus:ring-brand focus:border-brand transition-colors"
-          placeholder={t.onboard.form.abgClassPlaceholder}
-        />
+          className="w-full px-4 py-3 border border-border rounded-md focus:ring-2 focus:ring-brand focus:border-brand transition-colors bg-white"
+        >
+          <option value="">{t.onboard.form.abgClassPlaceholder}</option>
+          {abgClassOptions.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
         <p className="text-xs text-text-secondary mt-1">
           {t.onboard.form.abgClassHelp}
         </p>

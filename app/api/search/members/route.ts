@@ -3,16 +3,15 @@ import { requireAuth } from "@/lib/auth-middleware";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getMemberTier } from "@/lib/tier-utils";
 import { checkSearchRateLimit, checkSearchQuota, getSearchQuotaInfo, filterSearchResultByTier } from "@/lib/search-utils";
-import { addRequestAudit, incrementMemberSearchCount } from "@/lib/supabase-db";
+import { addRequestAudit, incrementMemberSearchCount, getAbgClasses } from "@/lib/supabase-db";
 import { vietnameseIncludes } from "@/lib/vietnamese-utils";
 import { Member } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
     await requireAuth(request);
-    const db = createServerSupabaseClient();
-    const { data } = await db.from("members").select("abg_class").eq("status", "active").eq("approval_status", "approved");
-    const classes = [...new Set((data || []).map(m => m.abg_class).filter(Boolean))].sort() as string[];
+    const abgClasses = await getAbgClasses(true);
+    const classes = abgClasses.map(c => c.name);
     return NextResponse.json({ classes });
   } catch (error) {
     if (error instanceof Error && error.message === "Authentication required") {
