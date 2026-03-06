@@ -248,6 +248,7 @@ export const en = {
     // Upgrade nudge
     upgradeNudge: 'Unlock unlimited searches — Go Pro!',
     // Message language switch
+    placeholderWarning: 'Please replace the [xxx] and [yyy] placeholders with your actual details before sending.',
     messageLanguage: 'Message language',
     messageLangEn: 'English',
     messageLangVi: 'Tiếng Việt',

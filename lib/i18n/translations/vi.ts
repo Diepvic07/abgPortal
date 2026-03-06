@@ -250,6 +250,7 @@ export const vi: Translations = {
     // Upgrade nudge
     upgradeNudge: 'Mở khoá tìm kiếm không giới hạn — Nâng cấp Pro!',
     // Message language switch
+    placeholderWarning: 'Vui lòng thay thế [xxx] và [yyy] bằng nội dung cụ thể của bạn trước khi gửi.',
     messageLanguage: 'Ngôn ngữ tin nhắn',
     messageLangEn: 'English',
     messageLangVi: 'Tiếng Việt',

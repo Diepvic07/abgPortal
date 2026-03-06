@@ -30,6 +30,11 @@ function generateIntroText(lang: MessageLang, targetName: string, requesterName:
   return interpolate(translations.matches.matchIntroTemplateFallback, { targetName, requesterName });
 }
 
+/** Check if message still contains bracket placeholders like [xxx], [yyy] */
+function hasPlaceholders(text: string): boolean {
+  return /\[[a-zA-Z]{1,}\]/.test(text);
+}
+
 export function MatchIntroModal({
   isLove, targetName, requesterName, requesterClass,
   customIntro, onCustomIntroChange,
@@ -37,6 +42,7 @@ export function MatchIntroModal({
 }: MatchIntroModalProps) {
   const { t, locale } = useTranslation();
   const [messageLang, setMessageLang] = useState<MessageLang>(locale as MessageLang);
+  const showPlaceholderWarning = !isLove && hasPlaceholders(customIntro);
 
   const switchLanguage = (lang: MessageLang) => {
     setMessageLang(lang);
@@ -127,6 +133,15 @@ export function MatchIntroModal({
               />
               <p className="text-xs text-gray-400 mt-1.5 text-right">{customIntro.length}/500</p>
 
+              {showPlaceholderWarning && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-700 mt-2 flex items-start gap-2">
+                  <svg className="w-4 h-4 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                  {t.matches.placeholderWarning}
+                </div>
+              )}
+
               {error && (
                 <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-sm text-red-600 mt-2 flex items-start gap-2">
                   <svg className="w-4 h-4 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -146,7 +161,7 @@ export function MatchIntroModal({
                 </button>
                 <button
                   onClick={onSend}
-                  disabled={isConnecting || (!isLove && !customIntro.trim())}
+                  disabled={isConnecting || (!isLove && !customIntro.trim()) || showPlaceholderWarning}
                   className={`flex-1 px-4 py-2.5 text-white rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all
                     ${isLove
                       ? 'bg-pink-500 hover:bg-pink-600 shadow-sm shadow-pink-500/20'
