@@ -231,6 +231,12 @@ export const vi: Translations = {
     addIntroMessage: 'Thêm lời giới thiệu cá nhân (tùy chọn)',
     introLabel: 'Lời giới thiệu (tùy chọn, tối đa 500 ký tự)',
     introPlaceholder: 'Viết lời giới thiệu bản thân...',
+    matchIntroTemplate: 'Xin chào {targetName}, mình là {requesterName} từ lớp {requesterClass}. Mình tìm thấy hồ sơ của bạn trên ABG Alumni Connect. Mình đang tìm hiểu về [xxx] và muốn kết nối để xin lời khuyên về [yyy]. Mong nhận được phản hồi từ bạn.',
+    matchIntroTemplateFallback: 'Xin chào {targetName}, mình là {requesterName}. Mình tìm thấy hồ sơ của bạn trên ABG Alumni Connect. Mình đang tìm hiểu về [xxx] và muốn kết nối để xin lời khuyên về [yyy]. Mong nhận được phản hồi từ bạn.',
+    modalNotice: 'Thông tin liên hệ của bạn chỉ được chia sẻ khi họ chấp nhận.',
+    cancel: 'Hủy',
+    sendRequest: 'Gửi yêu cầu',
+    sending: 'Đang gửi...',
     // Love match profile labels
     aboutLabel: 'Giới thiệu:',
     interestsLabel: 'Sở thích:',
