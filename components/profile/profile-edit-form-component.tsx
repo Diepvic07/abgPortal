@@ -18,7 +18,7 @@ function createProfileEditSchema(t: { onboard: { validation: Record<string, stri
     looking_for: z.string().min(10, t.onboard.validation.lookingForMin),
     phone: z.string().optional(),
     country: z.string().optional(),
-    abg_class: z.string().optional(),
+    abg_class: z.string().optional().refine(v => v !== '__other__', { message: 'Please type your class name' }),
     nickname: z.string().optional(),
     linkedin_url: z.string().url().optional().or(z.literal('')),
     facebook_url: z.string().url().optional().or(z.literal('')),
@@ -52,7 +52,7 @@ interface ProfileEditFormComponentProps {
 }
 
 export function ProfileEditFormComponent({ member }: ProfileEditFormComponentProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +77,7 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
     handleSubmit,
     formState: { errors },
     watch,
+    setValue,
   } = useForm<ProfileEditData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -229,13 +230,33 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t.onboard.form.abgClass}</label>
-                <select
-                  {...register('abg_class')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand focus:border-brand bg-white"
-                >
-                  <option value="">Select your class</option>
-                  {abgClassOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                {watch('abg_class') === '__other__' ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      onChange={(e) => setValue('abg_class', e.target.value === '' ? '__other__' : e.target.value)}
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand focus:border-brand"
+                      placeholder={locale === 'vi' ? 'Nhập tên lớp ABG...' : 'Type your ABG class name...'}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setValue('abg_class', '')}
+                      className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-300 rounded-md"
+                    >
+                      {locale === 'vi' ? 'Quay lại' : 'Back'}
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    {...register('abg_class')}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand focus:border-brand bg-white"
+                  >
+                    <option value="">{t.onboard.form.abgClassPlaceholder}</option>
+                    {abgClassOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                    <option value="__other__">{locale === 'vi' ? '— Khác (nhập tay)' : '— Other (type manually)'}</option>
+                  </select>
+                )}
               </div>
 
               <div>

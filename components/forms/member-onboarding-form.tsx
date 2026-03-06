@@ -23,7 +23,7 @@ function createOnboardingSchema(t: { onboard: { validation: Record<string, strin
     expertise: z.string().min(10, t.onboard.validation.expertiseMin),
     can_help_with: z.string().min(10, t.onboard.validation.canHelpMin),
     looking_for: z.string().min(10, t.onboard.validation.lookingForMin),
-    abg_class: z.string().optional(),
+    abg_class: z.string().optional().refine(v => v !== '__other__', { message: 'Please type your class name' }),
     nickname: z.string().max(50).optional(),
     display_nickname_in_search: z.boolean().optional(),
     display_nickname_in_match: z.boolean().optional(),
@@ -349,13 +349,33 @@ export function MemberOnboardingForm() {
         <label className="block text-sm font-medium text-text-primary mb-1">
           {t.onboard.form.abgClass}
         </label>
-        <select
-          {...register('abg_class')}
-          className="w-full px-4 py-3 border border-border rounded-md focus:ring-2 focus:ring-brand focus:border-brand transition-colors bg-white"
-        >
-          <option value="">{t.onboard.form.abgClassPlaceholder}</option>
-          {abgClassOptions.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+        {watch('abg_class') === '__other__' ? (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              onChange={(e) => setValue('abg_class', e.target.value === '' ? '__other__' : e.target.value)}
+              className="flex-1 px-4 py-3 border border-border rounded-md focus:ring-2 focus:ring-brand focus:border-brand transition-colors"
+              placeholder={locale === 'vi' ? 'Nhập tên lớp ABG...' : 'Type your ABG class name...'}
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => setValue('abg_class', '')}
+              className="px-3 py-2 text-sm text-text-secondary hover:text-text-primary border border-border rounded-md"
+            >
+              {locale === 'vi' ? 'Quay lại' : 'Back'}
+            </button>
+          </div>
+        ) : (
+          <select
+            {...register('abg_class')}
+            className="w-full px-4 py-3 border border-border rounded-md focus:ring-2 focus:ring-brand focus:border-brand transition-colors bg-white"
+          >
+            <option value="">{t.onboard.form.abgClassPlaceholder}</option>
+            {abgClassOptions.map(c => <option key={c} value={c}>{c}</option>)}
+            <option value="__other__">{locale === 'vi' ? '— Khác (nhập tay)' : '— Other (type manually)'}</option>
+          </select>
+        )}
         <p className="text-xs text-text-secondary mt-1">
           {t.onboard.form.abgClassHelp}
         </p>
