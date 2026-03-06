@@ -173,20 +173,44 @@ export function MemberOnboardingForm() {
   if (success) {
     return (
       <>
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-success mb-4">{t.onboard.success.title}</h2>
-          <p className="text-text-secondary mb-4">{t.onboard.success.checkEmail}</p>
+        <div className="flex flex-col items-center text-center py-8 gap-6">
+          {/* Success icon */}
+          <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center shadow-md">
+            <svg className="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+
+          {/* Title & subtitle */}
+          <div>
+            <h2 className="text-3xl font-bold text-brand mb-2">{t.onboard.success.title}</h2>
+            <p className="text-text-secondary text-base">{t.onboard.success.checkEmail}</p>
+          </div>
+
+          {/* Generated bio card */}
           {generatedBio && (
-            <div className="mt-6 p-4 bg-bg-surface rounded-lg text-left shadow">
-              <p className="text-sm font-medium text-text-primary mb-2">{t.onboard.success.generatedBio}</p>
-              <p className="text-text-secondary italic">{generatedBio}</p>
+            <div className="w-full p-5 bg-bg-primary rounded-xl border border-border text-left shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <p className="text-sm font-semibold text-brand">{t.onboard.success.generatedBio}</p>
+              </div>
+              <p className="text-text-secondary italic leading-relaxed text-sm">{generatedBio}</p>
             </div>
           )}
+
+          {/* CTA button */}
           {memberId && (
             <button
               onClick={() => setShowPaymentModal(true)}
-              className="mt-6 py-3 px-6 bg-brand text-white rounded-md font-medium hover:bg-brand-dark transition-colors"
+              className="w-full py-4 px-6 bg-brand text-white rounded-xl font-semibold text-base hover:bg-brand-dark active:scale-95 transition-all duration-150 shadow-md flex items-center justify-center gap-2"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
               {t.onboard.success.completePayment}
             </button>
           )}

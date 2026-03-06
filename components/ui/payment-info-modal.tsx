@@ -16,8 +16,17 @@ export function PaymentInfoModal({ memberId, memberName, isOpen, onClose }: Paym
   const [isConfirming, setIsConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
+
+  const referenceCode = `ABG-${memberId.substring(0, 8)}`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(referenceCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleConfirmPayment = async () => {
     setIsConfirming(true);
@@ -40,7 +49,6 @@ export function PaymentInfoModal({ memberId, memberName, isOpen, onClose }: Paym
         throw new Error(result.error || t.common.error);
       }
 
-      // Success - show confirmation screen
       setShowConfirmation(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.common.error);
@@ -50,144 +58,182 @@ export function PaymentInfoModal({ memberId, memberName, isOpen, onClose }: Paym
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+      <div className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden">
 
         {showConfirmation ? (
-          // Confirmation Screen
-          <div className="text-center py-8">
-            {/* Success Icon */}
-            <div className="mb-6 flex justify-center">
-              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-                <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
+          // ── Confirmation Screen ──────────────────────────────
+          <div className="flex flex-col items-center text-center px-6 pt-10 pb-8 gap-5">
+            {/* Icon */}
+            <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center shadow-md">
+              <svg className="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
 
-            {/* Title */}
-            <h2 className="text-2xl font-bold text-text-primary mb-4">
-              {t.payment.confirmationTitle}
-            </h2>
+            <div>
+              <h2 className="text-2xl font-bold text-brand mb-2">
+                {t.payment.confirmationTitle}
+              </h2>
+              <p className="text-text-secondary text-sm leading-relaxed">
+                {t.payment.confirmationMessage}
+              </p>
+            </div>
 
-            {/* Message */}
-            <p className="text-text-secondary mb-8">
-              {t.payment.confirmationMessage}
-            </p>
-
-            {/* Action Button */}
             <button
               type="button"
               onClick={() => {
                 onClose();
                 window.location.href = '/request';
               }}
-              className="w-full py-3 px-4 bg-brand text-white rounded-md font-medium hover:bg-brand-dark transition-colors"
+              className="w-full py-4 px-4 bg-brand text-white rounded-xl font-semibold text-base hover:bg-brand-dark active:scale-95 transition-all duration-150 shadow-md"
             >
               {t.payment.findConnections}
             </button>
           </div>
+
         ) : (
-          // Payment Details Screen
+          // ── Payment Details Screen ───────────────────────────
           <>
-            {/* Title */}
-            <h2 className="text-2xl font-bold text-text-primary mb-6">
-              {t.payment.title}
-            </h2>
-
-            {/* QR Code */}
-            <div className="mb-6 flex justify-center">
-              <div className="w-48 h-48 rounded-lg overflow-hidden bg-gray-50">
-                <img src="https://img.glotdojo.com/insecure/fit/0/0/sm/1/plain/https://ejoy.sgp1.digitaloceanspaces.com/ghost/QR_TPbank.jpg" alt="Payment QR Code" className="w-full h-full object-contain p-2" />
-              </div>
-            </div>
-
-            {/* Bank details */}
-            <div className="mb-6 space-y-3 bg-bg-surface p-4 rounded-lg">
-              <h3 className="font-semibold text-text-primary mb-3">{t.payment.bankDetails}</h3>
-
-              <div className="grid grid-cols-3 gap-2">
-                <span className="text-sm text-text-secondary">{t.payment.bank}:</span>
-                <span className="col-span-2 text-sm font-medium text-text-primary">TPBank</span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <span className="text-sm text-text-secondary">{t.payment.accountNumber}:</span>
-                <span className="col-span-2 text-sm font-medium text-text-primary font-mono">158 8888 6666</span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <span className="text-sm text-text-secondary">{t.payment.accountName}:</span>
-                <span className="col-span-2 text-sm font-medium text-text-primary">VU DINH HIEU</span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <span className="text-sm text-text-secondary">{t.payment.amount}:</span>
-                <span className="col-span-2 text-sm font-medium text-brand">1,000,000 VND</span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <span className="text-sm text-text-secondary">{t.payment.reference}:</span>
-                <span className="col-span-2 text-sm font-medium text-text-primary font-mono">
-                  ABG-{memberId.substring(0, 8)}
-                </span>
-              </div>
-            </div>
-
-            {/* Instructions */}
-            <p className="text-sm text-text-secondary mb-6">
-              {t.payment.instructions}
-            </p>
-
-            {/* Error message */}
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-error/20 rounded-lg text-error text-sm">
-                {error}
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="flex gap-3">
+            {/* Gradient Header */}
+            <div className="relative bg-gradient-to-br from-brand to-brand-light px-6 pt-8 pb-6 text-white">
+              {/* Close button */}
               <button
-                type="button"
                 onClick={onClose}
-                disabled={isConfirming}
-                className="flex-1 py-2.5 px-4 border border-border rounded-md font-medium text-text-primary hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
               >
-                {t.payment.cancel}
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
 
-              <button
-                type="button"
-                onClick={handleConfirmPayment}
-                disabled={isConfirming}
-                className="flex-1 py-2.5 px-4 bg-brand text-white rounded-md font-medium hover:bg-brand-dark disabled:bg-brand/50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-              >
-                {isConfirming ? (
-                  <>
-                    <LoadingSpinner size="sm" />
-                    <span>{t.payment.confirming}</span>
-                  </>
-                ) : (
-                  t.payment.confirmPayment
-                )}
-              </button>
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold">{t.payment.title}</h2>
+              </div>
+              <p className="text-white/70 text-sm">
+                Hi <span className="font-medium text-white">{memberName}</span> — scan or transfer below to activate your Premium access.
+              </p>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-5">
+
+              {/* QR Code */}
+              <div className="flex justify-center">
+                <div className="p-2 rounded-2xl border-2 border-brand/15 bg-brand/5 shadow-inner">
+                  <img
+                    src="https://img.glotdojo.com/insecure/fit/0/0/sm/1/plain/https://ejoy.sgp1.digitaloceanspaces.com/ghost/QR_TPbank.jpg"
+                    alt="Payment QR Code"
+                    className="w-44 h-44 object-contain rounded-xl"
+                  />
+                </div>
+              </div>
+
+              {/* Bank details card */}
+              <div className="rounded-xl border border-border bg-bg-primary overflow-hidden">
+                <div className="px-4 py-2.5 bg-brand/5 border-b border-border">
+                  <h3 className="text-xs font-bold tracking-widest uppercase text-brand/60">{t.payment.bankDetails}</h3>
+                </div>
+                <div className="divide-y divide-border">
+                  {[
+                    { label: t.payment.bank, value: 'TPBank', mono: false },
+                    { label: t.payment.accountNumber, value: '158 8888 6666', mono: true },
+                    { label: t.payment.accountName, value: 'VU DINH HIEU', mono: false },
+                  ].map(({ label, value, mono }) => (
+                    <div key={label} className="flex items-center justify-between px-4 py-3">
+                      <span className="text-xs text-text-secondary">{label}</span>
+                      <span className={`text-sm font-semibold text-brand ${mono ? 'font-mono' : ''}`}>{value}</span>
+                    </div>
+                  ))}
+
+                  {/* Amount – highlighted */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-emerald-50">
+                    <span className="text-xs text-text-secondary">{t.payment.amount}</span>
+                    <span className="text-sm font-bold text-emerald-700 bg-emerald-100 px-3 py-0.5 rounded-full">
+                      1,000,000 VND
+                    </span>
+                  </div>
+
+                  {/* Reference – copyable */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span className="text-xs text-text-secondary">{t.payment.reference}</span>
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      className="flex items-center gap-1.5 text-sm font-mono font-semibold text-brand hover:text-brand-light transition-colors group"
+                    >
+                      {referenceCode}
+                      <span className="text-brand/40 group-hover:text-brand transition-colors">
+                        {copied ? (
+                          <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="flex gap-2.5 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <svg className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-xs text-amber-800 leading-relaxed">{t.payment.instructions}</p>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="p-3 bg-red-50 border border-error/20 rounded-xl text-error text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={isConfirming}
+                  className="flex-1 py-3 px-4 border border-border rounded-xl font-medium text-sm text-text-primary hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {t.payment.cancel}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleConfirmPayment}
+                  disabled={isConfirming}
+                  className="flex-1 py-3 px-4 bg-brand text-white rounded-xl font-semibold text-sm hover:bg-brand-dark active:scale-95 disabled:bg-brand/50 disabled:cursor-not-allowed transition-all duration-150 shadow-md flex items-center justify-center gap-2"
+                >
+                  {isConfirming ? (
+                    <>
+                      <LoadingSpinner size="sm" />
+                      <span>{t.payment.confirming}</span>
+                    </>
+                  ) : (
+                    t.payment.confirmPayment
+                  )}
+                </button>
+              </div>
+
             </div>
           </>
         )}
