@@ -67,6 +67,7 @@ export const en = {
       switchToSignup: 'Not a member? Join Community',
       switchToSignin: 'Already a member? Sign In',
       tryDifferentEmail: 'Try a different email',
+      magicLinkError: 'Could not send magic link.',
     },
     // Auth section translations
     authSection: {
@@ -199,6 +200,8 @@ export const en = {
     accountSuspended: 'Your account has been suspended for suspicious activity. Please contact support.',
     sessionExpired: 'Your session has expired. Please sign in again',
     signedIn: 'Signed in as {email}',
+    magicLinkSent: 'Magic link sent! Check your email.',
+    sendMagicLink: 'Send Magic Link',
   },
 
   // Match results

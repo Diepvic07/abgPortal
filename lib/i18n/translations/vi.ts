@@ -69,6 +69,7 @@ export const vi: Translations = {
       switchToSignup: 'Chưa có tài khoản? Đăng ký',
       switchToSignin: 'Đã là thành viên? Đăng nhập',
       tryDifferentEmail: 'Thử email khác',
+      magicLinkError: 'Không thể gửi magic link.',
     },
     // Auth section translations
     authSection: {
@@ -201,6 +202,8 @@ export const vi: Translations = {
     accountSuspended: 'Tài khoản của bạn đã bị tạm ngưng do hoạt động đáng ngờ. Vui lòng liên hệ hỗ trợ.',
     sessionExpired: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại',
     signedIn: 'Đã đăng nhập với {email}',
+    magicLinkSent: 'Đã gửi magic link! Vui lòng kiểm tra email của bạn.',
+    sendMagicLink: 'Gửi Magic Link',
   },
 
   // Match results
