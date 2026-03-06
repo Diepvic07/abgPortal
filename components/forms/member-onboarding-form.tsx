@@ -600,6 +600,22 @@ export function MemberOnboardingForm() {
               setError(null);
               setMagicLinkLoading(true);
               try {
+                const res = await fetch('/api/auth/check-email', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  // intent signup to avoid member existence errors for new users
+                  body: JSON.stringify({ email: emailValue.trim().toLowerCase(), intent: 'signup' }),
+                });
+                const data = await res.json();
+
+                if (data.isTestMode && !data.adminEmails.includes(emailValue.trim().toLowerCase())) {
+                  setError(locale === 'vi'
+                    ? 'Hệ thống đang ở chế độ test. Chỉ gửi được email cho admin. Hãy dùng Google Sign-In.'
+                    : 'System is in test mode. Cannot send email to this address. Please use Google Sign-In.');
+                  setMagicLinkLoading(false);
+                  return;
+                }
+
                 // Save draft for auto-resume after magic link auth
                 const draftData = { ...getValues(), _pendingSubmit: true };
                 localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(draftData));

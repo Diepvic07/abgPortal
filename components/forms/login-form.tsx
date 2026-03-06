@@ -46,6 +46,12 @@ export function LoginForm() {
         return;
       }
 
+      if (data.isTestMode && !data.adminEmails.includes(email.trim().toLowerCase())) {
+        setError("Resend đang ở chế độ test. Chỉ gửi được đến email admin. Hãy dùng Google Sign-In.");
+        setIsLoading(false);
+        return;
+      }
+
       // Send magic link (server enforces 60s per-email cooldown)
       const result = await signIn("email", { email, redirect: false, callbackUrl: "/request" });
       if (result?.error) {

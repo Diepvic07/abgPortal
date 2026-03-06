@@ -45,6 +45,14 @@ export function SignInButton({ className = '', variant = 'default' }: SignInButt
                 router.push('/auth/suspended'); return;
             }
 
+            if (data.isTestMode && !data.adminEmails.includes(email.trim().toLowerCase())) {
+                setError(locale === 'vi'
+                    ? 'Resend đang ở chế độ test. Chỉ gửi được đến email admin. Hãy dùng Google Sign-In.'
+                    : 'System is in test mode. Cannot send email to this address. Please use Google Sign-In.');
+                setIsLoading(false);
+                return;
+            }
+
             const result = await signIn('email', { email, redirect: false, callbackUrl: '/request' });
             if (result?.error) {
                 console.error('Magic link sign-in error:', result.error);

@@ -106,8 +106,8 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting by IP
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0] ||
-               request.headers.get("x-real-ip") ||
-               "unknown";
+      request.headers.get("x-real-ip") ||
+      "unknown";
 
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
@@ -126,18 +126,27 @@ export async function POST(request: NextRequest) {
 
     const member = await getMemberByEmail(email.trim().toLowerCase());
 
+    const isTestMode = !process.env.EMAIL_FROM || process.env.EMAIL_FROM.includes("resend.dev");
+    const adminEmails = process.env.ADMIN_EMAILS || "";
+
     if (!member) {
-      return NextResponse.json(getResponse(false, undefined, undefined, intent));
+      return NextResponse.json({
+        ...getResponse(false, undefined, undefined, intent),
+        isTestMode,
+        adminEmails
+      });
     }
 
-    return NextResponse.json(
-      getResponse(
+    return NextResponse.json({
+      ...getResponse(
         true,
         member.approval_status || "approved",
         member.account_status,
         intent
-      )
-    );
+      ),
+      isTestMode,
+      adminEmails
+    });
   } catch (error) {
     console.error("Check email error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
