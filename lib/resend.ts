@@ -573,8 +573,9 @@ export async function sendContactRequestEmail(data: {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
       console.warn('Resend Test Mode: Contact request email not sent to target.', error.message);
 
-      // Fallback: send to test mode emails so admins can test
-      const testRecipients = [data.requester_email, ...TEST_MODE_EMAILS];
+      // Fallback: send only to verified test mode emails (non-test emails cause batch rejection)
+      const testRecipients = [...new Set([data.requester_email, data.target_email, ...TEST_MODE_EMAILS])]
+        .filter(e => TEST_MODE_EMAILS.includes(e));
       const { error: retryError } = await resend.emails.send({
         from: FROM_EMAIL,
         to: testRecipients,
@@ -710,10 +711,12 @@ export async function sendContactAcceptedEmail(data: {
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
       console.warn('Resend Test Mode: Contact accepted email not sent.', error.message);
-      // Fallback: send to requester + test mode emails
+      // Fallback: send only to verified test mode emails
+      const testRecipients = [...new Set([data.requester_email, ...TEST_MODE_EMAILS])]
+        .filter(e => TEST_MODE_EMAILS.includes(e));
       const { error: retryError } = await resend.emails.send({
         from: FROM_EMAIL,
-        to: [data.requester_email, ...TEST_MODE_EMAILS],
+        to: testRecipients,
         subject: `[TEST MODE] ${data.target_name} đã chấp nhận yêu cầu kết nối`,
         html: `
           <div style="background:#d1fae5;color:#065f46;padding:12px 16px;margin-bottom:20px;border:1px solid #a7f3d0;border-radius:8px;font-size:13px;">
@@ -786,10 +789,12 @@ export async function sendContactDeclinedEmail(data: {
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
       console.warn('Resend Test Mode: Contact declined email not sent.', error.message);
-      // Fallback: send to requester + test mode emails
+      // Fallback: send only to verified test mode emails
+      const testRecipients = [...new Set([data.requester_email, ...TEST_MODE_EMAILS])]
+        .filter(e => TEST_MODE_EMAILS.includes(e));
       const { error: retryError } = await resend.emails.send({
         from: FROM_EMAIL,
-        to: [data.requester_email, ...TEST_MODE_EMAILS],
+        to: testRecipients,
         subject: `[TEST MODE] Cập nhật yêu cầu kết nối - ${data.requester_name}`,
         html: `
           <div style="background:#fee2e2;color:#991b1b;padding:12px 16px;margin-bottom:20px;border:1px solid #fecaca;border-radius:8px;font-size:13px;">
