@@ -247,6 +247,10 @@ export const vi: Translations = {
     creditRemaining: 'Còn {remaining}/{total} lượt',
     creditFree: 'Miễn phí',
     creditPremium: 'Premium',
+    // Message language switch
+    messageLanguage: 'Ngôn ngữ tin nhắn',
+    messageLangEn: 'English',
+    messageLangVi: 'Tiếng Việt',
     success: {
       title: 'Đã bắn tin giới thiệu!',
       message: 'Đã gửi mail cho cả hai rồi nhé. Check inbox ngay và luôn!',

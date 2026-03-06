@@ -245,6 +245,10 @@ export const en = {
     creditRemaining: '{remaining}/{total} requests remaining',
     creditFree: 'Free tier',
     creditPremium: 'Premium',
+    // Message language switch
+    messageLanguage: 'Message language',
+    messageLangEn: 'English',
+    messageLangVi: 'Tiếng Việt',
     success: {
       title: 'Introduction Sent!',
       message: 'We\'ve sent an email to both you and your match. Check your inbox!',
