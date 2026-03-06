@@ -524,9 +524,10 @@ export function MemberOnboardingForm() {
             {...register('gender')}
             className="w-full px-4 py-3 border border-border rounded-md focus:ring-2 focus:ring-brand focus:border-brand transition-colors"
           >
-            <option value="">{t.onboard.form.genderUndisclosed}</option>
+            <option value="">{t.onboard.form.gender}</option>
             <option value="Female">{t.onboard.form.genderFemale}</option>
             <option value="Male">{t.onboard.form.genderMale}</option>
+            <option value="Undisclosed">{t.onboard.form.genderUndisclosed}</option>
           </select>
         </div>
 
