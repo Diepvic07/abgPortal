@@ -44,7 +44,7 @@ export const authOptions: NextAuthOptions = {
             }
         }),
         EmailProvider({
-            from: process.env.EMAIL_FROM || 'ABG Connect <onboarding@resend.dev>',
+            from: process.env.EMAIL_FROM || 'ABG Connect <bdh.alumni@abg.edu.vn>',
             async sendVerificationRequest({ identifier: email, url, provider }) {
                 // Enforce per-email cooldown to prevent spam/abuse
                 const normalizedEmail = email.trim().toLowerCase();
@@ -114,15 +114,15 @@ export const authOptions: NextAuthOptions = {
 
                 // Auto-downgrade expired premium members
                 if (member.paid && member.membership_expiry) {
-                  const expiry = new Date(member.membership_expiry);
-                  if (new Date() > expiry) {
-                    const { updateMember } = await import('./supabase-db');
-                    await updateMember(member.id, {
-                      paid: false,
-                      payment_status: 'expired' as const,
-                    });
-                    console.log(`[Auth] Auto-downgraded expired member: ${member.email}`);
-                  }
+                    const expiry = new Date(member.membership_expiry);
+                    if (new Date() > expiry) {
+                        const { updateMember } = await import('./supabase-db');
+                        await updateMember(member.id, {
+                            paid: false,
+                            payment_status: 'expired' as const,
+                        });
+                        console.log(`[Auth] Auto-downgraded expired member: ${member.email}`);
+                    }
                 }
 
                 return true;

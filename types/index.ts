@@ -93,7 +93,8 @@ export function getMembershipStatus(member: Member): MembershipStatus {
 
 // Derive display status for avatar badge: admin > pro > basic
 export function getAvatarMemberStatus(member: Member): 'basic' | 'pro' | 'admin' {
-  if (member.is_admin) return 'admin';
+  // Only display admin badge if the user is actually approved
+  if (member.is_admin && member.approval_status === 'approved') return 'admin';
   if (member.paid || member.payment_status === 'paid') return 'pro';
   return 'basic';
 }

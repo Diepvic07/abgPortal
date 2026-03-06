@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { MatchResult, Member } from '@/types';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useTranslation, interpolate } from '@/lib/i18n';
@@ -29,10 +30,28 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
   const [matches, setMatches] = useState<MatchWithMember[]>(initialMatches);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
   const [customIntro, setCustomIntro] = useState('');
-  const [showIntroInput, setShowIntroInput] = useState(false);
+
+  const { data: session } = useSession();
+  const [requesterClass, setRequesterClass] = useState<string>('');
+
+  useEffect(() => {
+    if (session?.user?.email) {
+      fetch('/api/profile')
+        .then(res => res.json())
+        .then(data => {
+          if (data.member?.abg_class) {
+            setRequesterClass(data.member.abg_class);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [session]);
 
   // Reroll state
   const [isRerolling, setIsRerolling] = useState(false);
@@ -82,7 +101,6 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
         setMatches(newMatches);
         setAllShownIds(prev => [...prev, ...newMatches.map(m => m.id)]);
         setSelectedId(null);
-        setShowIntroInput(false);
         setCustomIntro('');
         setShowAll(false);
       } else {
@@ -125,7 +143,11 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
         throw new Error(result.error || t.common.error);
       }
 
-      setConnected(true);
+      setSuccess(true);
+      setTimeout(() => {
+        setShowModal(false);
+        setSuccess(false);
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.common.error);
     } finally {
@@ -133,18 +155,26 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
     }
   };
 
-  if (connected) {
-    return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold text-success mb-4">
-          {t.matches.success.title}
-        </h2>
-        <p className="text-text-secondary">
-          {t.matches.success.message}
-        </p>
-      </div>
-    );
-  }
+  const openModal = (matchId: string) => {
+    const match = matches.find(m => m.id === matchId);
+    if (!match) return;
+
+    setSelectedId(match.id);
+
+    // Generate pre-filled template
+    const targetName = isLove ? maskName(match.member) : (match.member.nickname || match.member.name.split(' ')[0]);
+    const requesterName = session?.user?.name?.split(' ')[0] || '';
+
+    if (isLove) {
+      setCustomIntro('');
+    } else if (requesterClass) {
+      setCustomIntro(interpolate(t.matches.matchIntroTemplate, { targetName, requesterName, requesterClass }));
+    } else {
+      setCustomIntro(interpolate(t.matches.matchIntroTemplateFallback, { targetName, requesterName }));
+    }
+
+    setShowModal(true);
+  };
 
   const titleText = matches.length === 1
     ? interpolate(t.matches.title, { count: matches.length })
@@ -191,13 +221,11 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
             key={match.id}
             onClick={() => {
               setSelectedId(match.id);
-              setShowIntroInput(false);
             }}
-            className={`p-4 border rounded-lg cursor-pointer transition-all ${
-              selectedId === match.id
-                ? isLove ? 'border-pink-500 bg-pink-50/50 ring-2 ring-pink-500' : 'border-brand bg-bg-surface ring-2 ring-brand'
-                : 'border-border hover:border-brand-light'
-            }`}
+            className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedId === match.id
+              ? isLove ? 'border-pink-500 bg-pink-50/50 ring-2 ring-pink-500' : 'border-brand bg-bg-surface ring-2 ring-brand'
+              : 'border-border hover:border-brand-light'
+              }`}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -218,17 +246,6 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
                   <p className="text-sm text-text-secondary">
                     {interpolate(t.matches.roleAt, { role: match.member.role, company: match.member.company })}
                   </p>
-                )}
-              </div>
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                selectedId === match.id
-                  ? isLove ? 'border-pink-500 bg-pink-500' : 'border-brand bg-brand'
-                  : 'border-border'
-              }`}>
-                {selectedId === match.id && (
-                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
                 )}
               </div>
             </div>
@@ -274,6 +291,19 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
                 ))}
               </div>
             )}
+
+            <div className="mt-4 pt-3 border-t border-gray-100">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openModal(match.id);
+                }}
+                className={`w-full px-3 py-2 text-white text-sm font-medium rounded-md transition-colors ${isLove ? 'bg-pink-500 hover:bg-pink-600' : 'bg-brand hover:bg-brand-dark'
+                  }`}
+              >
+                {isLove ? t.matches.sendLoveMatch : t.matches.requestIntro}
+              </button>
+            </div>
           </div>
         ))}
 
@@ -291,58 +321,12 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
         )}
       </div>
 
-      {/* Custom Intro Section */}
-      {selectedId && (
-        <div className="space-y-3">
-          {!showIntroInput ? (
-            <button
-              type="button"
-              onClick={() => setShowIntroInput(true)}
-              className="text-sm text-brand hover:text-brand-dark underline"
-            >
-              {t.matches.addIntroMessage}
-            </button>
-          ) : (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-text-primary">
-                {t.matches.introLabel}
-              </label>
-              <textarea
-                value={customIntro}
-                onChange={(e) => setCustomIntro(e.target.value.slice(0, 500))}
-                rows={3}
-                className="w-full px-4 py-3 border border-border rounded-md focus:ring-2 focus:ring-brand focus:border-brand text-sm"
-                placeholder={t.matches.introPlaceholder}
-              />
-              <p className="text-xs text-text-secondary text-right">{customIntro.length}/500</p>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Action Buttons */}
       <div className="flex gap-3">
         <button
-          onClick={handleConnect}
-          disabled={!selectedId || isConnecting}
-          className={`flex-1 py-3.5 px-6 text-white rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 ${
-            isLove ? 'bg-pink-500 hover:bg-pink-600' : 'bg-brand hover:bg-brand-dark'
-          }`}
-        >
-          {isConnecting ? (
-            <>
-              <LoadingSpinner size="sm" />
-              <span>{t.matches.sendingIntro}</span>
-            </>
-          ) : (
-            isLove ? t.matches.sendLoveMatch : t.matches.requestIntro
-          )}
-        </button>
-
-        <button
           onClick={handleReroll}
           disabled={isRerolling}
-          className="py-3.5 px-6 border-2 border-gray-300 text-gray-700 rounded-md font-medium hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="w-full py-3.5 px-6 border-2 border-gray-300 text-gray-700 rounded-md font-medium hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
           {isRerolling ? (
             <>
@@ -375,6 +359,67 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
       <p className="text-xs text-text-secondary text-center">
         {t.matches.rerollNote} {t.matches.footerNote}
       </p>
+
+      {/* Modal matching ContactRequestModal layout */}
+      {showModal && selectedId && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              {isLove
+                ? t.matches.sendLoveMatch
+                : interpolate(t.matches.requestIntro, { targetName: matches.find(m => m.id === selectedId)?.member?.name ?? '' })
+              }
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              {t.matches.modalNotice}
+            </p>
+
+            {success ? (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-green-700">
+                {t.matches.success.message}
+              </div>
+            ) : (
+              <>
+                <textarea
+                  value={customIntro}
+                  onChange={(e) => setCustomIntro(e.target.value.slice(0, 500))}
+                  maxLength={500}
+                  rows={4}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 resize-none ${isLove ? 'focus:ring-pink-500' : 'focus:ring-blue-500'}`}
+                  placeholder={t.matches.introPlaceholder}
+                />
+                <p className="text-xs text-gray-400 mt-1 text-right">{customIntro.length}/500</p>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600 mt-2">
+                    {error}
+                  </div>
+                )}
+
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                  >
+                    {t.matches.cancel}
+                  </button>
+                  <button
+                    onClick={handleConnect}
+                    disabled={isConnecting || (!isLove && !customIntro.trim())}
+                    className={`flex-1 px-4 py-2 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors ${isLove ? 'bg-pink-600 hover:bg-pink-700' : 'bg-blue-600 hover:bg-blue-700'
+                      }`}
+                  >
+                    {isConnecting ? t.matches.sending : t.matches.sendRequest}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
 
-    // Update approval status
-    await updateMember(memberId, { approval_status: "approved" });
+    // Update approval status and ensure member is active so they appear in search
+    await updateMember(memberId, { approval_status: "approved", status: "active" });
 
     // Send approval email
     await sendApprovalEmail(member.email, member.name);

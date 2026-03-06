@@ -229,6 +229,12 @@ export const en = {
     addIntroMessage: 'Add a personal introduction message (optional)',
     introLabel: 'Personal introduction (optional, max 500 chars)',
     introPlaceholder: 'Write a personal message to introduce yourself...',
+    matchIntroTemplate: 'Hi {targetName}, I\'m {requesterName} from class {requesterClass}. I found your profile on ABG Alumni Connect. I\'m currently exploring [xxx] and would love to connect to seek your advice on [yyy]. Looking forward to your reply.',
+    matchIntroTemplateFallback: 'Hi {targetName}, I\'m {requesterName}. I found your profile on ABG Alumni Connect. I\'m currently exploring [xxx] and would love to connect to seek your advice on [yyy]. Looking forward to your reply.',
+    modalNotice: 'Your contact info will only be shared if they accept.',
+    cancel: 'Cancel',
+    sendRequest: 'Send Request',
+    sending: 'Sending...',
     // Love match profile labels
     aboutLabel: 'About:',
     interestsLabel: 'Interests:',

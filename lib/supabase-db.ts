@@ -166,12 +166,31 @@ export async function getMemberById(id: string): Promise<Member | null> {
 
 export async function getMemberByEmail(email: string): Promise<Member | null> {
   const db = createServerSupabaseClient();
-  const { data, error } = await db.from('members').select('*').ilike('email', email).maybeSingle();
+  // Use .select() (not .maybeSingle()) to handle potential duplicate rows gracefully.
+  // If duplicates exist, pick the "best" row: approved > pending > rejected, then active > inactive.
+  const { data, error } = await db.from('members').select('*').ilike('email', email);
   if (error) {
     console.error('[SupabaseDB] getMemberByEmail error:', error);
     throw new Error(`Failed to get member by email: ${error.message}`);
   }
-  return data ? mapRowToMember(data as unknown as Record<string, unknown>) : null;
+  if (!data || data.length === 0) return null;
+  if (data.length === 1) return mapRowToMember(data[0] as unknown as Record<string, unknown>);
+
+  // Multiple rows for same email — pick the best one
+  const approvalOrder: Record<string, number> = { approved: 0, pending: 1, rejected: 2 };
+  const statusOrder: Record<string, number> = { active: 0, inactive: 1 };
+  const sorted = [...data].sort((aRow, bRow) => {
+    const a = aRow as Record<string, unknown>;
+    const b = bRow as Record<string, unknown>;
+    const aApproval = approvalOrder[(a.approval_status as string) ?? 'pending'] ?? 1;
+    const bApproval = approvalOrder[(b.approval_status as string) ?? 'pending'] ?? 1;
+    if (aApproval !== bApproval) return aApproval - bApproval;
+    const aStatus = statusOrder[(a.status as string) ?? 'inactive'] ?? 1;
+    const bStatus = statusOrder[(b.status as string) ?? 'inactive'] ?? 1;
+    return aStatus - bStatus;
+  });
+  console.warn(`[SupabaseDB] getMemberByEmail: found ${data.length} rows for ${email}, using best match.`);
+  return mapRowToMember(sorted[0] as unknown as Record<string, unknown>);
 }
 
 export async function addMember(member: Member): Promise<void> {
