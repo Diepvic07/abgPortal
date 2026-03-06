@@ -36,6 +36,8 @@ export async function GET(request: NextRequest) {
         target_company: target.company || "",
         target_phone: target.phone,
         target_email: target.email,
+        target_facebook_url: target.facebook_url,
+        target_linkedin_url: target.linkedin_url,
       });
       return htmlResponse("Cảm ơn bạn! Thông tin liên hệ của bạn đã được chia sẻ.", "success");
     }

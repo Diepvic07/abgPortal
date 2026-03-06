@@ -19,10 +19,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Target member ID required" }, { status: 400 });
     }
 
-    // Daily limit: 10 contact requests/day
-    const todayCount = await countTodayContactRequests(member.id);
-    if (todayCount >= 10) {
-      return NextResponse.json({ error: "Daily contact request limit reached (10/day)" }, { status: 429 });
+    // Daily limit: 10 contact requests/day (unlimited for test mode emails)
+    const TEST_MODE_EMAILS = ['diep@ejoylearning.com', 'ttvietduc@gmail.com', 'quephc@gmail.com', 'diu.tran@abg.edu.vn'];
+    const isTestUser = TEST_MODE_EMAILS.includes(member.email);
+    if (!isTestUser) {
+      const todayCount = await countTodayContactRequests(member.id);
+      if (todayCount >= 10) {
+        return NextResponse.json({ error: "Daily contact request limit reached (10/day)" }, { status: 429 });
+      }
     }
 
     // Verify target exists and is active/approved

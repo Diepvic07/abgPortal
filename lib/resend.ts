@@ -3,6 +3,21 @@ import { getTranslations, interpolate, type Locale } from '@/lib/i18n';
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'ABG Connect <onboarding@resend.dev>';
 
+// Test mode: emails that receive fallback notifications when Resend domain is unverified
+const TEST_MODE_EMAILS = [
+  'diep@ejoylearning.com',
+  'ttvietduc@gmail.com',
+  'quephc@gmail.com',
+  'diu.tran@abg.edu.vn',
+];
+
+/** Escape HTML special characters to prevent XSS in email templates */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -471,86 +486,109 @@ export async function sendContactRequestEmail(data: {
   decline_url: string;
 }): Promise<void> {
   const resend = getResendClient();
+  const safeName = escapeHtml(data.requester_name);
+  const safeTargetName = escapeHtml(data.target_name);
+  const safeRole = escapeHtml(data.requester_role);
+  const safeCompany = escapeHtml(data.requester_company);
+  const safeMessage = escapeHtml(data.message);
+  const roleInfo = safeRole
+    ? `${safeRole}${safeCompany ? ` tại ${safeCompany}` : ''}`
+    : safeCompany || '';
+
+  const emailHtml = `
+<!DOCTYPE html>
+<html lang="vi">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <!-- Header -->
+        <tr><td style="background:#1a56db;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <!-- Body -->
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Xin chào <strong>${safeTargetName}</strong>,</p>
+          <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">
+            Bạn vừa nhận được một yêu cầu kết nối từ một thành viên trong cộng đồng ABG Alumni. Dưới đây là thông tin của họ:
+          </p>
+          <!-- Requester Card -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin:0 0 20px;">
+            <tr><td style="padding:16px 20px;">
+              <p style="margin:0 0 4px;font-size:17px;font-weight:600;color:#1e40af;">${safeName}</p>
+              ${roleInfo ? `<p style="margin:0;font-size:14px;color:#6b7280;">${roleInfo}</p>` : ''}
+            </td></tr>
+          </table>
+          <!-- Message -->
+          <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#374151;">Lời nhắn từ ${safeName}:</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#eff6ff;border-left:4px solid #1a56db;border-radius:0 8px 8px 0;margin:0 0 24px;">
+            <tr><td style="padding:14px 18px;">
+              <p style="margin:0;font-size:15px;color:#1e3a5f;line-height:1.6;white-space:pre-wrap;">${safeMessage}</p>
+            </td></tr>
+          </table>
+          <!-- Privacy Note -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;margin:0 0 28px;">
+            <tr><td style="padding:12px 16px;">
+              <p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">
+                🔒 <strong>Quyền riêng tư:</strong> Thông tin liên hệ của bạn (email, số điện thoại, mạng xã hội) sẽ <strong>chỉ được chia sẻ khi bạn chấp nhận</strong> yêu cầu này.
+              </p>
+            </td></tr>
+          </table>
+          <!-- Action Buttons -->
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td align="center" style="padding:0 0 12px;">
+                <a href="${data.accept_url}" style="display:inline-block;padding:14px 48px;background:#16a34a;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">Chấp nhận kết nối</a>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <a href="${data.decline_url}" style="display:inline-block;padding:10px 36px;background:#ffffff;color:#6b7280;font-size:14px;font-weight:500;text-decoration:none;border-radius:8px;border:1px solid #d1d5db;">Từ chối</a>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+        <!-- Footer -->
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">
+            Email này được gửi từ nền tảng ABG Alumni Connect.<br>
+            Nếu bạn không phải là thành viên ABG, vui lòng bỏ qua email này.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: data.target_email,
     subject: `[ABG Connect] ${data.requester_name} muốn kết nối với bạn`,
-    html: `
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { border-bottom: 2px solid #007bff; padding-bottom: 16px; margin-bottom: 24px; }
-    .header h1 { margin: 0; font-size: 24px; color: #007bff; }
-    .requester-info { background: #f8f9fa; border-left: 4px solid #007bff; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
-    .message-box { background: #e8f4fd; border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-style: italic; }
-    .actions { margin: 24px 0; }
-    .btn { display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-right: 12px; }
-    .btn-accept { background: #22c55e; color: white; }
-    .btn-decline { background: #9ca3af; color: white; }
-    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>ABG Alumni Connect</h1>
-    </div>
-
-    <p>Xin chào <strong>${data.target_name}</strong>,</p>
-
-    <p>Một thành viên ABG Alumni muốn kết nối với bạn:</p>
-
-    <div class="requester-info">
-      <strong>${data.requester_name}</strong><br>
-      ${data.requester_role}${data.requester_company ? ` tại ${data.requester_company}` : ''}
-    </div>
-
-    <p><strong>Lời nhắn:</strong></p>
-    <div class="message-box">${data.message}</div>
-
-    <p>Nếu bạn chấp nhận, thông tin liên hệ của bạn sẽ được chia sẻ với họ.</p>
-
-    <div class="actions">
-      <a href="${data.accept_url}" class="btn btn-accept">Chấp nhận</a>
-      <a href="${data.decline_url}" class="btn btn-decline">Từ chối</a>
-    </div>
-
-    <p>Trân trọng,<br>ABG Alumni Connect</p>
-
-    <div class="footer">
-      <p>ABG Alumni Community</p>
-    </div>
-  </div>
-</body>
-</html>
-    `,
+    html: emailHtml,
   });
 
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
       console.warn('Resend Test Mode: Contact request email not sent to target.', error.message);
 
-      // Fallback: send to requester so they can see the email was attempted
+      // Fallback: send to test mode emails so admins can test
+      const testRecipients = [data.requester_email, ...TEST_MODE_EMAILS];
       const { error: retryError } = await resend.emails.send({
         from: FROM_EMAIL,
-        to: data.requester_email,
+        to: testRecipients,
         subject: `[TEST MODE] ${data.requester_name} muốn kết nối với ${data.target_name}`,
         html: `
-          <div style="background: #fff3cd; color: #856404; padding: 12px; margin-bottom: 20px; border: 1px solid #ffeeba; border-radius: 4px;">
-            <strong>Test Mode Notice:</strong> This email was sent only to you because the target email (${data.target_email}) is unverified in Resend.
+          <div style="background:#fff3cd;color:#856404;padding:12px 16px;margin-bottom:20px;border:1px solid #ffeeba;border-radius:8px;font-size:13px;">
+            <strong>⚠️ Test Mode:</strong> Target email <strong>${data.target_email}</strong> is unverified in Resend. This test email was sent to admins instead.
           </div>
-          <p>Contact request to <strong>${data.target_name}</strong> (${data.target_email}) was created successfully, but the notification email could not be delivered in test mode.</p>
-          <p><strong>Accept URL:</strong> ${data.accept_url}</p>
-          <p><strong>Decline URL:</strong> ${data.decline_url}</p>
+          ${emailHtml}
         `,
       });
 
       if (retryError) {
-        console.warn('Resend Test Mode: Failed to send fallback email to requester.', retryError);
+        console.warn('Resend Test Mode: Failed to send fallback email.', retryError);
       }
       return;
     }
@@ -560,7 +598,7 @@ export async function sendContactRequestEmail(data: {
 }
 
 /**
- * Send contact accepted email to requester — reveals target's contact info
+ * Send contact accepted email to requester — reveals target's full contact info
  */
 export async function sendContactAcceptedEmail(data: {
   requester_email: string;
@@ -570,61 +608,123 @@ export async function sendContactAcceptedEmail(data: {
   target_company: string;
   target_phone?: string;
   target_email: string;
+  target_facebook_url?: string;
+  target_linkedin_url?: string;
 }): Promise<void> {
   const resend = getResendClient();
+  const safeRequesterName = escapeHtml(data.requester_name);
+  const safeTargetName = escapeHtml(data.target_name);
+  const safeRole = escapeHtml(data.target_role);
+  const safeCompany = escapeHtml(data.target_company);
+  const safeEmail = escapeHtml(data.target_email);
+  const safePhone = data.target_phone ? escapeHtml(data.target_phone) : '';
+  const safeFacebook = data.target_facebook_url ? escapeHtml(data.target_facebook_url) : '';
+  const safeLinkedin = data.target_linkedin_url ? escapeHtml(data.target_linkedin_url) : '';
+  const roleInfo = safeRole
+    ? `${safeRole}${safeCompany ? ` tại ${safeCompany}` : ''}`
+    : safeCompany || '';
+
+  // Build contact rows dynamically
+  const contactRows: string[] = [];
+  contactRows.push(`
+    <tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
+      <span style="font-size:13px;color:#6b7280;">📧 Email</span><br>
+      <a href="mailto:${safeEmail}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeEmail}</a>
+    </td></tr>`);
+  if (data.target_phone) {
+    contactRows.push(`
+    <tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
+      <span style="font-size:13px;color:#6b7280;">📱 Điện thoại</span><br>
+      <a href="tel:${encodeURI(data.target_phone)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safePhone}</a>
+    </td></tr>`);
+  }
+  if (data.target_facebook_url) {
+    contactRows.push(`
+    <tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
+      <span style="font-size:13px;color:#6b7280;">👤 Facebook</span><br>
+      <a href="${encodeURI(data.target_facebook_url)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeFacebook}</a>
+    </td></tr>`);
+  }
+  if (data.target_linkedin_url) {
+    contactRows.push(`
+    <tr><td style="padding:8px 0;">
+      <span style="font-size:13px;color:#6b7280;">💼 LinkedIn</span><br>
+      <a href="${encodeURI(data.target_linkedin_url)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeLinkedin}</a>
+    </td></tr>`);
+  }
+
+  const emailHtml = `
+<!DOCTYPE html>
+<html lang="vi">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <!-- Header -->
+        <tr><td style="background:#16a34a;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <!-- Body -->
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Xin chào <strong>${safeRequesterName}</strong>,</p>
+          <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">
+            Tin vui! <strong>${safeTargetName}</strong> đã chấp nhận yêu cầu kết nối của bạn.
+          </p>
+          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">
+            Dưới đây là thông tin liên hệ đầy đủ để bạn có thể bắt đầu kết nối:
+          </p>
+          <!-- Contact Card -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin:0 0 24px;">
+            <tr><td style="padding:20px 24px;">
+              <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:#166534;">${safeTargetName}</p>
+              ${roleInfo ? `<p style="margin:0 0 16px;font-size:14px;color:#4b5563;">${roleInfo}</p>` : '<div style="margin:0 0 16px;"></div>'}
+              <table width="100%" cellpadding="0" cellspacing="0">
+                ${contactRows.join('')}
+              </table>
+            </td></tr>
+          </table>
+          <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">
+            Hãy chủ động liên hệ và bắt đầu kết nối nhé! Chúc bạn có những cuộc trò chuyện thú vị.
+          </p>
+        </td></tr>
+        <!-- Footer -->
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">
+            Trân trọng,<br><strong>ABG Alumni Connect</strong>
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: data.requester_email,
     subject: `[ABG Connect] ${data.target_name} đã chấp nhận yêu cầu kết nối`,
-    html: `
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { border-bottom: 2px solid #22c55e; padding-bottom: 16px; margin-bottom: 24px; }
-    .header h1 { margin: 0; font-size: 24px; color: #22c55e; }
-    .contact-card { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0; }
-    .contact-card h3 { margin: 0 0 8px; color: #166534; }
-    .contact-card p { margin: 4px 0; font-size: 14px; }
-    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>ABG Alumni Connect</h1>
-    </div>
-
-    <p>Xin chào <strong>${data.requester_name}</strong>,</p>
-
-    <p>Tin vui! <strong>${data.target_name}</strong> đã chấp nhận yêu cầu kết nối của bạn. Đây là thông tin liên hệ của họ:</p>
-
-    <div class="contact-card">
-      <h3>${data.target_name}</h3>
-      <p>${data.target_role}${data.target_company ? ` tại ${data.target_company}` : ''}</p>
-      <p>Email: <a href="mailto:${data.target_email}">${data.target_email}</a></p>
-      ${data.target_phone ? `<p>Điện thoại: ${data.target_phone}</p>` : ''}
-    </div>
-
-    <p>Hãy liên hệ và bắt đầu kết nối nhé!</p>
-
-    <p>Trân trọng,<br>ABG Alumni Connect</p>
-
-    <div class="footer">
-      <p>ABG Alumni Community</p>
-    </div>
-  </div>
-</body>
-</html>
-    `,
+    html: emailHtml,
   });
 
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
       console.warn('Resend Test Mode: Contact accepted email not sent.', error.message);
+      // Fallback: send to requester + test mode emails
+      const { error: retryError } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: [data.requester_email, ...TEST_MODE_EMAILS],
+        subject: `[TEST MODE] ${data.target_name} đã chấp nhận yêu cầu kết nối`,
+        html: `
+          <div style="background:#d1fae5;color:#065f46;padding:12px 16px;margin-bottom:20px;border:1px solid #a7f3d0;border-radius:8px;font-size:13px;">
+            <strong>Test Mode:</strong> Acceptance email for <strong>${escapeHtml(data.requester_email)}</strong>. Sent to admins for testing.
+          </div>
+          ${emailHtml}
+        `,
+      });
+      if (retryError) {
+        console.warn('Resend Test Mode: Failed to send accepted fallback.', retryError);
+      }
       return;
     }
     console.error('Failed to send contact accepted email:', error);
@@ -640,49 +740,67 @@ export async function sendContactDeclinedEmail(data: {
   requester_name: string;
 }): Promise<void> {
   const resend = getResendClient();
+  const safeName = escapeHtml(data.requester_name);
+
+  const emailHtml = `
+<!DOCTYPE html>
+<html lang="vi">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <!-- Header -->
+        <tr><td style="background:#1a56db;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <!-- Body -->
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Xin chào <strong>${safeName}</strong>,</p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+            Cảm ơn bạn đã sử dụng ABG Alumni Connect. Yêu cầu kết nối của bạn hiện chưa được chấp nhận vào lúc này.
+          </p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+            Đừng lo, cộng đồng ABG Alumni có rất nhiều thành viên tài năng khác đang chờ kết nối với bạn. Hãy tiếp tục khám phá và tìm kiếm những cơ hội mới!
+          </p>
+        </td></tr>
+        <!-- Footer -->
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">
+            Trân trọng,<br><strong>ABG Alumni Connect</strong>
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: data.requester_email,
     subject: `[ABG Connect] Cập nhật yêu cầu kết nối`,
-    html: `
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { border-bottom: 2px solid #007bff; padding-bottom: 16px; margin-bottom: 24px; }
-    .header h1 { margin: 0; font-size: 24px; color: #007bff; }
-    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>ABG Alumni Connect</h1>
-    </div>
-
-    <p>Xin chào <strong>${data.requester_name}</strong>,</p>
-
-    <p>Yêu cầu kết nối của bạn hiện không được chấp nhận vào lúc này.</p>
-
-    <p>Bạn có thể tiếp tục khám phá và kết nối với các thành viên khác trong cộng đồng ABG Alumni.</p>
-
-    <p>Trân trọng,<br>ABG Alumni Connect</p>
-
-    <div class="footer">
-      <p>ABG Alumni Community</p>
-    </div>
-  </div>
-</body>
-</html>
-    `,
+    html: emailHtml,
   });
 
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
       console.warn('Resend Test Mode: Contact declined email not sent.', error.message);
+      // Fallback: send to requester + test mode emails
+      const { error: retryError } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: [data.requester_email, ...TEST_MODE_EMAILS],
+        subject: `[TEST MODE] Cập nhật yêu cầu kết nối - ${data.requester_name}`,
+        html: `
+          <div style="background:#fee2e2;color:#991b1b;padding:12px 16px;margin-bottom:20px;border:1px solid #fecaca;border-radius:8px;font-size:13px;">
+            <strong>Test Mode:</strong> Decline email for <strong>${escapeHtml(data.requester_email)}</strong>. Sent to admins for testing.
+          </div>
+          ${emailHtml}
+        `,
+      });
+      if (retryError) {
+        console.warn('Resend Test Mode: Failed to send declined fallback.', retryError);
+      }
       return;
     }
     console.error('Failed to send contact declined email:', error);
