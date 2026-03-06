@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import { LoadingSpinner } from './loading-spinner';
 
@@ -11,7 +12,10 @@ interface PaymentInfoModalProps {
   onClose: () => void;
 }
 
-export function PaymentInfoModal({ memberId, memberName, isOpen, onClose }: PaymentInfoModalProps) {
+export function PaymentInfoModal({ memberId, memberName: memberNameProp, isOpen, onClose }: PaymentInfoModalProps) {
+  const { data: session } = useSession();
+  // Always show the logged-in user's name, not the passed prop (which may be a search result)
+  const memberName = session?.user?.name || memberNameProp;
   const { t } = useTranslation();
   const [isConfirming, setIsConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
