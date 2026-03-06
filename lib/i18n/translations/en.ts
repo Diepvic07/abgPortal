@@ -328,6 +328,12 @@ export const en = {
     confirmationTitle: 'Confirmation Sent!',
     confirmationMessage: 'Admin will verify payment and activate your Premium account within 24 hours.',
     findConnections: 'Find Connections Now',
+    // Payment reminder (dropdown + profile banner)
+    completePayment: 'Complete Payment',
+    paymentUnderReview: 'Payment Under Review',
+    paymentReviewMessage: 'Your payment is being reviewed by admin. You\'ll be upgraded shortly.',
+    profileBannerMessage: 'Complete your membership payment to unlock premium features.',
+    payNow: 'Pay Now',
   },
 
   // Dating

@@ -330,6 +330,12 @@ export const vi: Translations = {
     confirmationTitle: 'Đã gửi xác nhận!',
     confirmationMessage: 'Admin sẽ xác minh thanh toán và kích hoạt tài khoản Premium trong vòng 24 giờ.',
     findConnections: 'Tìm kết nối ngay',
+    // Payment reminder (dropdown + profile banner)
+    completePayment: 'Hoàn tất thanh toán',
+    paymentUnderReview: 'Đang xác minh thanh toán',
+    paymentReviewMessage: 'Admin đang xác minh thanh toán. Tài khoản sẽ được nâng cấp sớm thôi.',
+    profileBannerMessage: 'Hoàn tất thanh toán hội phí để mở khóa tính năng Premium.',
+    payNow: 'Thanh toán ngay',
   },
 
   // Dating

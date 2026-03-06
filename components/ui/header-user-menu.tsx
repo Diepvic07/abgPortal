@@ -9,6 +9,7 @@ import { MembershipBadge } from '@/components/ui/membership-badge';
 import type { Member, MembershipStatus } from '@/types';
 import { getAvatarMemberStatus } from '@/types';
 import { isAdmin } from '@/lib/admin-utils';
+import { PaymentInfoModal } from '@/components/ui/payment-info-modal';
 
 interface HeaderUserMenuProps {
   member: Member;
@@ -18,6 +19,7 @@ interface HeaderUserMenuProps {
 export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,7 +41,11 @@ export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps
 
   const avatarStatus = getAvatarMemberStatus(member);
 
+  const isPendingPayment = membershipStatus === 'pending';
+  const showPaymentCta = (membershipStatus === 'basic' || membershipStatus === 'expired') && !isPendingPayment;
+
   return (
+    <>
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -81,23 +87,34 @@ export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps
             )}
           </div>
 
-          {(membershipStatus === 'basic' || membershipStatus === 'expired') && (
-            <div className="px-3 py-2 border-b border-amber-100 bg-amber-50">
-              <Link
-                href="/upgrade"
-                className="flex items-center justify-between gap-2 w-full px-3 py-2 text-sm font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          {(showPaymentCta || isPendingPayment) && (
+            <div className={`px-3 py-2 border-b ${isPendingPayment ? 'border-blue-100 bg-blue-50' : 'border-amber-100 bg-amber-50'}`}>
+              {showPaymentCta ? (
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsPaymentModalOpen(true);
+                  }}
+                  className="flex items-center justify-between gap-2 w-full px-3 py-2 text-sm font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    {t.payment.completePayment}
+                  </span>
+                  <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  {t.nav.payMembership}
-                </span>
-                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-lg">
+                  <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {t.payment.paymentUnderReview}
+                </div>
+              )}
             </div>
           )}
 
@@ -178,5 +195,14 @@ export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps
         </div>
       )}
     </div>
+    {showPaymentCta && (
+      <PaymentInfoModal
+        memberId={member.id}
+        memberName={member.name}
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+      />
+    )}
+    </>
   );
 }

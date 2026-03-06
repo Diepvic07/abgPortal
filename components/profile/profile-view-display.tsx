@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { MembershipBadge } from '@/components/ui/membership-badge';
+import { PaymentInfoModal } from '@/components/ui/payment-info-modal';
 import type { Member, MembershipStatus } from '@/types';
 import { getAvatarMemberStatus } from '@/types';
 
@@ -75,6 +77,10 @@ interface ProfileViewDisplayProps {
 
 export function ProfileViewDisplay({ member, membershipStatus }: ProfileViewDisplayProps) {
   const { t } = useTranslation();
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  const isPendingPayment = membershipStatus === 'pending';
+  const showPaymentCta = (membershipStatus === 'basic' || membershipStatus === 'expired') && !isPendingPayment;
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
@@ -82,7 +88,44 @@ export function ProfileViewDisplay({ member, membershipStatus }: ProfileViewDisp
   };
 
   return (
+    <>
     <div className="max-w-4xl mx-auto space-y-5">
+      {/* ---- Payment Reminder Banner ---- */}
+      {showPaymentCta && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.832c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-amber-800">{t.payment.completePayment}</p>
+              <p className="text-xs text-amber-600 mt-0.5">{t.payment.profileBannerMessage}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsPaymentModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+            {t.payment.payNow}
+          </button>
+        </div>
+      )}
+
+      {isPendingPayment && (
+        <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 shadow-sm">
+          <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p className="text-sm font-semibold text-blue-800">{t.payment.paymentUnderReview}</p>
+            <p className="text-xs text-blue-600 mt-0.5">{t.payment.paymentReviewMessage}</p>
+          </div>
+        </div>
+      )}
+
       {/* ---- Hero Header ---- */}
       <div className="relative rounded-xl overflow-hidden shadow-sm">
         {/* gradient banner */}
@@ -211,5 +254,15 @@ export function ProfileViewDisplay({ member, membershipStatus }: ProfileViewDisp
         </SectionCard>
       )}
     </div>
+
+    {showPaymentCta && (
+      <PaymentInfoModal
+        memberId={member.id}
+        memberName={member.name}
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+      />
+    )}
+    </>
   );
 }
