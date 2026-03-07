@@ -243,16 +243,28 @@ export async function sendApprovalEmail(to: string, name: string): Promise<void>
       <p style="margin: 0;"><strong>Your membership application has been approved.</strong></p>
     </div>
 
-    <p>You now have full access to the ABG Alumni Connect platform. You can:</p>
+    <p>You've been activated as a <strong>Basic Member</strong>. Here's what you can do right away:</p>
     <ul>
-      <li>Search and connect with fellow ABG alumni</li>
-      <li>Submit connection requests and get AI-powered matches</li>
+      <li>Browse and search the ABG alumni directory</li>
       <li>Update your profile and showcase your expertise</li>
+      <li>Submit up to 5 connection requests per month</li>
+      <li>Get AI-powered match suggestions</li>
     </ul>
 
     <a href="${process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app'}/login" class="cta-button">
       Sign In Now
     </a>
+
+    <div style="background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 8px; padding: 16px; margin: 16px 0;">
+      <p style="margin: 0 0 8px;"><strong style="color: #7c3aed;">Upgrade to Pro</strong> to unlock full access:</p>
+      <ul style="margin: 0; padding-left: 20px;">
+        <li>Up to 50 connection requests per month</li>
+        <li>See full member profiles (name, phone, LinkedIn)</li>
+        <li>Up to 10 AI-powered matches per request</li>
+        <li>Priority matching and support</li>
+      </ul>
+      <p style="margin: 8px 0 0;">Contact us at <a href="mailto:bdh.alumni@abg.edu.vn?subject=Premium Upgrade Request">bdh.alumni@abg.edu.vn</a> to upgrade.</p>
+    </div>
 
     <p>Best regards,<br>ABG Alumni Connect</p>
 
