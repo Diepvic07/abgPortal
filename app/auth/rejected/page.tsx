@@ -19,7 +19,7 @@ export default function RejectedPage() {
         </p>
         <div className="space-y-3">
           <a
-            href="mailto:admin@abg.vn?subject=Membership Application Inquiry"
+            href="mailto:bdh.alumni@abg.edu.vn?subject=Membership Application Inquiry"
             className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Contact Admin

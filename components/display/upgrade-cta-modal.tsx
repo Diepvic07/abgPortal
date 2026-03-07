@@ -76,7 +76,7 @@ export function UpgradeCtaModal({ isOpen, onClose }: UpgradeCtaModalProps) {
 
         <div className="space-y-3">
           <a
-            href="mailto:admin@abg.vn?subject=Premium Upgrade Request"
+            href="mailto:bdh.alumni@abg.edu.vn?subject=Premium Upgrade Request"
             className="block w-full py-3 bg-blue-600 text-white text-center font-medium rounded-lg hover:bg-blue-700 transition-colors"
           >
             Request Upgrade

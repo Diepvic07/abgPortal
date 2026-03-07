@@ -934,7 +934,7 @@ export async function sendRejectionEmail(to: string, name: string): Promise<void
 
     <p>After reviewing your application, we're unable to approve your membership at this time.</p>
 
-    <p>If you believe this is an error or have questions, please contact our admin team at <a href="mailto:admin@abg.vn">admin@abg.vn</a>.</p>
+    <p>If you believe this is an error or have questions, please contact our admin team at <a href="mailto:bdh.alumni@abg.edu.vn">bdh.alumni@abg.edu.vn</a>.</p>
 
     <p>Best regards,<br>ABG Alumni Connect</p>
 
