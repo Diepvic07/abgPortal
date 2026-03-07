@@ -45,22 +45,46 @@ async function main() {
   emails.push({
     name: '2. Application Approved',
     subject: '[TEST] Welcome to ABG Alumni Connect - Application Approved!',
-    html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-      <h1 style="color:#22c55e;border-bottom:2px solid #22c55e;padding-bottom:16px;">ABG Alumni Connect</h1>
-      <h2>Congratulations, Nguyễn Văn Test!</h2>
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:16px 0;">
-        <p style="margin:0;"><strong>Your membership application has been approved.</strong></p>
-      </div>
-      <p>You've been activated as a <strong>Basic Member</strong>. Here's what you can do right away:</p>
-      <ul><li>Browse and search the ABG alumni directory</li><li>Update your profile and showcase your expertise</li><li>Submit up to 5 connection requests per month</li><li>Get AI-powered match suggestions</li></ul>
-      <a href="${APP_URL}/login" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;margin:16px 0;">Sign In Now</a>
-      <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;padding:16px;margin:16px 0;">
-        <p style="margin:0 0 8px;"><strong style="color:#7c3aed;">Upgrade to Pro</strong> to unlock full access:</p>
-        <ul style="margin:0;padding-left:20px;"><li>Up to 50 connection requests per month</li><li>See full member profiles (name, phone, LinkedIn)</li><li>Up to 10 AI-powered matches per request</li><li>Priority matching and support</li></ul>
-        <p style="margin:8px 0 0;">Contact us at <a href="mailto:bdh.alumni@abg.edu.vn?subject=Premium Upgrade Request">bdh.alumni@abg.edu.vn</a> to upgrade.</p>
-      </div>
-      <p>Best regards,<br>ABG Alumni Connect</p>
-    </div>`,
+    html: `<body style="margin:0;padding:0;background:#f4f4f7;font-family:sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#16a34a;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1f2937;">Congratulations, Nguyễn Văn Test!</p>
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <p style="margin:0;font-size:15px;color:#166534;font-weight:600;">Your membership application has been approved.</p>
+          </div>
+          <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.6;">You've been activated as a <strong>Basic Member</strong>. Here's what you can do right away:</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; Browse and search the ABG alumni directory</td></tr>
+            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; Update your profile and showcase your expertise</td></tr>
+            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; Submit up to 5 connection requests per month</td></tr>
+            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; Up to 3 AI-powered searches per month</td></tr>
+          </table>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td>
+            <a href="${APP_URL}/login" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">Sign In Now</a>
+          </td></tr></table>
+          <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <p style="margin:0 0 8px;font-size:15px;color:#374151;"><strong style="color:#7c3aed;">Upgrade to Pro</strong> to unlock full access:</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px;">
+              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; Up to 50 connection requests per month</td></tr>
+              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; See full member profiles (name, phone, LinkedIn)</td></tr>
+              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; Up to 10 AI-powered searches per month</td></tr>
+              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; Priority matching and support</td></tr>
+            </table>
+            <p style="margin:0;font-size:14px;color:#374151;">Contact us at <a href="mailto:bdh.alumni@abg.edu.vn?subject=Premium Upgrade Request" style="color:#7c3aed;text-decoration:underline;">bdh.alumni@abg.edu.vn</a> to upgrade.</p>
+          </div>
+          <p style="margin:0;font-size:15px;color:#374151;">Best regards,<br><strong>ABG Alumni Connect</strong></p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Community</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table></body>`,
   });
 
   // 3. Premium Upgrade (NEW)
@@ -261,14 +285,34 @@ async function main() {
   emails.push({
     name: '8. Application Rejected',
     subject: '[TEST] ABG Alumni Connect - Application Update',
-    html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-      <h1 style="color:#007bff;border-bottom:2px solid #007bff;padding-bottom:16px;">ABG Alumni Connect</h1>
-      <p>Hi Nguyễn Văn Test,</p>
-      <p>Thank you for your interest in ABG Alumni Connect.</p>
-      <p>After reviewing your application, we're unable to approve your membership at this time.</p>
-      <p>If you believe this is an error or have questions, please contact our admin team at <a href="mailto:bdh.alumni@abg.edu.vn">bdh.alumni@abg.edu.vn</a>.</p>
-      <p>Best regards,<br>ABG Alumni Connect</p>
-    </div>`,
+    html: `<body style="margin:0;padding:0;background:#f4f4f7;font-family:sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#1a56db;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Hi <strong>Nguyễn Văn Test</strong>,</p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">Thank you for your interest in ABG Alumni Connect.</p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">After reviewing your application, we were unable to verify your information against our ABG class records. This may happen if:</p>
+          <ul style="margin:0 0 16px;padding-left:20px;font-size:15px;color:#374151;line-height:1.8;">
+            <li>Your registered email does not match our alumni database</li>
+            <li>The class name you provided does not match any ABG program</li>
+            <li>Your name could not be found in the selected class roster</li>
+          </ul>
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;margin:0 0 16px;">
+            <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6;"><strong>Think this is a mistake?</strong> Please double-check your class name and re-apply, or contact us with your correct ABG class details so we can verify manually.</p>
+          </div>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">Reach out to us at <a href="mailto:bdh.alumni@abg.edu.vn?subject=Membership Application Inquiry" style="color:#1a56db;text-decoration:underline;">bdh.alumni@abg.edu.vn</a> and we'll be happy to help.</p>
+          <p style="margin:0;font-size:15px;color:#374151;">Best regards,<br><strong>ABG Alumni Connect</strong></p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Community</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table></body>`,
   });
 
   // Send all emails

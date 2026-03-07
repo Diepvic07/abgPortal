@@ -10,12 +10,14 @@ export default function RejectedPage() {
           </svg>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Application Not Approved</h1>
-        <p className="text-gray-600 mb-6">
-          Unfortunately, your membership application was not approved at this time.
+        <p className="text-gray-600 mb-4">
+          We were unable to verify your information against our ABG class records.
+        </p>
+        <p className="text-sm text-gray-500 mb-4">
+          This may happen if your email, name, or class name doesn&apos;t match our alumni database.
         </p>
         <p className="text-sm text-gray-500 mb-8">
-          If you believe this is an error or would like more information,
-          please contact our admin team.
+          Please double-check your class name and re-apply, or contact us with the correct details.
         </p>
         <div className="space-y-3">
           <a
