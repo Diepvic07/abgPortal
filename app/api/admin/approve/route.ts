@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
     // Update approval status and ensure member is active so they appear in search
     await updateMember(memberId, { approval_status: "approved", status: "active" });
 
-    // Send approval email
-    await sendApprovalEmail(member.email, member.name);
+    // Send approval email in member's preferred locale
+    await sendApprovalEmail(member.email, member.name, member.locale || 'vi');
 
     return NextResponse.json({ success: true });
   } catch (error) {

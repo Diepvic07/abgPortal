@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
         auth_provider: authProvider,
         last_login: formatDate(),
         approval_status: 'approved', // Auto-approve since email was found in DB
+        locale,
       };
 
       await updateMember(existingMember.id, updates);
@@ -167,6 +168,7 @@ export async function POST(request: NextRequest) {
         // New signups require approval
         approval_status: 'pending',
         is_csv_imported: false,
+        locale,
       };
 
       await addMember(member);

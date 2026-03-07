@@ -65,6 +65,7 @@ function mapRowToMember(row: Record<string, unknown>): Member {
     month_reset_date: nullToUndefined(row.month_reset_date as string | null),
     searches_this_month: (row.searches_this_month as number) || 0,
     search_month_reset_date: nullToUndefined(row.search_month_reset_date as string | null),
+    locale: (nullToUndefined(row.locale as string | null) as 'en' | 'vi' | undefined) ?? 'vi',
   };
 }
 
@@ -253,6 +254,7 @@ export async function addMember(member: Member): Promise<void> {
     month_reset_date: member.month_reset_date ?? null,
     searches_this_month: member.searches_this_month ?? 0,
     search_month_reset_date: member.search_month_reset_date ?? null,
+    locale: member.locale ?? 'vi',
   });
   if (error) {
     console.error(`[SupabaseDB] addMember error for ${member.email}:`, error);

@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Send premium upgrade notification email
     if (tier === "premium" && isNewUpgrade) {
       try {
-        await sendPremiumUpgradeEmail(member.email, member.name);
+        await sendPremiumUpgradeEmail(member.email, member.name, member.locale || 'vi');
       } catch (emailError) {
         console.error("Failed to send premium upgrade email:", emailError);
         // Don't fail the tier update if email fails

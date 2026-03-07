@@ -65,6 +65,8 @@ export async function GET(request: NextRequest) {
           facebook_url: target.facebook_url,
           linkedin_url: target.linkedin_url,
         },
+        requesterLocale: requester.locale || 'vi',
+        targetLocale: target.locale || 'vi',
       });
       return htmlResponse("Cảm ơn bạn! Thông tin liên hệ của bạn đã được chia sẻ.", "success");
     }
@@ -75,6 +77,7 @@ export async function GET(request: NextRequest) {
       requester_email: requester.email,
       requester_name: requester.name,
       target_name: target.name,
+      locale: requester.locale || 'vi',
     });
     return htmlResponse("Yêu cầu đã được từ chối. Cảm ơn bạn đã phản hồi.", "info");
   } catch (error) {

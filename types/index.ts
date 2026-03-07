@@ -62,6 +62,8 @@ export interface Member {
   // Search tracking fields (premium plan)
   searches_this_month?: number;
   search_month_reset_date?: string;
+  // Locale preference for emails
+  locale?: 'en' | 'vi';
 }
 
 // Membership status for badge display

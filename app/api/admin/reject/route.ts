@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
 
-    // Send rejection email first (before deletion)
-    await sendRejectionEmail(member.email, member.name);
+    // Send rejection email first (before deletion) in member's preferred locale
+    await sendRejectionEmail(member.email, member.name, member.locale || 'vi');
 
     // Delete member from sheet
     await deleteMember(memberId);

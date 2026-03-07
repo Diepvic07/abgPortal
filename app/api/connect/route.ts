@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
         message: sanitizedMessage,
         accept_url: `${baseUrl}/api/contact/respond?token=${token}&action=accept`,
         decline_url: `${baseUrl}/api/contact/respond?token=${token}&action=decline`,
+        locale: targetMember.locale || 'vi',
       });
     } catch (emailError) {
       console.error('AI match contact request email failed (request still created):', emailError);

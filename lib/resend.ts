@@ -210,13 +210,15 @@ export async function sendIntroEmail(data: {
 /**
  * Send approval notification email
  */
-export async function sendApprovalEmail(to: string, name: string): Promise<void> {
+export async function sendApprovalEmail(to: string, name: string, locale: Locale = 'vi'): Promise<void> {
   const resend = getResendClient();
+  const t = getTranslations(locale);
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
 
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: "Welcome to ABG Alumni Connect - Application Approved!",
+    subject: t.email.approval.subject,
     html: `<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
     <tr><td align="center">
@@ -225,44 +227,43 @@ export async function sendApprovalEmail(to: string, name: string): Promise<void>
           <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
         </td></tr>
         <tr><td style="padding:32px 40px;">
-          <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1f2937;">Congratulations, ${name}!</p>
+          <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1f2937;">${interpolate(t.email.approval.greeting, { name })}</p>
 
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:0 0 20px;">
-            <p style="margin:0;font-size:15px;color:#166534;font-weight:600;">Your membership application has been approved.</p>
+            <p style="margin:0;font-size:15px;color:#166534;font-weight:600;">${t.email.approval.approved}</p>
           </div>
 
-          <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.6;">You've been activated as a <strong>Basic Member</strong>. Here's what you can do right away:</p>
+          <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.6;">${t.email.approval.basicMember}</p>
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
-            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; Browse and search the ABG alumni directory</td></tr>
-            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; Update your profile and showcase your expertise</td></tr>
-            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; Submit up to 5 connection requests per month</td></tr>
-            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; Up to 3 AI-powered searches per month</td></tr>
+            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; ${t.email.approval.benefit1}</td></tr>
+            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; ${t.email.approval.benefit2}</td></tr>
+            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; ${t.email.approval.benefit3}</td></tr>
+            <tr><td style="padding:6px 0;font-size:15px;color:#374151;">&#10003; ${t.email.approval.benefit4}</td></tr>
           </table>
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td>
-            <a href="${process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app'}/login" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">Sign In Now</a>
+            <a href="${appUrl}/login" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.approval.signInNow}</a>
           </td></tr></table>
 
           <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;padding:16px;margin:0 0 20px;">
-            <p style="margin:0 0 8px;font-size:15px;color:#374151;"><strong style="color:#7c3aed;">Upgrade to Pro</strong> to unlock full access:</p>
+            <p style="margin:0 0 8px;font-size:15px;color:#374151;"><strong style="color:#7c3aed;">${t.email.approval.upgradeToPro}</strong> ${t.email.approval.upgradeUnlock}</p>
             <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px;">
-              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; Up to 50 connection requests per month</td></tr>
-              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; See full member profiles (name, phone, LinkedIn)</td></tr>
-              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; Up to 10 AI-powered searches per month</td></tr>
-              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; Priority matching and support</td></tr>
+              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; ${t.email.approval.proBenefit1}</td></tr>
+              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; ${t.email.approval.proBenefit2}</td></tr>
+              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; ${t.email.approval.proBenefit3}</td></tr>
+              <tr><td style="padding:4px 0;font-size:14px;color:#374151;">&#10003; ${t.email.approval.proBenefit4}</td></tr>
             </table>
-            <p style="margin:0;font-size:14px;color:#374151;">Contact us at <a href="mailto:bdh.alumni@abg.edu.vn?subject=Premium Upgrade Request" style="color:#7c3aed;text-decoration:underline;">bdh.alumni@abg.edu.vn</a> to upgrade.</p>
+            <p style="margin:0;font-size:14px;color:#374151;">${t.email.approval.contactUpgrade} <a href="mailto:bdh.alumni@abg.edu.vn?subject=Premium Upgrade Request" style="color:#7c3aed;text-decoration:underline;">bdh.alumni@abg.edu.vn</a> ${t.email.approval.contactUpgradeSuffix}</p>
           </div>
 
-          <p style="margin:0;font-size:15px;color:#374151;">Best regards,<br><strong>ABG Alumni Connect</strong></p>
+          <p style="margin:0;font-size:15px;color:#374151;">${t.email.approval.regards}<br><strong>${t.email.approval.signature}</strong></p>
         </td></tr>
         <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
-          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Community</p>
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${t.footer.community}</p>
         </td></tr>
       </table>
     </td></tr>
-  </table></body>
-    `,
+  </table></body>`,
   });
 
   if (error) {
@@ -485,77 +486,65 @@ export async function sendContactRequestEmail(data: {
   message: string;
   accept_url: string;
   decline_url: string;
+  locale?: Locale;
 }): Promise<void> {
   const resend = getResendClient();
+  const t = getTranslations(data.locale || 'vi');
   const safeName = escapeHtml(data.requester_name);
   const safeTargetName = escapeHtml(data.target_name);
   const safeRole = escapeHtml(data.requester_role);
   const safeCompany = escapeHtml(data.requester_company);
   const safeMessage = escapeHtml(data.message);
-  const roleInfo = safeRole
-    ? `${safeRole}${safeCompany ? ` tại ${safeCompany}` : ''}`
-    : safeCompany || '';
+  const roleInfo = safeRole && safeCompany
+    ? interpolate(t.email.contact.roleAt, { role: safeRole, company: safeCompany })
+    : safeRole || safeCompany || '';
 
   const emailHtml = `
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${data.locale || 'vi'}">
 <head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-        <!-- Header -->
         <tr><td style="background:#1a56db;padding:28px 40px;">
           <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
         </td></tr>
-        <!-- Body -->
         <tr><td style="padding:32px 40px;">
-          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Xin chào <strong>${safeTargetName}</strong>,</p>
-          <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">
-            Bạn vừa nhận được một yêu cầu kết nối từ một thành viên trong cộng đồng ABG Alumni. Dưới đây là thông tin của họ:
-          </p>
-          <!-- Requester Card -->
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">${interpolate(t.email.contact.greeting, { targetName: `<strong>${safeTargetName}</strong>` })}</p>
+          <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">${t.email.contact.receivedRequest}</p>
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin:0 0 20px;">
             <tr><td style="padding:16px 20px;">
               <p style="margin:0 0 4px;font-size:17px;font-weight:600;color:#1e40af;">${safeName}</p>
               ${roleInfo ? `<p style="margin:0;font-size:14px;color:#6b7280;">${roleInfo}</p>` : ''}
             </td></tr>
           </table>
-          <!-- Message -->
-          <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#374151;">Lời nhắn từ ${safeName}:</p>
+          <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#374151;">${interpolate(t.email.contact.messageFrom, { requesterName: safeName })}</p>
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#eff6ff;border-left:4px solid #1a56db;border-radius:0 8px 8px 0;margin:0 0 24px;">
             <tr><td style="padding:14px 18px;">
               <p style="margin:0;font-size:15px;color:#1e3a5f;line-height:1.6;white-space:pre-wrap;">${safeMessage}</p>
             </td></tr>
           </table>
-          <!-- Privacy Note -->
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;margin:0 0 28px;">
             <tr><td style="padding:12px 16px;">
-              <p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">
-                🔒 <strong>Quyền riêng tư:</strong> Thông tin liên hệ của bạn (email, số điện thoại, mạng xã hội) sẽ <strong>chỉ được chia sẻ khi bạn chấp nhận</strong> yêu cầu này.
-              </p>
+              <p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">🔒 <strong>${t.email.contact.privacyLabel}</strong> ${t.email.contact.privacyText}</p>
             </td></tr>
           </table>
-          <!-- Action Buttons -->
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td align="center" style="padding:0 0 12px;">
-                <a href="${data.accept_url}" style="display:inline-block;padding:14px 48px;background:#16a34a;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">Chấp nhận kết nối</a>
+                <a href="${data.accept_url}" style="display:inline-block;padding:14px 48px;background:#16a34a;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.contact.acceptButton}</a>
               </td>
             </tr>
             <tr>
               <td align="center">
-                <a href="${data.decline_url}" style="display:inline-block;padding:10px 36px;background:#ffffff;color:#6b7280;font-size:14px;font-weight:500;text-decoration:none;border-radius:8px;border:1px solid #d1d5db;">Từ chối</a>
+                <a href="${data.decline_url}" style="display:inline-block;padding:10px 36px;background:#ffffff;color:#6b7280;font-size:14px;font-weight:500;text-decoration:none;border-radius:8px;border:1px solid #d1d5db;">${t.email.contact.declineButton}</a>
               </td>
             </tr>
           </table>
         </td></tr>
-        <!-- Footer -->
         <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
-          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">
-            Email này được gửi từ nền tảng ABG Alumni Connect.<br>
-            Nếu bạn không phải là thành viên ABG, vui lòng bỏ qua email này.
-          </p>
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${t.email.contact.footerText}<br>${t.email.contact.footerIgnore}</p>
         </td></tr>
       </table>
     </td></tr>
@@ -566,7 +555,7 @@ export async function sendContactRequestEmail(data: {
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: data.target_email,
-    subject: `[ABG Connect] ${data.requester_name} muốn kết nối với bạn`,
+    subject: interpolate(t.email.contact.subject, { requesterName: data.requester_name }),
     html: emailHtml,
   });
 
@@ -611,38 +600,38 @@ interface ContactMemberInfo {
 }
 
 /** Build HTML contact card for a member */
-function buildContactCard(member: ContactMemberInfo): string {
+function buildContactCard(member: ContactMemberInfo, t: ReturnType<typeof getTranslations>): string {
   const safeName = escapeHtml(member.name);
   const safeRole = escapeHtml(member.role);
   const safeCompany = escapeHtml(member.company);
   const safeEmail = escapeHtml(member.email);
-  const roleInfo = safeRole
-    ? `${safeRole}${safeCompany ? ` tại ${safeCompany}` : ''}`
-    : safeCompany || '';
+  const roleInfo = safeRole && safeCompany
+    ? interpolate(t.email.contact.roleAt, { role: safeRole, company: safeCompany })
+    : safeRole || safeCompany || '';
 
   const rows: string[] = [];
   rows.push(`<tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
-    <span style="font-size:13px;color:#6b7280;">📧 Email</span><br>
+    <span style="font-size:13px;color:#6b7280;">📧 ${t.email.contactAccepted.emailLabel}</span><br>
     <a href="mailto:${safeEmail}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeEmail}</a>
   </td></tr>`);
   if (member.phone) {
     const safePhone = escapeHtml(member.phone);
     rows.push(`<tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
-      <span style="font-size:13px;color:#6b7280;">📱 Điện thoại</span><br>
+      <span style="font-size:13px;color:#6b7280;">📱 ${t.email.contactAccepted.phoneLabel}</span><br>
       <a href="tel:${encodeURI(member.phone)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safePhone}</a>
     </td></tr>`);
   }
   if (member.facebook_url) {
     const safeFb = escapeHtml(member.facebook_url);
     rows.push(`<tr><td style="padding:8px 0;border-bottom:1px solid #dcfce7;">
-      <span style="font-size:13px;color:#6b7280;">👤 Facebook</span><br>
+      <span style="font-size:13px;color:#6b7280;">👤 ${t.email.contactAccepted.facebookLabel}</span><br>
       <a href="${encodeURI(member.facebook_url)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeFb}</a>
     </td></tr>`);
   }
   if (member.linkedin_url) {
     const safeLi = escapeHtml(member.linkedin_url);
     rows.push(`<tr><td style="padding:8px 0;">
-      <span style="font-size:13px;color:#6b7280;">💼 LinkedIn</span><br>
+      <span style="font-size:13px;color:#6b7280;">💼 ${t.email.contactAccepted.linkedinLabel}</span><br>
       <a href="${encodeURI(member.linkedin_url)}" style="font-size:15px;color:#1e40af;text-decoration:none;">${safeLi}</a>
     </td></tr>`);
   }
@@ -662,23 +651,26 @@ function buildContactCard(member: ContactMemberInfo): string {
 export async function sendContactAcceptedEmail(data: {
   requester: ContactMemberInfo;
   target: ContactMemberInfo;
+  requesterLocale?: Locale;
+  targetLocale?: Locale;
 }): Promise<void> {
   const resend = getResendClient();
 
   // Send personalized email to each party showing the other's contact card
   const parties = [
-    { recipient: data.requester, otherParty: data.target },
-    { recipient: data.target, otherParty: data.requester },
+    { recipient: data.requester, otherParty: data.target, locale: data.requesterLocale || 'vi' as Locale },
+    { recipient: data.target, otherParty: data.requester, locale: data.targetLocale || 'vi' as Locale },
   ];
 
-  for (const { recipient, otherParty } of parties) {
+  for (const { recipient, otherParty, locale } of parties) {
+    const t = getTranslations(locale);
     const safeRecipientName = escapeHtml(recipient.name);
     const safeOtherName = escapeHtml(otherParty.name);
-    const contactCard = buildContactCard(otherParty);
+    const contactCard = buildContactCard(otherParty, t);
 
     const emailHtml = `
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${locale}">
 <head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
@@ -688,22 +680,14 @@ export async function sendContactAcceptedEmail(data: {
           <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
         </td></tr>
         <tr><td style="padding:32px 40px;">
-          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Xin chào <strong>${safeRecipientName}</strong>,</p>
-          <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">
-            Tin vui! Kết nối giữa bạn và <strong>${safeOtherName}</strong> đã được xác nhận.
-          </p>
-          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">
-            Dưới đây là thông tin liên hệ đầy đủ để bạn có thể bắt đầu kết nối:
-          </p>
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">${interpolate(t.email.contactAccepted.greeting, { recipientName: `<strong>${safeRecipientName}</strong>` })}</p>
+          <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">${interpolate(t.email.contactAccepted.goodNews, { otherName: `<strong>${safeOtherName}</strong>` })}</p>
+          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">${t.email.contactAccepted.contactInfo}</p>
           ${contactCard}
-          <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">
-            Hãy chủ động liên hệ và bắt đầu kết nối nhé! Chúc bạn có những cuộc trò chuyện thú vị.
-          </p>
+          <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">${t.email.contactAccepted.encourage}</p>
         </td></tr>
         <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
-          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">
-            Trân trọng,<br><strong>ABG Alumni Connect</strong>
-          </p>
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${t.email.contactAccepted.regards}<br><strong>${t.email.contactAccepted.signature}</strong></p>
         </td></tr>
       </table>
     </td></tr>
@@ -714,7 +698,7 @@ export async function sendContactAcceptedEmail(data: {
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: recipient.email,
-      subject: `[ABG Connect] Kết nối với ${otherParty.name} đã được xác nhận`,
+      subject: interpolate(t.email.contactAccepted.subject, { otherName: otherParty.name }),
       html: emailHtml,
     });
 
@@ -727,7 +711,7 @@ export async function sendContactAcceptedEmail(data: {
           await resend.emails.send({
             from: FROM_EMAIL,
             to: testRecipients,
-            subject: `[TEST MODE] Kết nối ${recipient.name} ↔ ${otherParty.name} đã xác nhận`,
+            subject: `[TEST MODE] ${interpolate(t.email.contactAccepted.subject, { otherName: otherParty.name })}`,
             html: `<div style="background:#d1fae5;color:#065f46;padding:12px 16px;margin-bottom:20px;border:1px solid #a7f3d0;border-radius:8px;font-size:13px;">
               <strong>Test Mode:</strong> Acceptance email for <strong>${escapeHtml(recipient.email)}</strong>. Sent to admins for testing.
             </div>${emailHtml}`,
@@ -747,15 +731,17 @@ export async function sendContactDeclinedEmail(data: {
   requester_email: string;
   requester_name: string;
   target_name: string;
+  locale?: Locale;
 }): Promise<void> {
   const resend = getResendClient();
+  const t = getTranslations(data.locale || 'vi');
   const safeName = escapeHtml(data.requester_name);
   const safeTargetName = escapeHtml(data.target_name);
   const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
 
   const emailHtml = `
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${data.locale || 'vi'}">
 <head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
@@ -765,23 +751,17 @@ export async function sendContactDeclinedEmail(data: {
           <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
         </td></tr>
         <tr><td style="padding:32px 40px;">
-          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Xin chào <strong>${safeName}</strong>,</p>
-          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-            Cảm ơn bạn đã sử dụng ABG Alumni Connect. Rất tiếc, yêu cầu kết nối của bạn với <strong>${safeTargetName}</strong> hiện chưa được chấp nhận vào lúc này.
-          </p>
-          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">
-            Đừng lo, cộng đồng ABG Alumni có rất nhiều thành viên tài năng khác đang chờ kết nối với bạn. Hãy tiếp tục khám phá và tìm kiếm những cơ hội mới!
-          </p>
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">${interpolate(t.email.contactDeclined.greeting, { requesterName: `<strong>${safeName}</strong>` })}</p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${interpolate(t.email.contactDeclined.thanks, { targetName: `<strong>${safeTargetName}</strong>` })}</p>
+          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">${t.email.contactDeclined.encourage}</p>
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr><td align="center">
-              <a href="${appUrl}/request" style="display:inline-block;padding:12px 36px;background:#1a56db;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">Tìm kết nối mới</a>
+              <a href="${appUrl}/request" style="display:inline-block;padding:12px 36px;background:#1a56db;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.contactDeclined.ctaButton}</a>
             </td></tr>
           </table>
         </td></tr>
         <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
-          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">
-            Trân trọng,<br><strong>ABG Alumni Connect</strong>
-          </p>
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${t.email.contactDeclined.regards}<br><strong>${t.email.contactDeclined.signature}</strong></p>
         </td></tr>
       </table>
     </td></tr>
@@ -792,7 +772,7 @@ export async function sendContactDeclinedEmail(data: {
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: data.requester_email,
-    subject: `[ABG Connect] Cập nhật yêu cầu kết nối với ${data.target_name}`,
+    subject: interpolate(t.email.contactDeclined.subject, { targetName: data.target_name }),
     html: emailHtml,
   });
 
@@ -804,7 +784,7 @@ export async function sendContactDeclinedEmail(data: {
       const { error: retryError } = await resend.emails.send({
         from: FROM_EMAIL,
         to: testRecipients,
-        subject: `[TEST MODE] Cập nhật yêu cầu kết nối - ${data.requester_name} → ${data.target_name}`,
+        subject: `[TEST MODE] ${interpolate(t.email.contactDeclined.subject, { targetName: data.target_name })}`,
         html: `<div style="background:#fee2e2;color:#991b1b;padding:12px 16px;margin-bottom:20px;border:1px solid #fecaca;border-radius:8px;font-size:13px;">
           <strong>Test Mode:</strong> Decline email for <strong>${escapeHtml(data.requester_email)}</strong>. Sent to admins for testing.
         </div>${emailHtml}`,
@@ -822,61 +802,50 @@ export async function sendContactDeclinedEmail(data: {
 /**
  * Send premium upgrade notification email with link to start searching
  */
-export async function sendPremiumUpgradeEmail(to: string, name: string): Promise<void> {
+export async function sendPremiumUpgradeEmail(to: string, name: string, locale: Locale = 'vi'): Promise<void> {
   const resend = getResendClient();
+  const t = getTranslations(locale);
   const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
   const safeName = escapeHtml(name);
 
   const emailHtml = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${locale}">
 <head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-        <!-- Header -->
         <tr><td style="background:linear-gradient(135deg,#7c3aed,#2563eb);padding:28px 40px;">
           <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
         </td></tr>
-        <!-- Body -->
         <tr><td style="padding:32px 40px;">
-          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Hi <strong>${safeName}</strong>,</p>
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">${interpolate(t.email.premium.greeting, { name: `<strong>${safeName}</strong>` })}</p>
 
           <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:20px;margin:0 0 24px;text-align:center;">
-            <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#7c3aed;text-transform:uppercase;letter-spacing:0.05em;">Your membership</p>
-            <p style="margin:0;font-size:24px;font-weight:700;color:#5b21b6;">Premium Member</p>
+            <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#7c3aed;text-transform:uppercase;letter-spacing:0.05em;">${t.email.premium.yourMembership}</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:#5b21b6;">${t.email.premium.premiumMember}</p>
           </div>
 
-          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-            Congratulations! Your account has been upgraded to <strong>Premium</strong>. You now have access to all premium features:
-          </p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${t.email.premium.congrats}</p>
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
-            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; Up to 50 connection requests per month</td></tr>
-            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; See full member profiles (name, phone, LinkedIn)</td></tr>
-            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; Up to 10 AI-powered matches per request</td></tr>
-            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; Priority matching and support</td></tr>
+            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; ${t.email.premium.benefit1}</td></tr>
+            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; ${t.email.premium.benefit2}</td></tr>
+            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; ${t.email.premium.benefit3}</td></tr>
+            <tr><td style="padding:8px 0;font-size:15px;color:#374151;">&#10003; ${t.email.premium.benefit4}</td></tr>
           </table>
 
-          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">
-            Start exploring the ABG Alumni network and find the connections you're looking for!
-          </p>
+          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">${t.email.premium.startExploring}</p>
 
-          <!-- CTA Button -->
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr><td align="center" style="padding:0 0 12px;">
-              <a href="${appUrl}/request" style="display:inline-block;padding:14px 48px;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">
-                Start Finding Connections
-              </a>
+              <a href="${appUrl}/request" style="display:inline-block;padding:14px 48px;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.premium.ctaButton}</a>
             </td></tr>
           </table>
         </td></tr>
-        <!-- Footer -->
         <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
-          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">
-            Best regards,<br><strong>ABG Alumni Connect</strong>
-          </p>
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${t.email.premium.regards}<br><strong>${t.email.premium.signature}</strong></p>
         </td></tr>
       </table>
     </td></tr>
@@ -887,7 +856,7 @@ export async function sendPremiumUpgradeEmail(to: string, name: string): Promise
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: "You've been upgraded to Premium - ABG Alumni Connect",
+    subject: t.email.premium.subject,
     html: emailHtml,
   });
 
@@ -903,13 +872,14 @@ export async function sendPremiumUpgradeEmail(to: string, name: string): Promise
 /**
  * Send rejection notification email
  */
-export async function sendRejectionEmail(to: string, name: string): Promise<void> {
+export async function sendRejectionEmail(to: string, name: string, locale: Locale = 'vi'): Promise<void> {
   const resend = getResendClient();
+  const t = getTranslations(locale);
 
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: "ABG Alumni Connect - Application Update",
+    subject: t.email.rejection.subject,
     html: `<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
     <tr><td align="center">
@@ -918,28 +888,28 @@ export async function sendRejectionEmail(to: string, name: string): Promise<void
           <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
         </td></tr>
         <tr><td style="padding:32px 40px;">
-          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">Hi <strong>${name}</strong>,</p>
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">${interpolate(t.email.rejection.greeting, { name: `<strong>${escapeHtml(name)}</strong>` })}</p>
 
-          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">Thank you for your interest in ABG Alumni Connect.</p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${t.email.rejection.thanks}</p>
 
-          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">After reviewing your application, we were unable to verify your information against our ABG class records. This may happen if:</p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${t.email.rejection.unableToVerify}</p>
 
           <ul style="margin:0 0 16px;padding-left:20px;font-size:15px;color:#374151;line-height:1.8;">
-            <li>Your registered email does not match our alumni database</li>
-            <li>The class name you provided does not match any ABG program</li>
-            <li>Your name could not be found in the selected class roster</li>
+            <li>${t.email.rejection.reason1}</li>
+            <li>${t.email.rejection.reason2}</li>
+            <li>${t.email.rejection.reason3}</li>
           </ul>
 
           <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;margin:0 0 16px;">
-            <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6;"><strong>Think this is a mistake?</strong> Please double-check your class name and re-apply, or contact us with your correct ABG class details so we can verify manually.</p>
+            <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6;"><strong>${t.email.rejection.mistake}</strong> ${t.email.rejection.mistakeHelp}</p>
           </div>
 
-          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">Reach out to us at <a href="mailto:bdh.alumni@abg.edu.vn?subject=Membership Application Inquiry" style="color:#1a56db;text-decoration:underline;">bdh.alumni@abg.edu.vn</a> and we'll be happy to help.</p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${t.email.rejection.contactUs} <a href="mailto:bdh.alumni@abg.edu.vn?subject=Membership Application Inquiry" style="color:#1a56db;text-decoration:underline;">bdh.alumni@abg.edu.vn</a> ${t.email.rejection.contactUsSuffix}</p>
 
-          <p style="margin:0;font-size:15px;color:#374151;">Best regards,<br><strong>ABG Alumni Connect</strong></p>
+          <p style="margin:0;font-size:15px;color:#374151;">${t.email.rejection.regards}<br><strong>${t.email.rejection.signature}</strong></p>
         </td></tr>
         <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
-          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Community</p>
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${t.footer.community}</p>
         </td></tr>
       </table>
     </td></tr>

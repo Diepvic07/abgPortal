@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
         message: finalMessage,
         accept_url: `${baseUrl}/api/contact/respond?token=${token}&action=accept`,
         decline_url: `${baseUrl}/api/contact/respond?token=${token}&action=decline`,
+        locale: target.locale || 'vi',
       });
     } catch (emailError) {
       console.error("Contact request email failed (request still created):", emailError);
