@@ -37,9 +37,9 @@ export function FooterSection() {
             <Image
               src="/images/abg_logo.png"
               alt="ABG Logo"
-              width={32}
-              height={32}
-              className="h-8 w-auto"
+              width={300}
+              height={115}
+              className="h-8 w-auto object-contain"
             />
             <span className="text-white font-semibold">
               {t.nav.brand}
