@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
         expertise: mergedExpertise,
         can_help_with: mergedCanHelpWith,
         looking_for: mergedLookingFor,
+        locale,
       });
 
       let avatar_url = existingMember.avatar_url;
@@ -128,6 +129,7 @@ export async function POST(request: NextRequest) {
         expertise,
         can_help_with,
         looking_for,
+        locale,
       });
 
       memberId = generateId();

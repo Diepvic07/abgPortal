@@ -17,8 +17,19 @@ export async function generateBio(data: {
   expertise: string;
   can_help_with: string;
   looking_for: string;
+  locale?: string;
 }): Promise<string> {
-  const prompt = `Based on this member info, write a 2-3 sentence professional bio:
+  const isVi = data.locale === 'vi';
+  const prompt = isVi
+    ? `Dựa trên thông tin thành viên sau, viết bio chuyên nghiệp 2-3 câu bằng tiếng Việt:
+Tên: ${data.name}
+Vị trí: ${data.role} tại ${data.company}
+Chuyên môn: ${data.expertise}
+Có thể hỗ trợ: ${data.can_help_with}
+Đang tìm kiếm: ${data.looking_for}
+
+Viết ngôi thứ ba, chuyên nghiệp, ngắn gọn. Không dùng markdown.`
+    : `Based on this member info, write a 2-3 sentence professional bio:
 Name: ${data.name}
 Role: ${data.role} at ${data.company}
 Expertise: ${data.expertise}
@@ -32,7 +43,9 @@ Keep it professional, concise, third-person. No markdown formatting.`;
     return result.response.text().trim();
   } catch (error) {
     console.error('Gemini generateBio error:', error);
-    return `${data.name} is a ${data.role} at ${data.company}.`; // Fallback bio
+    return isVi
+      ? `${data.name} là ${data.role} tại ${data.company}.`
+      : `${data.name} is a ${data.role} at ${data.company}.`;
   }
 }
 

@@ -270,12 +270,13 @@ export const vi: Translations = {
   // Email templates
   email: {
     onboarding: {
-      subject: 'Welcome gia nhập ABG Alumni Connect!',
-      greeting: 'Chào {name},',
-      bioIntro: 'Hồ sơ đã lên sóng. Đây là bio của bạn:',
-      canFind: 'Anh em khác giờ có thể tìm thấy bạn rồi đó.',
-      readyToConnect: 'Muốn tìm kèo kết nối? Vào app ngay thôi.',
-      regards: 'Thân ái,',
+      subject: 'Chào mừng bạn đến với ABG Alumni Connect!',
+      greeting: 'Xin chào {name},',
+      bioIntro: 'Hồ sơ của bạn đã được tạo thành công. Dưới đây là phần giới thiệu của bạn:',
+      canFind: 'Các thành viên khác giờ đây có thể tìm thấy và kết nối với bạn dựa trên chuyên môn của bạn.',
+      readyToConnect: 'Sẵn sàng kết nối? Hãy đăng nhập để bắt đầu tìm kiếm và gửi yêu cầu kết nối.',
+      signInNow: 'Đăng nhập ngay',
+      regards: 'Trân trọng,',
       signature: 'ABG Alumni Connect',
     },
     intro: {
@@ -356,7 +357,9 @@ export const vi: Translations = {
       subject: '[ABG Connect] Kết nối với {otherName} đã được xác nhận',
       greeting: 'Xin chào {recipientName},',
       goodNews: 'Tin vui! Kết nối giữa bạn và {otherName} đã được xác nhận.',
-      contactInfo: 'Dưới đây là thông tin liên hệ đầy đủ để bạn có thể bắt đầu kết nối:',
+      contactInfo: 'Dưới đây là thông tin liên hệ của cả hai bên để bạn có thể bắt đầu kết nối:',
+      otherSectionTitle: 'Thông tin của {name}',
+      yourSectionTitle: 'Thông tin của bạn',
       encourage: 'Hãy chủ động liên hệ và bắt đầu kết nối nhé! Chúc bạn có những cuộc trò chuyện thú vị.',
       regards: 'Trân trọng,',
       signature: 'ABG Alumni Connect',

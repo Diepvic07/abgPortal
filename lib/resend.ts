@@ -36,48 +36,45 @@ export async function sendOnboardingConfirmation(
   const t = getTranslations(locale);
   const resend = getResendClient();
 
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to,
     subject: t.email.onboarding.subject,
-    html: `
-<!DOCTYPE html>
+    html: `<!DOCTYPE html>
 <html lang="${locale}">
-<head>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { border-bottom: 2px solid #007bff; padding-bottom: 16px; margin-bottom: 24px; }
-    .header h1 { margin: 0; font-size: 24px; color: #007bff; }
-    .quote { background: #f8f9fa; border-left: 4px solid #007bff; padding: 12px 16px; margin: 16px 0; }
-    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>ABG Alumni Connect</h1>
-    </div>
-
-    <h2>${interpolate(t.email.onboarding.greeting, { name })}</h2>
-
-    <p>${t.email.onboarding.bioIntro}</p>
-
-    <div class="quote">${bio}</div>
-
-    <p>${t.email.onboarding.canFind}</p>
-
-    <p>${t.email.onboarding.readyToConnect}</p>
-
-    <p>${t.email.onboarding.regards}<br>${t.email.onboarding.signature}</p>
-
-    <div class="footer">
-      <p>${t.footer.community}</p>
-    </div>
-  </div>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#16a34a;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">${interpolate(t.email.onboarding.greeting, { name: `<strong>${escapeHtml(name)}</strong>` })}</p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${t.email.onboarding.bioIntro}</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+            <tr><td style="background:#f0fdf4;border-left:4px solid #16a34a;padding:16px 20px;border-radius:0 8px 8px 0;">
+              <p style="margin:0;font-size:15px;color:#374151;line-height:1.6;font-style:italic;">${escapeHtml(bio)}</p>
+            </td></tr>
+          </table>
+          <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">${t.email.onboarding.canFind}</p>
+          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">${t.email.onboarding.readyToConnect}</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td>
+            <a href="${appUrl}/login" style="display:inline-block;padding:14px 36px;background:#16a34a;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.onboarding.signInNow}</a>
+          </td></tr></table>
+          <p style="margin:0;font-size:15px;color:#374151;">${t.email.onboarding.regards}<br><strong>${t.email.onboarding.signature}</strong></p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${t.footer.community}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
 </body>
-</html>
-    `,
+</html>`,
   });
 
   if (error) {
@@ -666,7 +663,10 @@ export async function sendContactAcceptedEmail(data: {
     const t = getTranslations(locale);
     const safeRecipientName = escapeHtml(recipient.name);
     const safeOtherName = escapeHtml(otherParty.name);
-    const contactCard = buildContactCard(otherParty, t);
+    const otherCard = buildContactCard(otherParty, t);
+    const recipientCard = buildContactCard(recipient, t);
+    const otherSectionTitle = interpolate(t.email.contactAccepted.otherSectionTitle, { name: safeOtherName });
+    const yourSectionTitle = t.email.contactAccepted.yourSectionTitle;
 
     const emailHtml = `
 <!DOCTYPE html>
@@ -683,7 +683,10 @@ export async function sendContactAcceptedEmail(data: {
           <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">${interpolate(t.email.contactAccepted.greeting, { recipientName: `<strong>${safeRecipientName}</strong>` })}</p>
           <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">${interpolate(t.email.contactAccepted.goodNews, { otherName: `<strong>${safeOtherName}</strong>` })}</p>
           <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">${t.email.contactAccepted.contactInfo}</p>
-          ${contactCard}
+          <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#166534;">${otherSectionTitle}</p>
+          ${otherCard}
+          <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#166534;">${yourSectionTitle}</p>
+          ${recipientCard}
           <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">${t.email.contactAccepted.encourage}</p>
         </td></tr>
         <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
