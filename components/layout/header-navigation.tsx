@@ -55,8 +55,8 @@ export function HeaderNavigation() {
           <Image
             src="/images/abg_dark_logo.png"
             alt="ABG Logo"
-            width={300}
-            height={115}
+            width={269}
+            height={103}
             className="h-9 w-auto object-contain"
           />
           <span className="text-xl font-semibold text-white">
