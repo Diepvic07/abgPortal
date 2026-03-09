@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from 'next/link';
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import type { SearchResultBasic, SearchResultPro } from "@/lib/search-utils";
 import { ContactRequestModal } from "./contact-request-modal";
@@ -24,7 +25,7 @@ export function MemberSearchResultCard({ result, viewerTier }: MemberSearchResul
 
   return (
     <>
-      <div className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow bg-white">
+      <Link href={`/profile/${result.id}`} className="block border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-blue-300 transition-all bg-white group cursor-pointer relative">
         <div className="flex items-start gap-3">
           <MemberAvatar
             name={result.name}
@@ -32,7 +33,7 @@ export function MemberSearchResultCard({ result, viewerTier }: MemberSearchResul
             size="lg"
           />
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 truncate">{result.name}</h3>
+            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{result.name}</h3>
             {isPro ? (
               <>
                 {result.role && (
@@ -63,26 +64,28 @@ export function MemberSearchResultCard({ result, viewerTier }: MemberSearchResul
         </div>
 
         {/* Action button */}
-        <div className="mt-3 pt-3 border-t border-gray-100">
+        <div className="mt-3 pt-3 border-t border-gray-100 flex gap-2">
           {viewerTier === "premium" ? (
             <button
-              onClick={() => setShowContactModal(true)}
-              className="w-full px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowContactModal(true); }}
+              className="flex-1 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors z-10"
             >
               Contact Member
             </button>
           ) : (
-            <div className="text-center">
-              <button
-                onClick={() => setShowPaymentModal(true)}
-                className="text-xs text-blue-600 hover:text-blue-800 underline"
-              >
-                Upgrade to Pro to contact members
-              </button>
-            </div>
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPaymentModal(true); }}
+              className="flex-1 px-3 py-1.5 bg-blue-50 text-blue-600 text-sm rounded-md hover:bg-blue-100 transition-colors"
+              title="Upgrade to Pro to contact members"
+            >
+              Upgrade to Contact
+            </button>
           )}
+          <div className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md text-center hover:bg-gray-200 transition-colors">
+            View Profile
+          </div>
         </div>
-      </div>
+      </Link>
 
       {showContactModal && (
         <ContactRequestModal

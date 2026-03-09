@@ -21,9 +21,9 @@ interface EnrichedRequest {
 }
 
 const CATEGORY_STYLES: Record<RequestCategory, { label: string; classes: string }> = {
-  love:    { label: 'Love',    classes: 'bg-pink-100 text-pink-700 border-pink-200' },
-  job:     { label: 'Job',     classes: 'bg-blue-100 text-blue-700 border-blue-200' },
-  hiring:  { label: 'Hiring',  classes: 'bg-purple-100 text-purple-700 border-purple-200' },
+  love: { label: 'Love', classes: 'bg-pink-100 text-pink-700 border-pink-200' },
+  job: { label: 'Job', classes: 'bg-blue-100 text-blue-700 border-blue-200' },
+  hiring: { label: 'Hiring', classes: 'bg-purple-100 text-purple-700 border-purple-200' },
   partner: { label: 'Partner', classes: 'bg-orange-100 text-orange-700 border-orange-200' },
 };
 
@@ -94,62 +94,84 @@ export function RequestHistoryList({ requests }: RequestHistoryListProps) {
 
   return (
     <div className="space-y-4">
-      {requests.map((request) => (
-        <div
-          key={request.id}
-          className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-        >
-          {/* Status Badge, Category Badge and Date */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-                  request.status
-                )}`}
-              >
-                {request.status === 'pending' ? t.history.status.pending :
-                 request.status === 'matched' ? t.history.status.matched :
-                 request.status === 'connected' ? t.history.status.connected :
-                 t.history.status.declined}
-              </span>
-              {request.category && CATEGORY_STYLES[request.category] && (
+      {requests.map((request) => {
+        const isConnected = request.status === 'matched' || request.status === 'connected';
+        const hasMember = !!request.matched_member;
+
+        const CardWrapper = isConnected && hasMember
+          ? ({ children }: { children: React.ReactNode }) => (
+            <Link href={`/profile/${request.matched_member!.id}`} className="block border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-brand/40 transition-all bg-white group">
+              {children}
+            </Link>
+          )
+          : ({ children }: { children: React.ReactNode }) => (
+            <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white">
+              {children}
+            </div>
+          );
+
+        return (
+          <CardWrapper key={request.id}>
+            {/* Status Badge, Category Badge and Date */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${CATEGORY_STYLES[request.category].classes}`}
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                    request.status
+                  )}`}
                 >
-                  {CATEGORY_STYLES[request.category].label}
+                  {request.status === 'pending' ? t.history.status.pending :
+                    request.status === 'matched' ? t.history.status.matched :
+                      request.status === 'connected' ? t.history.status.connected :
+                        t.history.status.declined}
                 </span>
-              )}
-            </div>
-            <span className="text-sm text-gray-500">
-              {getRelativeTime(request.created_at)}
-            </span>
-          </div>
-
-          {/* Request Text */}
-          <p className="text-gray-700 text-sm mb-3 line-clamp-2">
-            {request.request_text}
-          </p>
-
-          {/* Matched Member Info */}
-          {request.matched_member && (
-            <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
-              <MemberAvatar
-                name={request.matched_member.name}
-                avatarUrl={request.matched_member.avatar_url}
-                size="sm"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {request.matched_member.name}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {request.matched_member.role} at {request.matched_member.company}
-                </p>
+                {request.category && CATEGORY_STYLES[request.category] && (
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${CATEGORY_STYLES[request.category].classes}`}
+                  >
+                    {CATEGORY_STYLES[request.category].label}
+                  </span>
+                )}
               </div>
+              <span className="text-sm text-gray-500">
+                {getRelativeTime(request.created_at)}
+              </span>
             </div>
-          )}
-        </div>
-      ))}
+
+            {/* Request Text */}
+            <p className="text-gray-700 text-sm mb-3 line-clamp-2">
+              {request.request_text}
+            </p>
+
+            {/* Matched Member Info */}
+            {request.matched_member && (
+              <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+                <MemberAvatar
+                  name={request.matched_member.name}
+                  avatarUrl={request.matched_member.avatar_url}
+                  size="sm"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium truncate ${isConnected ? 'text-gray-900 group-hover:text-brand transition-colors' : 'text-gray-900'}`}>
+                    {request.matched_member.name}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {request.matched_member.role} at {request.matched_member.company}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* View Profile prompt */}
+            {isConnected && request.matched_member && (
+              <div className="mt-3 flex items-center text-sm font-medium text-brand border-t border-gray-50 pt-3">
+                <span>View full profile</span>
+                <svg className="ml-1 w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </div>
+            )}
+          </CardWrapper>
+        )
+      })}
     </div>
   );
 }

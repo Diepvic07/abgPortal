@@ -573,6 +573,7 @@ export async function sendContactRequestEmail(data: {
 
 /** Contact info for accepted email — both parties receive the other's details */
 interface ContactMemberInfo {
+  id: string;
   email: string;
   name: string;
   role: string;
@@ -588,6 +589,8 @@ function buildContactCard(member: ContactMemberInfo, t: ReturnType<typeof getTra
   const safeRole = escapeHtml(member.role);
   const safeCompany = escapeHtml(member.company);
   const safeEmail = escapeHtml(member.email);
+  const baseUrl = process.env.NEXTAUTH_URL || 'abg-connect.vercel.app';
+  const appUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
   const roleInfo = safeRole && safeCompany
     ? interpolate(t.email.contact.roleAt, { role: safeRole, company: safeCompany })
     : safeRole || safeCompany || '';
@@ -624,6 +627,9 @@ function buildContactCard(member: ContactMemberInfo, t: ReturnType<typeof getTra
       <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:#166534;">${safeName}</p>
       ${roleInfo ? `<p style="margin:0 0 16px;font-size:14px;color:#4b5563;">${roleInfo}</p>` : '<div style="margin:0 0 16px;"></div>'}
       <table width="100%" cellpadding="0" cellspacing="0">${rows.join('')}</table>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;"><tr><td align="center">
+        <a href="${appUrl}/profile/${member.id}" style="display:inline-block;padding:12px 36px;background:#16a34a;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;width:100%;text-align:center;">View Full Profile</a>
+      </td></tr></table>
     </td></tr>
   </table>`;
 }

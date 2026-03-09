@@ -449,6 +449,29 @@ export async function getConnectionsByTargetId(targetId: string): Promise<Connec
   return (data || []).map(row => mapRowToConnection(row as unknown as Record<string, unknown>));
 }
 
+export async function areMembersConnected(memberA: string, memberB: string): Promise<boolean> {
+  const db = createServerSupabaseClient();
+
+  // Check 1: accepted contact_requests
+  const { data: contactData, error: contactError } = await db.from('contact_requests')
+    .select('id')
+    .eq('status', 'accepted')
+    .or(`and(requester_id.eq.${memberA},target_id.eq.${memberB}),and(requester_id.eq.${memberB},target_id.eq.${memberA})`)
+    .limit(1);
+
+  if (!contactError && contactData && contactData.length > 0) return true;
+
+  // Check 2: existing connections row
+  const { data: connData, error: connError } = await db.from('connections')
+    .select('id')
+    .or(`and(from_id.eq.${memberA},to_id.eq.${memberB}),and(from_id.eq.${memberB},to_id.eq.${memberA})`)
+    .limit(1);
+
+  if (!connError && connData && connData.length > 0) return true;
+
+  return false;
+}
+
 // ==================== Audit ====================
 
 export async function addRequestAudit(audit: {

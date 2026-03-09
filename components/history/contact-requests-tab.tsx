@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from 'next/link';
 import { MemberAvatar } from "@/components/ui/member-avatar";
 
 interface ContactRequestItem {
@@ -30,7 +31,7 @@ export function ContactRequestsTab() {
     fetch("/api/contact/list")
       .then((res) => res.json())
       .then((data) => setRequests(data.requests || []))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -87,11 +88,28 @@ export function ContactRequestsTab() {
 
 function RequestCard({ request }: { request: ContactRequestItem }) {
   const { label, classes } = statusConfig[request.status];
+  const isAccepted = request.status === "accepted";
+
+  // We need to figure out the right ID to link to. 
+  // If direction is sent, the other person is the target_id
+  // If direction is received, the other person is the requester_id
+  const otherId = request.direction === "sent" ? request.target_id : request.requester_id;
+
+  const CardWrapper = isAccepted && otherId
+    ? ({ children }: { children: React.ReactNode }) => (
+      <Link href={`/profile/${otherId}`} className="block border border-gray-100 rounded-xl p-4 shadow-sm bg-white hover:shadow-md hover:border-brand/40 transition-all group">
+        {children}
+      </Link>
+    )
+    : ({ children }: { children: React.ReactNode }) => (
+      <div className={`border border-gray-100 rounded-xl p-4 shadow-sm ${request.status !== "pending" ? "opacity-60 bg-gray-50" : "bg-white hover:shadow-md transition-shadow"
+        }`}>
+        {children}
+      </div>
+    );
 
   return (
-    <div className={`border border-gray-100 rounded-xl p-4 shadow-sm ${
-      request.status !== "pending" ? "opacity-60 bg-gray-50" : "bg-white hover:shadow-md transition-shadow"
-    }`}>
+    <CardWrapper>
       <div className="flex items-center gap-3">
         <MemberAvatar
           name={request.other_name}
@@ -100,7 +118,7 @@ function RequestCard({ request }: { request: ContactRequestItem }) {
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700 truncate">
+            <span className={`text-sm font-medium truncate ${isAccepted ? 'text-gray-900 group-hover:text-brand transition-colors' : 'text-gray-700'}`}>
               {request.other_name}
             </span>
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${classes}`}>
@@ -108,15 +126,22 @@ function RequestCard({ request }: { request: ContactRequestItem }) {
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-1 line-clamp-1">{request.message}</p>
-          <p className="text-xs text-gray-400 mt-1">
-            {new Date(request.created_at).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
+          <p className="text-xs text-gray-400 mt-1 flex justify-between">
+            <span>
+              {new Date(request.created_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+            {isAccepted && (
+              <span className="text-brand flex items-center group-hover:translate-x-1 transition-transform">
+                View profile <svg className="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </span>
+            )}
           </p>
         </div>
       </div>
-    </div>
+    </CardWrapper>
   );
 }

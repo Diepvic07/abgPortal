@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
 
       await sendContactAcceptedEmail({
         requester: {
+          id: requester.id,
           email: requester.email,
           name: requester.name,
           role: requester.role || "",
@@ -57,6 +58,7 @@ export async function GET(request: NextRequest) {
           linkedin_url: requester.linkedin_url,
         },
         target: {
+          id: target.id,
           email: target.email,
           name: target.name,
           role: target.role || "",

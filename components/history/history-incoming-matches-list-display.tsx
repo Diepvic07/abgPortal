@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { LoveMatchRequest } from '@/types';
@@ -80,48 +81,67 @@ export function IncomingMatchesList({
             Connections
           </h3>
           <div className="space-y-4">
-            {connections.map((connection) => (
-              <div
-                key={connection.id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-              >
-                {/* Date */}
-                <div className="flex justify-end mb-3">
-                  <span className="text-sm text-gray-500">
-                    {getRelativeTime(connection.created_at)}
-                  </span>
-                </div>
+            {connections.map((connection) => {
+              const CardWrapper = connection.requester?.id
+                ? ({ children }: { children: React.ReactNode }) => (
+                  <Link href={`/profile/${connection.requester!.id}`} className="block border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-brand/40 transition-all bg-white group">
+                    {children}
+                  </Link>
+                )
+                : ({ children }: { children: React.ReactNode }) => (
+                  <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                    {children}
+                  </div>
+                );
 
-                {/* Requester Info */}
-                {connection.requester && (
-                  <div className="flex items-center gap-3 mb-4">
-                    <MemberAvatar
-                      name={connection.requester.name}
-                      avatarUrl={connection.requester.avatar_url}
-                      size="md"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-base font-medium text-gray-900 truncate">
-                        {connection.requester.name}
-                      </p>
-                      <p className="text-sm text-gray-500 truncate">
-                        {connection.requester.role} at {connection.requester.company}
-                      </p>
+              return (
+                <CardWrapper key={connection.id}>
+                  {/* Date */}
+                  <div className="flex justify-end mb-3">
+                    <span className="text-sm text-gray-500">
+                      {getRelativeTime(connection.created_at)}
+                    </span>
+                  </div>
+
+                  {/* Requester Info */}
+                  {connection.requester && (
+                    <div className="flex items-center gap-3 mb-4">
+                      <MemberAvatar
+                        name={connection.requester.name}
+                        avatarUrl={connection.requester.avatar_url}
+                        size="md"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-base font-medium text-gray-900 group-hover:text-brand transition-colors truncate">
+                          {connection.requester.name}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">
+                          {connection.requester.role} at {connection.requester.company}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Request Text */}
-                {connection.request_text && (
-                  <div className="bg-gray-50 rounded-md p-3 border border-gray-100">
-                    <p className="text-xs font-medium text-gray-500 uppercase mb-1">
-                      {t.history.theyWereLookingFor}
-                    </p>
-                    <p className="text-sm text-gray-700">{connection.request_text}</p>
-                  </div>
-                )}
-              </div>
-            ))}
+                  {/* Request Text */}
+                  {connection.request_text && (
+                    <div className="bg-gray-50 rounded-md p-3 border border-gray-100 mt-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase mb-1">
+                        {t.history.theyWereLookingFor}
+                      </p>
+                      <p className="text-sm text-gray-700">{connection.request_text}</p>
+                    </div>
+                  )}
+
+                  {/* View Profile prompt */}
+                  {connection.requester?.id && (
+                    <div className="mt-4 flex items-center text-sm font-medium text-brand">
+                      <span>View full profile</span>
+                      <svg className="ml-1 w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </div>
+                  )}
+                </CardWrapper>
+              )
+            })}
           </div>
         </div>
       )}
@@ -140,7 +160,7 @@ export function IncomingMatchesList({
               <IncomingLoveMatchCard
                 key={lm.id}
                 loveMatch={lm}
-                onRespond={onLoveMatchRespond ?? (() => {})}
+                onRespond={onLoveMatchRespond ?? (() => { })}
                 isLoading={loveMatchLoadingId === lm.id}
               />
             ))}
