@@ -53,7 +53,7 @@ export function HeaderNavigation() {
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <Image
-            src="/images/abg_logo.png"
+            src="/images/abg_dark_logo.png"
             alt="ABG Logo"
             width={300}
             height={115}

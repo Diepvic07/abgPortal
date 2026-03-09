@@ -35,7 +35,7 @@ export function FooterSection() {
           {/* Brand */}
           <div className="flex items-center gap-3">
             <Image
-              src="/images/abg_logo.png"
+              src="/images/abg_dark_logo.png"
               alt="ABG Logo"
               width={300}
               height={115}
