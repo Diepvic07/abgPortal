@@ -282,79 +282,66 @@ export async function sendLoveMatchNotificationEmail(
     core_values?: string;
     self_description?: string;
     app_url?: string;
+    locale?: Locale;
   }
 ): Promise<void> {
   const resend = getResendClient();
+  const locale = data.locale || 'vi';
+  const t = getTranslations(locale);
   const appUrl = data.app_url || process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
+  /** Build a pink snippet block for love match profile data */
+  const buildSnippet = (label: string, content: string) => `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px;">
+      <tr><td style="background:#fdf2f8;border-left:4px solid #ec4899;padding:14px 18px;border-radius:0 8px 8px 0;">
+        <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#9d174d;text-transform:uppercase;letter-spacing:0.05em;">${escapeHtml(label)}</p>
+        <p style="margin:0;font-size:15px;color:#374151;line-height:1.5;">${escapeHtml(content)}</p>
+      </td></tr>
+    </table>`;
+
+  const snippets = [
+    data.self_description ? buildSnippet(t.email.loveMatchNotification.aboutLabel, data.self_description) : '',
+    data.interests ? buildSnippet(t.email.loveMatchNotification.interestsLabel, data.interests) : '',
+    data.core_values ? buildSnippet(t.email.loveMatchNotification.coreValuesLabel, data.core_values) : '',
+  ].join('');
 
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: 'Someone is interested in connecting with you on ABG Connect',
-    html: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { border-bottom: 2px solid #ec4899; padding-bottom: 16px; margin-bottom: 24px; }
-    .header h1 { margin: 0; font-size: 24px; color: #ec4899; }
-    .snippet { background: #fdf2f8; border-left: 4px solid #ec4899; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
-    .snippet-label { font-size: 12px; font-weight: 600; color: #9d174d; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-    .cta-button { display: inline-block; background: #ec4899; color: white; padding: 12px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
-    .privacy-note { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px; margin: 16px 0; font-size: 14px; color: #166534; }
-    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>ABG Alumni Connect</h1>
-    </div>
-
-    <h2>Someone wants to connect with you!</h2>
-
-    <p>A fellow ABG alumni has expressed interest in connecting with you. Here's a glimpse of who they are:</p>
-
-    ${data.self_description ? `
-    <div class="snippet">
-      <div class="snippet-label">About them</div>
-      ${data.self_description}
-    </div>
-    ` : ''}
-
-    ${data.interests ? `
-    <div class="snippet">
-      <div class="snippet-label">Interests</div>
-      ${data.interests}
-    </div>
-    ` : ''}
-
-    ${data.core_values ? `
-    <div class="snippet">
-      <div class="snippet-label">Core Values</div>
-      ${data.core_values}
-    </div>
-    ` : ''}
-
-    <div class="privacy-note">
-      Their real name, contact info, and employer are kept private until you accept.
-    </div>
-
-    <p>Log in to view their full anonymous profile and choose to accept or pass.</p>
-
-    <a href="${appUrl}/love-match" class="cta-button">View & Respond</a>
-
-    <p>Best regards,<br>ABG Alumni Connect</p>
-
-    <div class="footer">
-      <p>ABG Alumni Community</p>
-    </div>
-  </div>
+    subject: t.email.loveMatchNotification.subject,
+    html: `<!DOCTYPE html>
+<html lang="${locale}">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#16a34a;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1f2937;">${t.email.loveMatchNotification.heading}</p>
+          <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">${t.email.loveMatchNotification.intro}</p>
+          ${snippets}
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 20px;">
+            <tr><td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 18px;">
+              <p style="margin:0;font-size:14px;color:#166534;">${t.email.loveMatchNotification.privacyNote}</p>
+            </td></tr>
+          </table>
+          <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">${t.email.loveMatchNotification.viewPrompt}</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td>
+            <a href="${appUrl}/love-match" style="display:inline-block;padding:14px 36px;background:#ec4899;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.loveMatchNotification.ctaButton}</a>
+          </td></tr></table>
+          <p style="margin:0;font-size:15px;color:#374151;">${t.email.loveMatchNotification.regards}<br><strong>${t.email.loveMatchNotification.signature}</strong></p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${t.footer.community}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
 </body>
-</html>
-    `,
+</html>`,
   });
 
   if (error) {
@@ -383,71 +370,71 @@ export async function sendLoveMatchAcceptEmail(data: {
   to_company: string;
   to_phone?: string;
   to_linkedin?: string;
+  locale?: Locale;
 }): Promise<void> {
   const resend = getResendClient();
+  const locale = data.locale || 'vi';
+  const t = getTranslations(locale);
 
-  const buildContact = (phone?: string, linkedin?: string) => {
-    const parts: string[] = [];
-    if (phone) parts.push(`Phone: ${phone}`);
-    if (linkedin) parts.push(`LinkedIn: <a href="${linkedin}">${linkedin}</a>`);
-    return parts.length ? parts.join(' &bull; ') : 'No additional contact info shared';
+  /** Build a pink match card with inline styles */
+  const buildMatchCard = (name: string, role: string, company: string, email: string, phone?: string, linkedin?: string) => {
+    const safeName = escapeHtml(name);
+    const safeRole = escapeHtml(role);
+    const safeCompany = escapeHtml(company);
+    const safeEmail = escapeHtml(email);
+    const rows: string[] = [];
+    rows.push(`<tr><td style="padding:6px 0;font-size:14px;color:#374151;">📧 ${t.email.loveMatchAccept.emailLabel}: <a href="mailto:${safeEmail}" style="color:#9d174d;text-decoration:none;">${safeEmail}</a></td></tr>`);
+    if (phone) {
+      rows.push(`<tr><td style="padding:6px 0;font-size:14px;color:#374151;">📱 ${t.email.loveMatchAccept.phoneLabel}: <a href="tel:${encodeURI(phone)}" style="color:#9d174d;text-decoration:none;">${escapeHtml(phone)}</a></td></tr>`);
+    }
+    if (linkedin) {
+      rows.push(`<tr><td style="padding:6px 0;font-size:14px;color:#374151;">💼 ${t.email.loveMatchAccept.linkedinLabel}: <a href="${encodeURI(linkedin)}" style="color:#9d174d;text-decoration:none;">${escapeHtml(linkedin)}</a></td></tr>`);
+    }
+    if (!phone && !linkedin) {
+      rows.push(`<tr><td style="padding:6px 0;font-size:13px;color:#6b7280;font-style:italic;">${t.email.loveMatchAccept.noContact}</td></tr>`);
+    }
+    return `<table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf2f8;border:1px solid #f9a8d4;border-radius:10px;margin:0 0 16px;">
+      <tr><td style="padding:18px 22px;">
+        <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:#9d174d;">${safeName}</p>
+        <p style="margin:0 0 12px;font-size:14px;color:#4b5563;">${safeRole} tại ${safeCompany}</p>
+        <table width="100%" cellpadding="0" cellspacing="0">${rows.join('')}</table>
+      </td></tr>
+    </table>`;
   };
 
-  const html = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { border-bottom: 2px solid #ec4899; padding-bottom: 16px; margin-bottom: 24px; }
-    .header h1 { margin: 0; font-size: 24px; color: #ec4899; }
-    .match-card { background: #fdf2f8; border: 1px solid #f9a8d4; border-radius: 8px; padding: 16px; margin: 16px 0; }
-    .match-card h3 { margin: 0 0 8px; color: #9d174d; }
-    .match-card p { margin: 4px 0; font-size: 14px; }
-    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>ABG Alumni Connect</h1>
-    </div>
+  const card1 = buildMatchCard(data.from_name, data.from_role, data.from_company, data.from_email, data.from_phone, data.from_linkedin);
+  const card2 = buildMatchCard(data.to_name, data.to_role, data.to_company, data.to_email, data.to_phone, data.to_linkedin);
 
-    <h2>You've been matched!</h2>
-
-    <p>Great news — you and your match have both expressed mutual interest. Here are each other's contact details:</p>
-
-    <div class="match-card">
-      <h3>${data.from_name}</h3>
-      <p>${data.from_role} at ${data.from_company}</p>
-      <p>${buildContact(data.from_phone, data.from_linkedin)}</p>
-      <p>Email: <a href="mailto:${data.from_email}">${data.from_email}</a></p>
-    </div>
-
-    <div class="match-card">
-      <h3>${data.to_name}</h3>
-      <p>${data.to_role} at ${data.to_company}</p>
-      <p>${buildContact(data.to_phone, data.to_linkedin)}</p>
-      <p>Email: <a href="mailto:${data.to_email}">${data.to_email}</a></p>
-    </div>
-
-    <p>We encourage you to reach out and start a conversation. Wishing you all the best!</p>
-
-    <p>Best regards,<br>ABG Alumni Connect</p>
-
-    <div class="footer">
-      <p>ABG Alumni Community</p>
-    </div>
-  </div>
+  const html = `<!DOCTYPE html>
+<html lang="${locale}">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#16a34a;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1f2937;">${t.email.loveMatchAccept.heading}</p>
+          <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">${t.email.loveMatchAccept.intro}</p>
+          ${card1}
+          ${card2}
+          <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.6;">${t.email.loveMatchAccept.encourage}</p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${t.footer.community}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
 </body>
-</html>
-  `;
+</html>`;
 
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: [data.from_email, data.to_email],
-    subject: "You've been matched on ABG Connect!",
+    subject: t.email.loveMatchAccept.subject,
     html,
     replyTo: data.from_email,
   });
@@ -455,11 +442,10 @@ export async function sendLoveMatchAcceptEmail(data: {
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
       console.warn('Resend Test Mode: Love match accept email not sent.', error.message);
-      // Fallback: send only to from_email
       await resend.emails.send({
         from: FROM_EMAIL,
         to: data.from_email,
-        subject: "[TEST MODE] You've been matched on ABG Connect!",
+        subject: `[TEST MODE] ${t.email.loveMatchAccept.subject}`,
         html,
         replyTo: data.from_email,
       });

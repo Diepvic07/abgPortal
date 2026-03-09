@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
             to_company: member.company,
             to_phone: member.phone,
             to_linkedin: member.linkedin_url,
+            locale: member.locale || 'vi',
           });
         } catch (emailErr) {
           console.error('Love match accept email failed (non-fatal):', emailErr);

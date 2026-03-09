@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
         interests: fromProfile.interests,
         core_values: fromProfile.core_values,
         self_description: fromProfile.self_description,
+        locale: target.locale || 'vi',
       });
     } catch (emailErr) {
       console.error('Love match notification email failed (non-fatal):', emailErr);
