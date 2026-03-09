@@ -4,7 +4,7 @@ import EmailProvider from "next-auth/providers/email";
 import { Resend } from "resend";
 import { getMemberByEmail, updateMemberLastLogin } from "./supabase-db";
 import { SupabaseVerificationAdapter } from "./nextauth-supabase-adapter";
-import { getMagicLinkEmailHtml, getMagicLinkEmailText } from "./auth-email-template";
+import { getMagicLinkEmailHtml, getMagicLinkEmailText, getMagicLinkEmailSubject } from "./auth-email-template";
 
 // Per-email cooldown: 1 magic link per 60 seconds
 const MAGIC_LINK_COOLDOWN_MS = 60 * 1000;
@@ -57,12 +57,17 @@ export const authOptions: NextAuthOptions = {
 
                 const resend = new Resend(process.env.RESEND_API_KEY);
                 const { host } = new URL(url);
+
+                // Look up member locale; default Vietnamese for most users
+                const member = await getMemberByEmail(normalizedEmail);
+                const locale = member?.locale === 'en' ? 'en' : 'vi';
+
                 const { error } = await resend.emails.send({
                     from: provider.from,
                     to: email,
-                    subject: `Sign in to ABG Alumni Connect`,
-                    html: getMagicLinkEmailHtml(url, host),
-                    text: getMagicLinkEmailText(url),
+                    subject: getMagicLinkEmailSubject(locale),
+                    html: getMagicLinkEmailHtml(url, host, locale),
+                    text: getMagicLinkEmailText(url, locale),
                 });
 
                 if (error) {
