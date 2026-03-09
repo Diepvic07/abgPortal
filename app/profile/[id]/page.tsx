@@ -5,21 +5,24 @@ import { getMemberById, getMemberByEmail, areMembersConnected } from '@/lib/supa
 import { MemberProfileCard } from '@/components/ui/member-profile-card';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 interface ProfilePageProps {
-    params: {
-        id: string;
-    };
+    params: Promise<{ id: string }>;
 }
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
-        redirect(`/login?callbackUrl=/profile/${params.id}`);
+        redirect(`/login?callbackUrl=/profile/${id}`);
     }
 
-    const currentUser = await getMemberByEmail(session.user.email);
-    const targetMember = await getMemberById(params.id);
+    const [currentUser, targetMember] = await Promise.all([
+        getMemberByEmail(session.user.email),
+        getMemberById(id),
+    ]);
 
     if (!currentUser || !targetMember) {
         notFound();
@@ -28,7 +31,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     // Check Authorization
     const isOwner = currentUser.id === targetMember.id;
     const isAdmin = currentUser.is_admin;
-    const isConnected = await areMembersConnected(currentUser.id, targetMember.id);
+    const isConnected = isOwner || isAdmin ? false : await areMembersConnected(currentUser.id, targetMember.id);
 
     const isAuthorized = isOwner || isAdmin || isConnected;
 
