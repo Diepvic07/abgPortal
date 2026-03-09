@@ -6,8 +6,8 @@ export const TIER_LIMITS = {
     max_results_per_request: 3,
   },
   premium: {
-    monthly_limit: 50,
-    daily_soft_cap: 10,
+    monthly_limit: 100,
+    daily_soft_cap: 20,
     max_results_per_request: 10,
   },
 } as const;

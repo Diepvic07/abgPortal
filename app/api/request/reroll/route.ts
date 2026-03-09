@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
     newMatches = await findMatches(
       originalRequest.request_text,
       availableMembers.map(m => ({
-        id: m.id, name: m.name, expertise: m.expertise,
+        id: m.id, name: m.name, gender: m.gender, expertise: m.expertise,
         can_help_with: m.can_help_with, bio: m.bio,
         job_preferences: m.job_preferences, hiring_preferences: m.hiring_preferences,
       })),

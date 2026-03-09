@@ -1,6 +1,7 @@
 'use client';
 
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
 import { useTranslation } from '@/lib/i18n';
 
@@ -72,7 +73,7 @@ export function LegalPageLayout({ contentVi, contentEn }: LegalPageLayoutProps) 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="prose prose-lg max-w-none">
-        <ReactMarkdown components={components}>{content}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>{content}</ReactMarkdown>
       </div>
     </div>
   );

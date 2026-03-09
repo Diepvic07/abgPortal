@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { MemberSearchResultCard } from "./member-search-result-card";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useTranslation } from "@/lib/i18n";
 import type { SearchResultBasic, SearchResultPro } from "@/lib/search-utils";
 
 type SearchResult = SearchResultBasic | SearchResultPro;
 
 export function MemberSearchPageClient() {
   const { status } = useSession();
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState({ name: "", company: "", expertise: "", abg_class: "" });
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -32,7 +34,7 @@ export function MemberSearchPageClient() {
     const hasQuery = query.trim().length >= 2;
     const hasFilters = Object.values(filters).some(v => v.trim().length > 0);
     if (!hasQuery && !hasFilters) {
-      setError("Enter a search query (min 2 chars) or use filters");
+      setError(t.members.searchMinQuery);
       return;
     }
 
@@ -52,7 +54,7 @@ export function MemberSearchPageClient() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Search failed");
+        setError(data.error || t.members.searchFailed);
         if (res.status === 403) {
           setSearchQuota({ remaining: 0, limit: 10 });
         }
@@ -64,7 +66,7 @@ export function MemberSearchPageClient() {
       if (data.search_quota) setSearchQuota(data.search_quota);
       setHasSearched(true);
     } catch {
-      setError("Search failed. Please try again.");
+      setError(t.members.searchFailed);
     } finally {
       setLoading(false);
     }
@@ -77,7 +79,7 @@ export function MemberSearchPageClient() {
   if (status === "unauthenticated") {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Please sign in to search members.</p>
+        <p className="text-gray-500">{t.members.signInRequired}</p>
       </div>
     );
   }
@@ -88,9 +90,9 @@ export function MemberSearchPageClient() {
         <div className="bg-white rounded-lg shadow-md">
           {/* Header */}
           <div className="border-b border-gray-200 px-6 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Member Search</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t.members.title}</h1>
             <p className="text-sm text-gray-500 mt-1">
-              Search ABG alumni by name, company, expertise, or class
+              {t.members.subtitle}
             </p>
           </div>
 
@@ -103,7 +105,7 @@ export function MemberSearchPageClient() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Search members..."
+                placeholder={t.members.searchPlaceholder}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <button
@@ -111,7 +113,7 @@ export function MemberSearchPageClient() {
                 disabled={loading}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
-                {loading ? "..." : "Search"}
+                {loading ? "..." : t.members.searchButton}
               </button>
             </div>
 
@@ -122,7 +124,7 @@ export function MemberSearchPageClient() {
                 value={filters.name}
                 onChange={(e) => setFilters({ ...filters, name: e.target.value })}
                 onKeyDown={handleKeyDown}
-                placeholder="Name"
+                placeholder={t.members.filterName}
                 className="px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
               <input
@@ -130,7 +132,7 @@ export function MemberSearchPageClient() {
                 value={filters.company}
                 onChange={(e) => setFilters({ ...filters, company: e.target.value })}
                 onKeyDown={handleKeyDown}
-                placeholder="Company"
+                placeholder={t.members.filterCompany}
                 className="px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
               <input
@@ -138,7 +140,7 @@ export function MemberSearchPageClient() {
                 value={filters.expertise}
                 onChange={(e) => setFilters({ ...filters, expertise: e.target.value })}
                 onKeyDown={handleKeyDown}
-                placeholder="Expertise"
+                placeholder={t.members.filterExpertise}
                 className="px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
               <select
@@ -146,7 +148,7 @@ export function MemberSearchPageClient() {
                 onChange={(e) => setFilters({ ...filters, abg_class: e.target.value })}
                 className="px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
               >
-                <option value="">All Classes</option>
+                <option value="">{t.members.filterAllClasses}</option>
                 {abgClasses.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
@@ -159,8 +161,10 @@ export function MemberSearchPageClient() {
                   : "bg-blue-50 text-blue-600"
               }`}>
                 {searchQuota.remaining === 0
-                  ? "Monthly search limit reached. Upgrade to Pro for unlimited searches."
-                  : `${searchQuota.remaining}/${searchQuota.limit} searches remaining this month`}
+                  ? t.members.searchLimitReached
+                  : t.members.searchesRemaining
+                      .replace('{remaining}', String(searchQuota.remaining))
+                      .replace('{limit}', String(searchQuota.limit))}
               </div>
             )}
           </div>
@@ -175,16 +179,20 @@ export function MemberSearchPageClient() {
 
             {loading ? (
               <div className="py-12">
-                <LoadingSpinner size="lg" text="Searching..." />
+                <LoadingSpinner size="lg" text={t.common.loading} />
               </div>
             ) : hasSearched && results.length === 0 ? (
               <div className="py-12 text-center text-gray-500">
-                <p className="text-lg font-medium">No members found</p>
-                <p className="text-sm mt-1">Try different search terms or filters</p>
+                <p className="text-lg font-medium">{t.members.noResults}</p>
+                <p className="text-sm mt-1">{t.members.noResultsHint}</p>
               </div>
             ) : results.length > 0 ? (
               <div className="space-y-3">
-                <p className="text-xs text-gray-400">{results.length} result{results.length !== 1 ? "s" : ""}</p>
+                <p className="text-xs text-gray-400">
+                  {results.length === 1
+                    ? t.members.resultCount.replace('{count}', '1')
+                    : t.members.resultCountPlural.replace('{count}', String(results.length))}
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {results.map((result) => (
                     <MemberSearchResultCard
@@ -197,7 +205,7 @@ export function MemberSearchPageClient() {
               </div>
             ) : !hasSearched ? (
               <div className="py-12 text-center text-gray-400">
-                <p>Enter a search query or filter to find members</p>
+                <p>{t.members.enterQuery}</p>
               </div>
             ) : null}
           </div>

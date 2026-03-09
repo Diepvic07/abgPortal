@@ -59,6 +59,7 @@ export async function findMatches(
     bio: string;
     job_preferences?: string;
     hiring_preferences?: string;
+    gender?: string;
   }[],
   locale: string = 'en',
   type: string = 'professional',
@@ -72,6 +73,7 @@ export async function findMatches(
   const membersJson = JSON.stringify(filtered.map(m => ({
     id: m.id,
     name: m.name,
+    gender: m.gender,
     expertise: m.expertise,
     can_help_with: m.can_help_with,
     bio: m.bio,
@@ -88,19 +90,29 @@ export async function findMatches(
     ? `QUAN TRỌNG: Bạn PHẢI trả về ít nhất ${minMatches} kết quả. Nếu không đủ người phù hợp hoàn hảo, hãy bao gồm cả những người phù hợp một phần với điểm match_score thấp hơn. Luôn trả về ${minMatches}-${matchCount} kết quả.`
     : `IMPORTANT: You MUST return at least ${minMatches} results. If there aren't enough perfect matches, include partial matches with lower match_score. Always return ${minMatches}-${matchCount} results.`;
 
+  // Gender-aware pronoun instruction for Vietnamese
+  const genderInstruction = locale === 'vi'
+    ? `\nQUAN TRỌNG VỀ XƯNG HÔ: Khi đề cập đến thành viên, hãy dùng đại từ phù hợp giới tính trong trường "gender": dùng "anh" cho Male, "chị" cho Female. Nếu không rõ giới tính, dùng "bạn".`
+    : '';
+
+  // Strict language enforcement
+  const langInstruction = locale === 'vi'
+    ? '\nBẮT BUỘC: Viết phần "reason" hoàn toàn bằng tiếng Việt. Không dùng tiếng Anh.'
+    : '\nIMPORTANT: Write ALL "reason" text entirely in English. Never use Vietnamese or any other language.';
+
   if (type === 'job') {
     prompt = locale === 'vi'
       ? `Bạn là một chuyên gia tư vấn nghề nghiệp. Thành viên này đang tìm việc: "${requestText}"
          Đây là danh sách các nhà tuyển dụng tiềm năng (thành viên đang Hiring):
          ${membersJson}
          Chọn ${minMatches}-${matchCount} nhà tuyển dụng phù hợp nhất dựa trên nhu cầu tuyển dụng của họ (hiring_preferences) và chuyên môn.
-         ${minMatchInstruction}
+         ${minMatchInstruction}${genderInstruction}${langInstruction}
          Giải thích ngắn gọn tại sao nên ứng tuyển. Cho điểm match_score từ 0-100.`
       : `You are a career consultant. This member is looking for a job: "${requestText}"
          Here are potential employers (members who are Hiring):
          ${membersJson}
          Select ${minMatches}-${matchCount} best matching employers based on their hiring_preferences and expertise.
-         ${minMatchInstruction}
+         ${minMatchInstruction}${langInstruction}
          Briefly explain why they should apply. Include match_score (0-100).`;
   } else if (type === 'hiring') {
     prompt = locale === 'vi'
@@ -108,13 +120,13 @@ export async function findMatches(
           Đây là danh sách các ứng viên tiềm năng (thành viên Open to Work):
           ${membersJson}
           Chọn ${minMatches}-${matchCount} ứng viên phù hợp nhất dựa trên mong muốn tìm việc của họ (job_preferences) và chuyên môn.
-          ${minMatchInstruction}
+          ${minMatchInstruction}${genderInstruction}${langInstruction}
           Giải thích ngắn gọn tại sao nên phỏng vấn họ. Cho điểm match_score từ 0-100.`
       : `You are a recruitment expert. This member is hiring: "${requestText}"
           Here are potential candidates (members Open to Work):
           ${membersJson}
           Select ${minMatches}-${matchCount} best candidates based on their job_preferences and expertise.
-          ${minMatchInstruction}
+          ${minMatchInstruction}${langInstruction}
           Briefly explain why they are a good fit. Include match_score (0-100).`;
   } else {
     // Professional / Partner
@@ -126,7 +138,7 @@ export async function findMatches(
 ${membersJson}
 
 Hãy chọn ${minMatches}-${matchCount} người phù hợp nhất dựa trên chuyên môn và những gì họ có thể giúp.
-${minMatchInstruction}
+${minMatchInstruction}${genderInstruction}${langInstruction}
 Với mỗi người, hãy giải thích trong 1-2 câu tiếng Việt TẠI SAO họ phù hợp với yêu cầu này. Cho điểm match_score từ 0-100.
 
 Trả về CHỈ một mảng JSON hợp lệ, không dùng markdown:
@@ -138,7 +150,7 @@ Here are available members:
 ${membersJson}
 
 Select ${minMatches}-${matchCount} best matches based on their expertise and what they can help with.
-${minMatchInstruction}
+${minMatchInstruction}${langInstruction}
 For each, explain in 1-2 sentences WHY they're relevant to this specific request. Include match_score (0-100).
 
 Return ONLY valid JSON array, no markdown:

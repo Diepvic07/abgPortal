@@ -223,6 +223,7 @@ export async function POST(request: NextRequest) {
             availableMembers.map(m => ({
               id: m.id,
               name: m.name,
+              gender: m.gender,
               role: m.role,
               company: m.company,
               expertise: m.expertise,
