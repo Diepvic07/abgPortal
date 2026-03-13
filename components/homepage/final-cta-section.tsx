@@ -7,20 +7,28 @@ interface FinalCtaSectionProps {
 
 export function FinalCtaSection({ finalCta }: FinalCtaSectionProps) {
   return (
-    <section className="homepage-full-bleed bg-brand-dark text-white py-16 md:py-24">
-      <div className="max-w-3xl mx-auto px-4 text-center">
-        <h2 className="text-2xl md:text-3xl font-bold mb-4">
+    <section className="homepage-full-bleed py-24 bg-blue-600 text-white text-center">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl md:text-5xl font-extrabold mb-6 leading-tight">
           {finalCta.headline}
         </h2>
-        <p className="text-blue-200 mb-8 text-lg">
+        <p className="text-blue-100 text-lg md:text-xl mb-12 max-w-2xl mx-auto">
           {finalCta.subtext}
         </p>
-        <Link
-          href="/signup"
-          className="inline-block px-8 py-3.5 bg-white text-brand font-semibold rounded-xl hover:bg-gray-100 transition-colors text-base"
-        >
-          {finalCta.cta}
-        </Link>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <Link
+            href="/signup"
+            className="bg-white text-blue-600 px-10 py-5 rounded-xl text-xl font-bold hover:bg-blue-50 transition-colors shadow-2xl shadow-blue-900/40"
+          >
+            {finalCta.cta}
+          </Link>
+          <Link
+            href="/faq"
+            className="bg-blue-700/40 text-white backdrop-blur-md px-10 py-5 rounded-xl text-xl font-bold hover:bg-blue-700/60 transition-colors border border-blue-400/30"
+          >
+            {finalCta.secondaryCta}
+          </Link>
+        </div>
       </div>
     </section>
   );

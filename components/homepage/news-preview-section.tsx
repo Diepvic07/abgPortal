@@ -17,20 +17,27 @@ export function NewsPreviewSection({ articles, labels, locale }: NewsPreviewSect
   if (articles.length === 0) return null;
 
   return (
-    <section className="py-16 md:py-20">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="flex items-center justify-between mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
-            {labels.title}
-          </h2>
+    <section className="homepage-full-bleed py-24 bg-slate-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-end mb-16">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">
+              {labels.title}
+            </h2>
+            <p className="mt-4 text-slate-600 text-lg">{labels.subtitle}</p>
+          </div>
           <Link
             href="/news"
-            className="text-brand-light font-medium text-sm hover:underline"
+            className="hidden md:flex items-center text-blue-600 font-bold group"
           >
-            {labels.viewAll} &rarr;
+            {labels.viewAll}
+            <svg className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {articles.slice(0, 3).map((article) => (
             <NewsCard
               key={article.slug}
@@ -41,6 +48,16 @@ export function NewsPreviewSection({ articles, labels, locale }: NewsPreviewSect
               locale={locale}
             />
           ))}
+        </div>
+
+        {/* Mobile "View All" button */}
+        <div className="mt-12 text-center md:hidden">
+          <Link
+            href="/news"
+            className="inline-flex btn-secondary px-6 py-3 rounded-xl text-md font-bold"
+          >
+            {labels.viewAll}
+          </Link>
         </div>
       </div>
     </section>
