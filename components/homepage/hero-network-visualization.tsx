@@ -1,4 +1,4 @@
-import Image from 'next/image';
+/* eslint-disable @next/next/no-img-element */
 import type { FeaturedMember } from '@/lib/homepage-stats';
 
 interface HeroNetworkVisualizationProps {
@@ -8,7 +8,6 @@ interface HeroNetworkVisualizationProps {
 
 /** Decorative network visualization for hero section with real member avatars */
 export function HeroNetworkVisualization({ members, alumniCount }: HeroNetworkVisualizationProps) {
-  // First 3 members for card rows, rest for bottom avatar stack
   const cardMembers = members.slice(0, 3);
   const stackMembers = members.slice(0, 4);
   const remainingCount = Math.max(0, alumniCount - stackMembers.length);
@@ -20,27 +19,34 @@ export function HeroNetworkVisualization({ members, alumniCount }: HeroNetworkVi
         <div className="absolute -top-10 -left-10 w-64 h-64 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
         <div className="absolute -bottom-10 -right-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
 
-        {/* Card with real members */}
+        {/* Card with members */}
         <div className="relative bg-white p-8 rounded-3xl border border-slate-200 shadow-2xl overflow-hidden group">
           <div className="space-y-4">
-            {cardMembers.map((member, i) => (
-              <MemberRow key={i} member={member} variant={i} />
-            ))}
+            {cardMembers.length > 0
+              ? cardMembers.map((member, i) => (
+                  <MemberRow key={i} member={member} variant={i} />
+                ))
+              : /* Placeholder rows when no member data available */
+                [0, 1, 2].map((i) => <PlaceholderRow key={i} variant={i} />)
+            }
           </div>
 
           {/* Bottom bar with avatar stack */}
           <div className="mt-8 pt-8 border-t border-slate-100 flex justify-between items-center">
             <div className="flex -space-x-2">
-              {stackMembers.map((member, i) => (
-                <Image
-                  key={i}
-                  src={member.avatar_url}
-                  alt={member.name}
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 rounded-full border-2 border-white object-cover"
-                />
-              ))}
+              {stackMembers.length > 0
+                ? stackMembers.map((member, i) => (
+                    <img
+                      key={i}
+                      src={member.avatar_url}
+                      alt={member.name}
+                      className="w-8 h-8 rounded-full border-2 border-white object-cover"
+                    />
+                  ))
+                : [0, 1, 2].map((i) => (
+                    <div key={i} className={`w-8 h-8 rounded-full border-2 border-white ${['bg-slate-200', 'bg-slate-300', 'bg-slate-400'][i]}`} />
+                  ))
+              }
               {remainingCount > 0 && (
                 <div className="w-8 h-8 rounded-full border-2 border-white bg-blue-600 flex items-center justify-center text-[10px] text-white font-bold">
                   +{remainingCount}
@@ -69,11 +75,9 @@ function MemberRow({ member, variant }: { member: FeaturedMember; variant: numbe
 
   return (
     <div className={`flex items-center p-4 rounded-2xl border transform transition-transform ${style}`}>
-      <Image
+      <img
         src={member.avatar_url}
         alt={member.name}
-        width={48}
-        height={48}
         className={`w-12 h-12 rounded-full mr-4 shrink-0 object-cover ${isHighlighted ? 'border-2 border-blue-600' : ''}`}
       />
       <div className="flex-1 min-w-0">
@@ -93,6 +97,19 @@ function MemberRow({ member, variant }: { member: FeaturedMember; variant: numbe
           </svg>
         </div>
       )}
+    </div>
+  );
+}
+
+function PlaceholderRow({ variant }: { variant: number }) {
+  const style = rowStyles[variant % rowStyles.length];
+  return (
+    <div className={`flex items-center p-4 rounded-2xl border transform transition-transform ${style}`}>
+      <div className={`w-12 h-12 rounded-full mr-4 shrink-0 ${variant === 1 ? 'bg-slate-200 border-2 border-blue-600' : 'bg-blue-200'}`} />
+      <div className="flex-1">
+        <div className="h-4 bg-slate-200 rounded w-1/3 mb-2" />
+        <div className="h-3 bg-slate-100 rounded w-2/3" />
+      </div>
     </div>
   );
 }

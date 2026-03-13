@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Outfit } from 'next/font/google';
+import { Inter, Be_Vietnam_Pro } from 'next/font/google';
 import './globals.css';
 import { ToastProvider } from '@/components/ui/toast-provider';
 import { LanguageProvider } from '@/lib/i18n';
@@ -8,9 +8,9 @@ import { FooterSection } from '@/components/layout/footer-section';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { BugReportButton } from '@/components/ui/bug-report-button';
 
-const inter = Inter({ subsets: ['latin'] });
-const outfit = Outfit({
-  subsets: ['latin'],
+const inter = Inter({ subsets: ['latin', 'vietnamese'] });
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ['latin', 'vietnamese'],
   variable: '--font-outfit',
   weight: ['400', '500', '600', '700', '800'],
 });
@@ -27,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} ${outfit.variable}`}>
+      <body className={`${inter.className} ${beVietnamPro.variable}`}>
         <AuthProvider>
           <LanguageProvider>
             <ToastProvider>

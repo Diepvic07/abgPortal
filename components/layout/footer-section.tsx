@@ -28,11 +28,11 @@ export function FooterSection() {
           <div>
             <div className="flex items-center space-x-2 text-white mb-6">
               <Image
-                src="/images/abg_dark_logo.png"
+                src="/images/abg_white_logo.png"
                 alt="ABG Logo"
-                width={32}
-                height={32}
-                className="h-8 w-auto object-contain"
+                width={269}
+                height={103}
+                className="h-9 w-auto object-contain"
               />
               <span className="text-lg font-bold tracking-tight">ABG Alumni</span>
             </div>
@@ -105,7 +105,7 @@ export function FooterSection() {
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link href="/terms" className="hover:text-white transition-colors">{t.footer.terms}</Link>
             <Link href="/privacy" className="hover:text-white transition-colors">{t.footer.privacy}</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">{t.footer.memberAgreement}</Link>
+            <Link href="/data-policy" className="hover:text-white transition-colors">{t.footer.dataPolicy || 'Data Policy'}</Link>
           </div>
         </div>
       </div>

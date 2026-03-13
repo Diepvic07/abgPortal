@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { Translations } from './translations/en';
-import { type Locale, translations } from './utils';
+import { type Locale, translations, DEFAULT_LOCALE } from './utils';
 
 // Storage key for localStorage
 const LOCALE_STORAGE_KEY = 'abg-locale';
@@ -23,10 +23,11 @@ interface LanguageProviderProps {
   defaultLocale?: Locale;
 }
 
-// Get initial locale from localStorage or default
+// Get initial locale from localStorage, browser language, or default
 function getInitialLocale(defaultLocale: Locale): Locale {
   if (typeof window === 'undefined') return defaultLocale;
 
+  // 1. Check localStorage for user's explicit choice
   try {
     const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
     if (stored === 'en' || stored === 'vi') {
@@ -36,11 +37,15 @@ function getInitialLocale(defaultLocale: Locale): Locale {
     // localStorage not available
   }
 
+  // 2. Detect from browser language
+  const browserLang = navigator.language || '';
+  if (browserLang.startsWith('en')) return 'en';
+
   return defaultLocale;
 }
 
 // Language Provider Component
-export function LanguageProvider({ children, defaultLocale = 'en' }: LanguageProviderProps) {
+export function LanguageProvider({ children, defaultLocale = DEFAULT_LOCALE }: LanguageProviderProps) {
   const [locale, setLocale] = useState<Locale>(defaultLocale);
   const [mounted, setMounted] = useState(false);
 

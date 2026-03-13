@@ -63,14 +63,14 @@ export function HeaderNavigation() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
           <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <Image
-              src="/images/abg_logo.png"
+              src="/images/abg_white_logo.png"
               alt="ABG Logo"
               width={269}
               height={103}
               className="h-9 w-auto object-contain"
             />
             <span className="text-xl font-bold tracking-tight text-white">
-              ABG <span className="text-blue-300">Alumni</span>
+              ABG <span className="text-white">Alumni</span>
             </span>
           </Link>
 

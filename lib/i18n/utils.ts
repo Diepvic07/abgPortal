@@ -8,8 +8,10 @@ export type Locale = 'en' | 'vi';
 export const translations: Record<Locale, Translations> = { en, vi };
 
 // Server-side translation helper (for emails/API)
-export function getTranslations(locale: Locale = 'en'): Translations {
-    return translations[locale] || translations.en;
+export const DEFAULT_LOCALE: Locale = 'vi';
+
+export function getTranslations(locale: Locale = DEFAULT_LOCALE): Translations {
+    return translations[locale] || translations.vi;
 }
 
 // Interpolate variables in translation strings

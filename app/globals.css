@@ -162,7 +162,7 @@ h1, h2, h3, .font-heading {
 
 /* Step number gradient text */
 .step-number {
-  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+  background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

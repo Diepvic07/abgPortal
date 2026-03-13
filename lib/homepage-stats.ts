@@ -15,17 +15,22 @@ export interface FeaturedMember {
 
 /** Fetch approved members who have avatar photos for hero display */
 export async function getFeaturedMemberAvatars(limit = 6): Promise<FeaturedMember[]> {
-  const db = createServerSupabaseClient();
-  const { data } = await db
-    .from('members')
-    .select('name, role, company, avatar_url')
-    .eq('approval_status', 'approved')
-    .not('avatar_url', 'is', null)
-    .neq('avatar_url', '')
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  try {
+    const db = createServerSupabaseClient();
+    const { data, error } = await db
+      .from('members')
+      .select('name, role, company, avatar_url')
+      .eq('approval_status', 'approved')
+      .not('avatar_url', 'is', null)
+      .neq('avatar_url', '')
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
-  return (data || []) as FeaturedMember[];
+    if (error) return [];
+    return (data || []) as FeaturedMember[];
+  } catch {
+    return [];
+  }
 }
 
 export async function getHomepageStats(): Promise<HomepageStats> {
