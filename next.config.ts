@@ -9,15 +9,6 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '*.supabase.co' },
     ],
   },
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/news',
-        permanent: false,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
