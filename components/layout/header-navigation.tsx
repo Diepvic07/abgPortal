@@ -7,14 +7,12 @@ import Image from 'next/image';
 import { useTranslation } from '@/lib/i18n';
 import { LanguageSwitcherDropdown } from '@/components/ui/language-switcher-dropdown';
 import { HeaderUserMenu } from '@/components/ui/header-user-menu';
-import { SignInButton } from '@/components/ui/sign-in-button';
 import { getMembershipStatus, getAvatarMemberStatus, type Member } from '@/types';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { MembershipBadge } from '@/components/ui/membership-badge';
 import { isAdmin } from '@/lib/admin-utils';
 import { PaymentInfoModal } from '@/components/ui/payment-info-modal';
 
-// Header navigation with dark brand background and responsive mobile menu
 export function HeaderNavigation() {
   const { t } = useTranslation();
   const { data: session, status } = useSession();
@@ -40,11 +38,9 @@ export function HeaderNavigation() {
         }
       }
     }
-
     fetchMember();
   }, [session, member]);
 
-  // Close mobile menu when clicking outside
   useEffect(() => {
     if (isMobileMenuOpen) {
       const handleClickOutside = () => setIsMobileMenuOpen(false);
@@ -57,15 +53,14 @@ export function HeaderNavigation() {
     await signOut({ callbackUrl: '/' });
   };
 
-  // Compute mobile-specific membership values
   const membershipStatus = member ? getMembershipStatus(member) : null;
   const isPendingPayment = membershipStatus === 'pending';
   const showPaymentCta = membershipStatus && (membershipStatus === 'basic' || membershipStatus === 'expired') && !isPendingPayment;
 
   return (
     <>
-      <header className="bg-brand shadow-md relative">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="glass-nav fixed top-0 w-full z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
           <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <Image
               src="/images/abg_dark_logo.png"
@@ -74,8 +69,8 @@ export function HeaderNavigation() {
               height={103}
               className="h-9 w-auto object-contain"
             />
-            <span className="text-xl font-semibold text-white">
-              {t.nav.brand}
+            <span className="text-xl font-bold tracking-tight text-slate-900">
+              ABG <span className="text-brand-light">Alumni</span>
             </span>
           </Link>
 
@@ -85,7 +80,7 @@ export function HeaderNavigation() {
               e.stopPropagation();
               setIsMobileMenuOpen(!isMobileMenuOpen);
             }}
-            className="md:hidden p-2 text-white hover:bg-white/10 rounded-md transition-colors"
+            className="md:hidden p-2 text-slate-600 hover:text-blue-600 rounded-md transition-colors"
             aria-label="Toggle menu"
             aria-expanded={isMobileMenuOpen}
           >
@@ -103,29 +98,37 @@ export function HeaderNavigation() {
           {/* Desktop navigation */}
           <nav className="hidden md:flex items-center gap-6">
             {status !== 'authenticated' && (
-              <Link href="/onboard" className="text-sm text-white/80 hover:text-white transition-colors">
+              <Link href="/onboard" className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors">
                 {t.nav.join}
               </Link>
             )}
-            <Link href="/request" className="text-sm text-white/80 hover:text-white transition-colors">
+            <Link href="/request" className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors">
               {t.nav.findConnection}
             </Link>
             {status === 'authenticated' && (
-              <Link href="/members" className="text-sm text-white/80 hover:text-white transition-colors">
+              <Link href="/members" className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors">
                 Members
               </Link>
             )}
-            <Link href="/news" className="text-sm text-white/80 hover:text-white transition-colors">
+            <Link href="/news" className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors">
               News
             </Link>
-            <Link href="/faq" className="text-sm text-white/80 hover:text-white transition-colors">
+            <Link href="/faq" className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors">
               {t.nav.faq}
             </Link>
             <LanguageSwitcherDropdown />
+            <div className="h-6 w-px bg-slate-200 mx-2" />
             {status === 'authenticated' && member && !isLoadingMember ? (
               <HeaderUserMenu member={member} membershipStatus={getMembershipStatus(member)} />
             ) : status === 'unauthenticated' ? (
-              <SignInButton variant="header" />
+              <>
+                <Link href="/login" className="text-slate-900 text-sm font-semibold hover:text-blue-600 transition-colors">
+                  {t.auth.signIn || 'Sign In'}
+                </Link>
+                <Link href="/signup" className="btn-primary px-6 py-2.5 rounded-full text-sm font-semibold">
+                  {t.homepage?.hero?.primaryCta || 'Unlock Member Access'}
+                </Link>
+              </>
             ) : null}
           </nav>
         </div>
@@ -133,14 +136,14 @@ export function HeaderNavigation() {
         {/* Mobile menu overlay */}
         {isMobileMenuOpen && (
           <div
-            className="md:hidden absolute top-full left-0 right-0 bg-brand border-t border-white/10 shadow-lg z-50"
+            className="md:hidden absolute top-full left-0 right-0 bg-white border-t border-slate-200 shadow-lg z-50"
             onClick={(e) => e.stopPropagation()}
           >
             <nav className="flex flex-col p-4 gap-1">
               {status !== 'authenticated' && (
                 <Link
                   href="/onboard"
-                  className="text-sm text-white/90 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+                  className="text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-md transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {t.nav.join}
@@ -148,7 +151,7 @@ export function HeaderNavigation() {
               )}
               <Link
                 href="/request"
-                className="text-sm text-white/90 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+                className="text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-md transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t.nav.findConnection}
@@ -156,7 +159,7 @@ export function HeaderNavigation() {
               {status === 'authenticated' && (
                 <Link
                   href="/members"
-                  className="text-sm text-white/90 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+                  className="text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-md transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Members
@@ -164,14 +167,14 @@ export function HeaderNavigation() {
               )}
               <Link
                 href="/news"
-                className="text-sm text-white/90 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+                className="text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-md transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 News
               </Link>
               <Link
                 href="/faq"
-                className="text-sm text-white/90 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+                className="text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-md transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t.nav.faq}
@@ -180,28 +183,26 @@ export function HeaderNavigation() {
                 <LanguageSwitcherDropdown />
               </div>
 
-              {/* Mobile user section - inline links instead of nested dropdown */}
-              <div className="border-t border-white/10 mt-2 pt-3">
+              {/* Mobile user section */}
+              <div className="border-t border-slate-200 mt-2 pt-3">
                 {status === 'authenticated' && member && !isLoadingMember ? (
                   <>
-                    {/* User info */}
                     <div className="flex items-center gap-3 px-4 py-2 mb-2">
                       <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="sm" memberStatus={getAvatarMemberStatus(member)} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{member.name}</p>
-                        <p className="text-xs text-white/60 truncate">{member.email}</p>
+                        <p className="text-sm font-medium text-slate-900 truncate">{member.name}</p>
+                        <p className="text-xs text-slate-500 truncate">{member.email}</p>
                       </div>
                       {membershipStatus && <MembershipBadge status={membershipStatus} size="sm" />}
                     </div>
 
-                    {/* Payment CTA */}
                     {showPaymentCta && (
                       <button
                         onClick={() => {
                           setIsMobileMenuOpen(false);
                           setIsMobilePaymentModalOpen(true);
                         }}
-                        className="flex items-center gap-2 w-full px-4 py-3 text-sm font-semibold text-amber-300 hover:bg-white/10 rounded-md transition-colors"
+                        className="flex items-center gap-2 w-full px-4 py-3 text-sm font-semibold text-amber-600 hover:bg-slate-50 rounded-md transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -210,7 +211,7 @@ export function HeaderNavigation() {
                       </button>
                     )}
                     {isPendingPayment && (
-                      <div className="flex items-center gap-2 px-4 py-3 text-sm text-blue-300">
+                      <div className="flex items-center gap-2 px-4 py-3 text-sm text-blue-600">
                         <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -218,10 +219,9 @@ export function HeaderNavigation() {
                       </div>
                     )}
 
-                    {/* Profile link */}
                     <Link
                       href="/profile"
-                      className="flex items-center gap-2 px-4 py-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+                      className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,10 +230,9 @@ export function HeaderNavigation() {
                       {t.nav.profile}
                     </Link>
 
-                    {/* History link */}
                     <Link
                       href="/history"
-                      className="flex items-center gap-2 px-4 py-3 text-sm text-white/90 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+                      className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,11 +241,10 @@ export function HeaderNavigation() {
                       {t.nav.history}
                     </Link>
 
-                    {/* Admin link */}
                     {isAdmin(member) && (
                       <Link
                         href="/admin"
-                        className="flex items-center gap-2 px-4 py-3 text-sm text-purple-300 hover:text-purple-200 hover:bg-white/10 rounded-md transition-colors"
+                        className="flex items-center gap-2 px-4 py-3 text-sm text-purple-600 hover:text-purple-700 hover:bg-slate-50 rounded-md transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,10 +255,9 @@ export function HeaderNavigation() {
                       </Link>
                     )}
 
-                    {/* Sign out */}
                     <button
                       onClick={handleMobileSignOut}
-                      className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-400 hover:text-red-300 hover:bg-white/10 rounded-md transition-colors mt-1"
+                      className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-500 hover:text-red-600 hover:bg-slate-50 rounded-md transition-colors mt-1"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -269,8 +266,13 @@ export function HeaderNavigation() {
                     </button>
                   </>
                 ) : status === 'unauthenticated' ? (
-                  <div className="px-4 py-3">
-                    <SignInButton variant="header" />
+                  <div className="px-4 py-3 flex flex-col gap-3">
+                    <Link href="/login" className="text-slate-900 text-sm font-semibold hover:text-blue-600 transition-colors">
+                      {t.auth.signIn || 'Sign In'}
+                    </Link>
+                    <Link href="/signup" className="btn-primary px-6 py-2.5 rounded-full text-sm font-semibold text-center">
+                      {t.homepage?.hero?.primaryCta || 'Unlock Member Access'}
+                    </Link>
                   </div>
                 ) : null}
               </div>
@@ -279,7 +281,6 @@ export function HeaderNavigation() {
         )}
       </header>
 
-      {/* Mobile payment modal - rendered outside header to avoid z-index issues */}
       {member && showPaymentCta && (
         <PaymentInfoModal
           memberId={member.id}
