@@ -92,6 +92,70 @@ export const vi: Translations = {
     divider: 'HOẶC',
   },
 
+  // Homepage (network-first landing page)
+  homepage: {
+    hero: {
+      headline: "Mở Khóa Mạng Lưới Alumni ABG Độc Quyền",
+      subheadline: "Tham gia mạng lưới thành viên riêng tư giúp alumni ABG kết nối, khám phá cơ hội và gắn kết với cộng đồng.",
+      primaryCta: "Mở Khóa Quyền Thành Viên",
+      secondaryCta: "Tìm Hiểu Về ABG Alumni",
+      bullet1: "Truy cập mạng lưới uy tín với 500+ alumni",
+      bullet2: "Tìm thành viên theo ngành nghề, thành phố và thế hệ",
+      bullet3: "Kết nối qua các hoạt động và cập nhật cộng đồng",
+    },
+    whatIsAbg: {
+      title: "ABG Alumni là gì?",
+      description1: "ABG Alumni kết nối các thành viên cộng đồng ABG thông qua một mạng lưới riêng tư, nơi hỗ trợ kết nối, chia sẻ và tạo cơ hội chung.",
+      description2: "Nền tảng giúp alumni tìm kiếm thành viên, theo dõi hoạt động cộng đồng và khai thác giá trị của mạng lưới ABG.",
+    },
+    whyJoin: {
+      title: "Tại Sao Nên Tham Gia",
+      connect: "Kết Nối Với Alumni",
+      connectDesc: "Truy cập danh bạ alumni, yêu cầu giới thiệu và xây dựng mối quan hệ trong cộng đồng uy tín.",
+      discover: "Khám Phá Cơ Hội",
+      discoverDesc: "Tìm lại bạn cũ, khám phá cơ hội nghề nghiệp và đối tác kinh doanh trong cộng đồng ABG.",
+      stayEngaged: "Luôn Kết Nối",
+      stayEngagedDesc: "Theo dõi tin tức, hoạt động và sự kiện cộng đồng qua các cập nhật thường xuyên.",
+    },
+    whatYouCanDo: {
+      title: "Bạn Có Thể Làm Gì Trên Nền Tảng",
+      searchTitle: "Tìm Kiếm Mạng Lưới Alumni",
+      searchDesc: "Khám phá alumni theo khóa, ngành nghề, thành phố và quốc gia.",
+      introTitle: "Yêu Cầu Giới Thiệu",
+      introDesc: "Nền tảng giúp bạn kết nối trực tiếp với các alumni khác.",
+      updatesTitle: "Theo Dõi Cập Nhật",
+      updatesDesc: "Cập nhật tin tức, hoạt động và xu hướng cộng đồng.",
+      premiumTitle: "Mở Khóa Premium",
+      premiumDesc: "Gói Premium mở khóa toàn bộ giá trị mạng lưới với tính năng nâng cao.",
+    },
+    howItWorks: {
+      title: "Cách Thức Hoạt Động",
+      subtitle: "Bắt đầu chỉ với 3 bước đơn giản",
+      step1Title: "Đăng Ký",
+      step1Desc: "Đăng ký với email hiện tại của bạn.",
+      step2Title: "Xác Nhận Hồ Sơ",
+      step2Desc: "Xác nhận hồ sơ alumni hoặc yêu cầu xét duyệt.",
+      step3Title: "Được Duyệt",
+      step3Desc: "Được duyệt và mở khóa mạng lưới thành viên.",
+    },
+    stats: {
+      title: "Cộng Đồng Của Chúng Tôi",
+      alumni: "Hồ Sơ Alumni",
+      countries: "Quốc Gia",
+      industries: "Lĩnh Vực Chuyên Môn",
+    },
+    newsPreview: {
+      title: "Tin Tức & Hoạt Động Mới Nhất",
+      viewAll: "Xem Tất Cả",
+      readMore: "Đọc toàn bộ",
+    },
+    finalCta: {
+      headline: "Sẵn sàng mở khóa mạng lưới alumni ABG?",
+      subtext: "Tham gia cộng đồng ABG và bắt đầu xây dựng những kết nối ý nghĩa.",
+      cta: "Mở Khóa Quyền Thành Viên",
+    },
+  },
+
   // Onboarding page
   onboard: {
     title: 'Gia nhập ABG Alumni Connect',

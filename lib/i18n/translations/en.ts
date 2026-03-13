@@ -90,6 +90,70 @@ export const en = {
     divider: 'OR',
   },
 
+  // Homepage (network-first landing page)
+  homepage: {
+    hero: {
+      headline: "Unlock Access to ABG's Exclusive Alumni Network",
+      subheadline: "Join a private member network built to help ABG alumni connect, discover opportunities, and stay engaged with the community.",
+      primaryCta: "Unlock Member Access",
+      secondaryCta: "Learn About ABG Alumni",
+      bullet1: "Access a trusted network of 500+ alumni",
+      bullet2: "Find members across industries, cities, and generations",
+      bullet3: "Stay connected through community activities and updates",
+    },
+    whatIsAbg: {
+      title: "What is ABG Alumni?",
+      description1: "ABG Alumni brings members of the ABG community together through a private network designed for connection, support, and shared opportunities.",
+      description2: "The portal gives alumni a trusted place to discover fellow members, stay close to community activity, and unlock the value of the ABG network.",
+    },
+    whyJoin: {
+      title: "Why Join the Network",
+      connect: "Connect with Alumni",
+      connectDesc: "Access a curated alumni directory, request introductions, and build relationships inside a trusted private community.",
+      discover: "Discover Opportunities",
+      discoverDesc: "Use the network to reconnect, explore career opportunities, and find partnerships across the ABG community.",
+      stayEngaged: "Stay Engaged",
+      stayEngagedDesc: "Keep up with news, activities, and community momentum through regular updates and events.",
+    },
+    whatYouCanDo: {
+      title: "What You Can Do on the Portal",
+      searchTitle: "Search the Alumni Network",
+      searchDesc: "Discover alumni across classes, industries, cities, and countries.",
+      introTitle: "Request Introductions",
+      introDesc: "The portal helps you reach out and connect with other alumni directly.",
+      updatesTitle: "Follow Community Updates",
+      updatesDesc: "Keep up with news, activities, and community momentum.",
+      premiumTitle: "Unlock Premium Access",
+      premiumDesc: "The premium layer unlocks the full value of the network with advanced features.",
+    },
+    howItWorks: {
+      title: "How It Works",
+      subtitle: "Get started in 3 simple steps",
+      step1Title: "Sign Up",
+      step1Desc: "Sign up with your current email address.",
+      step2Title: "Claim Your Profile",
+      step2Desc: "Claim your alumni profile or request review.",
+      step3Title: "Get Approved",
+      step3Desc: "Get approved and unlock the member network.",
+    },
+    stats: {
+      title: "Our Community",
+      alumni: "Alumni Profiles",
+      countries: "Countries Represented",
+      industries: "Areas of Expertise",
+    },
+    newsPreview: {
+      title: "Latest News & Activities",
+      viewAll: "View All Updates",
+      readMore: "Read full story",
+    },
+    finalCta: {
+      headline: "Ready to unlock the ABG alumni network?",
+      subtext: "Join the private ABG community and start building meaningful connections.",
+      cta: "Unlock Member Access",
+    },
+  },
+
   // Onboarding page
   onboard: {
     title: 'Join ABG Alumni Connect',
