@@ -83,12 +83,10 @@ h1, h2, h3, .font-heading {
   display: none;
 }
 
-/* Glassmorphic navigation */
+/* Dark navigation */
 .glass-nav {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  background: var(--brand);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Hero radial gradient */

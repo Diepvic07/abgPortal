@@ -1,6 +1,6 @@
 import { getTranslations } from '@/lib/i18n';
 import { getServerLocale } from '@/lib/i18n/server-locale';
-import { getHomepageStats } from '@/lib/homepage-stats';
+import { getHomepageStats, getFeaturedMemberAvatars } from '@/lib/homepage-stats';
 import { getPublishedNews } from '@/lib/news-service';
 import { HomepageHeroSection } from '@/components/homepage/hero-section';
 import { WhatIsAbgSection } from '@/components/homepage/what-is-abg-section';
@@ -15,16 +15,17 @@ export default async function HomePage() {
   const locale = await getServerLocale();
   const t = getTranslations(locale);
 
-  const [stats, news] = await Promise.all([
+  const [stats, news, featuredMembers] = await Promise.all([
     getHomepageStats(),
     getPublishedNews(undefined, locale),
+    getFeaturedMemberAvatars(6),
   ]);
 
   const previewNews = news.slice(0, 3);
 
   return (
     <>
-      <HomepageHeroSection hero={t.homepage.hero} />
+      <HomepageHeroSection hero={t.homepage.hero} featuredMembers={featuredMembers} alumniCount={stats.alumniCount} />
       <WhatIsAbgSection whatIsAbg={t.homepage.whatIsAbg} />
       <WhyJoinSection whyJoin={t.homepage.whyJoin} />
       <WhatYouCanDoSection whatYouCanDo={t.homepage.whatYouCanDo} />

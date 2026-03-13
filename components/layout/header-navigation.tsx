@@ -63,14 +63,14 @@ export function HeaderNavigation() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
           <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <Image
-              src="/images/abg_dark_logo.png"
+              src="/images/abg_logo.png"
               alt="ABG Logo"
               width={269}
               height={103}
               className="h-9 w-auto object-contain"
             />
-            <span className="text-xl font-bold tracking-tight text-slate-900">
-              ABG <span className="text-brand-light">Alumni</span>
+            <span className="text-xl font-bold tracking-tight text-white">
+              ABG <span className="text-blue-300">Alumni</span>
             </span>
           </Link>
 
@@ -80,7 +80,7 @@ export function HeaderNavigation() {
               e.stopPropagation();
               setIsMobileMenuOpen(!isMobileMenuOpen);
             }}
-            className="md:hidden p-2 text-slate-600 hover:text-blue-600 rounded-md transition-colors"
+            className="md:hidden p-2 text-white/80 hover:text-white rounded-md transition-colors"
             aria-label="Toggle menu"
             aria-expanded={isMobileMenuOpen}
           >
@@ -98,34 +98,34 @@ export function HeaderNavigation() {
           {/* Desktop navigation */}
           <nav className="hidden md:flex items-center gap-6">
             {status !== 'authenticated' && (
-              <Link href="/onboard" className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors">
+              <Link href="/onboard" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
                 {t.nav.join}
               </Link>
             )}
-            <Link href="/request" className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors">
+            <Link href="/request" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
               {t.nav.findConnection}
             </Link>
             {status === 'authenticated' && (
-              <Link href="/members" className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors">
+              <Link href="/members" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
                 Members
               </Link>
             )}
-            <Link href="/news" className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors">
+            <Link href="/news" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
               News
             </Link>
-            <Link href="/faq" className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors">
+            <Link href="/faq" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
               {t.nav.faq}
             </Link>
             <LanguageSwitcherDropdown />
-            <div className="h-6 w-px bg-slate-200 mx-2" />
+            <div className="h-6 w-px bg-white/20 mx-2" />
             {status === 'authenticated' && member && !isLoadingMember ? (
               <HeaderUserMenu member={member} membershipStatus={getMembershipStatus(member)} />
             ) : status === 'unauthenticated' ? (
               <>
-                <Link href="/login" className="text-slate-900 text-sm font-semibold hover:text-blue-600 transition-colors">
+                <Link href="/login" className="text-white text-sm font-semibold hover:text-blue-200 transition-colors">
                   {t.auth.signIn || 'Sign In'}
                 </Link>
-                <Link href="/signup" className="btn-primary px-6 py-2.5 rounded-full text-sm font-semibold">
+                <Link href="/signup" className="bg-white text-brand px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-blue-50 transition-colors">
                   {t.homepage?.hero?.primaryCta || 'Unlock Member Access'}
                 </Link>
               </>
@@ -136,14 +136,14 @@ export function HeaderNavigation() {
         {/* Mobile menu overlay */}
         {isMobileMenuOpen && (
           <div
-            className="md:hidden absolute top-full left-0 right-0 bg-white border-t border-slate-200 shadow-lg z-50"
+            className="md:hidden absolute top-full left-0 right-0 bg-brand-dark border-t border-white/10 shadow-lg z-50"
             onClick={(e) => e.stopPropagation()}
           >
             <nav className="flex flex-col p-4 gap-1">
               {status !== 'authenticated' && (
                 <Link
                   href="/onboard"
-                  className="text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-md transition-colors"
+                  className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {t.nav.join}
@@ -151,7 +151,7 @@ export function HeaderNavigation() {
               )}
               <Link
                 href="/request"
-                className="text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-md transition-colors"
+                className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t.nav.findConnection}
@@ -159,7 +159,7 @@ export function HeaderNavigation() {
               {status === 'authenticated' && (
                 <Link
                   href="/members"
-                  className="text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-md transition-colors"
+                  className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Members
@@ -167,14 +167,14 @@ export function HeaderNavigation() {
               )}
               <Link
                 href="/news"
-                className="text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-md transition-colors"
+                className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 News
               </Link>
               <Link
                 href="/faq"
-                className="text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-md transition-colors"
+                className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t.nav.faq}
@@ -184,14 +184,14 @@ export function HeaderNavigation() {
               </div>
 
               {/* Mobile user section */}
-              <div className="border-t border-slate-200 mt-2 pt-3">
+              <div className="border-t border-white/10 mt-2 pt-3">
                 {status === 'authenticated' && member && !isLoadingMember ? (
                   <>
                     <div className="flex items-center gap-3 px-4 py-2 mb-2">
                       <MemberAvatar name={member.name} avatarUrl={member.avatar_url} size="sm" memberStatus={getAvatarMemberStatus(member)} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{member.name}</p>
-                        <p className="text-xs text-slate-500 truncate">{member.email}</p>
+                        <p className="text-sm font-medium text-white truncate">{member.name}</p>
+                        <p className="text-xs text-white/50 truncate">{member.email}</p>
                       </div>
                       {membershipStatus && <MembershipBadge status={membershipStatus} size="sm" />}
                     </div>
@@ -202,7 +202,7 @@ export function HeaderNavigation() {
                           setIsMobileMenuOpen(false);
                           setIsMobilePaymentModalOpen(true);
                         }}
-                        className="flex items-center gap-2 w-full px-4 py-3 text-sm font-semibold text-amber-600 hover:bg-slate-50 rounded-md transition-colors"
+                        className="flex items-center gap-2 w-full px-4 py-3 text-sm font-semibold text-amber-400 hover:bg-white/10 rounded-md transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -211,7 +211,7 @@ export function HeaderNavigation() {
                       </button>
                     )}
                     {isPendingPayment && (
-                      <div className="flex items-center gap-2 px-4 py-3 text-sm text-blue-600">
+                      <div className="flex items-center gap-2 px-4 py-3 text-sm text-blue-300">
                         <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -221,7 +221,7 @@ export function HeaderNavigation() {
 
                     <Link
                       href="/profile"
-                      className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
+                      className="flex items-center gap-2 px-4 py-3 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,7 +232,7 @@ export function HeaderNavigation() {
 
                     <Link
                       href="/history"
-                      className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
+                      className="flex items-center gap-2 px-4 py-3 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,7 +244,7 @@ export function HeaderNavigation() {
                     {isAdmin(member) && (
                       <Link
                         href="/admin"
-                        className="flex items-center gap-2 px-4 py-3 text-sm text-purple-600 hover:text-purple-700 hover:bg-slate-50 rounded-md transition-colors"
+                        className="flex items-center gap-2 px-4 py-3 text-sm text-purple-300 hover:text-purple-200 hover:bg-white/10 rounded-md transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,7 +257,7 @@ export function HeaderNavigation() {
 
                     <button
                       onClick={handleMobileSignOut}
-                      className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-500 hover:text-red-600 hover:bg-slate-50 rounded-md transition-colors mt-1"
+                      className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-400 hover:text-red-300 hover:bg-white/10 rounded-md transition-colors mt-1"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -267,10 +267,10 @@ export function HeaderNavigation() {
                   </>
                 ) : status === 'unauthenticated' ? (
                   <div className="px-4 py-3 flex flex-col gap-3">
-                    <Link href="/login" className="text-slate-900 text-sm font-semibold hover:text-blue-600 transition-colors">
+                    <Link href="/login" className="text-white text-sm font-semibold hover:text-blue-200 transition-colors">
                       {t.auth.signIn || 'Sign In'}
                     </Link>
-                    <Link href="/signup" className="btn-primary px-6 py-2.5 rounded-full text-sm font-semibold text-center">
+                    <Link href="/signup" className="bg-white text-brand px-6 py-2.5 rounded-full text-sm font-semibold text-center hover:bg-blue-50 transition-colors">
                       {t.homepage?.hero?.primaryCta || 'Unlock Member Access'}
                     </Link>
                   </div>

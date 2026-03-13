@@ -2,9 +2,12 @@ import Link from 'next/link';
 import { ScrollCtaButton } from './scroll-cta-button';
 import { HeroNetworkVisualization } from './hero-network-visualization';
 import type { Translations } from '@/lib/i18n';
+import type { FeaturedMember } from '@/lib/homepage-stats';
 
 interface HeroSectionProps {
   hero: Translations['homepage']['hero'];
+  featuredMembers: FeaturedMember[];
+  alumniCount: number;
 }
 
 function CheckIcon({ className }: { className?: string }) {
@@ -15,9 +18,9 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
-export function HomepageHeroSection({ hero }: HeroSectionProps) {
+export function HomepageHeroSection({ hero, featuredMembers, alumniCount }: HeroSectionProps) {
   return (
-    <section className="homepage-full-bleed relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden hero-gradient">
+    <section className="homepage-full-bleed relative pt-8 pb-20 md:pt-16 md:pb-32 overflow-hidden hero-gradient">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-20">
           {/* Left content */}
@@ -61,7 +64,7 @@ export function HomepageHeroSection({ hero }: HeroSectionProps) {
           </div>
 
           {/* Right side: network visualization */}
-          <HeroNetworkVisualization />
+          <HeroNetworkVisualization members={featuredMembers} alumniCount={alumniCount} />
         </div>
       </div>
     </section>
