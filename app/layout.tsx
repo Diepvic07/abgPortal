@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Outfit } from 'next/font/google';
 import './globals.css';
 import { ToastProvider } from '@/components/ui/toast-provider';
 import { LanguageProvider } from '@/lib/i18n';
@@ -9,6 +9,11 @@ import { AuthProvider } from '@/components/providers/auth-provider';
 import { BugReportButton } from '@/components/ui/bug-report-button';
 
 const inter = Inter({ subsets: ['latin'] });
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  weight: ['400', '500', '600', '700', '800'],
+});
 
 export const metadata: Metadata = {
   title: 'ABG Alumni Connect',
@@ -22,13 +27,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${outfit.variable}`}>
         <AuthProvider>
           <LanguageProvider>
             <ToastProvider>
               <div className="min-h-screen bg-gray-50 flex flex-col">
                 <HeaderNavigation />
-                <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
+                <main className="flex-1 max-w-4xl mx-auto px-4 pt-24 pb-8 w-full">
                   {children}
                 </main>
                 <FooterSection />
