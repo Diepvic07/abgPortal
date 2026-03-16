@@ -30,6 +30,16 @@ interface AdminMember {
   phone?: string;
   expertise?: string;
   bio?: string;
+  country?: string;
+  gender?: string;
+  birth_year?: string;
+  nickname?: string;
+  facebook_url?: string;
+  linkedin_url?: string;
+  company_website?: string;
+  can_help_with?: string;
+  looking_for?: string;
+  relationship_status?: string;
 }
 
 export default function AdminPage() {
@@ -224,6 +234,17 @@ export default function AdminPage() {
       abg_class: member.abg_class || "",
       phone: member.phone || "",
       expertise: member.expertise || "",
+      bio: member.bio || "",
+      country: member.country || "",
+      gender: member.gender || "",
+      birth_year: member.birth_year || "",
+      nickname: member.nickname || "",
+      facebook_url: member.facebook_url || "",
+      linkedin_url: member.linkedin_url || "",
+      company_website: member.company_website || "",
+      can_help_with: member.can_help_with || "",
+      looking_for: member.looking_for || "",
+      relationship_status: member.relationship_status || "",
     });
   };
 
@@ -655,25 +676,56 @@ export default function AdminPage() {
       {/* Edit Member Modal */}
       {editingMember && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="px-6 py-4 border-b">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b shrink-0">
               <h2 className="text-lg font-semibold text-gray-900">Edit Member</h2>
               <p className="text-sm text-gray-500">{editingMember.email}</p>
             </div>
-            <div className="px-6 py-4 space-y-3">
-              {(["name", "role", "company", "abg_class", "phone", "expertise"] as const).map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">{field.replace("_", " ")}</label>
+            <div className="px-6 py-4 space-y-3 overflow-y-auto">
+              {([
+                { key: "name", label: "Name" },
+                { key: "nickname", label: "Nickname" },
+                { key: "role", label: "Role" },
+                { key: "company", label: "Company" },
+                { key: "abg_class", label: "ABG Class" },
+                { key: "phone", label: "Phone" },
+                { key: "expertise", label: "Expertise" },
+                { key: "country", label: "Country" },
+                { key: "gender", label: "Gender" },
+                { key: "birth_year", label: "Birth Year" },
+                { key: "relationship_status", label: "Relationship Status" },
+                { key: "facebook_url", label: "Facebook URL" },
+                { key: "linkedin_url", label: "LinkedIn URL" },
+                { key: "company_website", label: "Company Website" },
+              ] as const).map(({ key, label }) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
                   <input
                     type="text"
-                    value={editForm[field] || ""}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, [field]: e.target.value }))}
+                    value={editForm[key] || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, [key]: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               ))}
+              {/* Textarea fields */}
+              {([
+                { key: "bio", label: "Bio" },
+                { key: "can_help_with", label: "Can Help With" },
+                { key: "looking_for", label: "Looking For" },
+              ] as const).map(({ key, label }) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                  <textarea
+                    value={editForm[key] || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
+                  />
+                </div>
+              ))}
             </div>
-            <div className="px-6 py-4 border-t flex justify-end gap-2">
+            <div className="px-6 py-4 border-t flex justify-end gap-2 shrink-0">
               <button
                 onClick={() => setEditingMember(null)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
