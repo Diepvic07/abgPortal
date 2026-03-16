@@ -374,15 +374,18 @@ export interface DuplicateMatch {
   reason: string;
 }
 
-/** Find potential duplicates among CSV-imported members by name + class */
+/** Find potential duplicates among ALL existing members by name + class */
 export async function findPotentialDuplicates(
   name: string,
-  abgClass?: string
+  abgClass?: string,
+  excludeEmail?: string
 ): Promise<DuplicateMatch[]> {
   const db = createServerSupabaseClient();
-  const { data, error } = await db.from('members')
-    .select('*')
-    .eq('is_csv_imported', true);
+  let query = db.from('members').select('*');
+  if (excludeEmail) {
+    query = query.neq('email', excludeEmail.toLowerCase());
+  }
+  const { data, error } = await query;
   if (error) {
     console.error('[SupabaseDB] findPotentialDuplicates error:', error);
     return [];
@@ -421,12 +424,12 @@ export async function findPotentialDuplicates(
       }
     }
 
-    // HIGH without class: exact name match (no class info)
-    if (normalizedInput === normalizedExisting && !abgClass) {
+    // Exact name match without class context → still flag as HIGH
+    if (normalizedInput === normalizedExisting && !sameClass) {
       matches.push({
         member,
-        confidence: 'MEDIUM',
-        reason: `Exact name match "${member.name}" (no class specified)`,
+        confidence: normalizedInput.split(' ').length >= 2 ? 'HIGH' : 'MEDIUM',
+        reason: `Exact name match "${member.name}"${member.abg_class ? ` (class: ${member.abg_class})` : ''}`,
       });
     }
   }

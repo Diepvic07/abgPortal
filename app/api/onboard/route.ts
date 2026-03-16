@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
     // Duplicate detection for new signups (not existing email merges)
     if (!existingMember) {
       try {
-        const duplicates = await findPotentialDuplicates(name, abg_class);
+        const duplicates = await findPotentialDuplicates(name, abg_class, email);
         if (duplicates.length > 0) {
           const topMatch = duplicates[0];
           await updateMember(memberId, {
