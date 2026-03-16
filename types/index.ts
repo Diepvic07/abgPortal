@@ -96,6 +96,12 @@ export function getMembershipStatus(member: Member): MembershipStatus {
   return 'premium';
 }
 
+// Self-registered member with complete profile → "Verified"
+export function isMemberVerified(member: Member): boolean {
+  if (member.is_csv_imported) return false;
+  return Boolean(member.name && member.email && member.role && member.company);
+}
+
 // Derive display status for avatar badge: admin > pro > basic
 export function getAvatarMemberStatus(member: Member): 'basic' | 'pro' | 'admin' {
   // Only display admin badge if the user is actually approved

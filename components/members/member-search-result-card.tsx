@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from 'next/link';
 import { MemberAvatar } from "@/components/ui/member-avatar";
+import { useTranslation } from "@/lib/i18n";
 import type { SearchResultBasic, SearchResultPro } from "@/lib/search-utils";
 import { ContactRequestModal } from "./contact-request-modal";
 import { PaymentInfoModal } from "@/components/ui/payment-info-modal";
@@ -18,10 +19,18 @@ interface MemberSearchResultCardProps {
   viewerTier: string;
 }
 
+function isVerified(result: SearchResult): boolean {
+  if (result.is_csv_imported) return false;
+  if (!isProResult(result)) return !result.is_csv_imported;
+  return Boolean(result.name && result.role && result.company);
+}
+
 export function MemberSearchResultCard({ result, viewerTier }: MemberSearchResultCardProps) {
+  const { t } = useTranslation();
   const [showContactModal, setShowContactModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const isPro = isProResult(result);
+  const verified = isVerified(result);
 
   return (
     <>
@@ -33,7 +42,16 @@ export function MemberSearchResultCard({ result, viewerTier }: MemberSearchResul
             size="lg"
           />
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{result.name}</h3>
+            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate flex items-center gap-1.5">
+              {result.name}
+              {verified && (
+                <span title={t.common.verified} className="inline-flex items-center shrink-0">
+                  <svg className="w-4 h-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                  </svg>
+                </span>
+              )}
+            </h3>
             {isPro ? (
               <>
                 {result.role && (

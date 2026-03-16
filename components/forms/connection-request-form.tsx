@@ -167,8 +167,9 @@ export function ConnectionRequestForm() {
       });
 
       if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || t.common.error);
+        let result;
+        try { result = await response.json(); } catch { /* non-JSON */ }
+        throw new Error(result?.error || t.common.error);
       }
 
       setNeedsProfileCompletion(false);
@@ -202,7 +203,12 @@ export function ConnectionRequestForm() {
         body: JSON.stringify({ request_text: data.request_text, category: matchType, locale }),
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error(t.common.error);
+      }
 
       if (!response.ok) {
         if (response.status === 403) {

@@ -12,7 +12,16 @@ export async function GET(request: NextRequest) {
     await requireAuth(request);
     const abgClasses = await getAbgClasses(true);
     const classes = abgClasses.map(c => c.name);
-    return NextResponse.json({ classes });
+
+    // Count total approved members
+    const db = createServerSupabaseClient();
+    const { count } = await db
+      .from("members")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active")
+      .eq("approval_status", "approved");
+
+    return NextResponse.json({ classes, totalMembers: count || 0 });
   } catch (error) {
     if (error instanceof Error && error.message === "Authentication required") {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });

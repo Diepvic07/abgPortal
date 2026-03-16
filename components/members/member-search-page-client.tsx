@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { MemberSearchResultCard } from "./member-search-result-card";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, interpolate } from "@/lib/i18n";
 import type { SearchResultBasic, SearchResultPro } from "@/lib/search-utils";
 
 type SearchResult = SearchResultBasic | SearchResultPro;
@@ -18,6 +18,7 @@ export function MemberSearchPageClient() {
   const [tier, setTier] = useState<string>("");
   const [abgClasses, setAbgClasses] = useState<string[]>([]);
   const [searchQuota, setSearchQuota] = useState<{ remaining: number | null; limit: number | null }>({ remaining: null, limit: null });
+  const [totalMembers, setTotalMembers] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
@@ -26,9 +27,18 @@ export function MemberSearchPageClient() {
     if (status === "authenticated") {
       fetch("/api/search/members").then(r => r.json()).then(d => {
         if (d.classes) setAbgClasses(d.classes);
+        if (d.totalMembers != null) setTotalMembers(d.totalMembers);
       }).catch(() => {});
     }
   }, [status]);
+
+  // Auto-search when class filter changes
+  useEffect(() => {
+    if (filters.abg_class) {
+      handleSearch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.abg_class]);
 
   const handleSearch = async () => {
     const hasQuery = query.trim().length >= 2;
@@ -92,7 +102,9 @@ export function MemberSearchPageClient() {
           <div className="border-b border-gray-200 px-6 py-4">
             <h1 className="text-2xl font-bold text-gray-900">{t.members.title}</h1>
             <p className="text-sm text-gray-500 mt-1">
-              {t.members.subtitle}
+              {totalMembers != null
+                ? interpolate(t.members.totalMembers, { count: totalMembers })
+                : t.members.subtitle}
             </p>
           </div>
 

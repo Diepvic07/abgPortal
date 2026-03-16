@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { MatchResult, Member } from '@/types';
 import { useTranslation, interpolate } from '@/lib/i18n';
 
@@ -133,11 +134,11 @@ export function MatchResultCard({ match, isSelected, isLove, onSelect, onRequest
         )}
       </div>
 
-      {/* CTA button */}
-      <div className="px-5 pb-5 pt-1">
+      {/* CTA buttons */}
+      <div className="px-5 pb-5 pt-1 flex gap-2">
         <button
           onClick={(e) => { e.stopPropagation(); onRequestIntro(match.id); }}
-          className={`w-full py-2.5 text-sm font-semibold rounded-xl transition-all duration-200
+          className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200
             ${isLove
               ? 'bg-pink-500 hover:bg-pink-600 text-white shadow-sm shadow-pink-500/20'
               : 'bg-brand hover:bg-brand-light text-white shadow-sm shadow-brand/20'
@@ -145,6 +146,16 @@ export function MatchResultCard({ match, isSelected, isLove, onSelect, onRequest
         >
           {isLove ? t.matches.sendLoveMatch : t.matches.requestIntro}
         </button>
+        {!isLove && (
+          <Link
+            href={`/profile/${match.id}`}
+            target="_blank"
+            onClick={(e) => e.stopPropagation()}
+            className="px-4 py-2.5 text-sm font-semibold rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all duration-200"
+          >
+            {t.matches.viewProfile}
+          </Link>
+        )}
       </div>
     </div>
   );

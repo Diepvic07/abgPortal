@@ -7,6 +7,7 @@ export const en = {
     cancel: 'Cancel',
     error: 'Something went wrong',
     required: 'Required',
+    verified: 'Verified',
   },
 
   // Navigation
@@ -299,6 +300,7 @@ export const en = {
     selectPrompt: 'Select someone to connect with',
     whyMatched: 'Why we matched you:',
     requestIntro: 'Request Introduction',
+    viewProfile: 'View Profile',
     sendLoveMatch: 'Send Love Match Request',
     sendingIntro: 'Sending introduction...',
     footerNote: 'Both you and your match will receive an email introduction',
@@ -736,6 +738,7 @@ export const en = {
     resultCountPlural: '{count} results',
     enterQuery: 'Enter a search query or filter to find members',
     signInRequired: 'Please sign in to search members.',
+    totalMembers: '{count} members in the network',
   },
 
   // History page

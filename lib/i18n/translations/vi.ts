@@ -9,6 +9,7 @@ export const vi: Translations = {
     cancel: 'Thôi',
     error: 'Có biến rồi (Lỗi)',
     required: 'Cái này bắt buộc nha',
+    verified: 'Đã xác thực',
   },
 
   // Navigation
@@ -301,6 +302,7 @@ export const vi: Translations = {
     selectPrompt: 'Chọn người muốn làm quen',
     whyMatched: 'Tại sao lại hợp:',
     requestIntro: 'Nhờ giới thiệu',
+    viewProfile: 'Xem hồ sơ',
     sendLoveMatch: 'Gửi yêu cầu ghép đôi',
     sendingIntro: 'Đang bắn tin...',
     footerNote: 'Cả bạn và người ấy sẽ nhận được email giới thiệu',
@@ -738,6 +740,7 @@ export const vi: Translations = {
     resultCountPlural: '{count} kết quả',
     enterQuery: 'Nhập từ khóa hoặc bộ lọc để tìm thành viên',
     signInRequired: 'Vui lòng đăng nhập để tìm kiếm thành viên.',
+    totalMembers: '{count} thành viên trong mạng lưới',
   },
 
   // History page

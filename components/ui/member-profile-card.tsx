@@ -1,4 +1,4 @@
-import { Member, getAvatarMemberStatus } from '@/types';
+import { Member, getAvatarMemberStatus, isMemberVerified } from '@/types';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { getCountryFlag } from '@/lib/country-flags';
 
@@ -87,6 +87,7 @@ export function MemberProfileCard({ member }: MemberProfileCardProps) {
     if (!member) return null;
 
     const flag = getCountryFlag(member.country);
+    const verified = isMemberVerified(member);
 
     return (
         <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden w-full max-w-3xl mx-auto flex flex-col border border-border">
@@ -110,6 +111,13 @@ export function MemberProfileCard({ member }: MemberProfileCardProps) {
                         <div className="flex-1 pb-1">
                             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 flex flex-wrap items-center gap-2 sm:gap-3">
                                 {member.name}
+                                {verified && (
+                                    <span title="Verified" className="inline-flex items-center">
+                                        <svg className="w-5 h-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                                        </svg>
+                                    </span>
+                                )}
                                 {member.abg_class && (
                                     <span className="text-xs sm:text-sm bg-brand/10 text-brand px-3 py-1 rounded-full font-semibold tracking-wide border border-brand/20">
                                         {member.abg_class}
