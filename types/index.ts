@@ -43,6 +43,9 @@ export interface Member {
   // Approval fields (columns AO-AP)
   approval_status?: 'pending' | 'approved' | 'rejected';
   is_csv_imported?: boolean;
+  // Duplicate detection fields
+  potential_duplicate_of?: string;
+  duplicate_note?: string;
   // Admin field (column AQ)
   is_admin?: boolean;
   // Dating profile fields (columns AR-BA)

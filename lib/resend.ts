@@ -919,3 +919,166 @@ export async function sendRejectionEmail(to: string, name: string, locale: Local
     console.error('Failed to send rejection email:', error);
   }
 }
+
+// ==================== Duplicate Alert Emails ====================
+
+interface DuplicateAlertData {
+  newMemberName: string;
+  newMemberEmail: string;
+  newMemberClass?: string;
+  matches: {
+    name: string;
+    email: string;
+    abgClass?: string;
+    confidence: 'HIGH' | 'MEDIUM';
+    reason: string;
+  }[];
+}
+
+/** Send duplicate alert to admin emails */
+export async function sendDuplicateAlertEmail(data: DuplicateAlertData): Promise<void> {
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim())
+    .filter(Boolean);
+  if (adminEmails.length === 0) {
+    console.warn('[Resend] No ADMIN_EMAILS configured, skipping duplicate alert');
+    return;
+  }
+
+  const resend = getResendClient();
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
+  const matchRows = data.matches.map(m => `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">
+        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;${m.confidence === 'HIGH' ? 'background:#fef2f2;color:#dc2626;' : 'background:#fffbeb;color:#d97706;'}">${m.confidence}</span>
+      </td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#374151;">${escapeHtml(m.name)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#374151;">${escapeHtml(m.email)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#374151;">${escapeHtml(m.abgClass || '-')}</td>
+    </tr>`).join('');
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: adminEmails,
+    subject: `[ABG] Potential duplicate: ${data.newMemberName}`,
+    html: `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#dc2626;padding:24px 40px;">
+          <h1 style="margin:0;font-size:20px;color:#ffffff;font-weight:600;">Potential Duplicate Member Detected</h1>
+        </td></tr>
+        <tr><td style="padding:28px 40px;">
+          <p style="margin:0 0 16px;font-size:15px;color:#1f2937;">A new member just signed up and matches existing CSV-imported member(s).</p>
+
+          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <p style="margin:0 0 4px;font-size:13px;color:#0369a1;font-weight:600;">NEW MEMBER</p>
+            <p style="margin:0;font-size:15px;color:#1f2937;"><strong>${escapeHtml(data.newMemberName)}</strong> &mdash; ${escapeHtml(data.newMemberEmail)}</p>
+            ${data.newMemberClass ? `<p style="margin:4px 0 0;font-size:14px;color:#6b7280;">Class: ${escapeHtml(data.newMemberClass)}</p>` : ''}
+          </div>
+
+          <p style="margin:0 0 8px;font-size:14px;color:#1f2937;font-weight:600;">Matched existing member(s):</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin:0 0 20px;">
+            <tr style="background:#f9fafb;">
+              <th style="padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Match</th>
+              <th style="padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Name</th>
+              <th style="padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Email</th>
+              <th style="padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Class</th>
+            </tr>
+            ${matchRows}
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0"><tr><td>
+            <a href="${appUrl}/admin" style="display:inline-block;padding:12px 28px;background:#1a56db;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">Review in Admin Panel</a>
+          </td></tr></table>
+        </td></tr>
+        <tr><td style="padding:20px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Connect &mdash; Admin Notification</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: Duplicate alert not sent.', error.message);
+      return;
+    }
+    console.error('Failed to send duplicate alert email:', error);
+  }
+}
+
+/** Send reminder for unresolved duplicates (48h+ old) */
+export async function sendDuplicateReminderEmail(
+  unresolvedMembers: { name: string; email: string; createdAt: string; duplicateNote: string }[]
+): Promise<void> {
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim())
+    .filter(Boolean);
+  if (adminEmails.length === 0 || unresolvedMembers.length === 0) return;
+
+  const resend = getResendClient();
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
+  const rows = unresolvedMembers.map(m => `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#374151;">${escapeHtml(m.name)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#374151;">${escapeHtml(m.email)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#374151;">${escapeHtml(m.duplicateNote)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;">${new Date(m.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+    </tr>`).join('');
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: adminEmails,
+    subject: `[ABG] ${unresolvedMembers.length} unresolved duplicate(s) need review`,
+    html: `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#d97706;padding:24px 40px;">
+          <h1 style="margin:0;font-size:20px;color:#ffffff;font-weight:600;">Duplicate Review Reminder</h1>
+        </td></tr>
+        <tr><td style="padding:28px 40px;">
+          <p style="margin:0 0 16px;font-size:15px;color:#1f2937;">The following <strong>${unresolvedMembers.length}</strong> potential duplicate(s) have been pending for over 48 hours and need your review.</p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin:0 0 20px;">
+            <tr style="background:#f9fafb;">
+              <th style="padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Name</th>
+              <th style="padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Email</th>
+              <th style="padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Note</th>
+              <th style="padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Signed Up</th>
+            </tr>
+            ${rows}
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0"><tr><td>
+            <a href="${appUrl}/admin" style="display:inline-block;padding:12px 28px;background:#1a56db;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">Review in Admin Panel</a>
+          </td></tr></table>
+        </td></tr>
+        <tr><td style="padding:20px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Connect &mdash; Daily Admin Reminder</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: Duplicate reminder not sent.', error.message);
+      return;
+    }
+    console.error('Failed to send duplicate reminder email:', error);
+  }
+}

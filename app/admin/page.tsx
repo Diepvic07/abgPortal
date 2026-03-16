@@ -9,6 +9,8 @@ import { AdminNewsManager } from "@/components/admin/admin-news-manager";
 import { AdminPaymentReport } from "@/components/admin/admin-payment-report";
 import { AdminClassManager } from "@/components/admin/admin-class-manager";
 import { PaymentUpgradeModal } from "@/components/admin/payment-upgrade-modal";
+import { DuplicateReviewCard } from "@/components/admin/duplicate-review-card";
+import { Member } from "@/types";
 
 interface AdminMember {
   id: string;
@@ -23,13 +25,18 @@ interface AdminMember {
   created_at: string;
   abg_class?: string;
   membership_expiry?: string;
+  potential_duplicate_of?: string;
+  duplicate_note?: string;
+  phone?: string;
+  expertise?: string;
+  bio?: string;
 }
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [members, setMembers] = useState<AdminMember[]>([]);
-  const [activeTab, setActiveTab] = useState<"pending" | "status" | "directory" | "news" | "payments" | "classes">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "duplicates" | "status" | "directory" | "news" | "payments" | "classes">("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -37,6 +44,8 @@ export default function AdminPage() {
   const [expiryValue, setExpiryValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [upgradeTarget, setUpgradeTarget] = useState<{ id: string; name: string } | null>(null);
+  const [editingMember, setEditingMember] = useState<AdminMember | null>(null);
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -178,7 +187,64 @@ export default function AdminPage() {
     }
   };
 
+  const handleClearDuplicateFlag = async (memberId: string) => {
+    try {
+      const res = await fetch("/api/admin/clear-duplicate-flag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      if (!res.ok) throw new Error("Failed to clear flag");
+      await fetchMembers();
+    } catch {
+      alert("Failed to clear duplicate flag");
+    }
+  };
+
+  const handleDeleteMember = async (memberId: string) => {
+    try {
+      const res = await fetch("/api/admin/reject", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      if (!res.ok) throw new Error("Failed to delete");
+      await fetchMembers();
+    } catch {
+      alert("Failed to delete member");
+    }
+  };
+
+  const handleEditMember = (member: AdminMember) => {
+    setEditingMember(member);
+    setEditForm({
+      name: member.name || "",
+      role: member.role || "",
+      company: member.company || "",
+      abg_class: member.abg_class || "",
+      phone: member.phone || "",
+      expertise: member.expertise || "",
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingMember) return;
+    try {
+      const res = await fetch("/api/admin/update-member", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: editingMember.id, updates: editForm }),
+      });
+      if (!res.ok) throw new Error("Failed to update");
+      setEditingMember(null);
+      await fetchMembers();
+    } catch {
+      alert("Failed to update member");
+    }
+  };
+
   const pendingMembers = members.filter((m) => m.approval_status === "pending");
+  const duplicateMembers = members.filter((m) => m.potential_duplicate_of);
   const filterBySearch = (list: AdminMember[]) => {
     if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase();
@@ -240,6 +306,19 @@ export default function AdminPage() {
             Pending ({pendingMembers.length})
           </button>
           <button
+            onClick={() => setActiveTab("duplicates")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === "duplicates"
+              ? "bg-red-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+          >
+            Duplicates {duplicateMembers.length > 0 && (
+              <span className={`ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${activeTab === "duplicates" ? "bg-white text-red-600" : "bg-red-100 text-red-700"}`}>
+                {duplicateMembers.length}
+              </span>
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab("status")}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === "status"
               ? "bg-blue-600 text-white"
@@ -286,7 +365,7 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {activeTab !== "directory" && activeTab !== "news" && activeTab !== "payments" && activeTab !== "classes" && (
+        {activeTab !== "directory" && activeTab !== "news" && activeTab !== "payments" && activeTab !== "classes" && activeTab !== "duplicates" && (
           <div className="mb-4">
             <input
               type="text"
@@ -298,7 +377,31 @@ export default function AdminPage() {
           </div>
         )}
 
-        {activeTab === "classes" ? (
+        {activeTab === "duplicates" ? (
+          <div className="space-y-4">
+            {duplicateMembers.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">
+                No potential duplicates found
+              </div>
+            ) : (
+              duplicateMembers.map((dm) => {
+                const existingMember = dm.potential_duplicate_of
+                  ? members.find((m) => m.id === dm.potential_duplicate_of) || null
+                  : null;
+                return (
+                  <DuplicateReviewCard
+                    key={dm.id}
+                    newMember={dm as unknown as Member}
+                    existingMember={existingMember as unknown as Member | null}
+                    onClearFlag={handleClearDuplicateFlag}
+                    onDelete={handleDeleteMember}
+                    onEdit={(m) => handleEditMember(m as unknown as AdminMember)}
+                  />
+                );
+              })
+            )}
+          </div>
+        ) : activeTab === "classes" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">
             <AdminClassManager />
           </div>
@@ -511,7 +614,7 @@ export default function AdminPage() {
             </div>
 
             {/* Stats summary */}
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-6 gap-4">
               <div className="bg-white rounded-lg p-4 shadow-sm">
                 <p className="text-2xl font-bold text-gray-900">{members.length}</p>
                 <p className="text-sm text-gray-500">Total Members</p>
@@ -533,6 +636,12 @@ export default function AdminPage() {
                 <p className="text-sm text-gray-500">Admins</p>
               </div>
               <div className="bg-white rounded-lg p-4 shadow-sm">
+                <p className="text-2xl font-bold text-orange-600">
+                  {duplicateMembers.length}
+                </p>
+                <p className="text-sm text-gray-500">Duplicates</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow-sm">
                 <p className="text-2xl font-bold text-gray-600">
                   {members.filter((m) => m.is_csv_imported).length}
                 </p>
@@ -542,6 +651,45 @@ export default function AdminPage() {
           </>
         )}
       </div>
+
+      {/* Edit Member Modal */}
+      {editingMember && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="px-6 py-4 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">Edit Member</h2>
+              <p className="text-sm text-gray-500">{editingMember.email}</p>
+            </div>
+            <div className="px-6 py-4 space-y-3">
+              {(["name", "role", "company", "abg_class", "phone", "expertise"] as const).map((field) => (
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">{field.replace("_", " ")}</label>
+                  <input
+                    type="text"
+                    value={editForm[field] || ""}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, [field]: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="px-6 py-4 border-t flex justify-end gap-2">
+              <button
+                onClick={() => setEditingMember(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Payment Upgrade Modal */}
       <PaymentUpgradeModal

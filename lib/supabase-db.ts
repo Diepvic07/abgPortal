@@ -50,6 +50,8 @@ function mapRowToMember(row: Record<string, unknown>): Member {
     membership_expiry: nullToUndefined(row.membership_expiry as string | null),
     approval_status: ((row.approval_status as string) || 'approved') as 'pending' | 'approved' | 'rejected',
     is_csv_imported: (row.is_csv_imported as boolean) || false,
+    potential_duplicate_of: nullToUndefined(row.potential_duplicate_of as string | null),
+    duplicate_note: nullToUndefined(row.duplicate_note as string | null),
     is_admin: (row.is_admin as boolean) || false,
     self_description: nullToUndefined(row.self_description as string | null),
     truth_lie: nullToUndefined(row.truth_lie as string | null),
@@ -239,6 +241,8 @@ export async function addMember(member: Member): Promise<void> {
     membership_expiry: member.membership_expiry ?? null,
     approval_status: member.approval_status ?? 'approved',
     is_csv_imported: member.is_csv_imported ?? false,
+    potential_duplicate_of: member.potential_duplicate_of ?? null,
+    duplicate_note: member.duplicate_note ?? null,
     is_admin: member.is_admin ?? false,
     self_description: member.self_description ?? null,
     truth_lie: member.truth_lie ?? null,
@@ -348,6 +352,130 @@ export async function incrementMemberMonthlyRequests(id: string): Promise<void> 
     console.error('[SupabaseDB] incrementMemberMonthlyRequests error:', error);
     throw new Error(`Failed to increment monthly requests: ${error.message}`);
   }
+}
+
+// ==================== Duplicate Detection ====================
+
+/** Normalize name for comparison: lowercase, trim, remove Vietnamese diacritics */
+function normalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .replace(/\s+/g, ' ');
+}
+
+export interface DuplicateMatch {
+  member: Member;
+  confidence: 'HIGH' | 'MEDIUM';
+  reason: string;
+}
+
+/** Find potential duplicates among CSV-imported members by name + class */
+export async function findPotentialDuplicates(
+  name: string,
+  abgClass?: string
+): Promise<DuplicateMatch[]> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('members')
+    .select('*')
+    .eq('is_csv_imported', true);
+  if (error) {
+    console.error('[SupabaseDB] findPotentialDuplicates error:', error);
+    return [];
+  }
+  if (!data || data.length === 0) return [];
+
+  const normalizedInput = normalizeName(name);
+  const matches: DuplicateMatch[] = [];
+
+  for (const row of data) {
+    const member = mapRowToMember(row as unknown as Record<string, unknown>);
+    const normalizedExisting = normalizeName(member.name);
+    const sameClass = abgClass && member.abg_class && abgClass === member.abg_class;
+
+    // HIGH: exact normalized name + same class
+    if (normalizedInput === normalizedExisting && sameClass) {
+      matches.push({
+        member,
+        confidence: 'HIGH',
+        reason: `Exact name match "${member.name}" + same class "${member.abg_class}"`,
+      });
+      continue;
+    }
+
+    // MEDIUM: name contains/contained-by + same class
+    if (sameClass) {
+      const isContained = normalizedExisting.includes(normalizedInput)
+        || normalizedInput.includes(normalizedExisting);
+      if (isContained && normalizedInput !== normalizedExisting) {
+        matches.push({
+          member,
+          confidence: 'MEDIUM',
+          reason: `Similar name "${member.name}" + same class "${member.abg_class}"`,
+        });
+        continue;
+      }
+    }
+
+    // HIGH without class: exact name match (no class info)
+    if (normalizedInput === normalizedExisting && !abgClass) {
+      matches.push({
+        member,
+        confidence: 'MEDIUM',
+        reason: `Exact name match "${member.name}" (no class specified)`,
+      });
+    }
+  }
+
+  // Sort HIGH before MEDIUM
+  return matches.sort((a, b) => (a.confidence === 'HIGH' ? -1 : 1) - (b.confidence === 'HIGH' ? -1 : 1));
+}
+
+/** Get all members flagged as potential duplicates */
+export async function getDuplicateFlaggedMembers(): Promise<Member[]> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('members')
+    .select('*')
+    .not('potential_duplicate_of', 'is', null)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('[SupabaseDB] getDuplicateFlaggedMembers error:', error);
+    throw new Error(`Failed to get duplicate flagged members: ${error.message}`);
+  }
+  return (data || []).map(row => mapRowToMember(row as unknown as Record<string, unknown>));
+}
+
+/** Clear duplicate flag (admin decided it's not a duplicate) */
+export async function clearDuplicateFlag(memberId: string): Promise<boolean> {
+  const db = createServerSupabaseClient();
+  // Cast needed: these columns were added via migration but not in Supabase generated types
+  const updates = { potential_duplicate_of: null, duplicate_note: null } as Record<string, unknown>;
+  const { error } = await db.from('members').update(updates).eq('id', memberId);
+  if (error) {
+    console.error('[SupabaseDB] clearDuplicateFlag error:', error);
+    throw new Error(`Failed to clear duplicate flag: ${error.message}`);
+  }
+  return true;
+}
+
+/** Get unresolved duplicates older than given hours */
+export async function getUnresolvedDuplicates(olderThanHours: number): Promise<Member[]> {
+  const db = createServerSupabaseClient();
+  const cutoff = new Date(Date.now() - olderThanHours * 60 * 60 * 1000).toISOString();
+  const { data, error } = await db.from('members')
+    .select('*')
+    .not('potential_duplicate_of', 'is', null)
+    .lt('created_at', cutoff)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('[SupabaseDB] getUnresolvedDuplicates error:', error);
+    return [];
+  }
+  return (data || []).map(row => mapRowToMember(row as unknown as Record<string, unknown>));
 }
 
 // ==================== Requests ====================

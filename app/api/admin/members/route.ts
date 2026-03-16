@@ -30,6 +30,11 @@ export async function GET() {
       created_at: m.created_at,
       abg_class: m.abg_class,
       membership_expiry: m.membership_expiry,
+      potential_duplicate_of: m.potential_duplicate_of,
+      duplicate_note: m.duplicate_note,
+      phone: m.phone,
+      expertise: m.expertise,
+      bio: m.bio,
     }));
 
     // Deduplicate by email, keeping the entry with most recent created_at

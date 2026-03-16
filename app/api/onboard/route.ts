@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 import { put } from '@vercel/blob';
 import { generateBio } from '@/lib/gemini';
-import { addMember, getMemberByEmail, updateMember, updateMemberLastLogin } from '@/lib/supabase-db';
-import { sendOnboardingConfirmation } from '@/lib/resend';
+import { addMember, getMemberByEmail, updateMember, updateMemberLastLogin, findPotentialDuplicates } from '@/lib/supabase-db';
+import { sendOnboardingConfirmation, sendDuplicateAlertEmail } from '@/lib/resend';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { Member } from '@/types';
@@ -197,6 +197,36 @@ export async function POST(request: NextRequest) {
 
     // Explicitly update last login to initialize all security fields
     await updateMemberLastLogin(email);
+
+    // Duplicate detection for new signups (not existing email merges)
+    if (!existingMember) {
+      try {
+        const duplicates = await findPotentialDuplicates(name, abg_class);
+        if (duplicates.length > 0) {
+          const topMatch = duplicates[0];
+          await updateMember(memberId, {
+            potential_duplicate_of: topMatch.member.id,
+            duplicate_note: `${topMatch.confidence}: ${topMatch.reason}`,
+          });
+          // Notify admin
+          await sendDuplicateAlertEmail({
+            newMemberName: name,
+            newMemberEmail: email,
+            newMemberClass: abg_class,
+            matches: duplicates.map(d => ({
+              name: d.member.name,
+              email: d.member.email,
+              abgClass: d.member.abg_class,
+              confidence: d.confidence,
+              reason: d.reason,
+            })),
+          });
+        }
+      } catch (dupError) {
+        // Don't fail onboarding if duplicate check fails
+        console.error('[API] Duplicate detection error (non-blocking):', dupError);
+      }
+    }
 
     await sendOnboardingConfirmation(email, name, bio, locale);
 
