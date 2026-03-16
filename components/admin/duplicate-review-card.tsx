@@ -9,6 +9,8 @@ interface DuplicateReviewCardProps {
   onClearFlag: (memberId: string) => Promise<void>;
   onDelete: (memberId: string) => Promise<void>;
   onEdit: (member: Member) => void;
+  /** Show custom confirm modal instead of browser confirm() */
+  onConfirmDelete?: (member: Member, proceed: () => void) => void;
 }
 
 /** All detail fields to display for each member side-by-side */
@@ -36,14 +38,24 @@ function MemberColumn({
   loading,
   onEdit,
   onDelete,
+  onConfirmDelete,
 }: {
   member: Member;
   label: string;
   loading: string | null;
   onEdit: () => void;
   onDelete: () => void;
+  onConfirmDelete?: (member: Member, proceed: () => void) => void;
 }) {
   const deleteKey = `delete-${member.id}`;
+
+  const handleDelete = () => {
+    if (onConfirmDelete) {
+      onConfirmDelete(member, onDelete);
+    } else {
+      onDelete();
+    }
+  };
 
   return (
     <div className="flex-1 min-w-0">
@@ -93,11 +105,7 @@ function MemberColumn({
           Edit
         </button>
         <button
-          onClick={() => {
-            if (confirm(`Delete "${member.name}" (${member.email})? This cannot be undone.`)) {
-              onDelete();
-            }
-          }}
+          onClick={handleDelete}
           disabled={loading === deleteKey}
           className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
         >
@@ -108,7 +116,7 @@ function MemberColumn({
   );
 }
 
-export function DuplicateReviewCard({ newMember, existingMember, onClearFlag, onDelete, onEdit }: DuplicateReviewCardProps) {
+export function DuplicateReviewCard({ newMember, existingMember, onClearFlag, onDelete, onEdit, onConfirmDelete }: DuplicateReviewCardProps) {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleAction = async (action: string, fn: () => Promise<void>) => {
@@ -147,6 +155,7 @@ export function DuplicateReviewCard({ newMember, existingMember, onClearFlag, on
           loading={loading}
           onEdit={() => onEdit(newMember)}
           onDelete={() => handleAction(`delete-${newMember.id}`, () => onDelete(newMember.id))}
+          onConfirmDelete={onConfirmDelete}
         />
         {existingMember ? (
           <>
@@ -157,6 +166,7 @@ export function DuplicateReviewCard({ newMember, existingMember, onClearFlag, on
               loading={loading}
               onEdit={() => onEdit(existingMember)}
               onDelete={() => handleAction(`delete-${existingMember.id}`, () => onDelete(existingMember.id))}
+              onConfirmDelete={onConfirmDelete}
             />
           </>
         ) : (

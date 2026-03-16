@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -10,6 +10,8 @@ import { AdminPaymentReport } from "@/components/admin/admin-payment-report";
 import { AdminClassManager } from "@/components/admin/admin-class-manager";
 import { PaymentUpgradeModal } from "@/components/admin/payment-upgrade-modal";
 import { DuplicateReviewCard } from "@/components/admin/duplicate-review-card";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
+import { ToastNotification, useToasts } from "@/components/ui/toast-notification";
 import { Member } from "@/types";
 
 interface AdminMember {
@@ -56,6 +58,14 @@ export default function AdminPage() {
   const [upgradeTarget, setUpgradeTarget] = useState<{ id: string; name: string } | null>(null);
   const [editingMember, setEditingMember] = useState<AdminMember | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const { toasts, showToast, dismissToast } = useToasts();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string; message: string; variant: 'danger' | 'warning' | 'info';
+    confirmLabel: string; onConfirm: () => void;
+  } | null>(null);
+
+  const showConfirm = useCallback((opts: typeof confirmDialog) => setConfirmDialog(opts), []);
+  const closeConfirm = useCallback(() => setConfirmDialog(null), []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -95,32 +105,40 @@ export default function AdminPage() {
         body: JSON.stringify({ memberId: id }),
       });
       if (!res.ok) throw new Error("Failed to approve");
+      showToast("Member approved successfully", "success");
       await fetchMembers();
     } catch {
-      alert("Failed to approve member");
+      showToast("Failed to approve member");
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleReject = async (id: string) => {
-    if (!confirm("Are you sure you want to reject and remove this member? This action cannot be undone.")) {
-      return;
-    }
-    setActionLoading(id);
-    try {
-      const res = await fetch("/api/admin/reject", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: id }),
-      });
-      if (!res.ok) throw new Error("Failed to reject");
-      await fetchMembers();
-    } catch {
-      alert("Failed to reject member");
-    } finally {
-      setActionLoading(null);
-    }
+  const handleReject = (id: string) => {
+    showConfirm({
+      title: "Reject Member",
+      message: "Are you sure you want to reject and remove this member? This action cannot be undone.",
+      variant: "danger",
+      confirmLabel: "Reject",
+      onConfirm: async () => {
+        closeConfirm();
+        setActionLoading(id);
+        try {
+          const res = await fetch("/api/admin/reject", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ memberId: id }),
+          });
+          if (!res.ok) throw new Error("Failed to reject");
+          showToast("Member rejected", "success");
+          await fetchMembers();
+        } catch {
+          showToast("Failed to reject member");
+        } finally {
+          setActionLoading(null);
+        }
+      },
+    });
   };
 
   const handleTierChange = (id: string, currentPaid: boolean, memberName: string) => {
@@ -150,7 +168,7 @@ export default function AdminPage() {
       if (!res.ok) throw new Error("Failed to change tier");
       await fetchMembers();
     } catch {
-      alert("Failed to change tier");
+      showToast("Failed to change tier");
     } finally {
       setActionLoading(null);
     }
@@ -170,31 +188,38 @@ export default function AdminPage() {
       setExpiryValue("");
       await fetchMembers();
     } catch {
-      alert("Failed to update expiry date");
+      showToast("Failed to update expiry date");
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleToggleAdmin = async (id: string, currentIsAdmin: boolean) => {
+  const handleToggleAdmin = (id: string, currentIsAdmin: boolean) => {
     const action = currentIsAdmin ? "remove admin privileges from" : "grant admin privileges to";
-    if (!confirm(`Are you sure you want to ${action} this member?`)) {
-      return;
-    }
-    setActionLoading(id);
-    try {
-      const res = await fetch("/api/admin/toggle-admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: id, isAdmin: !currentIsAdmin }),
-      });
-      if (!res.ok) throw new Error("Failed to toggle admin");
-      await fetchMembers();
-    } catch {
-      alert("Failed to toggle admin status");
-    } finally {
-      setActionLoading(null);
-    }
+    showConfirm({
+      title: currentIsAdmin ? "Remove Admin" : "Grant Admin",
+      message: `Are you sure you want to ${action} this member?`,
+      variant: currentIsAdmin ? "warning" : "info",
+      confirmLabel: currentIsAdmin ? "Remove" : "Grant",
+      onConfirm: async () => {
+        closeConfirm();
+        setActionLoading(id);
+        try {
+          const res = await fetch("/api/admin/toggle-admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ memberId: id, isAdmin: !currentIsAdmin }),
+          });
+          if (!res.ok) throw new Error("Failed to toggle admin");
+          showToast(`Admin privileges ${currentIsAdmin ? "removed" : "granted"}`, "success");
+          await fetchMembers();
+        } catch {
+          showToast("Failed to toggle admin status");
+        } finally {
+          setActionLoading(null);
+        }
+      },
+    });
   };
 
   const handleClearDuplicateFlag = async (memberId: string) => {
@@ -207,7 +232,7 @@ export default function AdminPage() {
       if (!res.ok) throw new Error("Failed to clear flag");
       await fetchMembers();
     } catch {
-      alert("Failed to clear duplicate flag");
+      showToast("Failed to clear duplicate flag");
     }
   };
 
@@ -219,9 +244,10 @@ export default function AdminPage() {
         body: JSON.stringify({ memberId }),
       });
       if (!res.ok) throw new Error("Failed to delete");
+      showToast("Member deleted", "success");
       await fetchMembers();
     } catch {
-      alert("Failed to delete member");
+      showToast("Failed to delete member");
     }
   };
 
@@ -258,9 +284,10 @@ export default function AdminPage() {
       });
       if (!res.ok) throw new Error("Failed to update");
       setEditingMember(null);
+      showToast("Member updated", "success");
       await fetchMembers();
     } catch {
-      alert("Failed to update member");
+      showToast("Failed to update member");
     }
   };
 
@@ -417,6 +444,15 @@ export default function AdminPage() {
                     onClearFlag={handleClearDuplicateFlag}
                     onDelete={handleDeleteMember}
                     onEdit={(m) => handleEditMember(m as unknown as AdminMember)}
+                    onConfirmDelete={(member, proceed) => {
+                      showConfirm({
+                        title: "Delete Profile",
+                        message: `Delete "${member.name}" (${member.email})? This action cannot be undone.`,
+                        variant: "danger",
+                        confirmLabel: "Delete",
+                        onConfirm: () => { closeConfirm(); proceed(); },
+                      });
+                    }}
                   />
                 );
               })
@@ -755,6 +791,20 @@ export default function AdminPage() {
           }
         }}
       />
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        open={!!confirmDialog}
+        title={confirmDialog?.title || ""}
+        message={confirmDialog?.message || ""}
+        variant={confirmDialog?.variant || "danger"}
+        confirmLabel={confirmDialog?.confirmLabel || "Confirm"}
+        onConfirm={() => confirmDialog?.onConfirm()}
+        onCancel={closeConfirm}
+      />
+
+      {/* Toast Notifications */}
+      <ToastNotification toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }
