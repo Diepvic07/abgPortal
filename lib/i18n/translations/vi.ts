@@ -523,6 +523,7 @@ export const vi: Translations = {
   // Payment
   payment: {
     title: 'Hoàn tất thành viên',
+    description: 'Xin chào {name} — quét mã hoặc chuyển khoản bên dưới để kích hoạt Premium.',
     qrPlaceholder: 'Mã QR',
     qrComingSoon: 'Mã QR sắp có',
     bankDetails: 'Thông tin chuyển khoản',

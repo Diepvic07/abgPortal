@@ -521,6 +521,7 @@ export const en = {
   // Payment
   payment: {
     title: 'Complete Your Membership',
+    description: 'Hi {name} — scan or transfer below to activate your Premium access.',
     qrPlaceholder: 'QR Code',
     qrComingSoon: 'Scan code coming soon',
     bankDetails: 'Bank Transfer Details',

@@ -127,7 +127,9 @@ export function PaymentInfoModal({ memberId, memberName: memberNameProp, isOpen,
                 <h2 className="text-xl font-bold">{t.payment.title}</h2>
               </div>
               <p className="text-white/70 text-sm">
-                Hi <span className="font-medium text-white">{memberName}</span> — scan or transfer below to activate your Premium access.
+                {t.payment.description.split('{name}')[0]}
+                <span className="font-medium text-white">{memberName}</span>
+                {t.payment.description.split('{name}')[1]}
               </p>
             </div>
 
