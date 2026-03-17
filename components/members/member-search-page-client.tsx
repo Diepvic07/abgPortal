@@ -19,6 +19,7 @@ export function MemberSearchPageClient() {
   const [abgClasses, setAbgClasses] = useState<string[]>([]);
   const [searchQuota, setSearchQuota] = useState<{ remaining: number | null; limit: number | null }>({ remaining: null, limit: null });
   const [totalMembers, setTotalMembers] = useState<number | null>(null);
+  const [userClass, setUserClass] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
@@ -28,6 +29,12 @@ export function MemberSearchPageClient() {
       fetch("/api/search/members").then(r => r.json()).then(d => {
         if (d.classes) setAbgClasses(d.classes);
         if (d.totalMembers != null) setTotalMembers(d.totalMembers);
+        if (d.userClass) {
+          setUserClass(d.userClass);
+          setFilters(prev => ({ ...prev, abg_class: d.userClass }));
+        } else {
+          setUserClass(null);
+        }
       }).catch(() => {});
     }
   }, [status]);
@@ -179,6 +186,21 @@ export function MemberSearchPageClient() {
                       .replace('{limit}', String(searchQuota.limit))}
               </div>
             )}
+
+            {/* Helper banner for basic tier / no-class users */}
+            {status === "authenticated" && userClass !== undefined && (
+              userClass ? (
+                tier === "basic" || !tier ? (
+                  <div className="text-xs px-3 py-2 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                    {t.members.basicClassHelper}
+                  </div>
+                ) : null
+              ) : userClass === null && !hasSearched && !loading ? (
+                <div className="text-xs px-3 py-2 rounded-md bg-gray-50 text-gray-600 border border-gray-200">
+                  {t.members.noClassFallback}
+                </div>
+              ) : null
+            )}
           </div>
 
           {/* Results */}
@@ -215,7 +237,7 @@ export function MemberSearchPageClient() {
                   ))}
                 </div>
               </div>
-            ) : !hasSearched ? (
+            ) : !hasSearched && !userClass ? (
               <div className="py-12 text-center text-gray-400">
                 <p>{t.members.enterQuery}</p>
               </div>

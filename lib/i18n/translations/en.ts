@@ -740,6 +740,8 @@ export const en = {
     enterQuery: 'Enter a search query or filter to find members',
     signInRequired: 'Please sign in to search members.',
     totalMembers: '{count} members in the network',
+    basicClassHelper: 'Basic membership lets you view all members in your class. Upgrade to Premium to explore the wider alumni network and use additional filters.',
+    noClassFallback: 'Update your profile to set your ABG class, or use the filters above to search.',
   },
 
   // History page

@@ -742,6 +742,8 @@ export const vi: Translations = {
     enterQuery: 'Nhập từ khóa hoặc bộ lọc để tìm thành viên',
     signInRequired: 'Vui lòng đăng nhập để tìm kiếm thành viên.',
     totalMembers: '{count} thành viên trong mạng lưới',
+    basicClassHelper: 'Thành viên Basic có thể xem tất cả thành viên trong lớp của bạn. Nâng cấp Premium để khám phá mạng lưới alumni rộng hơn và sử dụng thêm bộ lọc.',
+    noClassFallback: 'Cập nhật hồ sơ để đặt lớp ABG, hoặc dùng bộ lọc phía trên để tìm kiếm.',
   },
 
   // History page
