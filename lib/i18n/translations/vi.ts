@@ -293,6 +293,7 @@ export const vi: Translations = {
     signedIn: 'Đã đăng nhập với {email}',
     magicLinkSent: 'Đã gửi magic link! Vui lòng kiểm tra email của bạn.',
     sendMagicLink: 'Gửi Magic Link',
+    googleUnregistered: 'Chúng tôi không tìm thấy tài khoản cho email Google này. Vui lòng đăng ký trước để truy cập ABG Alumni Connect.',
   },
 
   // Match results

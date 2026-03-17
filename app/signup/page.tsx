@@ -1,13 +1,25 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { MemberOnboardingForm } from "@/components/forms/member-onboarding-form";
+import { useToast } from "@/components/ui/toast-provider";
+import { useTranslation } from "@/lib/i18n";
 
 function SignupContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
+  const source = searchParams.get("source");
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    if (source === "google") {
+      showToast(t.auth.googleUnregistered, "info");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">

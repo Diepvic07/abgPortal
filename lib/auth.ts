@@ -95,8 +95,13 @@ export const authOptions: NextAuthOptions = {
                 // Check if member exists
                 const member = await getMemberByEmail(user.email);
 
-                // If member doesn't exist, allow sign in to proceed to onboarding
+                // Member doesn't exist
                 if (!member) {
+                    // Google sign-in: redirect to signup with email prefill
+                    if (account?.provider === 'google') {
+                        return `/signup?email=${encodeURIComponent(user.email)}&source=google`;
+                    }
+                    // Email/magic-link: allow through to onboarding flow
                     return true;
                 }
 

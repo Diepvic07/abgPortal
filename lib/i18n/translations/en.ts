@@ -291,6 +291,7 @@ export const en = {
     signedIn: 'Signed in as {email}',
     magicLinkSent: 'Magic link sent! Check your email.',
     sendMagicLink: 'Send Magic Link',
+    googleUnregistered: 'We could not find an account for this Google email. Please register first to access ABG Alumni Connect.',
   },
 
   // Match results
