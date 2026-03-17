@@ -9,7 +9,7 @@ import { Member } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth(request);
+    const member = await requireAuth(request);
     const abgClasses = await getAbgClasses(true);
     const classes = abgClasses.map(c => c.name);
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       .eq("status", "active")
       .eq("approval_status", "approved");
 
-    return NextResponse.json({ classes, totalMembers: count || 0 });
+    return NextResponse.json({ classes, totalMembers: count || 0, userClass: member.abg_class || null });
   } catch (error) {
     if (error instanceof Error && error.message === "Authentication required") {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
@@ -140,7 +140,9 @@ export async function POST(request: NextRequest) {
     if (filters?.expertise) {
       filtered = filtered.filter(m => m.expertise && vietnameseIncludes(m.expertise, filters.expertise!.trim()));
     }
-    filtered = filtered.slice(0, 10);
+    // Show more results for class-only filter (default view), limit 10 otherwise
+    const isClassOnly = filters?.abg_class && !hasQuery && !filters?.name && !filters?.company && !filters?.expertise;
+    filtered = filtered.slice(0, isClassOnly ? 50 : 10);
 
     const viewerTier = getMemberTier(member);
     const results = filtered.map((row) =>
