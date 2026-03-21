@@ -107,11 +107,11 @@ export function HeaderNavigation() {
             </Link>
             {status === 'authenticated' && (
               <Link href="/members" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
-                Members
+                {t.nav.members}
               </Link>
             )}
             <Link href="/news" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
-              News
+              {t.nav.news}
             </Link>
             <Link href="/faq" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
               {t.nav.faq}
@@ -183,7 +183,7 @@ export function HeaderNavigation() {
                   className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Members
+                  {t.nav.members}
                 </Link>
               )}
               <Link
@@ -191,7 +191,7 @@ export function HeaderNavigation() {
                 className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                News
+                {t.nav.news}
               </Link>
               <Link
                 href="/faq"

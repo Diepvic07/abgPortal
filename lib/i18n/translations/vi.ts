@@ -20,6 +20,8 @@ export const vi: Translations = {
     profile: 'Hồ sơ',
     history: 'Lịch sử',
     faq: 'FAQ',
+    news: 'Tin tức',
+    members: 'Thành viên',
     payMembership: 'Thanh toán hội phí',
   },
 

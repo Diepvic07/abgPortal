@@ -18,6 +18,8 @@ export const en = {
     profile: 'Profile',
     history: 'History',
     faq: 'FAQ',
+    news: 'News',
+    members: 'Members',
     payMembership: 'Pay Membership',
   },
 
