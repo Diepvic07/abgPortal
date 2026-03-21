@@ -1,5 +1,86 @@
 [
   {
+    "id": "96f45422-c074-47c8-b66f-8c0829c959e7",
+    "reporter_email": "ttvietduc@gmail.com",
+    "page_url": "https://www.abgalumni.vn/request",
+    "description": "lỗi",
+    "screenshot_url": "https://ketrmymhnrtkiygjbtye.supabase.co/storage/v1/object/public/bug-screenshots/521aacc6-d2fa-4583-bb6c-b2c3a8308a2a.blob",
+    "status": "open",
+    "created_at": "2026-03-21T04:17:52.664+00:00"
+  },
+  {
+    "id": "565f722e-8db9-4b51-bfe2-672c9b5988a8",
+    "reporter_email": "quephc@gmail.com",
+    "page_url": "https://www.abgalumni.vn/request",
+    "description": "đổi tên nội dung thanh toán thành ABG Alumni  - ho va ten - khóa - data",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-21T03:35:53.891+00:00"
+  },
+  {
+    "id": "879e1977-fb34-4d25-a34f-7d57b6ffe0a7",
+    "reporter_email": "ttvietduc@gmail.com",
+    "page_url": "https://www.abgalumni.vn/about",
+    "description": "Trang không hiển thị - đang ở chế độ user đã đăng nhập",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-21T03:25:03.109+00:00"
+  },
+  {
+    "id": "b4d5a451-dc24-4383-9b4d-6f503253c387",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/request",
+    "description": "Sửa tìm \"người yêu\" thành \"người yêu và bạn bè chung chí hướng và sở thích\"",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-21T03:11:23.068+00:00"
+  },
+  {
+    "id": "65487ff9-f7c5-46eb-905f-ee692ddfbc39",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/onboard",
+    "description": "Sửa \"300 thành viên ABG\" thành \" +600 thành viên ABG\"",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-21T03:10:10.919+00:00"
+  },
+  {
+    "id": "1d4f022a-42bc-439b-a6df-fc2715c2f52e",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/members",
+    "description": "1/ Phần hiển text thị đang ghi \"tất cả lớp\", hãy chuyển \"lớp\" thành \"khoá ABG\"",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-21T03:09:13.395+00:00"
+  },
+  {
+    "id": "339e70f2-91af-4e52-b8e3-143a3abae39b",
+    "reporter_email": "diutran.vnu@gmail.com",
+    "page_url": "https://www.abgalumni.vn/request",
+    "description": "Phần footer hãy link đến đến địa chỉ :\r\n1/ Facebook ABG Alumni: https://www.facebook.com/ABGAlumni/\r\n2/ Chương trình ABG:  https://www.facebook.com/ABG.Program",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-20T10:21:14.502+00:00"
+  },
+  {
+    "id": "41ad0f9b-fcbf-489c-9f2e-e10b649dd521",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/about",
+    "description": "trang này bị lỗi, trang này cần hiện link về Homepage",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-16T11:15:04.605+00:00"
+  },
+  {
+    "id": "21c42781-60f3-46be-9d97-da0e47db67ff",
+    "reporter_email": "ttvietduc@gmail.com",
+    "page_url": "https://www.abgalumni.vn/request",
+    "description": "đang ở trang find connection thì không click on Find connection lại được",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-16T10:48:43.689+00:00"
+  },
+  {
     "id": "8b43e596-d1ce-43b7-9c47-3df904c0cf48",
     "reporter_email": "ttvietduc@gmail.com",
     "page_url": "https://www.abgalumni.vn/members",
