@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const sanitizedQuery = query.trim().slice(0, 500);
 
     const allMembers = await getMembers();
-    const members = allMembers.filter(m => m.status === 'active');
+    let members = allMembers.filter(m => m.status === 'active');
 
     if (members.length === 0) {
       return NextResponse.json({
@@ -70,6 +70,13 @@ export async function POST(request: NextRequest) {
         total: 0,
         message: "No members available at this time.",
       });
+    }
+
+    // Cap members sent to Gemini to avoid timeout
+    if (members.length > 200) {
+      members = members
+        .filter(m => m.expertise || m.bio || m.can_help_with)
+        .slice(0, 200);
     }
 
     // Find matches using Gemini

@@ -207,6 +207,12 @@ export function ConnectionRequestForm() {
       try {
         result = await response.json();
       } catch {
+        // Non-JSON response (e.g. Vercel 504 timeout)
+        if (response.status === 504 || response.status === 502) {
+          throw new Error(locale === 'vi'
+            ? 'Hệ thống đang bận, vui lòng thử lại sau ít phút.'
+            : 'Request timed out. Please try again in a moment.');
+        }
         throw new Error(t.common.error);
       }
 

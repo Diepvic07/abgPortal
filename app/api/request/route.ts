@@ -202,7 +202,6 @@ export async function POST(request: NextRequest) {
 
     } else {
       // Professional, Job, or Hiring Logic
-      // Use all active members as candidates so AI search covers the full community
       const allMembers = await getMembers();
       let availableMembers = allMembers.filter(m => m.id !== requester.id && m.status === 'active');
 
@@ -217,18 +216,28 @@ export async function POST(request: NextRequest) {
         if (openToWorkMembers.length > 0) availableMembers = openToWorkMembers;
       }
 
-      matchResults = availableMembers.length > 0
+      // Cap members sent to Gemini to avoid timeout (keep only those with meaningful profiles)
+      let aiCandidates = availableMembers;
+      if (aiCandidates.length > 200) {
+        // Prioritize members with richer profiles (have expertise/bio/can_help_with filled)
+        aiCandidates = aiCandidates
+          .sort((a, b) => {
+            const scoreA = (a.expertise ? 1 : 0) + (a.bio ? 1 : 0) + (a.can_help_with ? 1 : 0);
+            const scoreB = (b.expertise ? 1 : 0) + (b.bio ? 1 : 0) + (b.can_help_with ? 1 : 0);
+            return scoreB - scoreA;
+          })
+          .slice(0, 200);
+      }
+
+      matchResults = aiCandidates.length > 0
         ? await findMatches(
             request_text,
-            availableMembers.map(m => ({
+            aiCandidates.map(m => ({
               id: m.id,
               name: m.name,
               gender: m.gender,
-              role: m.role,
-              company: m.company,
               expertise: m.expertise,
               can_help_with: m.can_help_with,
-              looking_for: m.looking_for,
               bio: m.bio,
               job_preferences: m.job_preferences,
               hiring_preferences: m.hiring_preferences,
