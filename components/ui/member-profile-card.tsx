@@ -90,25 +90,21 @@ export function MemberProfileCard({ member }: MemberProfileCardProps) {
     const verified = isMemberVerified(member);
 
     return (
-        <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden w-full max-w-3xl mx-auto flex flex-col border border-border">
-            <div className="h-32 sm:h-36 bg-gradient-to-br from-brand to-brand-light relative flex-shrink-0">
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-            </div>
-
+        <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden w-full max-w-3xl mx-auto flex flex-col border border-border border-t-4 border-t-brand">
             <div className="flex-1 pb-10">
                 <div className="px-6 sm:px-10">
-                    <div className="-mt-16 sm:-mt-20 flex flex-col sm:flex-row gap-4 sm:gap-6 sm:items-end mb-8 relative z-10">
-                        <div className="inline-block rounded-full p-1.5 bg-white shadow-md self-start">
+                    <div className="pt-8 sm:pt-10 flex flex-col sm:flex-row gap-4 sm:gap-6 sm:items-start mb-8">
+                        <div className="inline-block rounded-full p-1 bg-white shadow-md self-start flex-shrink-0">
                             <MemberAvatar
                                 name={member.name}
                                 avatarUrl={member.avatar_url}
                                 size="xl"
                                 memberStatus={getAvatarMemberStatus(member)}
-                                className="!w-28 !h-28 sm:!w-32 sm:!h-32 text-3xl sm:text-4xl"
+                                className="!w-20 !h-20 sm:!w-24 sm:!h-24 text-2xl sm:text-3xl"
                             />
                         </div>
 
-                        <div className="flex-1 pb-1">
+                        <div className="flex-1 min-w-0">
                             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 flex flex-wrap items-center gap-2 sm:gap-3">
                                 {member.name}
                                 {verified && (
@@ -137,7 +133,7 @@ export function MemberProfileCard({ member }: MemberProfileCardProps) {
                             </div>
                         </div>
 
-                        <div className="hidden sm:flex flex-wrap gap-2 pb-1 justify-end">
+                        <div className="hidden sm:flex flex-wrap gap-2 justify-end flex-shrink-0">
                             {member.linkedin_url && <LinkButton href={member.linkedin_url} label="LinkedIn" icon={Icons.LinkedIn} />}
                             {member.facebook_url && <LinkButton href={member.facebook_url} label="Facebook" icon={Icons.Facebook} />}
                             {member.company_website && <LinkButton href={member.company_website} label="Website" icon={Icons.Website} />}
