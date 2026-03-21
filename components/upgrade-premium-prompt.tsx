@@ -173,7 +173,7 @@ export function UpgradePremiumPrompt() {
             </div>
             <div className="flex justify-between items-center pt-2 border-t">
               <span className="text-gray-500">{t.payment.reference}</span>
-              <span className="font-mono font-semibold text-brand">Alumni - [Ho Ten] - [Khoa] - [Phone]</span>
+              <span className="font-mono font-semibold text-brand">Alumni [Ho Ten] [ABGEdu/Openxx] [Phone]</span>
             </div>
           </div>
         </div>
