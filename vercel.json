@@ -1,6 +1,14 @@
 {
   "framework": "nextjs",
   "regions": ["sin1"],
+  "redirects": [
+    {
+      "source": "/:path(.*)",
+      "has": [{ "type": "host", "value": "www.abgalumni.vn" }],
+      "destination": "https://abgalumni.vn/:path",
+      "permanent": true
+    }
+  ],
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 60
