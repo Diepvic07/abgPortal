@@ -35,7 +35,7 @@ export const vi: Translations = {
     directory: 'Danh bạ',
     newsFeed: 'Tin tức',
     connections: 'Kết nối',
-    company: 'Công Ty',
+    company: 'Nơi học tập/công tác',
     about: 'Về ABG',
     faqLink: 'Câu hỏi thường gặp',
     stayConnected: 'Giữ Liên Lạc',
@@ -45,7 +45,7 @@ export const vi: Translations = {
 
   // Landing page
   landing: {
-    title: 'Kết nối với anh chị em ABG',
+    title: 'Kết nối với ABGers',
     subtitle: 'Tìm đúng người, đúng việc trong ổ nhóm mình. Ghép đôi với những người anh em có thể gỡ rối cho bạn.',
     joinCard: {
       title: 'Nhập hội ngay',
@@ -57,13 +57,13 @@ export const vi: Translations = {
     },
     about: {
       title: 'ABG Alumni Connect là gì?',
-      description: 'Nền tảng kết nối riêng tư dành riêng cho anh chị em ABG Alumni để giao lưu, hợp tác và hỗ trợ nhau qua hệ thống ghép đôi AI.',
+      description: 'Nền tảng kết nối riêng tư dành riêng cho ABG Alumni để giao lưu, hợp tác và hỗ trợ nhau qua hệ thống ghép đôi AI.',
       benefit1Title: 'Mạng lưới độc quyền',
-      benefit1Desc: 'Tiếp cận cộng đồng chọn lọc ~600 alumni ABG từ nhiều ngành nghề và chuyên môn.',
+      benefit1Desc: 'Tiếp cận cộng đồng chọn lọc ~600 ABGers từ nhiều ngành nghề và chuyên môn.',
       benefit2Title: 'Ghép đôi bằng AI',
       benefit2Desc: 'AI phân tích nhu cầu của bạn và tìm những người phù hợp nhất có thể giúp được.',
       benefit3Title: 'Kết nối uy tín',
-      benefit3Desc: 'Toàn bộ thành viên đều là ABG alumni đã xác minh, đảm bảo chất lượng và kết nối chân thực.',
+      benefit3Desc: 'Toàn bộ thành viên đều là ABG Alumni đã xác minh, đảm bảo chất lượng và kết nối chân thực.',
     },
     howItWorks: {
       title: 'Cách thức hoạt động',
@@ -107,8 +107,8 @@ export const vi: Translations = {
   // Homepage (network-first landing page)
   homepage: {
     hero: {
-      headline: "Mở Khóa Mạng Lưới Alumni ABG Độc Quyền",
-      subheadline: "Tham gia mạng lưới thành viên riêng tư giúp alumni ABG kết nối, khám phá cơ hội và gắn kết với cộng đồng.",
+      headline: "Mở Khóa Mạng Lưới ABG Alumni Độc Quyền",
+      subheadline: "Tham gia mạng lưới thành viên giúp ABG Alumni để kết nối, khám phá cơ hội và gắn kết với cộng đồng.",
       primaryCta: "Mở Khóa Quyền Thành Viên",
       secondaryCta: "Tìm Hiểu Về ABG Alumni",
       bullet1: "Truy cập mạng lưới uy tín với 500+ alumni",
@@ -125,8 +125,8 @@ export const vi: Translations = {
     whyJoin: {
       title: "Tại Sao Nên Tham Gia",
       subtitle: "Xây dựng để tạo ảnh hưởng, thiết kế để kết nối.",
-      connect: "Kết Nối Với Alumni",
-      connectDesc: "Truy cập danh bạ alumni, yêu cầu giới thiệu và xây dựng mối quan hệ trong cộng đồng uy tín.",
+      connect: "Kết Nối Với ABG Alumni",
+      connectDesc: "Truy cập danh bạ ABG Alumni, yêu cầu giới thiệu và xây dựng mối quan hệ trong cộng đồng uy tín.",
       discover: "Khám Phá Cơ Hội",
       discoverDesc: "Tìm lại bạn cũ, khám phá cơ hội nghề nghiệp và đối tác kinh doanh trong cộng đồng ABG.",
       stayEngaged: "Luôn Kết Nối",
@@ -134,8 +134,8 @@ export const vi: Translations = {
     },
     whatYouCanDo: {
       title: "Bạn Có Thể Làm Gì Trên Nền Tảng",
-      searchTitle: "Tìm Kiếm Mạng Lưới Alumni",
-      searchDesc: "Khám phá alumni theo khóa, ngành nghề, thành phố và quốc gia.",
+      searchTitle: "Tìm Kiếm Mạng Lưới ABG Alumni",
+      searchDesc: "Khám phá Alumni theo khóa, ngành nghề, thành phố và quốc gia.",
       introTitle: "Yêu Cầu Giới Thiệu",
       introDesc: "Nền tảng giúp bạn kết nối trực tiếp với các alumni khác.",
       updatesTitle: "Theo Dõi Cập Nhật",
@@ -173,7 +173,7 @@ export const vi: Translations = {
       readMore: "Đọc toàn bộ",
     },
     finalCta: {
-      headline: "Sẵn sàng mở khóa mạng lưới alumni ABG?",
+      headline: "Sẵn sàng mở khóa mạng lưới ABG Alumni?",
       subtext: "Tham gia cộng đồng ABG và bắt đầu xây dựng những kết nối ý nghĩa.",
       cta: "Mở Khóa Quyền Thành Viên",
       secondaryCta: "Liên Hệ Hỗ Trợ",
@@ -189,9 +189,9 @@ export const vi: Translations = {
       fullNamePlaceholder: 'Nguyễn Văn A',
       email: 'Email',
       emailPlaceholder: 'email@example.com',
-      role: 'Đang làm chức gì',
+      role: 'Vị trí công việc',
       rolePlaceholder: 'Product Manager',
-      company: 'Ở công ty nào',
+      company: 'Nơi học tập/công tác',
       companyPlaceholder: 'Công ty ABC',
       expertise: 'Món tủ của bạn (Chuyên môn)',
       expertisePlaceholder: 'VD: Rành về gọi vốn, trùm sales, chiến lược...',
@@ -200,9 +200,9 @@ export const vi: Translations = {
       lookingFor: 'Bạn đang cần tìm gì?',
       lookingForPlaceholder: 'VD: Tìm Co-founder kỹ thuật, cần mối bán hàng B2B...',
       avatar: 'Bấm để up ảnh đại diện (tùy chọn)',
-      abgClass: 'Lớp ABG',
-      abgClassPlaceholder: 'Chọn lớp ABG của bạn',
-      abgClassHelp: 'Chọn lớp ABG từ danh sách',
+      abgClass: 'Khoá ABG',
+      abgClassPlaceholder: 'Chọn khoá ABG của bạn',
+      abgClassHelp: 'Chọn khoá ABG từ danh sách',
       nicknameSection: 'Biệt danh (Tùy chọn)',
       nickname: 'Biệt danh',
       nicknamePlaceholder: 'VD: Johnny',
@@ -236,10 +236,10 @@ export const vi: Translations = {
       orDivider: 'hoặc',
       emailGoogleNote: 'Email sẽ được tự động điền từ tài khoản Google của bạn',
       emailRequired: 'Nhập email để nhận magic link hoặc đăng nhập bằng Google',
-      autoApproveNote: 'Lưu ý: Nếu bạn dùng email đã đăng ký lớp ABG, tài khoản sẽ được duyệt tự động. Nếu không, bạn cần chờ admin phê duyệt.',
+      autoApproveNote: 'Lưu ý: Nếu bạn dùng email đã đăng ký các chương trình ABG, tài khoản sẽ được duyệt tự động. Nếu không, bạn cần chờ admin phê duyệt.',
     },
     success: {
-      title: 'Chào mừng người anh em!',
+      title: 'Chào mừng người anh em ABG!',
       checkEmail: 'Check mail để xác nhận nhé.',
       generatedBio: 'Bio xịn xò AI viết cho bạn:',
       completePayment: 'Thanh toán ngay',
@@ -247,8 +247,8 @@ export const vi: Translations = {
     validation: {
       nameRequired: 'Nhớ điền tên nha',
       emailRequired: 'Email không chuẩn rồi',
-      roleRequired: 'Chưa điền chức danh nè',
-      companyRequired: 'Quên điền công ty rồi',
+      roleRequired: 'Chưa điền vị trí công việc nè',
+      companyRequired: 'Quên điền nơi công tác rồi',
       expertiseMin: 'Kể thêm chút về món tủ đi (tối thiểu 10 ký tự)',
       canHelpMin: 'Giúp được gì kể rõ tí nha (tối thiểu 10 ký tự)',
       lookingForMin: 'Tìm gì nói rõ xíu (tối thiểu 10 ký tự)',
@@ -553,10 +553,10 @@ export const vi: Translations = {
   // Dating
   dating: {
     professionalNetwork: 'Kết nối công việc',
-    findPartner: 'Tìm người yêu ❤️',
+    findPartner: 'Tìm bạn tâm giao ❤️',
     idealMatch: 'Mô tả người trong mộng ❤️',
     idealMatchPlaceholder: 'Ví dụ: Mình tìm người thích đi du lịch, yêu thiên nhiên, thích nói chuyện sâu sắc...',
-    findMyMatch: 'Tìm người yêu ngay ❤️',
+    findMyMatch: 'Tìm bạn tâm giao ngay ❤️',
     searching: 'Đang tìm người ấy...',
     findJob: 'Tìm việc 💼',
     findCandidates: 'Tuyển dụng 🤝',
