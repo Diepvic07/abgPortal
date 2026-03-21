@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
   const router = useRouter();
+  const { t } = useTranslation();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,13 +60,13 @@ export function LoginForm() {
         if (result.error.includes("wait") || result.error.includes("seconds")) {
           setError(result.error);
         } else {
-          setError("Could not send email. Please try again.");
+          setError(t.auth.couldNotSendEmail);
         }
       } else {
         setEmailSent(true);
       }
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t.auth.somethingWentWrong);
     } finally {
       setIsLoading(false);
     }
@@ -73,8 +75,8 @@ export function LoginForm() {
   if (emailSent) {
     return (
       <div className="text-center py-6 space-y-2">
-        <p className="text-green-600 font-medium">Magic link sent!</p>
-        <p className="text-sm text-gray-500">Check your email and click the link to sign in.</p>
+        <p className="text-green-600 font-medium">{t.auth.magicLinkSent}</p>
+        <p className="text-sm text-gray-500">{t.auth.magicLinkCheck}</p>
       </div>
     );
   }
@@ -102,7 +104,7 @@ export function LoginForm() {
           disabled={isLoading}
           className="w-full py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {isLoading ? "Checking..." : "Continue with Email"}
+          {isLoading ? t.auth.checking : t.auth.continueWithEmail}
         </button>
       </form>
 
@@ -111,7 +113,7 @@ export function LoginForm() {
           <div className="w-full border-t border-gray-300"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">or</span>
+          <span className="px-2 bg-white text-gray-500">{t.auth.or}</span>
         </div>
       </div>
 
@@ -137,7 +139,7 @@ export function LoginForm() {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-        <span className="font-medium text-gray-700">Continue with Google</span>
+        <span className="font-medium text-gray-700">{t.auth.continueWithGoogle}</span>
       </button>
     </div>
   );
