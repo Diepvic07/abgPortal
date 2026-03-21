@@ -24,7 +24,7 @@ export function PaymentInfoModal({ memberId, memberName: memberNameProp, isOpen,
 
   if (!isOpen) return null;
 
-  const referenceCode = `Alumni - ${memberName} - [Khoá] - [Số đt]`;
+  const referenceCode = `Alumni - [Tên] - [Khoá] - [Số đt]`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referenceCode);
