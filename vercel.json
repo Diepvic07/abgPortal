@@ -4,8 +4,8 @@
   "redirects": [
     {
       "source": "/:path(.*)",
-      "has": [{ "type": "host", "value": "www.abgalumni.vn" }],
-      "destination": "https://abgalumni.vn/:path",
+      "has": [{ "type": "host", "value": "abgalumni.vn" }],
+      "destination": "https://www.abgalumni.vn/:path",
       "permanent": true
     }
   ],
