@@ -24,7 +24,7 @@ export function PaymentInfoModal({ memberId, memberName: memberNameProp, isOpen,
 
   if (!isOpen) return null;
 
-  const referenceCode = `ABG-${memberId.substring(0, 8)}`;
+  const referenceCode = `ABG Alumni - ${memberName} - ${memberId.substring(0, 8)}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referenceCode);

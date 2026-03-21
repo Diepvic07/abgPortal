@@ -198,7 +198,7 @@ export function FakeResultsPaywall({ type, matchType, onBack }: FakeResultsPaywa
           </div>
           <div className="flex justify-between items-center pt-2 border-t border-gray-200">
             <span className="text-gray-500">{t.payment.reference}</span>
-            <span className="font-mono font-semibold text-brand">ABG-[Email]</span>
+            <span className="font-mono font-semibold text-brand">ABG Alumni - [Ho Ten] - [Khoa] - [Email]</span>
           </div>
         </div>
       </div>

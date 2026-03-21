@@ -19,7 +19,7 @@ const PAYMENT_CONFIG = {
 
 const PREMIUM_BENEFITS = {
   vi: [
-    { icon: '🔍', title: 'Tìm kiếm không giới hạn', desc: 'Tìm kiếm kết nối không giới hạn với hơn 300 thành viên ABG' },
+    { icon: '🔍', title: 'Tìm kiếm không giới hạn', desc: 'Tìm kiếm kết nối không giới hạn với hơn 600 thành viên ABG' },
     { icon: '🤝', title: 'Kết nối chất lượng cao', desc: 'AI matching thông minh giúp tìm đúng người phù hợp với nhu cầu' },
     { icon: '💼', title: 'Cơ hội việc làm độc quyền', desc: 'Tiếp cận các vị trí tuyển dụng chỉ dành cho thành viên Premium' },
     { icon: '❤️', title: 'Hẹn hò trong cộng đồng', desc: 'Tìm kiếm bạn đời trong mạng lưới ABG Alumni đã xác minh' },
@@ -27,7 +27,7 @@ const PREMIUM_BENEFITS = {
     { icon: '🎯', title: 'Hiển thị nổi bật', desc: 'Hồ sơ của bạn được ưu tiên hiển thị trong kết quả tìm kiếm' },
   ],
   en: [
-    { icon: '🔍', title: 'Unlimited Searches', desc: 'Unlimited connection searches with 300+ ABG members' },
+    { icon: '🔍', title: 'Unlimited Searches', desc: 'Unlimited connection searches with 600+ ABG members' },
     { icon: '🤝', title: 'High-Quality Matches', desc: 'Smart AI matching finds the right people for your needs' },
     { icon: '💼', title: 'Exclusive Job Opportunities', desc: 'Access job positions exclusive to Premium members' },
     { icon: '❤️', title: 'Community Dating', desc: 'Find your partner within the verified ABG Alumni network' },
@@ -173,7 +173,7 @@ export function UpgradePremiumPrompt() {
             </div>
             <div className="flex justify-between items-center pt-2 border-t">
               <span className="text-gray-500">{t.payment.reference}</span>
-              <span className="font-mono font-semibold text-brand">ABG-[Email]</span>
+              <span className="font-mono font-semibold text-brand">ABG Alumni - [Ho Ten] - [Khoa] - [Email]</span>
             </div>
           </div>
         </div>

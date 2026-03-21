@@ -594,7 +594,7 @@ export const vi: Translations = {
     statusNote: 'Chỉ thành viên độc thân mới có thể sử dụng tính năng hẹn hò',
     saveAndContinue: 'Lưu & Tiếp tục',
     // Category tab descriptions
-    loveDesc: 'Tìm người yêu trong mạng lưới alumni đã xác minh',
+    loveDesc: 'Tìm người yêu và bạn bè chung chí hướng và sở thích trong mạng lưới alumni đã xác minh',
     jobDesc: 'Khám phá cơ hội việc làm hoặc kết nối với mentor/nhà tuyển dụng',
     hiringDesc: 'Tìm kiếm nhân tài cho vị trí tuyển dụng',
     partnerDesc: 'Kết nối hợp tác kinh doanh hoặc mở rộng mạng lưới',
@@ -749,7 +749,7 @@ export const vi: Translations = {
     filterName: 'Tên',
     filterCompany: 'Công ty',
     filterExpertise: 'Chuyên môn',
-    filterAllClasses: 'Tất cả lớp',
+    filterAllClasses: 'Tất cả khoá ABG',
     searchLimitReached: 'Đã hết lượt tìm kiếm tháng này. Nâng cấp Pro để tìm kiếm không giới hạn.',
     searchesRemaining: 'Còn {remaining}/{limit} lượt tìm kiếm tháng này',
     searchMinQuery: 'Nhập từ khóa (tối thiểu 2 ký tự) hoặc dùng bộ lọc',

@@ -70,15 +70,28 @@ export function FooterSection() {
           {/* Col 4: Stay Connected */}
           <div>
             <h4 className="text-white font-bold mb-6">{t.footer.stayConnected}</h4>
-            <div className="flex space-x-4 mb-6">
+            <div className="flex flex-col space-y-3 mb-6">
               <a
                 href="https://www.facebook.com/ABGAlumni"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#1877F2] transition-all"
-                aria-label="Facebook"
+                className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors group"
               >
-                <FacebookIcon />
+                <span className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-[#1877F2] transition-all">
+                  <FacebookIcon />
+                </span>
+                <span className="text-sm">ABG Alumni</span>
+              </a>
+              <a
+                href="https://www.facebook.com/ABG.Program"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors group"
+              >
+                <span className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-[#1877F2] transition-all">
+                  <FacebookIcon />
+                </span>
+                <span className="text-sm">ABG Program</span>
               </a>
             </div>
           </div>

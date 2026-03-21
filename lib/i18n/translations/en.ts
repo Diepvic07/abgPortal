@@ -592,7 +592,7 @@ export const en = {
     statusNote: 'Only single members can use the dating feature',
     saveAndContinue: 'Save & Continue',
     // Category tab descriptions
-    loveDesc: 'Find a romantic partner within the verified alumni network',
+    loveDesc: 'Find a partner and like-minded friends with shared interests within the verified alumni network',
     jobDesc: 'Discover open roles or connect with mentors/recruiters',
     hiringDesc: 'Find talent for available job positions',
     partnerDesc: 'Connect for business partnerships or networking',
@@ -747,7 +747,7 @@ export const en = {
     filterName: 'Name',
     filterCompany: 'Company',
     filterExpertise: 'Expertise',
-    filterAllClasses: 'All Classes',
+    filterAllClasses: 'All ABG Classes',
     searchLimitReached: 'Monthly search limit reached. Upgrade to Pro for unlimited searches.',
     searchesRemaining: '{remaining}/{limit} searches remaining this month',
     searchMinQuery: 'Enter a search query (min 2 chars) or use filters',
