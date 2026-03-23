@@ -254,6 +254,7 @@ export default function AdminPage() {
   const handleEditMember = (member: AdminMember) => {
     setEditingMember(member);
     setEditForm({
+      email: member.email || "",
       name: member.name || "",
       role: member.role || "",
       company: member.company || "",
@@ -282,12 +283,15 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId: editingMember.id, updates: editForm }),
       });
-      if (!res.ok) throw new Error("Failed to update");
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update");
+      }
       setEditingMember(null);
       showToast("Member updated", "success");
       await fetchMembers();
-    } catch {
-      showToast("Failed to update member");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to update member");
     }
   };
 
@@ -715,9 +719,24 @@ export default function AdminPage() {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b shrink-0">
               <h2 className="text-lg font-semibold text-gray-900">Edit Member</h2>
-              <p className="text-sm text-gray-500">{editingMember.email}</p>
+              <p className="text-sm text-gray-500">{editingMember.name}</p>
             </div>
             <div className="px-6 py-4 space-y-3 overflow-y-auto">
+              {/* Email field with warning */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={editForm.email || ""}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {editForm.email && editForm.email !== editingMember?.email && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    Member must log in with this new email after the change.
+                  </p>
+                )}
+              </div>
               {([
                 { key: "name", label: "Name" },
                 { key: "nickname", label: "Nickname" },
