@@ -279,6 +279,16 @@ export async function updateMember(
   return true;
 }
 
+export async function updateMemberEmail(id: string, newEmail: string): Promise<boolean> {
+  const db = createServerSupabaseClient();
+  const { error } = await db.from('members').update({ email: newEmail }).eq('id', id);
+  if (error) {
+    console.error('[SupabaseDB] updateMemberEmail error:', error);
+    return false;
+  }
+  return true;
+}
+
 export async function updateMemberApprovalStatus(
   id: string,
   status: 'pending' | 'approved' | 'rejected'

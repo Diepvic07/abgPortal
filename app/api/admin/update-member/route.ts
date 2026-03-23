@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getMemberById, updateMember } from '@/lib/supabase-db';
+import { getMemberById, getMemberByEmail, updateMember, updateMemberEmail } from '@/lib/supabase-db';
 import { isAdminAsync } from '@/lib/admin-utils-server';
 import { Member } from '@/types';
 
@@ -37,13 +37,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (Object.keys(safeUpdates).length === 0) {
+    // Handle email separately (not in ALLOWED_FIELDS due to type constraint)
+    let emailUpdated = false;
+    if (typeof updates.email === 'string') {
+      const newEmail = updates.email.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+        return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+      }
+      if (newEmail !== member.email?.toLowerCase()) {
+        const existing = await getMemberByEmail(newEmail);
+        if (existing && existing.id !== memberId) {
+          return NextResponse.json({ error: 'Email already in use by another member' }, { status: 409 });
+        }
+        await updateMemberEmail(memberId, newEmail);
+        emailUpdated = true;
+      }
+    }
+
+    if (Object.keys(safeUpdates).length === 0 && !emailUpdated) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
-    await updateMember(memberId, safeUpdates as Partial<Omit<Member, 'id' | 'email' | 'created_at'>>);
+    if (Object.keys(safeUpdates).length > 0) {
+      await updateMember(memberId, safeUpdates as Partial<Omit<Member, 'id' | 'email' | 'created_at'>>);
+    }
 
-    return NextResponse.json({ success: true, updated: Object.keys(safeUpdates) });
+    const updatedFields = [...Object.keys(safeUpdates), ...(emailUpdated ? ['email'] : [])];
+    return NextResponse.json({ success: true, updated: updatedFields });
   } catch (error) {
     console.error('Admin update-member error:', error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
