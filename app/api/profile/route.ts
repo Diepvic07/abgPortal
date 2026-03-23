@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { getAuthenticatedMember, requireAuth } from '@/lib/auth-middleware';
 import { updateMember, getMemberById } from '@/lib/supabase-db';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
+import { sendPaymentNotificationEmail } from '@/lib/resend';
 
 // GET /api/profile - Get current user's profile
 export async function GET(request: NextRequest) {
@@ -86,6 +87,16 @@ export async function PATCH(request: NextRequest) {
 
     if (!success) {
       return errorResponse('Failed to update profile', 500);
+    }
+
+    // Notify admins when user confirms payment
+    if (updates.payment_status === 'pending') {
+      sendPaymentNotificationEmail({
+        name: member.name,
+        email: member.email,
+        abgClass: member.abg_class,
+        phone: member.phone,
+      }).catch(err => console.error('[API] Payment notification error (non-blocking):', err));
     }
 
     // Fetch updated member

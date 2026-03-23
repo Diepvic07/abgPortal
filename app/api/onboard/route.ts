@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { put } from '@vercel/blob';
 import { generateBio } from '@/lib/gemini';
 import { addMember, getMemberByEmail, updateMember, updateMemberLastLogin, findPotentialDuplicates } from '@/lib/supabase-db';
-import { sendOnboardingConfirmation, sendDuplicateAlertEmail } from '@/lib/resend';
+import { sendOnboardingConfirmation, sendDuplicateAlertEmail, sendNewSignupNotificationEmail } from '@/lib/resend';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { Member } from '@/types';
@@ -229,6 +229,17 @@ export async function POST(request: NextRequest) {
     }
 
     await sendOnboardingConfirmation(email, name, bio, locale);
+
+    // Notify admins about new signup needing approval (only for truly new users)
+    if (!existingMember) {
+      sendNewSignupNotificationEmail({
+        name,
+        email,
+        abgClass: abg_class,
+        role,
+        company,
+      }).catch(err => console.error('[API] New signup notification error (non-blocking):', err));
+    }
 
     return successResponse({
       message: 'Profile created successfully',

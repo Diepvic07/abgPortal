@@ -1082,3 +1082,139 @@ export async function sendDuplicateReminderEmail(
     console.error('Failed to send duplicate reminder email:', error);
   }
 }
+
+/** Send admin notification when a new user signs up and awaits approval */
+export async function sendNewSignupNotificationEmail(data: {
+  name: string;
+  email: string;
+  abgClass?: string;
+  role: string;
+  company: string;
+}): Promise<void> {
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim())
+    .filter(Boolean);
+  if (adminEmails.length === 0) {
+    console.warn('[Resend] No ADMIN_EMAILS configured, skipping new signup notification');
+    return;
+  }
+
+  const resend = getResendClient();
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: adminEmails,
+    subject: `[ABG] New signup pending approval: ${data.name}`,
+    html: `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#1a56db;padding:24px 40px;">
+          <h1 style="margin:0;font-size:20px;color:#ffffff;font-weight:600;">New Member Signup — Pending Approval</h1>
+        </td></tr>
+        <tr><td style="padding:28px 40px;">
+          <p style="margin:0 0 16px;font-size:15px;color:#1f2937;">A new member has signed up and is waiting for your approval.</p>
+
+          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#1f2937;">
+              <tr><td style="padding:4px 0;font-weight:600;width:80px;">Name:</td><td style="padding:4px 0;">${escapeHtml(data.name)}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">Email:</td><td style="padding:4px 0;">${escapeHtml(data.email)}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">Role:</td><td style="padding:4px 0;">${escapeHtml(data.role)}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">Company:</td><td style="padding:4px 0;">${escapeHtml(data.company)}</td></tr>
+              ${data.abgClass ? `<tr><td style="padding:4px 0;font-weight:600;">Class:</td><td style="padding:4px 0;">${escapeHtml(data.abgClass)}</td></tr>` : ''}
+            </table>
+          </div>
+
+          <table width="100%" cellpadding="0" cellspacing="0"><tr><td>
+            <a href="${appUrl}/admin" style="display:inline-block;padding:12px 28px;background:#1a56db;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">Review in Admin Panel</a>
+          </td></tr></table>
+        </td></tr>
+        <tr><td style="padding:20px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Connect &mdash; Admin Notification</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: New signup notification not sent.', error.message);
+      return;
+    }
+    console.error('Failed to send new signup notification email:', error);
+  }
+}
+
+/** Send admin notification when a user confirms payment */
+export async function sendPaymentNotificationEmail(data: {
+  name: string;
+  email: string;
+  abgClass?: string;
+  phone?: string;
+}): Promise<void> {
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim())
+    .filter(Boolean);
+  if (adminEmails.length === 0) {
+    console.warn('[Resend] No ADMIN_EMAILS configured, skipping payment notification');
+    return;
+  }
+
+  const resend = getResendClient();
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: adminEmails,
+    subject: `[ABG] Payment confirmed: ${data.name}`,
+    html: `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#059669;padding:24px 40px;">
+          <h1 style="margin:0;font-size:20px;color:#ffffff;font-weight:600;">Payment Confirmation — Needs Verification</h1>
+        </td></tr>
+        <tr><td style="padding:28px 40px;">
+          <p style="margin:0 0 16px;font-size:15px;color:#1f2937;">A member has confirmed their payment and is waiting for your verification.</p>
+
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#1f2937;">
+              <tr><td style="padding:4px 0;font-weight:600;width:80px;">Name:</td><td style="padding:4px 0;">${escapeHtml(data.name)}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">Email:</td><td style="padding:4px 0;">${escapeHtml(data.email)}</td></tr>
+              ${data.phone ? `<tr><td style="padding:4px 0;font-weight:600;">Phone:</td><td style="padding:4px 0;">${escapeHtml(data.phone)}</td></tr>` : ''}
+              ${data.abgClass ? `<tr><td style="padding:4px 0;font-weight:600;">Class:</td><td style="padding:4px 0;">${escapeHtml(data.abgClass)}</td></tr>` : ''}
+            </table>
+          </div>
+
+          <p style="margin:0 0 16px;font-size:14px;color:#6b7280;">Please verify the bank transfer and upgrade the member to Premium in the Admin Panel.</p>
+
+          <table width="100%" cellpadding="0" cellspacing="0"><tr><td>
+            <a href="${appUrl}/admin" style="display:inline-block;padding:12px 28px;background:#059669;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">Review in Admin Panel</a>
+          </td></tr></table>
+        </td></tr>
+        <tr><td style="padding:20px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Connect &mdash; Admin Notification</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: Payment notification not sent.', error.message);
+      return;
+    }
+    console.error('Failed to send payment notification email:', error);
+  }
+}
