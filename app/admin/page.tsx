@@ -530,6 +530,12 @@ export default function AdminPage() {
                           {/* Actions - stacked vertically */}
                           <td className="px-4 py-3">
                             <div className="flex flex-col gap-1">
+                              <button
+                                onClick={() => handleEditMember(member)}
+                                className="text-sm text-gray-600 hover:text-gray-800"
+                              >
+                                Edit
+                              </button>
                               {member.approval_status === "pending" && (
                                 <>
                                   <button
