@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PaymentUpgradeModal } from "./payment-upgrade-modal";
 
 interface EnrichedPayment {
   id: string;
@@ -37,6 +38,8 @@ export function AdminPaymentReport() {
   const [data, setData] = useState<PaymentsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [modalMember, setModalMember] = useState<PendingPaymentMember | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -56,6 +59,50 @@ export function AdminPaymentReport() {
     };
     fetchPayments();
   }, []);
+
+  const handleDecline = async (memberId: string) => {
+    if (!confirm("Decline this payment?")) return;
+    setProcessingId(memberId);
+    try {
+      const res = await fetch("/api/admin/tier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, tier: "basic" }),
+      });
+      if (!res.ok) throw new Error("Failed to decline");
+      setData((prev) =>
+        prev
+          ? { ...prev, pending_payments: prev.pending_payments.filter((m) => m.id !== memberId) }
+          : prev
+      );
+    } catch (err) {
+      console.error("Decline error:", err);
+      alert("Failed to decline payment");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleUpgrade = async (amount: number, notes: string) => {
+    if (!modalMember) return;
+    setProcessingId(modalMember.id);
+    try {
+      const res = await fetch("/api/admin/tier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: modalMember.id, tier: "premium", amount_vnd: amount, notes }),
+      });
+      if (!res.ok) throw new Error("Failed to upgrade");
+      const refreshRes = await fetch("/api/admin/payments");
+      if (refreshRes.ok) setData(await refreshRes.json());
+    } catch (err) {
+      console.error("Upgrade error:", err);
+      alert("Failed to upgrade member");
+    } finally {
+      setProcessingId(null);
+      setModalMember(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -117,9 +164,22 @@ export function AdminPaymentReport() {
                     <td className="px-4 py-3 text-gray-600">{m.abg_class || "-"}</td>
                     <td className="px-4 py-3 text-gray-600">{m.phone || "-"}</td>
                     <td className="px-4 py-3">
-                      <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-orange-200 text-orange-800">
-                        Awaiting verification
-                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setModalMember(m)}
+                          disabled={processingId === m.id}
+                          className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors disabled:opacity-50"
+                        >
+                          Upgrade Pro
+                        </button>
+                        <button
+                          onClick={() => handleDecline(m.id)}
+                          disabled={processingId === m.id}
+                          className="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors disabled:opacity-50"
+                        >
+                          {processingId === m.id ? "..." : "Decline"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -169,6 +229,13 @@ export function AdminPaymentReport() {
           </table>
         </div>
       )}
+
+      <PaymentUpgradeModal
+        isOpen={!!modalMember}
+        memberName={modalMember?.name || ""}
+        onClose={() => setModalMember(null)}
+        onConfirm={handleUpgrade}
+      />
     </div>
   );
 }

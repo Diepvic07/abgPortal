@@ -408,12 +408,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            Payments
-            {pendingPaymentCount > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-orange-500 rounded-full">
-                {pendingPaymentCount}
-              </span>
-            )}
+            Payments ({pendingPaymentCount})
           </button>
           <button
             onClick={() => setActiveTab("classes")}
