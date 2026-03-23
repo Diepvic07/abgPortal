@@ -13,10 +13,19 @@ interface EnrichedPayment {
   created_at: string;
 }
 
+interface PendingPaymentMember {
+  id: string;
+  name: string;
+  email: string;
+  abg_class?: string;
+  phone?: string;
+}
+
 interface PaymentsResponse {
   payments: EnrichedPayment[];
   total_cash_in: number;
   count: number;
+  pending_payments: PendingPaymentMember[];
 }
 
 const vndFormatter = new Intl.NumberFormat("vi-VN", {
@@ -81,6 +90,44 @@ export function AdminPaymentReport() {
           <p className="text-2xl font-bold text-blue-800 mt-1">{data.count}</p>
         </div>
       </div>
+
+      {/* Pending payment verifications */}
+      {data.pending_payments.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-base font-semibold text-orange-700 mb-3">
+            Pending Verification ({data.pending_payments.length})
+          </h3>
+          <div className="overflow-auto rounded-lg border border-orange-200 bg-orange-50">
+            <table className="w-full min-w-[500px] text-sm">
+              <thead>
+                <tr className="border-b border-orange-200">
+                  <th className="px-4 py-3 text-left font-medium text-orange-700">Member</th>
+                  <th className="px-4 py-3 text-left font-medium text-orange-700">Class</th>
+                  <th className="px-4 py-3 text-left font-medium text-orange-700">Phone</th>
+                  <th className="px-4 py-3 text-left font-medium text-orange-700">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-orange-100">
+                {data.pending_payments.map((m) => (
+                  <tr key={m.id} className="hover:bg-orange-100/50">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-gray-900">{m.name}</p>
+                      <p className="text-xs text-gray-500">{m.email}</p>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{m.abg_class || "-"}</td>
+                    <td className="px-4 py-3 text-gray-600">{m.phone || "-"}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-orange-200 text-orange-800">
+                        Awaiting verification
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Payments table */}
       {data.payments.length === 0 ? (
