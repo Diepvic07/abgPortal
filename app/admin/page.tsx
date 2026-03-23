@@ -59,6 +59,7 @@ export default function AdminPage() {
   const [editingMember, setEditingMember] = useState<AdminMember | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
   const { toasts, showToast, dismissToast } = useToasts();
+  const [pendingPaymentCount, setPendingPaymentCount] = useState(0);
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string; message: string; variant: 'danger' | 'warning' | 'info';
     confirmLabel: string; onConfirm: () => void;
@@ -72,6 +73,9 @@ export default function AdminPage() {
       router.push("/login");
     } else if (status === "authenticated") {
       fetchMembers();
+      fetch("/api/admin/payments").then(r => r.ok ? r.json() : null).then(d => {
+        if (d?.pending_payments) setPendingPaymentCount(d.pending_payments.length);
+      }).catch(() => {});
     }
   }, [status, router]);
 
@@ -405,6 +409,11 @@ export default function AdminPage() {
               }`}
           >
             Payments
+            {pendingPaymentCount > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-orange-500 rounded-full">
+                {pendingPaymentCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab("classes")}

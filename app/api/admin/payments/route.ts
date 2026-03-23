@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isAdminAsync } from "@/lib/admin-utils-server";
-import { getPaymentRecords, getMemberById, getMembers } from "@/lib/supabase-db";
+import { getPaymentRecords, getMemberById } from "@/lib/supabase-db";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,10 +25,9 @@ export async function GET(request: NextRequest) {
     const total_cash_in = records.reduce((sum, r) => sum + r.amount_vnd, 0);
 
     // Members with payment_status = 'pending' (awaiting admin verification)
-    const allMembers = await getMembers();
-    const pendingPayments = allMembers
-      .filter((m) => m.payment_status === "pending")
-      .map((m) => ({ id: m.id, name: m.name, email: m.email, abg_class: m.abg_class, phone: m.phone }));
+    const db = createServerSupabaseClient();
+    const { data: pendingRows } = await db.from("members").select("id, name, email, abg_class, phone").eq("payment_status", "pending");
+    const pendingPayments = (pendingRows || []).map((m) => ({ id: m.id, name: m.name, email: m.email, abg_class: m.abg_class, phone: m.phone }));
 
     return NextResponse.json({ payments: enriched, total_cash_in, count: records.length, pending_payments: pendingPayments });
   } catch (error) {
