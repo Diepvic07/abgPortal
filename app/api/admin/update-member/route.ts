@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, updated: updatedFields });
   } catch (error) {
     console.error('Admin update-member error:', error);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
