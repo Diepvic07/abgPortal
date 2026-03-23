@@ -29,11 +29,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
-    // Filter to only allowed fields
+    // Filter to only allowed fields; convert empty strings to null for nullable columns
     const safeUpdates: Record<string, unknown> = {};
     for (const key of Object.keys(updates)) {
       if (ALLOWED_FIELDS.includes(key as keyof Omit<Member, 'id' | 'email' | 'created_at'>)) {
-        safeUpdates[key] = updates[key];
+        const val = updates[key];
+        safeUpdates[key] = typeof val === 'string' && val.trim() === '' ? null : val;
       }
     }
 
