@@ -1115,3 +1115,20 @@ export async function getUnmappedClasses(): Promise<{ class_name: string; member
     .map(([class_name, member_count]) => ({ class_name, member_count }))
     .sort((a, b) => b.member_count - a.member_count);
 }
+
+// ==================== Admin Emails ====================
+
+/** Get emails of all approved members with is_admin=true */
+export async function getAdminEmails(): Promise<string[]> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db
+    .from('members')
+    .select('email')
+    .eq('is_admin', true)
+    .eq('approval_status', 'approved');
+  if (error) {
+    console.error('[SupabaseDB] getAdminEmails error:', error);
+    return [];
+  }
+  return (data || []).map(r => r.email as string);
+}

@@ -3,7 +3,7 @@
  * Use this in API routes where you need to check admin status with database lookup
  */
 
-import { getMemberByEmail } from '@/lib/supabase-db';
+import { getMemberByEmail, getAdminEmails } from '@/lib/supabase-db';
 import { isAdminByEmail } from '@/lib/admin-utils';
 
 /**
@@ -20,4 +20,14 @@ export async function isAdminAsync(email: string | null | undefined): Promise<bo
   // Then check database is_admin field
   const member = await getMemberByEmail(email);
   return member?.is_admin === true;
+}
+
+/** Get all admin emails: ADMIN_EMAILS env var + DB is_admin members, deduped */
+export async function getAllAdminEmails(): Promise<string[]> {
+  const envEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+  const dbEmails = (await getAdminEmails()).map(e => e.toLowerCase());
+  return [...new Set([...envEmails, ...dbEmails])];
 }

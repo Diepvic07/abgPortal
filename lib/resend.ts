@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { getTranslations, interpolate, type Locale } from '@/lib/i18n';
+import { getAllAdminEmails } from '@/lib/admin-utils-server';
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'ABG Connect <onboarding@resend.dev>';
 
@@ -937,12 +938,9 @@ interface DuplicateAlertData {
 
 /** Send duplicate alert to admin emails */
 export async function sendDuplicateAlertEmail(data: DuplicateAlertData): Promise<void> {
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map(e => e.trim())
-    .filter(Boolean);
+  const adminEmails = await getAllAdminEmails();
   if (adminEmails.length === 0) {
-    console.warn('[Resend] No ADMIN_EMAILS configured, skipping duplicate alert');
+    console.warn('[Resend] No admin emails configured, skipping duplicate alert');
     return;
   }
 
@@ -1018,10 +1016,7 @@ export async function sendDuplicateAlertEmail(data: DuplicateAlertData): Promise
 export async function sendDuplicateReminderEmail(
   unresolvedMembers: { name: string; email: string; createdAt: string; duplicateNote: string }[]
 ): Promise<void> {
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map(e => e.trim())
-    .filter(Boolean);
+  const adminEmails = await getAllAdminEmails();
   if (adminEmails.length === 0 || unresolvedMembers.length === 0) return;
 
   const resend = getResendClient();
@@ -1091,12 +1086,9 @@ export async function sendNewSignupNotificationEmail(data: {
   role: string;
   company: string;
 }): Promise<void> {
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map(e => e.trim())
-    .filter(Boolean);
+  const adminEmails = await getAllAdminEmails();
   if (adminEmails.length === 0) {
-    console.warn('[Resend] No ADMIN_EMAILS configured, skipping new signup notification');
+    console.warn('[Resend] No admin emails configured, skipping new signup notification');
     return;
   }
 
@@ -1158,12 +1150,9 @@ export async function sendPaymentNotificationEmail(data: {
   abgClass?: string;
   phone?: string;
 }): Promise<void> {
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map(e => e.trim())
-    .filter(Boolean);
+  const adminEmails = await getAllAdminEmails();
   if (adminEmails.length === 0) {
-    console.warn('[Resend] No ADMIN_EMAILS configured, skipping payment notification');
+    console.warn('[Resend] No admin emails configured, skipping payment notification');
     return;
   }
 
