@@ -11,6 +11,7 @@ const TEST_MODE_EMAILS = [
   'ttvietduc@gmail.com',
   'quephc@gmail.com',
   'diu.tran@abg.edu.vn',
+  'diutran.vnu@gmail.com',
 ];
 
 /** Escape HTML special characters to prevent XSS in email templates */
@@ -957,11 +958,8 @@ export async function sendDuplicateAlertEmail(data: DuplicateAlertData): Promise
       <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#374151;">${escapeHtml(m.abgClass || '-')}</td>
     </tr>`).join('');
 
-  const { error } = await resend.emails.send({
-    from: FROM_EMAIL,
-    to: adminEmails,
-    subject: `[ABG] Potential duplicate: ${data.newMemberName}`,
-    html: `<!DOCTYPE html>
+  const subject = `[ABG] Potential duplicate: ${data.newMemberName}`;
+  const emailHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
@@ -1000,12 +998,16 @@ export async function sendDuplicateAlertEmail(data: DuplicateAlertData): Promise
       </table>
     </td></tr>
   </table>
-</body></html>`,
-  });
+</body></html>`;
+
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to: adminEmails, subject, html: emailHtml });
 
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
-      console.warn('Resend Test Mode: Duplicate alert not sent.', error.message);
+      const testAdmins = adminEmails.filter(e => TEST_MODE_EMAILS.includes(e));
+      if (testAdmins.length > 0) {
+        await resend.emails.send({ from: FROM_EMAIL, to: testAdmins, subject: `[TEST] ${subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+      }
       return;
     }
     console.error('Failed to send duplicate alert email:', error);
@@ -1030,11 +1032,8 @@ export async function sendDuplicateReminderEmail(
       <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;">${new Date(m.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
     </tr>`).join('');
 
-  const { error } = await resend.emails.send({
-    from: FROM_EMAIL,
-    to: adminEmails,
-    subject: `[ABG] ${unresolvedMembers.length} unresolved duplicate(s) need review`,
-    html: `<!DOCTYPE html>
+  const subject = `[ABG] ${unresolvedMembers.length} unresolved duplicate(s) need review`;
+  const emailHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
@@ -1066,12 +1065,16 @@ export async function sendDuplicateReminderEmail(
       </table>
     </td></tr>
   </table>
-</body></html>`,
-  });
+</body></html>`;
+
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to: adminEmails, subject, html: emailHtml });
 
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
-      console.warn('Resend Test Mode: Duplicate reminder not sent.', error.message);
+      const testAdmins = adminEmails.filter(e => TEST_MODE_EMAILS.includes(e));
+      if (testAdmins.length > 0) {
+        await resend.emails.send({ from: FROM_EMAIL, to: testAdmins, subject: `[TEST] ${subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+      }
       return;
     }
     console.error('Failed to send duplicate reminder email:', error);
@@ -1095,11 +1098,8 @@ export async function sendNewSignupNotificationEmail(data: {
   const resend = getResendClient();
   const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
 
-  const { error } = await resend.emails.send({
-    from: FROM_EMAIL,
-    to: adminEmails,
-    subject: `[ABG] New signup pending approval: ${data.name}`,
-    html: `<!DOCTYPE html>
+  const subject = `[ABG] New signup pending approval: ${data.name}`;
+  const emailHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
@@ -1131,12 +1131,16 @@ export async function sendNewSignupNotificationEmail(data: {
       </table>
     </td></tr>
   </table>
-</body></html>`,
-  });
+</body></html>`;
+
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to: adminEmails, subject, html: emailHtml });
 
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
-      console.warn('Resend Test Mode: New signup notification not sent.', error.message);
+      const testAdmins = adminEmails.filter(e => TEST_MODE_EMAILS.includes(e));
+      if (testAdmins.length > 0) {
+        await resend.emails.send({ from: FROM_EMAIL, to: testAdmins, subject: `[TEST] ${subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+      }
       return;
     }
     console.error('Failed to send new signup notification email:', error);
@@ -1159,11 +1163,8 @@ export async function sendPaymentNotificationEmail(data: {
   const resend = getResendClient();
   const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
 
-  const { error } = await resend.emails.send({
-    from: FROM_EMAIL,
-    to: adminEmails,
-    subject: `[ABG] Payment confirmed: ${data.name}`,
-    html: `<!DOCTYPE html>
+  const subject = `[ABG] Payment confirmed: ${data.name}`;
+  const emailHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
@@ -1196,12 +1197,16 @@ export async function sendPaymentNotificationEmail(data: {
       </table>
     </td></tr>
   </table>
-</body></html>`,
-  });
+</body></html>`;
+
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to: adminEmails, subject, html: emailHtml });
 
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
-      console.warn('Resend Test Mode: Payment notification not sent.', error.message);
+      const testAdmins = adminEmails.filter(e => TEST_MODE_EMAILS.includes(e));
+      if (testAdmins.length > 0) {
+        await resend.emails.send({ from: FROM_EMAIL, to: testAdmins, subject: `[TEST] ${subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+      }
       return;
     }
     console.error('Failed to send payment notification email:', error);
