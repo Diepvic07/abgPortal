@@ -70,7 +70,7 @@ export function PaymentInfoModal({ memberId, memberName: memberNameProp, isOpen,
       />
 
       {/* Modal */}
-      <div className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative bg-white w-full sm:max-w-md max-h-[90dvh] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
 
         {showConfirmation ? (
           // ── Confirmation Screen ──────────────────────────────
@@ -133,8 +133,8 @@ export function PaymentInfoModal({ memberId, memberName: memberNameProp, isOpen,
               </p>
             </div>
 
-            {/* Body */}
-            <div className="px-6 py-5 space-y-5">
+            {/* Body – scrollable */}
+            <div className="px-6 py-5 space-y-5 overflow-y-auto flex-1 min-h-0">
 
               {/* QR Code */}
               <div className="flex justify-center">
@@ -220,34 +220,34 @@ export function PaymentInfoModal({ memberId, memberName: memberNameProp, isOpen,
                 </div>
               )}
 
-              {/* Action buttons */}
-              <div className="flex gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={isConfirming}
-                  className="flex-1 py-3 px-4 border border-border rounded-xl font-medium text-sm text-text-primary hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {t.payment.cancel}
-                </button>
+            </div>
 
-                <button
-                  type="button"
-                  onClick={handleConfirmPayment}
-                  disabled={isConfirming}
-                  className="flex-1 py-3 px-4 bg-brand text-white rounded-xl font-semibold text-sm hover:bg-brand-dark active:scale-95 disabled:bg-brand/50 disabled:cursor-not-allowed transition-all duration-150 shadow-md flex items-center justify-center gap-2"
-                >
-                  {isConfirming ? (
-                    <>
-                      <LoadingSpinner size="sm" />
-                      <span>{t.payment.confirming}</span>
-                    </>
-                  ) : (
-                    t.payment.confirmPayment
-                  )}
-                </button>
-              </div>
+            {/* Action buttons – sticky footer, always visible */}
+            <div className="flex gap-3 px-6 py-4 border-t border-border bg-white flex-shrink-0">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isConfirming}
+                className="flex-1 py-3 px-4 border border-border rounded-xl font-medium text-sm text-text-primary hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {t.payment.cancel}
+              </button>
 
+              <button
+                type="button"
+                onClick={handleConfirmPayment}
+                disabled={isConfirming}
+                className="flex-1 py-3 px-4 bg-brand text-white rounded-xl font-semibold text-sm hover:bg-brand-dark active:scale-95 disabled:bg-brand/50 disabled:cursor-not-allowed transition-all duration-150 shadow-md flex items-center justify-center gap-2"
+              >
+                {isConfirming ? (
+                  <>
+                    <LoadingSpinner size="sm" />
+                    <span>{t.payment.confirming}</span>
+                  </>
+                ) : (
+                  t.payment.confirmPayment
+                )}
+              </button>
             </div>
           </>
         )}
