@@ -70,9 +70,9 @@ export async function POST(request: NextRequest) {
       }
 
       // Background: trigger AI match email (separate serverless function)
-      // Use VERCEL_URL (no redirect) to avoid www redirect stripping headers
-      const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
+      // Use VERCEL_PROJECT_PRODUCTION_URL (www.abgalumni.vn) to avoid non-www redirect stripping headers
+      const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
         : process.env.NEXTAUTH_URL || 'http://localhost:3000';
       fetch(`${baseUrl}/api/premium-match-email`, {
         method: 'POST',
