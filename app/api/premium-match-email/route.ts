@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const result = await generatePremiumMatches(member);
 
     if (result.status === 'success') {
-      await sendPremiumMatchEmail(member.email, member.name, locale, result.matches);
+      await sendPremiumMatchEmail(member.email, member.name, locale, result.matches, member.looking_for);
       console.log(`[PremiumMatch] Match email sent to ${member.email} (${result.matches.length} matches)`);
     } else {
       // profile_incomplete or no_quality_matches → send profile prompt

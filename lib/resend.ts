@@ -874,10 +874,14 @@ export async function sendPremiumMatchEmail(
   name: string,
   locale: Locale,
   matches: { name: string; role: string; company: string; match_score: number; reason: string }[],
+  lookingFor?: string,
 ): Promise<void> {
   const resend = getResendClient();
   const t = getTranslations(locale);
   const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+  const requestUrl = lookingFor
+    ? `${appUrl}/request?q=${encodeURIComponent(lookingFor)}`
+    : `${appUrl}/request`;
   const safeName = escapeHtml(name);
 
   const matchCardsHtml = matches.map(m => `
@@ -910,10 +914,10 @@ export async function sendPremiumMatchEmail(
           ${matchCardsHtml}
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;">
             <tr><td align="center" style="padding:0 0 12px;">
-              <a href="${appUrl}/request" style="display:inline-block;padding:14px 48px;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.premiumMatch.ctaViewMatches}</a>
+              <a href="${requestUrl}" style="display:inline-block;padding:14px 48px;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.premiumMatch.ctaViewMatches}</a>
             </td></tr>
             <tr><td align="center">
-              <a href="${appUrl}/request" style="display:inline-block;padding:12px 36px;border:2px solid #7c3aed;color:#7c3aed;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.premiumMatch.ctaExploreMore}</a>
+              <a href="${requestUrl}" style="display:inline-block;padding:12px 36px;border:2px solid #7c3aed;color:#7c3aed;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.premiumMatch.ctaExploreMore}</a>
             </td></tr>
           </table>
           <p style="margin:24px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">${t.email.premiumMatch.footer}</p>

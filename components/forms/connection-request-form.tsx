@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -103,6 +104,7 @@ const CATEGORY_STYLES = {
 export function ConnectionRequestForm() {
   const { t, locale } = useTranslation();
   const { status } = useSession();
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [matchType, setMatchType] = useState<RequestCategory>('partner');
   const [matches, setMatches] = useState<MatchWithMember[] | null>(null);
@@ -183,6 +185,9 @@ export function ConnectionRequestForm() {
 
   const { register, handleSubmit, formState: { errors } } = useForm<RequestData>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      request_text: searchParams.get('q') || '',
+    },
   });
 
   const onSubmit = async (data: RequestData) => {
