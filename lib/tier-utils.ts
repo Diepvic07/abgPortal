@@ -15,7 +15,7 @@ export const TIER_LIMITS = {
 export type TierType = "basic" | "premium";
 
 export function getMemberTier(member: Member): TierType {
-  if (!member.paid) return "basic";
+  if (!member.paid && member.payment_status !== 'paid') return "basic";
   // Immediate downgrade when expired (no grace period)
   if (member.membership_expiry) {
     const expiry = new Date(member.membership_expiry);

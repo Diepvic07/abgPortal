@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from '@/lib/i18n';
 import type { Member } from '@/types';
+import { MemberAvatar } from '@/components/ui/member-avatar';
+import { getAvatarMemberStatus } from '@/types';
 
 function createProfileEditSchema(t: { onboard: { validation: Record<string, string> } }) {
   return z.object({
@@ -57,6 +59,9 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [abgClassOptions, setAbgClassOptions] = useState<string[]>([]);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(member.avatar_url || null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch canonical class list for dropdown
   useEffect(() => {
@@ -119,15 +124,33 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
   const isOpenToWork = watch('open_to_work');
   const isHiring = watch('hiring');
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setAvatarPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const onSubmit = async (data: ProfileEditData) => {
     setIsSubmitting(true);
     setError(null);
 
     try {
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        formData.append(key, value.toString());
+      });
+      if (avatarFile) {
+        formData.append('avatar', avatarFile);
+      }
+
       const response = await fetch('/api/profile', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: formData,
       });
 
       const result = await response.json();
@@ -166,6 +189,50 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Avatar Upload */}
+          <div className="flex flex-col items-center gap-3">
+            <div
+              onClick={() => avatarInputRef.current?.click()}
+              className="cursor-pointer relative group"
+            >
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt="Avatar preview"
+                  className="w-24 h-24 rounded-full object-cover border-2 border-gray-200 group-hover:border-brand transition-colors"
+                />
+              ) : (
+                <div className="relative">
+                  <MemberAvatar name={member.name} size="xl" memberStatus={getAvatarMemberStatus(member)} />
+                  <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+              {avatarPreview && (
+                <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="hidden"
+            />
+            <p className="text-sm text-gray-500">
+              {t.onboard.form.avatar}
+            </p>
+          </div>
+
           {/* Basic Info Section */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">{t.profile.sections.about}</h2>

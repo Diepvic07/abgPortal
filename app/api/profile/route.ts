@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { put } from '@vercel/blob';
 import { getAuthenticatedMember, requireAuth } from '@/lib/auth-middleware';
 import { updateMember, getMemberById } from '@/lib/supabase-db';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
@@ -24,7 +25,27 @@ export async function PATCH(request: NextRequest) {
   try {
     const member = await requireAuth(request);
 
-    const body = await request.json();
+    // Support both JSON and FormData (for avatar upload)
+    const contentType = request.headers.get('content-type') || '';
+    let body: Record<string, unknown>;
+    let avatarFile: File | null = null;
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      body = {};
+      for (const [key, value] of formData.entries()) {
+        if (key === 'avatar' && value instanceof File) {
+          avatarFile = value;
+        } else {
+          // Parse booleans from string
+          if (value === 'true') body[key] = true;
+          else if (value === 'false') body[key] = false;
+          else body[key] = value;
+        }
+      }
+    } else {
+      body = await request.json();
+    }
 
     // Whitelist allowed fields for update
     const allowedFields = [
@@ -77,6 +98,15 @@ export async function PATCH(request: NextRequest) {
           updates[field] = body[field];
         }
       }
+    }
+
+    // Handle avatar upload via Vercel Blob
+    if (avatarFile && avatarFile.size > 0) {
+      const ext = avatarFile.name.split('.').pop() || 'jpg';
+      const blob = await put(`avatars/${member.id}.${ext}`, avatarFile, {
+        access: 'public',
+      });
+      updates.avatar_url = blob.url;
     }
 
     if (Object.keys(updates).length === 0) {

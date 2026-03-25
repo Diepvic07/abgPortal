@@ -29,7 +29,7 @@ export default function OnboardPage() {
           const data = await response.json();
           if (data.member?.id) {
             // Existing member - check if premium
-            if (data.member.paid) {
+            if (data.member.paid || data.member.payment_status === 'paid') {
               // Premium member - redirect to request page
               router.push('/request');
               return;
