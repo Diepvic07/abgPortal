@@ -909,7 +909,7 @@ export async function sendPremiumMatchEmail(
         </td></tr>
         <tr><td style="padding:32px 40px;">
           <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">${interpolate(t.email.premiumMatch.greeting, { name: `<strong>${safeName}</strong>` })}</p>
-          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">${t.email.premiumMatch.intro}</p>
+          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">${interpolate(t.email.premiumMatch.intro, { lookingFor: escapeHtml(lookingFor || '') })}</p>
           <h2 style="margin:0 0 16px;font-size:17px;color:#5b21b6;">${t.email.premiumMatch.matchLabel}</h2>
           ${matchCardsHtml}
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;">

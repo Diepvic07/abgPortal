@@ -452,7 +452,7 @@ export const en = {
     premiumMatch: {
       subject: 'Your Top AI Matches Are Ready - ABG Alumni Connect',
       greeting: 'Hi {name},',
-      intro: 'Congratulations on your Premium upgrade! We ran our AI matching engine on your profile and found members you should connect with:',
+      intro: 'Congratulations on your Premium upgrade! We ran our AI matching engine on your profile and found the best matches for your need: "{lookingFor}"',
       matchLabel: 'Your Top Matches',
       scoreLabel: 'Match Score',
       reasonLabel: 'Why this match',

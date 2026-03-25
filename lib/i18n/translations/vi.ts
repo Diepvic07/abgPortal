@@ -454,7 +454,7 @@ export const vi: Translations = {
     premiumMatch: {
       subject: 'Kết quả ghép đôi AI của bạn đã sẵn sàng - ABG Alumni Connect',
       greeting: 'Xin chào {name},',
-      intro: 'Chúc mừng bạn đã nâng cấp lên Premium! Chúng tôi đã sử dụng AI để phân tích hồ sơ và tìm ra những thành viên phù hợp nhất với bạn:',
+      intro: 'Chúc mừng bạn đã nâng cấp lên Premium! Chúng tôi đã sử dụng AI để phân tích hồ sơ và tìm ra những thành viên phù hợp nhất với nhu cầu "{lookingFor}" của bạn:',
       matchLabel: 'Kết quả ghép đôi hàng đầu',
       scoreLabel: 'Điểm phù hợp',
       reasonLabel: 'Lý do ghép đôi',
