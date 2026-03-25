@@ -913,11 +913,8 @@ export async function sendPremiumMatchEmail(
           <h2 style="margin:0 0 16px;font-size:17px;color:#5b21b6;">${t.email.premiumMatch.matchLabel}</h2>
           ${matchCardsHtml}
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;">
-            <tr><td align="center" style="padding:0 0 12px;">
-              <a href="${requestUrl}" style="display:inline-block;padding:14px 48px;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.premiumMatch.ctaViewMatches}</a>
-            </td></tr>
             <tr><td align="center">
-              <a href="${requestUrl}" style="display:inline-block;padding:12px 36px;border:2px solid #7c3aed;color:#7c3aed;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.premiumMatch.ctaExploreMore}</a>
+              <a href="${requestUrl}" style="display:inline-block;padding:14px 48px;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.premiumMatch.ctaViewMatches}</a>
             </td></tr>
           </table>
           <p style="margin:24px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">${t.email.premiumMatch.footer}</p>
