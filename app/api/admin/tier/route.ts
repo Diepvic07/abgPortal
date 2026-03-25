@@ -70,12 +70,15 @@ export async function POST(request: NextRequest) {
       }
 
       // Background: trigger AI match email (separate serverless function)
-      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      // Use VERCEL_URL (no redirect) to avoid www redirect stripping headers
+      const baseUrl = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : process.env.NEXTAUTH_URL || 'http://localhost:3000';
       fetch(`${baseUrl}/api/premium-match-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.CRON_SECRET}`,
+          'x-internal-secret': process.env.CRON_SECRET || '',
         },
         body: JSON.stringify({ memberId }),
       }).catch(err => console.error('[PremiumMatch] Failed to trigger background job:', err));

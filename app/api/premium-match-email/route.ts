@@ -11,8 +11,8 @@ import { sendPremiumMatchEmail, sendProfilePromptEmail } from '@/lib/resend';
 export async function POST(request: NextRequest) {
   try {
     // Verify internal secret to prevent unauthorized access
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const secret = request.headers.get('x-internal-secret');
+    if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
