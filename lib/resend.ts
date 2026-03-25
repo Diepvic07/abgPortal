@@ -880,8 +880,8 @@ export async function sendPremiumMatchEmail(
   const t = getTranslations(locale);
   const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
   const requestUrl = lookingFor
-    ? `${appUrl}/request?q=${encodeURIComponent(lookingFor)}`
-    : `${appUrl}/request`;
+    ? `${appUrl}/request?q=${encodeURIComponent(lookingFor)}&from=premium_match`
+    : `${appUrl}/request?from=premium_match`;
   const safeName = escapeHtml(name);
 
   const matchCardsHtml = matches.map(m => `

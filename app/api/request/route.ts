@@ -17,6 +17,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const request_text = body.request_text;
     const locale = body.locale || 'en';
+    const source = body.source as string | undefined;
+    // Premium match email CTA: gift request, skip quota decrement
+    const isPremiumMatchGift = source === 'premium_match' && requester.paid;
     // Support both legacy 'type' and new 'category' field
     const category: RequestCategory = body.category || (body.type === 'dating' ? 'love' : body.type === 'professional' ? 'partner' : body.type) || 'partner';
     // Map category to internal type for Gemini
@@ -285,13 +288,15 @@ export async function POST(request: NextRequest) {
     // Audit success
     await logAudit(true, undefined, connectionRequest.id);
 
-    // Update request counts
-    await incrementMemberRequestCounts(requester.id);
+    // Update request counts (skip for premium match gift)
+    if (!isPremiumMatchGift) {
+      await incrementMemberRequestCounts(requester.id);
 
-    if (requester.paid) {
-      await incrementMemberMonthlyRequests(requester.id);
-    } else {
-      await updateMemberFreeRequests(requester.id, requester.free_requests_used + 1);
+      if (requester.paid) {
+        await incrementMemberMonthlyRequests(requester.id);
+      } else {
+        await updateMemberFreeRequests(requester.id, requester.free_requests_used + 1);
+      }
     }
 
     // Soft block for basic tier with limit reached - show blurred matches

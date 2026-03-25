@@ -183,12 +183,24 @@ export function ConnectionRequestForm() {
     }
   };
 
+  const isPremiumMatchSource = searchParams.get('from') === 'premium_match';
+
   const { register, handleSubmit, formState: { errors } } = useForm<RequestData>({
     resolver: zodResolver(schema),
     defaultValues: {
       request_text: searchParams.get('q') || '',
     },
   });
+
+  // Auto-submit when landing from premium match email CTA
+  const [autoSubmitted, setAutoSubmitted] = useState(false);
+  useEffect(() => {
+    if (isPremiumMatchSource && searchParams.get('q') && status === 'authenticated' && !autoSubmitted) {
+      setAutoSubmitted(true);
+      handleSubmit(onSubmit)();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremiumMatchSource, status]);
 
   const onSubmit = async (data: RequestData) => {
     if (status === 'unauthenticated') {
@@ -205,7 +217,12 @@ export function ConnectionRequestForm() {
       const response = await fetch('/api/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_text: data.request_text, category: matchType, locale }),
+        body: JSON.stringify({
+          request_text: data.request_text,
+          category: matchType,
+          locale,
+          ...(isPremiumMatchSource ? { source: 'premium_match' } : {}),
+        }),
       });
 
       let result;
