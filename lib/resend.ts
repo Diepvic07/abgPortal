@@ -867,6 +867,151 @@ export async function sendPremiumUpgradeEmail(to: string, name: string, locale: 
 }
 
 /**
+ * Send premium match email with top 5 AI-matched members
+ */
+export async function sendPremiumMatchEmail(
+  to: string,
+  name: string,
+  locale: Locale,
+  matches: { name: string; role: string; company: string; match_score: number; reason: string }[],
+): Promise<void> {
+  const resend = getResendClient();
+  const t = getTranslations(locale);
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+  const safeName = escapeHtml(name);
+
+  const matchCardsHtml = matches.map(m => `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f3ff;border-radius:8px;margin:0 0 12px;">
+      <tr><td style="padding:16px;">
+        <p style="font-weight:700;font-size:15px;color:#1f2937;margin:0 0 4px;">${escapeHtml(m.name)}</p>
+        <p style="font-size:13px;color:#6b7280;margin:0 0 8px;">${escapeHtml(m.role)}${m.company ? ` @ ${escapeHtml(m.company)}` : ''}</p>
+        <div style="background:#e5e7eb;border-radius:4px;height:8px;margin:0 0 4px;">
+          <div style="background:#7c3aed;border-radius:4px;height:8px;width:${Math.max(0, Math.min(m.match_score, 100))}%;"></div>
+        </div>
+        <p style="font-size:12px;color:#7c3aed;font-weight:600;margin:0 0 6px;">${t.email.premiumMatch.scoreLabel}: ${m.match_score}%</p>
+        <p style="font-size:13px;color:#374151;margin:0;">${escapeHtml(m.reason)}</p>
+      </td></tr>
+    </table>`).join('');
+
+  const emailHtml = `<!DOCTYPE html>
+<html lang="${locale}">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:linear-gradient(135deg,#7c3aed,#2563eb);padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">${interpolate(t.email.premiumMatch.greeting, { name: `<strong>${safeName}</strong>` })}</p>
+          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">${t.email.premiumMatch.intro}</p>
+          <h2 style="margin:0 0 16px;font-size:17px;color:#5b21b6;">${t.email.premiumMatch.matchLabel}</h2>
+          ${matchCardsHtml}
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;">
+            <tr><td align="center" style="padding:0 0 12px;">
+              <a href="${appUrl}/request" style="display:inline-block;padding:14px 48px;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.premiumMatch.ctaViewMatches}</a>
+            </td></tr>
+            <tr><td align="center">
+              <a href="${appUrl}/request" style="display:inline-block;padding:12px 36px;border:2px solid #7c3aed;color:#7c3aed;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.premiumMatch.ctaExploreMore}</a>
+            </td></tr>
+          </table>
+          <p style="margin:24px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">${t.email.premiumMatch.footer}</p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${t.email.premiumMatch.regards}<br><strong>${t.email.premiumMatch.signature}</strong></p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: t.email.premiumMatch.subject,
+    html: emailHtml,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: Premium match email not sent.', error.message);
+      return;
+    }
+    console.error('Failed to send premium match email:', error);
+  }
+}
+
+/**
+ * Send profile completion prompt email (fallback when profile incomplete or no quality matches)
+ */
+export async function sendProfilePromptEmail(to: string, name: string, locale: Locale): Promise<void> {
+  const resend = getResendClient();
+  const t = getTranslations(locale);
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+  const safeName = escapeHtml(name);
+
+  const emailHtml = `<!DOCTYPE html>
+<html lang="${locale}">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:linear-gradient(135deg,#7c3aed,#2563eb);padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:16px;color:#1f2937;">${interpolate(t.email.profilePrompt.greeting, { name: `<strong>${safeName}</strong>` })}</p>
+          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">${t.email.profilePrompt.intro}</p>
+          <h3 style="margin:0 0 12px;font-size:15px;color:#5b21b6;">${t.email.profilePrompt.fieldsLabel}</h3>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+            <tr><td style="padding:10px 16px;background:#f5f3ff;border-radius:6px;margin-bottom:8px;">
+              <p style="margin:0;font-size:14px;color:#374151;">&#10148; ${t.email.profilePrompt.fieldLookingFor}</p>
+            </td></tr>
+            <tr><td style="height:8px;"></td></tr>
+            <tr><td style="padding:10px 16px;background:#f5f3ff;border-radius:6px;">
+              <p style="margin:0;font-size:14px;color:#374151;">&#10148; ${t.email.profilePrompt.fieldExpertise}</p>
+            </td></tr>
+            <tr><td style="height:8px;"></td></tr>
+            <tr><td style="padding:10px 16px;background:#f5f3ff;border-radius:6px;">
+              <p style="margin:0;font-size:14px;color:#374151;">&#10148; ${t.email.profilePrompt.fieldBio}</p>
+            </td></tr>
+          </table>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td align="center">
+              <a href="${appUrl}/profile/edit" style="display:inline-block;padding:14px 48px;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.profilePrompt.ctaCompleteProfile}</a>
+            </td></tr>
+          </table>
+          <p style="margin:24px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">${t.email.profilePrompt.footer}</p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${t.email.profilePrompt.regards}<br><strong>${t.email.profilePrompt.signature}</strong></p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: t.email.profilePrompt.subject,
+    html: emailHtml,
+  });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      console.warn('Resend Test Mode: Profile prompt email not sent.', error.message);
+      return;
+    }
+    console.error('Failed to send profile prompt email:', error);
+  }
+}
+
+/**
  * Send rejection notification email
  */
 export async function sendRejectionEmail(to: string, name: string, locale: Locale = 'vi'): Promise<void> {

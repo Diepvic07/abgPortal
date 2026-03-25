@@ -68,6 +68,17 @@ export async function POST(request: NextRequest) {
         console.error("Failed to send premium upgrade email:", emailError);
         // Don't fail the tier update if email fails
       }
+
+      // Background: trigger AI match email (separate serverless function)
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      fetch(`${baseUrl}/api/premium-match-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.CRON_SECRET}`,
+        },
+        body: JSON.stringify({ memberId }),
+      }).catch(err => console.error('[PremiumMatch] Failed to trigger background job:', err));
     }
 
     return NextResponse.json({ success: true, tier });
