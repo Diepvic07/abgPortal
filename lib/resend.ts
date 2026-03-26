@@ -982,7 +982,7 @@ export async function sendProfilePromptEmail(to: string, name: string, locale: L
           </table>
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr><td align="center">
-              <a href="${appUrl}/profile/edit" style="display:inline-block;padding:14px 48px;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.profilePrompt.ctaCompleteProfile}</a>
+              <a href="${appUrl}/profile" style="display:inline-block;padding:14px 48px;background:#7c3aed;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${t.email.profilePrompt.ctaCompleteProfile}</a>
             </td></tr>
           </table>
           <p style="margin:24px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">${t.email.profilePrompt.footer}</p>
