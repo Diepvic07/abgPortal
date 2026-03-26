@@ -76,11 +76,15 @@ export async function POST(request: NextRequest) {
 
       let avatar_url = existingMember.avatar_url;
       if (avatarFile && avatarFile.size > 0) {
-        const ext = avatarFile.name.split('.').pop() || 'jpg';
-        const blob = await put(`avatars/${existingMember.id}.${ext}`, avatarFile, {
-          access: 'public',
-        });
-        avatar_url = blob.url;
+        try {
+          const ext = avatarFile.name.split('.').pop() || 'jpg';
+          const blob = await put(`avatars/${existingMember.id}.${ext}`, avatarFile, {
+            access: 'public',
+          });
+          avatar_url = blob.url;
+        } catch (avatarError) {
+          console.error('[API] Avatar upload failed (non-blocking):', avatarError);
+        }
       }
 
       const updates: Partial<Omit<Member, 'id' | 'email' | 'created_at'>> = {
@@ -115,11 +119,15 @@ export async function POST(request: NextRequest) {
     } else {
       let avatar_url: string | undefined;
       if (avatarFile && avatarFile.size > 0) {
-        const ext = avatarFile.name.split('.').pop() || 'jpg';
-        const blob = await put(`avatars/${generateId()}.${ext}`, avatarFile, {
-          access: 'public',
-        });
-        avatar_url = blob.url;
+        try {
+          const ext = avatarFile.name.split('.').pop() || 'jpg';
+          const blob = await put(`avatars/${generateId()}.${ext}`, avatarFile, {
+            access: 'public',
+          });
+          avatar_url = blob.url;
+        } catch (avatarError) {
+          console.error('[API] Avatar upload failed (non-blocking):', avatarError);
+        }
       }
 
       bio = await generateBio({

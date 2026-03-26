@@ -102,11 +102,15 @@ export async function PATCH(request: NextRequest) {
 
     // Handle avatar upload via Vercel Blob
     if (avatarFile && avatarFile.size > 0) {
-      const ext = avatarFile.name.split('.').pop() || 'jpg';
-      const blob = await put(`avatars/${member.id}.${ext}`, avatarFile, {
-        access: 'public',
-      });
-      updates.avatar_url = blob.url;
+      try {
+        const ext = avatarFile.name.split('.').pop() || 'jpg';
+        const blob = await put(`avatars/${member.id}.${ext}`, avatarFile, {
+          access: 'public',
+        });
+        updates.avatar_url = blob.url;
+      } catch (avatarError) {
+        console.error('[API] Avatar upload failed (non-blocking):', avatarError);
+      }
     }
 
     if (Object.keys(updates).length === 0) {
