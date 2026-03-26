@@ -159,7 +159,7 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
         throw new Error(result.error || t.common.error);
       }
 
-      router.push('/profile');
+      router.push('/profile?saved=true');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : t.common.error);

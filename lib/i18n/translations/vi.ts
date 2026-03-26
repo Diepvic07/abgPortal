@@ -634,6 +634,7 @@ export const vi: Translations = {
     editProfile: 'Chỉnh sửa hồ sơ',
     cancelEdit: 'Hủy',
     saveChanges: 'Lưu thay đổi',
+    savedSuccess: 'Hồ sơ đã được lưu thành công',
     memberSince: 'Thành viên từ',
     sections: {
       about: 'Giới thiệu',

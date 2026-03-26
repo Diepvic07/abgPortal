@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
+import { ToastNotification, useToasts } from '@/components/ui/toast-notification';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { MembershipBadge } from '@/components/ui/membership-badge';
 import { PaymentInfoModal } from '@/components/ui/payment-info-modal';
@@ -78,6 +80,17 @@ interface ProfileViewDisplayProps {
 export function ProfileViewDisplay({ member, membershipStatus }: ProfileViewDisplayProps) {
   const { t } = useTranslation();
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const { toasts, showToast, dismissToast } = useToasts();
+
+  useEffect(() => {
+    if (searchParams.get('saved') === 'true') {
+      showToast(t.profile.savedSuccess || 'Profile saved successfully', 'success');
+      // Clean URL without reload
+      window.history.replaceState({}, '', '/profile');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isPendingPayment = membershipStatus === 'pending';
   const showPaymentCta = (membershipStatus === 'basic' || membershipStatus === 'expired') && !isPendingPayment;
@@ -89,6 +102,7 @@ export function ProfileViewDisplay({ member, membershipStatus }: ProfileViewDisp
 
   return (
     <>
+    <ToastNotification toasts={toasts} onDismiss={dismissToast} />
     <div className="max-w-4xl mx-auto space-y-5">
       {/* ---- Payment Reminder Banner ---- */}
       {showPaymentCta && (

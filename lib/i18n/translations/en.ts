@@ -632,6 +632,7 @@ export const en = {
     editProfile: 'Edit Profile',
     cancelEdit: 'Cancel',
     saveChanges: 'Save Changes',
+    savedSuccess: 'Profile saved successfully',
     memberSince: 'Member since',
     sections: {
       about: 'About',
