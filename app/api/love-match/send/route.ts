@@ -7,6 +7,7 @@ import { sendLoveMatchNotificationEmail } from '@/lib/resend';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { LoveMatchRequest } from '@/types';
+import { getPostHogClient } from '@/lib/posthog-server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,6 +95,11 @@ export async function POST(request: NextRequest) {
     } catch (emailErr) {
       console.error('Love match notification email failed (non-fatal):', emailErr);
     }
+
+    // Track love match sent
+    const posthog = getPostHogClient();
+    posthog.capture({ distinctId: member.email, event: 'love_match_sent', properties: { to_id } });
+    await posthog.shutdown();
 
     return successResponse({
       love_match_id: loveMatchId,
