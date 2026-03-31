@@ -2,9 +2,10 @@ import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth-middleware';
 import { createProposal, getProposals, upsertCommitment } from '@/lib/supabase-community';
-import { ProposalCategory } from '@/types';
+import { ProposalCategory, CommitmentLevel } from '@/types';
 
 const VALID_CATEGORIES: ProposalCategory[] = ['charity', 'event', 'learning', 'community_support', 'other'];
+const VALID_COMMITMENTS: CommitmentLevel[] = ['interested', 'will_participate', 'will_lead'];
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
     const member = await requireAuth(request);
 
     const body = await request.json();
-    const { title, description, category, target_date } = body;
+    const { title, description, category, target_date, commitment_level } = body;
 
     if (!title || title.length < 5 || title.length > 200) {
       return errorResponse('Title must be between 5 and 200 characters', 400);
@@ -44,6 +45,8 @@ export async function POST(request: NextRequest) {
       return errorResponse('Invalid category', 400);
     }
 
+    const proposerCommitment: CommitmentLevel = commitment_level && VALID_COMMITMENTS.includes(commitment_level) ? commitment_level : 'will_lead';
+
     // Create the proposal
     const proposal = await createProposal({
       created_by_member_id: member.id,
@@ -53,11 +56,11 @@ export async function POST(request: NextRequest) {
       target_date: target_date || undefined,
     });
 
-    // Auto-commit proposer as lead
+    // Commit proposer at their chosen level
     await upsertCommitment({
       proposal_id: proposal.id,
       member_id: member.id,
-      commitment_level: 'will_lead',
+      commitment_level: proposerCommitment,
     });
 
     return successResponse({ proposal }, 201);

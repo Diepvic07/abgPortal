@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
-import { ProposalCategory, PROPOSAL_CATEGORY_LABELS } from '@/types';
+import { ProposalCategory, CommitmentLevel, PROPOSAL_CATEGORY_LABELS } from '@/types';
 
 const CATEGORIES: ProposalCategory[] = ['charity', 'event', 'learning', 'community_support', 'other'];
 
@@ -37,6 +37,7 @@ export function NewProposalForm() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<ProposalCategory>('other');
   const [targetDate, setTargetDate] = useState('');
+  const [commitmentLevel, setCommitmentLevel] = useState<CommitmentLevel>('will_lead');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -56,7 +57,7 @@ export function NewProposalForm() {
       const res = await fetch('/api/community/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, category, target_date: targetDate || undefined }),
+        body: JSON.stringify({ title, description, category, target_date: targetDate || undefined, commitment_level: commitmentLevel }),
       });
 
       const data = await res.json();
@@ -159,13 +160,34 @@ export function NewProposalForm() {
           />
         </div>
 
-        {/* Commitment notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800">
-            {locale === 'vi'
-              ? 'Khi bạn đề xuất, bạn cam kết là trưởng nhóm thực hiện (mức cam kết: Sẽ dẫn dắt)'
-              : 'By proposing, you commit as taskforce lead (commitment: Will Lead)'}
-          </p>
+        {/* Commitment level picker */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {locale === 'vi' ? 'Mức cam kết của bạn' : 'Your Commitment Level'} *
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {([
+              { level: 'will_lead' as CommitmentLevel, icon: '🚀', label: locale === 'vi' ? 'Sẽ dẫn dắt' : 'Will Lead', pts: '+5', desc: locale === 'vi' ? 'Bạn sẽ dẫn dắt nhóm thực hiện' : 'You will lead the taskforce' },
+              { level: 'will_participate' as CommitmentLevel, icon: '🙌', label: locale === 'vi' ? 'Sẽ tham gia' : 'Will Join', pts: '+3', desc: locale === 'vi' ? 'Bạn sẽ tích cực tham gia' : 'You will actively participate' },
+              { level: 'interested' as CommitmentLevel, icon: '❤️', label: locale === 'vi' ? 'Quan tâm' : 'Interested', pts: '', desc: locale === 'vi' ? 'Bạn quan tâm và theo dõi' : 'You are interested and following' },
+            ]).map(({ level, icon, label, pts, desc }) => (
+              <button
+                key={level}
+                type="button"
+                onClick={() => setCommitmentLevel(level)}
+                className={`flex flex-col items-center gap-1 p-4 rounded-xl border-2 transition-all ${
+                  commitmentLevel === level
+                    ? 'border-blue-600 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-2xl">{icon}</span>
+                <span className="font-medium text-sm">{label}</span>
+                {pts && <span className="text-xs text-gray-400">{pts} {locale === 'vi' ? 'điểm' : 'pts'}</span>}
+                <span className="text-xs text-gray-500 text-center mt-1">{desc}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {error && (
