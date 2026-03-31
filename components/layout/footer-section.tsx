@@ -48,6 +48,9 @@ export function FooterSection() {
               <li>
                 <Link href="/request" className="hover:text-white transition-colors">{t.footer.connections}</Link>
               </li>
+              <li>
+                <Link href="/community" className="hover:text-white transition-colors">{t.nav.events || 'Events'}</Link>
+              </li>
             </ul>
           </div>
 

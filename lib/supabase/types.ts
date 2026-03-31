@@ -354,6 +354,92 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['abg_classes']['Insert']>;
         Relationships: [];
       };
+      community_proposals: {
+        Row: {
+          id: string;
+          created_by_member_id: string;
+          title: string;
+          description: string;
+          category: string;
+          status: string;
+          is_pinned: boolean;
+          commitment_score: number;
+          commitment_count: number;
+          comment_count: number;
+          target_date: string | null;
+          created_at: string;
+          updated_at: string;
+          published_at: string | null;
+          selected_at: string | null;
+          selected_by_member_id: string | null;
+          completed_at: string | null;
+          admin_note: string | null;
+        };
+        Insert: {
+          id: string;
+          created_by_member_id: string;
+          title: string;
+          description: string;
+          category?: string;
+          status?: string;
+          is_pinned?: boolean;
+          commitment_score?: number;
+          commitment_count?: number;
+          comment_count?: number;
+          target_date?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          published_at?: string | null;
+          selected_at?: string | null;
+          selected_by_member_id?: string | null;
+          completed_at?: string | null;
+          admin_note?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['community_proposals']['Insert']>;
+        Relationships: [];
+      };
+      community_commitments: {
+        Row: {
+          id: string;
+          proposal_id: string;
+          member_id: string;
+          commitment_level: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          proposal_id: string;
+          member_id: string;
+          commitment_level?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['community_commitments']['Insert']>;
+        Relationships: [];
+      };
+      community_proposal_comments: {
+        Row: {
+          id: string;
+          proposal_id: string;
+          member_id: string;
+          body: string;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          proposal_id: string;
+          member_id: string;
+          body: string;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['community_proposal_comments']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

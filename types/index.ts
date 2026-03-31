@@ -197,6 +197,84 @@ export interface BugReport {
   created_at: string;
 }
 
+// Community Proposals
+export type ProposalCategory = 'charity' | 'event' | 'learning' | 'community_support' | 'other';
+export type ProposalStatus = 'published' | 'selected' | 'in_progress' | 'completed' | 'archived' | 'removed';
+export type CommitmentLevel = 'interested' | 'will_participate' | 'will_lead';
+export type CommentStatus = 'visible' | 'hidden' | 'removed';
+
+export const COMMITMENT_WEIGHTS: Record<CommitmentLevel, number> = {
+  interested: 1,
+  will_participate: 3,
+  will_lead: 5,
+};
+
+export const COMMITMENT_LABELS: Record<CommitmentLevel, { en: string; vi: string }> = {
+  interested: { en: 'Interested', vi: 'Quan tâm' },
+  will_participate: { en: 'Will Participate', vi: 'Sẽ tham gia' },
+  will_lead: { en: 'Will Lead', vi: 'Sẽ dẫn dắt' },
+};
+
+export const PROPOSAL_CATEGORY_LABELS: Record<ProposalCategory, { en: string; vi: string }> = {
+  charity: { en: 'Charity', vi: 'Từ thiện' },
+  event: { en: 'Event', vi: 'Sự kiện' },
+  learning: { en: 'Learning', vi: 'Học tập' },
+  community_support: { en: 'Community Support', vi: 'Hỗ trợ cộng đồng' },
+  other: { en: 'Other', vi: 'Khác' },
+};
+
+export interface CommunityProposal {
+  id: string;
+  created_by_member_id: string;
+  title: string;
+  description: string;
+  category: ProposalCategory;
+  status: ProposalStatus;
+  is_pinned: boolean;
+  commitment_score: number;
+  commitment_count: number;
+  comment_count: number;
+  target_date?: string;
+  created_at: string;
+  updated_at: string;
+  published_at?: string;
+  selected_at?: string;
+  selected_by_member_id?: string;
+  completed_at?: string;
+  admin_note?: string;
+  // Joined fields
+  author_name?: string;
+  author_avatar_url?: string;
+  author_abg_class?: string;
+  my_commitment?: CommitmentLevel;
+}
+
+export interface CommunityCommitment {
+  id: string;
+  proposal_id: string;
+  member_id: string;
+  commitment_level: CommitmentLevel;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  member_name?: string;
+  member_avatar_url?: string;
+  member_abg_class?: string;
+}
+
+export interface CommunityProposalComment {
+  id: string;
+  proposal_id: string;
+  member_id: string;
+  body: string;
+  status: CommentStatus;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  member_name?: string;
+  member_avatar_url?: string;
+}
+
 export type NewsCategory = 'Edu' | 'Business' | 'Event' | 'Course' | 'Announcement';
 
 export interface NewsArticle {

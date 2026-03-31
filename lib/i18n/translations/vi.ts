@@ -23,6 +23,9 @@ export const vi: Translations = {
     news: 'Tin tức',
     members: 'Thành viên',
     payMembership: 'Thanh toán hội phí',
+    proposals: 'Đề xuất',
+    community: 'Cộng đồng',
+    events: 'Hoạt động',
   },
 
   // Footer

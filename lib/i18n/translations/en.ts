@@ -21,6 +21,9 @@ export const en = {
     news: 'News',
     members: 'Members',
     payMembership: 'Pay Membership',
+    proposals: 'Proposals',
+    community: 'Community',
+    events: 'Events',
   },
 
   // Footer
