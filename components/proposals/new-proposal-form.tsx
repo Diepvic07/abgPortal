@@ -72,8 +72,8 @@ export function NewProposalForm() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: React.FormEvent) {
+    if (e) e.preventDefault();
     setError('');
 
     const description = showPreview ? preview : buildDescription();
@@ -315,8 +315,8 @@ export function NewProposalForm() {
           </div>
         )}
 
-        <div className="flex gap-3">
-          {!showPreview ? (
+        {!showPreview && (
+          <div className="flex gap-3">
             <button
               type="button"
               onClick={handleGenerate}
@@ -332,35 +332,43 @@ export function NewProposalForm() {
                 <>✨ {vi ? 'Xem trước & Đăng' : 'Preview & Post'}</>
               )}
             </button>
-          ) : (
-            <>
-              <button
-                type="submit"
-                disabled={submitting || !preview}
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 text-base"
-              >
-                {submitting
-                  ? (vi ? 'Đang đăng...' : 'Posting...')
-                  : (vi ? 'Đăng đề xuất' : 'Post Proposal')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowPreview(false)}
-                className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                {vi ? 'Quay lại sửa' : 'Back to edit'}
-              </button>
-            </>
-          )}
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="px-6 py-3 text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              {vi ? 'Hủy' : 'Cancel'}
+            </button>
+          </div>
+        )}
+      </form>
+
+      {/* Preview actions — OUTSIDE the form to prevent accidental submit */}
+      {showPreview && (
+        <div className="flex gap-3 mt-6">
           <button
-            type="button"
+            onClick={() => handleSubmit()}
+            disabled={submitting || !preview}
+            className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 text-base"
+          >
+            {submitting
+              ? (vi ? 'Đang đăng...' : 'Posting...')
+              : (vi ? 'Đăng đề xuất' : 'Post Proposal')}
+          </button>
+          <button
+            onClick={() => setShowPreview(false)}
+            className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            {vi ? 'Quay lại sửa' : 'Back to edit'}
+          </button>
+          <button
             onClick={() => router.back()}
             className="px-6 py-3 text-gray-500 hover:text-gray-700 transition-colors"
           >
             {vi ? 'Hủy' : 'Cancel'}
           </button>
         </div>
-      </form>
+      )}
     </div>
   );
 }
