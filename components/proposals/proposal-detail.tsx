@@ -206,20 +206,20 @@ export function ProposalDetail({ proposalId }: Props) {
           {/* Reaction summary */}
           <div className="px-6 py-3 flex items-center gap-2 text-sm text-gray-500 border-b border-gray-100">
             <span className="flex -space-x-1">
-              <span className="inline-block">❤️</span>
-              <span className="inline-block">🙌</span>
               <span className="inline-block">🚀</span>
+              <span className="inline-block">🙌</span>
+              <span className="inline-block">❤️</span>
             </span>
             <span>{proposal.commitment_count} {locale === 'vi' ? 'người tham gia' : 'people committed'}</span>
           </div>
 
-          {/* Reaction buttons */}
+          {/* Reaction buttons — Will Lead first, then Will Join, then Interested */}
           <div className="grid grid-cols-3 divide-x divide-gray-100">
             {([
-              { level: 'interested' as CommitmentLevel, icon: '❤️', label: locale === 'vi' ? 'Quan tâm' : 'Interested' },
-              { level: 'will_participate' as CommitmentLevel, icon: '🙌', label: locale === 'vi' ? 'Sẽ tham gia' : 'Will Join' },
-              { level: 'will_lead' as CommitmentLevel, icon: '🚀', label: locale === 'vi' ? 'Sẽ dẫn dắt' : 'Will Lead' },
-            ]).map(({ level, icon, label }) => {
+              { level: 'will_lead' as CommitmentLevel, icon: '🚀', label: locale === 'vi' ? 'Sẽ dẫn dắt' : 'Will Lead', pts: '+5' },
+              { level: 'will_participate' as CommitmentLevel, icon: '🙌', label: locale === 'vi' ? 'Sẽ tham gia' : 'Will Join', pts: '+3' },
+              { level: 'interested' as CommitmentLevel, icon: '❤️', label: locale === 'vi' ? 'Quan tâm' : 'Interested', pts: '' },
+            ]).map(({ level, icon, label, pts }) => {
               const isActive = myCommitment === level;
               if (session) {
                 return (
@@ -227,12 +227,15 @@ export function ProposalDetail({ proposalId }: Props) {
                     key={level}
                     onClick={() => isActive ? handleUncommit() : handleCommit(level)}
                     disabled={submittingCommitment}
-                    className={`flex items-center justify-center gap-2 py-3 text-sm font-medium transition-all hover:bg-gray-50 active:scale-95 disabled:opacity-50 ${
+                    className={`flex flex-col items-center justify-center gap-0.5 py-3 text-sm font-medium transition-all hover:bg-gray-50 active:scale-95 disabled:opacity-50 ${
                       isActive ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
                     }`}
                   >
-                    <span className={`text-xl transition-transform ${isActive ? 'scale-110' : 'hover:scale-125'}`}>{icon}</span>
-                    {label}
+                    <span className="flex items-center gap-1.5">
+                      <span className={`text-xl transition-transform ${isActive ? 'scale-110' : 'hover:scale-125'}`}>{icon}</span>
+                      {label}
+                    </span>
+                    {pts && <span className="text-xs text-gray-400">{pts} {locale === 'vi' ? 'điểm' : 'pts'}</span>}
                   </button>
                 );
               }
@@ -240,10 +243,13 @@ export function ProposalDetail({ proposalId }: Props) {
                 <Link
                   key={level}
                   href="/login"
-                  className="flex items-center justify-center gap-2 py-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50 active:scale-95"
+                  className="flex flex-col items-center justify-center gap-0.5 py-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50 active:scale-95"
                 >
-                  <span className="text-xl hover:scale-125 transition-transform">{icon}</span>
-                  {label}
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-xl hover:scale-125 transition-transform">{icon}</span>
+                    {label}
+                  </span>
+                  {pts && <span className="text-xs text-gray-400">{pts} {locale === 'vi' ? 'điểm' : 'pts'}</span>}
                 </Link>
               );
             })}

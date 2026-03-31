@@ -204,7 +204,7 @@ export type CommitmentLevel = 'interested' | 'will_participate' | 'will_lead';
 export type CommentStatus = 'visible' | 'hidden' | 'removed';
 
 export const COMMITMENT_WEIGHTS: Record<CommitmentLevel, number> = {
-  interested: 1,
+  interested: 0,
   will_participate: 3,
   will_lead: 5,
 };

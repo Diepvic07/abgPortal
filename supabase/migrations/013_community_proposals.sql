@@ -55,7 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_comments_proposal ON community_proposal_comments(
 CREATE INDEX IF NOT EXISTS idx_comments_status ON community_proposal_comments(status);
 
 -- Commitment level weights for scoring
--- 'interested' = 1, 'will_participate' = 3, 'will_lead' = 5
+-- 'interested' = 0, 'will_participate' = 3, 'will_lead' = 5
 
 -- Function to calculate commitment weight
 CREATE OR REPLACE FUNCTION commitment_weight(level TEXT) RETURNS INTEGER AS $$
@@ -63,8 +63,8 @@ BEGIN
   CASE level
     WHEN 'will_lead' THEN RETURN 5;
     WHEN 'will_participate' THEN RETURN 3;
-    WHEN 'interested' THEN RETURN 1;
-    ELSE RETURN 1;
+    WHEN 'interested' THEN RETURN 0;
+    ELSE RETURN 0;
   END CASE;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
