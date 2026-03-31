@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, PROPOSAL_CATEGORY_LABELS, COMMITMENT_LABELS } from '@/types';
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -9,8 +11,11 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export function PublicProposals() {
+  const { data: session } = useSession();
+  const { locale } = useTranslation();
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);
   const [loading, setLoading] = useState(true);
+  const isLoggedIn = !!session;
 
   useEffect(() => {
     async function fetch_proposals() {
@@ -33,17 +38,28 @@ export function PublicProposals() {
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            What ABG Alumni Are Building Together
+            {locale === 'vi' ? 'Hoạt động cộng đồng ABG' : 'What ABG Alumni Are Building Together'}
           </h1>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Our members don't just connect — they commit to action. See the ideas our community is bringing to life.
+            {locale === 'vi'
+              ? 'Đề xuất ý tưởng, cam kết tham gia, và cùng nhau xây dựng cộng đồng ABG.'
+              : 'Our members don\'t just connect — they commit to action. See the ideas our community is bringing to life.'}
           </p>
-          <Link
-            href="/signup"
-            className="bg-white text-blue-700 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors inline-block"
-          >
-            Join ABG to Participate
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              href="/proposals/new"
+              className="bg-white text-blue-700 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors inline-block"
+            >
+              {locale === 'vi' ? '+ Đề xuất ý tưởng mới' : '+ Propose a New Idea'}
+            </Link>
+          ) : (
+            <Link
+              href="/signup"
+              className="bg-white text-blue-700 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors inline-block"
+            >
+              {locale === 'vi' ? 'Tham gia ABG' : 'Join ABG to Participate'}
+            </Link>
+          )}
         </div>
       </div>
 
@@ -83,16 +99,41 @@ export function PublicProposals() {
 
         {/* CTA */}
         <div className="text-center mt-16 py-12 bg-gray-50 rounded-xl">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Ready to Build Something Together?</h2>
-          <p className="text-gray-600 mb-6 max-w-lg mx-auto">
-            Join ABG Alumni Connect to propose your own ideas, commit to initiatives, and be part of a community that acts.
-          </p>
-          <Link
-            href="/signup"
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-block"
-          >
-            Join ABG to Participate
-          </Link>
+          {isLoggedIn ? (
+            <>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                {locale === 'vi' ? 'Bạn có ý tưởng?' : 'Got an Idea?'}
+              </h2>
+              <p className="text-gray-600 mb-6 max-w-lg mx-auto">
+                {locale === 'vi'
+                  ? 'Đề xuất ý tưởng và cam kết cùng cộng đồng ABG thực hiện.'
+                  : 'Propose your idea and commit together with the ABG community.'}
+              </p>
+              <Link
+                href="/proposals/new"
+                className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-block"
+              >
+                {locale === 'vi' ? '+ Đề xuất ý tưởng mới' : '+ Propose a New Idea'}
+              </Link>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                {locale === 'vi' ? 'Sẵn sàng cùng xây dựng?' : 'Ready to Build Something Together?'}
+              </h2>
+              <p className="text-gray-600 mb-6 max-w-lg mx-auto">
+                {locale === 'vi'
+                  ? 'Tham gia ABG Alumni Connect để đề xuất ý tưởng, cam kết tham gia, và cùng hành động.'
+                  : 'Join ABG Alumni Connect to propose your own ideas, commit to initiatives, and be part of a community that acts.'}
+              </p>
+              <Link
+                href="/signup"
+                className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-block"
+              >
+                {locale === 'vi' ? 'Tham gia ABG' : 'Join ABG to Participate'}
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>
