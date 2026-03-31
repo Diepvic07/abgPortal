@@ -317,30 +317,21 @@ export function NewProposalForm() {
 
         <div className="flex gap-3">
           {!showPreview ? (
-            <>
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={generating || !title || !what}
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 text-base flex items-center gap-2"
-              >
-                {generating ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                    {vi ? 'AI đang viết...' : 'AI writing...'}
-                  </>
-                ) : (
-                  <>✨ {vi ? 'Xem trước với AI' : 'Preview with AI'}</>
-                )}
-              </button>
-              <button
-                type="submit"
-                disabled={submitting || !title || !what}
-                className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
-              >
-                {vi ? 'Đăng luôn (không AI)' : 'Post without AI'}
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={generating || !title || !what}
+              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 text-base flex items-center gap-2"
+            >
+              {generating ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  {vi ? 'AI đang viết...' : 'AI writing...'}
+                </>
+              ) : (
+                <>✨ {vi ? 'Xem trước & Đăng' : 'Preview & Post'}</>
+              )}
+            </button>
           ) : (
             <>
               <button
