@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   try {
     await requireAuth(request);
 
-    const { title, category, what, why, who, howMany, resources, targetDate, locale } = await request.json();
+    const { title, category, what, why, who, howMany, resources, extra, targetDate, locale } = await request.json();
 
     if (!title || !what) {
       return errorResponse('Title and description are required', 400);
@@ -32,6 +32,7 @@ ${who ? `Đối tượng: ${who}` : ''}
 ${howMany ? `Số lượng: ${howMany}` : ''}
 ${resources ? `Cần hỗ trợ: ${resources}` : ''}
 ${targetDate ? `Thời gian: ${targetDate}` : ''}
+${extra ? `Thông tin thêm: ${extra}` : ''}
 
 Yêu cầu:
 - Viết thân thiện, gần gũi như đang nói chuyện với anh chị em trong cộng đồng
@@ -50,6 +51,7 @@ ${who ? `Target audience: ${who}` : ''}
 ${howMany ? `Expected participants: ${howMany}` : ''}
 ${resources ? `Resources needed: ${resources}` : ''}
 ${targetDate ? `Target date: ${targetDate}` : ''}
+${extra ? `Additional info: ${extra}` : ''}
 
 Requirements:
 - Friendly, community tone

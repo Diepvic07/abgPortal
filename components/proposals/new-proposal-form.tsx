@@ -23,6 +23,7 @@ export function NewProposalForm() {
   const [who, setWho] = useState('');
   const [howMany, setHowMany] = useState('');
   const [resources, setResources] = useState('');
+  const [extra, setExtra] = useState('');
   const [targetDate, setTargetDate] = useState('');
   const [commitmentLevel, setCommitmentLevel] = useState<CommitmentLevel>('will_lead');
   const [submitting, setSubmitting] = useState(false);
@@ -38,6 +39,7 @@ export function NewProposalForm() {
     if (who) parts.push(`${vi ? 'Đối tượng' : 'Who'}: ${who}`);
     if (howMany) parts.push(`${vi ? 'Số lượng dự kiến' : 'Expected participants'}: ${howMany}`);
     if (resources) parts.push(`${vi ? 'Cần hỗ trợ' : 'Resources needed'}: ${resources}`);
+    if (extra) parts.push(`\n${extra}`);
     return parts.join('\n');
   }
 
@@ -52,7 +54,7 @@ export function NewProposalForm() {
       const res = await fetch('/api/community/proposals/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, category, what, why, who, howMany, resources, targetDate, locale }),
+        body: JSON.stringify({ title, category, what, why, who, howMany, resources, extra, targetDate, locale }),
       });
       const data = await res.json();
       if (res.ok && data.description) {
@@ -251,10 +253,29 @@ export function NewProposalForm() {
           </div>
         </div>
 
-        {/* Step 7: Commitment level */}
+        {/* Step 7: Extra / paste anything */}
+        <div className="bg-gray-50 rounded-xl p-5">
+          <label htmlFor="extra" className="block text-sm font-semibold text-gray-900 mb-1">
+            7. {vi ? 'Thông tin thêm (tùy chọn)' : 'Additional info (optional)'}
+          </label>
+          <p className="text-xs text-gray-500 mb-2">
+            {vi ? 'Paste nội dung có sẵn, thêm chi tiết, link tham khảo, hoặc bất cứ gì bạn muốn chia sẻ' : 'Paste existing content, add details, reference links, or anything else you want to share'}
+          </p>
+          <textarea
+            id="extra"
+            value={extra}
+            onChange={(e) => setExtra(e.target.value)}
+            placeholder={vi
+              ? 'VD: Chi tiết chương trình, link tham khảo, thông tin liên hệ, ghi chú thêm...'
+              : 'e.g. Program details, reference links, contact info, additional notes...'}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-h-[100px]"
+          />
+        </div>
+
+        {/* Step 8: Commitment level */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label className="block text-sm font-semibold text-gray-900 mb-3">
-            7. {vi ? 'Bạn sẽ tham gia ở mức nào?' : 'How will you participate?'} *
+            8. {vi ? 'Bạn sẽ tham gia ở mức nào?' : 'How will you participate?'} *
           </label>
           <div className="grid grid-cols-3 gap-3">
             {([
