@@ -76,7 +76,7 @@ export function PublicProposals() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {proposals.map((proposal) => (
-              <div key={proposal.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <Link key={proposal.id} href={`/proposals/${proposal.id}`} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all hover:-translate-y-0.5 block">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xl">{CATEGORY_ICONS[proposal.category] || '💡'}</span>
                   <span className="text-xs font-medium text-gray-500 uppercase">
@@ -92,7 +92,7 @@ export function PublicProposals() {
                 <p className="text-xs text-gray-400 mt-2">
                   by {proposal.author_name || 'ABG Member'}{proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
         )}
