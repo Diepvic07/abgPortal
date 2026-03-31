@@ -11,11 +11,11 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export function PublicProposals() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { locale } = useTranslation();
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);
   const [loading, setLoading] = useState(true);
-  const isLoggedIn = !!session;
+  const isLoggedIn = status === 'authenticated';
 
   useEffect(() => {
     async function fetch_proposals() {
