@@ -81,8 +81,8 @@ export function NewProposalForm() {
       </h1>
       <p className="text-gray-600 mb-8">
         {locale === 'vi'
-          ? 'Bạn sẽ tự động trở thành trưởng nhóm thực hiện khi đề xuất.'
-          : 'You will automatically become the taskforce lead when you propose.'}
+          ? 'Chọn mức cam kết của bạn khi đề xuất ý tưởng.'
+          : 'Choose your commitment level when proposing an idea.'}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
