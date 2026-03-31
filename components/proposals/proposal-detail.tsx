@@ -20,6 +20,41 @@ const STATUS_COLORS: Record<string, string> = {
   removed: 'bg-red-100 text-red-800',
 };
 
+const STATUS_LABELS: Record<string, { en: string; vi: string }> = {
+  published: { en: 'Open', vi: 'Đang mở' },
+  selected: { en: 'Selected', vi: 'Đã chọn' },
+  in_progress: { en: 'In Progress', vi: 'Đang thực hiện' },
+  completed: { en: 'Completed', vi: 'Hoàn thành' },
+  archived: { en: 'Archived', vi: 'Lưu trữ' },
+  removed: { en: 'Removed', vi: 'Đã xóa' },
+};
+
+function timeAgo(dateStr: string, lang: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30);
+
+  if (lang === 'vi') {
+    if (months > 0) return `${months} tháng trước`;
+    if (weeks > 0) return `${weeks} tuần trước`;
+    if (days > 0) return `${days} ngày trước`;
+    if (hours > 0) return `${hours} giờ trước`;
+    if (minutes > 0) return `${minutes} phút trước`;
+    return 'vừa xong';
+  }
+  if (months > 0) return `${months}mo ago`;
+  if (weeks > 0) return `${weeks}w ago`;
+  if (days > 0) return `${days}d ago`;
+  if (hours > 0) return `${hours}h ago`;
+  if (minutes > 0) return `${minutes}m ago`;
+  return 'just now';
+}
+
 interface Props {
   proposalId: string;
 }
@@ -129,7 +164,7 @@ export function ProposalDetail({ proposalId }: Props) {
         <div className="flex items-center gap-2 mb-3">
           <span className="text-2xl">{CATEGORY_ICONS[proposal.category]}</span>
           <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${STATUS_COLORS[proposal.status]}`}>
-            {proposal.status.replace('_', ' ')}
+            {(STATUS_LABELS[proposal.status] || { en: proposal.status, vi: proposal.status })[locale === 'vi' ? 'vi' : 'en']}
           </span>
           {proposal.is_pinned && <span className="text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">📌 Pinned</span>}
         </div>
@@ -306,7 +341,7 @@ export function ProposalDetail({ proposalId }: Props) {
                   {(c.member_name || '?')[0]}
                 </div>
                 <span className="font-medium text-sm text-gray-900">{c.member_name || 'Unknown'}</span>
-                <span className="text-xs text-gray-500">{new Date(c.created_at).toLocaleDateString()}</span>
+                <span className="text-xs text-gray-500">{timeAgo(c.created_at, locale || 'vi')}</span>
               </div>
               <p className="text-gray-700 text-sm whitespace-pre-wrap">{c.body}</p>
             </div>

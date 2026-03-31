@@ -16,6 +16,14 @@ const CATEGORY_ICONS: Record<ProposalCategory, string> = {
   other: '💡',
 };
 
+const CATEGORY_COLORS: Record<ProposalCategory, { border: string; bg: string; accent: string }> = {
+  charity: { border: 'border-l-rose-400', bg: 'bg-rose-50/40', accent: 'text-rose-600' },
+  event: { border: 'border-l-amber-400', bg: 'bg-amber-50/40', accent: 'text-amber-600' },
+  learning: { border: 'border-l-blue-400', bg: 'bg-blue-50/40', accent: 'text-blue-600' },
+  community_support: { border: 'border-l-emerald-400', bg: 'bg-emerald-50/40', accent: 'text-emerald-600' },
+  other: { border: 'border-l-violet-400', bg: 'bg-violet-50/40', accent: 'text-violet-600' },
+};
+
 export function ProposalsList() {
   const { t, locale } = useTranslation();
   const { data: session } = useSession();
@@ -121,42 +129,60 @@ export function ProposalsList() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {proposals.map((proposal) => (
-            <Link key={proposal.id} href={`/proposals/${proposal.id}`}>
-              <div className={`bg-white rounded-xl border p-6 hover:shadow-md transition-shadow ${proposal.is_pinned ? 'border-yellow-300 bg-yellow-50/30' : 'border-gray-200'}`}>
-                {proposal.is_pinned && (
-                  <span className="text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full mb-2 inline-block">
-                    📌 {locale === 'vi' ? 'Ghim' : 'Pinned'}
-                  </span>
-                )}
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="text-2xl">{CATEGORY_ICONS[proposal.category]}</span>
-                  <div className="flex-1 min-w-0">
+          {proposals.map((proposal) => {
+            const colors = CATEGORY_COLORS[proposal.category] || CATEGORY_COLORS.other;
+            return (
+              <Link key={proposal.id} href={`/proposals/${proposal.id}`}>
+                <div className={`rounded-xl border border-l-4 overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${
+                  proposal.is_pinned ? 'border-yellow-300 bg-yellow-50/20 border-l-yellow-400' : `border-gray-200 ${colors.border}`
+                }`}>
+                  {/* Card header with category accent */}
+                  <div className={`px-5 pt-5 pb-3 ${proposal.is_pinned ? '' : colors.bg}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {proposal.is_pinned && (
+                        <span className="text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">
+                          📌 {locale === 'vi' ? 'Ghim' : 'Pinned'}
+                        </span>
+                      )}
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full bg-white/80 ${colors.accent}`}>
+                        {CATEGORY_ICONS[proposal.category]} {PROPOSAL_CATEGORY_LABELS[proposal.category][locale === 'vi' ? 'vi' : 'en']}
+                      </span>
+                    </div>
                     <h3 className="font-semibold text-gray-900 text-lg leading-tight line-clamp-2">
                       {proposal.title}
                     </h3>
                     <p className="text-sm text-gray-500 mt-1">
-                      {locale === 'vi' ? 'bởi' : 'by'} {proposal.author_name || 'Unknown'}{proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
+                      {proposal.author_name || 'Unknown'}{proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
                     </p>
                   </div>
+
+                  {/* Description */}
+                  <div className="px-5 pb-3">
+                    <p className="text-gray-600 text-sm line-clamp-2">{proposal.description}</p>
+                  </div>
+
+                  {/* Inline reactions footer — Facebook style */}
+                  <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <span className="flex -space-x-1 text-sm">
+                        <span>❤️</span><span>🙌</span><span>🚀</span>
+                      </span>
+                      <span className="text-sm font-semibold text-gray-700 ml-1">{proposal.commitment_score}</span>
+                      <span className="text-xs text-gray-500">· {proposal.commitment_count} {locale === 'vi' ? 'tham gia' : 'joined'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      {proposal.comment_count > 0 && (
+                        <span>💬 {proposal.comment_count}</span>
+                      )}
+                      {proposal.target_date && (
+                        <span>📅 {proposal.target_date}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-gray-600 text-sm line-clamp-2 mb-4">{proposal.description}</p>
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="font-semibold text-blue-600">
-                    🔥 {proposal.commitment_score} {locale === 'vi' ? 'điểm' : 'pts'}
-                  </span>
-                  <span className="text-gray-500">
-                    👥 {proposal.commitment_count} {locale === 'vi' ? 'người tham gia' : 'committed'}
-                  </span>
-                  {proposal.comment_count > 0 && (
-                    <span className="text-gray-500">
-                      💬 {proposal.comment_count}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
