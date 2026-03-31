@@ -30,6 +30,7 @@ export function NewProposalForm() {
   const [generating, setGenerating] = useState(false);
   const [preview, setPreview] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [previewIsAI, setPreviewIsAI] = useState(false);
   const [error, setError] = useState('');
 
   function buildDescription(): string {
@@ -41,6 +42,17 @@ export function NewProposalForm() {
     if (resources) parts.push(`${vi ? 'Cần hỗ trợ' : 'Resources needed'}: ${resources}`);
     if (extra) parts.push(`\n${extra}`);
     return parts.join('\n');
+  }
+
+  function handleManualPreview() {
+    if (!title || !what) {
+      setError(vi ? 'Vui lòng điền tên và mô tả trước' : 'Please fill in the name and description first');
+      return;
+    }
+    setError('');
+    setPreview(buildDescription());
+    setPreviewIsAI(false);
+    setShowPreview(true);
   }
 
   async function handleGenerate() {
@@ -59,15 +71,16 @@ export function NewProposalForm() {
       const data = await res.json();
       if (res.ok && data.description) {
         setPreview(data.description);
+        setPreviewIsAI(true);
         setShowPreview(true);
       } else {
-        // Fallback to manual description
         setPreview(buildDescription());
+        setPreviewIsAI(false);
         setShowPreview(true);
       }
     } catch {
-      // Fallback to manual description
       setPreview(buildDescription());
+      setPreviewIsAI(false);
       setShowPreview(true);
     } finally {
       setGenerating(false);
@@ -307,16 +320,33 @@ export function NewProposalForm() {
           <div className="bg-white border-2 border-blue-200 rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                ✨ {vi ? 'Xem trước bài viết (AI đã tạo)' : 'Preview (AI generated)'}
+                {previewIsAI
+                ? <>✨ {vi ? 'Xem trước bài viết (AI đã tạo)' : 'Preview (AI generated)'}</>
+                : <>{vi ? '📝 Xem trước bài viết' : '📝 Preview'}</>
+              }
               </h3>
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={generating}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
-              >
-                🔄 {vi ? 'Tạo lại' : 'Regenerate'}
-              </button>
+              <div className="flex gap-2">
+                {!previewIsAI && (
+                  <button
+                    type="button"
+                    onClick={handleGenerate}
+                    disabled={generating}
+                    className="text-xs text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+                  >
+                    {generating ? '⏳...' : <>✨ {vi ? 'Viết lại bằng AI' : 'Rewrite with AI'}</>}
+                  </button>
+                )}
+                {previewIsAI && (
+                  <button
+                    type="button"
+                    onClick={handleGenerate}
+                    disabled={generating}
+                    className="text-xs text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+                  >
+                    {generating ? '⏳...' : <>🔄 {vi ? 'Tạo lại' : 'Regenerate'}</>}
+                  </button>
+                )}
+              </div>
             </div>
             <p className="text-xs text-gray-500">
               {vi ? 'Chỉnh sửa nội dung bên dưới trước khi đăng. Bạn có thể sửa thoải mái!' : 'Edit the content below before posting. Feel free to modify!'}
@@ -337,7 +367,7 @@ export function NewProposalForm() {
         )}
 
         {!showPreview && (
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={handleGenerate}
@@ -350,8 +380,16 @@ export function NewProposalForm() {
                   {vi ? 'AI đang viết...' : 'AI writing...'}
                 </>
               ) : (
-                <>✨ {vi ? 'Xem trước & Đăng' : 'Preview & Post'}</>
+                <>✨ {vi ? 'Xem trước với AI' : 'Preview with AI'}</>
               )}
+            </button>
+            <button
+              type="button"
+              onClick={handleManualPreview}
+              disabled={!title || !what}
+              className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
+            >
+              {vi ? '📝 Xem trước & Đăng' : '📝 Preview & Post'}
             </button>
             <button
               type="button"
