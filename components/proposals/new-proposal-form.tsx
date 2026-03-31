@@ -26,6 +26,9 @@ export function NewProposalForm() {
   const [targetDate, setTargetDate] = useState('');
   const [commitmentLevel, setCommitmentLevel] = useState<CommitmentLevel>('will_lead');
   const [submitting, setSubmitting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [preview, setPreview] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
   const [error, setError] = useState('');
 
   function buildDescription(): string {
@@ -38,11 +41,42 @@ export function NewProposalForm() {
     return parts.join('\n');
   }
 
+  async function handleGenerate() {
+    if (!title || !what) {
+      setError(vi ? 'Vui lòng điền tên và mô tả trước' : 'Please fill in the name and description first');
+      return;
+    }
+    setError('');
+    setGenerating(true);
+    try {
+      const res = await fetch('/api/community/proposals/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, category, what, why, who, howMany, resources, targetDate, locale }),
+      });
+      const data = await res.json();
+      if (res.ok && data.description) {
+        setPreview(data.description);
+        setShowPreview(true);
+      } else {
+        // Fallback to manual description
+        setPreview(buildDescription());
+        setShowPreview(true);
+      }
+    } catch {
+      // Fallback to manual description
+      setPreview(buildDescription());
+      setShowPreview(true);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
 
-    const description = buildDescription();
+    const description = showPreview ? preview : buildDescription();
     if (description.length < 20) {
       setError(vi ? 'Vui lòng điền thêm thông tin (ít nhất 20 ký tự)' : 'Please provide more details (at least 20 characters)');
       return;
@@ -247,6 +281,34 @@ export function NewProposalForm() {
           </div>
         </div>
 
+        {/* AI Preview Panel */}
+        {showPreview && (
+          <div className="bg-white border-2 border-blue-200 rounded-xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                ✨ {vi ? 'Xem trước bài viết (AI đã tạo)' : 'Preview (AI generated)'}
+              </h3>
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={generating}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+              >
+                🔄 {vi ? 'Tạo lại' : 'Regenerate'}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500">
+              {vi ? 'Chỉnh sửa nội dung bên dưới trước khi đăng. Bạn có thể sửa thoải mái!' : 'Edit the content below before posting. Feel free to modify!'}
+            </p>
+            <textarea
+              value={preview}
+              onChange={(e) => setPreview(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-h-[200px] text-sm leading-relaxed"
+            />
+            <p className="text-xs text-gray-400">{preview.length} {vi ? 'ký tự' : 'characters'}</p>
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-sm text-red-800">{error}</p>
@@ -254,19 +316,55 @@ export function NewProposalForm() {
         )}
 
         <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={submitting || !title || !what}
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 text-base"
-          >
-            {submitting
-              ? (vi ? 'Đang gửi...' : 'Submitting...')
-              : (vi ? 'Đề xuất' : 'Submit Proposal')}
-          </button>
+          {!showPreview ? (
+            <>
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={generating || !title || !what}
+                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 text-base flex items-center gap-2"
+              >
+                {generating ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    {vi ? 'AI đang viết...' : 'AI writing...'}
+                  </>
+                ) : (
+                  <>✨ {vi ? 'Xem trước với AI' : 'Preview with AI'}</>
+                )}
+              </button>
+              <button
+                type="submit"
+                disabled={submitting || !title || !what}
+                className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
+              >
+                {vi ? 'Đăng luôn (không AI)' : 'Post without AI'}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="submit"
+                disabled={submitting || !preview}
+                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 text-base"
+              >
+                {submitting
+                  ? (vi ? 'Đang đăng...' : 'Posting...')
+                  : (vi ? 'Đăng đề xuất' : 'Post Proposal')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPreview(false)}
+                className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                {vi ? 'Quay lại sửa' : 'Back to edit'}
+              </button>
+            </>
+          )}
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            className="px-6 py-3 text-gray-500 hover:text-gray-700 transition-colors"
           >
             {vi ? 'Hủy' : 'Cancel'}
           </button>
