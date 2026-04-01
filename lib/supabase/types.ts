@@ -453,6 +453,8 @@ export interface Database {
           location: string | null;
           location_url: string | null;
           capacity: number | null;
+          capacity_premium: number | null;
+          capacity_basic: number | null;
           image_url: string | null;
           created_by_member_id: string;
           proposal_id: string | null;
@@ -476,6 +478,8 @@ export interface Database {
           location?: string | null;
           location_url?: string | null;
           capacity?: number | null;
+          capacity_premium?: number | null;
+          capacity_basic?: number | null;
           image_url?: string | null;
           created_by_member_id: string;
           proposal_id?: string | null;

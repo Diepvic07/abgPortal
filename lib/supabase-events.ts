@@ -19,6 +19,8 @@ function mapRowToEvent(row: Record<string, unknown>): CommunityEvent {
     location: nullToUndefined(row.location as string | null),
     location_url: nullToUndefined(row.location_url as string | null),
     capacity: nullToUndefined(row.capacity as number | null),
+    capacity_premium: nullToUndefined(row.capacity_premium as number | null),
+    capacity_basic: nullToUndefined(row.capacity_basic as number | null),
     image_url: nullToUndefined(row.image_url as string | null),
     created_by_member_id: row.created_by_member_id as string,
     proposal_id: nullToUndefined(row.proposal_id as string | null),
@@ -78,6 +80,8 @@ export async function createEvent(data: {
   location?: string;
   location_url?: string;
   capacity?: number;
+  capacity_premium?: number;
+  capacity_basic?: number;
   image_url?: string;
   created_by_member_id: string;
   proposal_id?: string;
@@ -100,6 +104,8 @@ export async function createEvent(data: {
       location: data.location || null,
       location_url: data.location_url || null,
       capacity: data.capacity || null,
+      capacity_premium: data.capacity_premium ?? null,
+      capacity_basic: data.capacity_basic ?? null,
       image_url: data.image_url || null,
       created_by_member_id: data.created_by_member_id,
       proposal_id: data.proposal_id || null,
@@ -216,6 +222,8 @@ export async function updateEvent(id: string, data: Partial<{
   location: string | null;
   location_url: string | null;
   capacity: number | null;
+  capacity_premium: number | null;
+  capacity_basic: number | null;
   image_url: string | null;
   status: EventStatus;
   published_at: string | null;
@@ -448,6 +456,8 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
   location?: string;
   location_url?: string;
   capacity?: number;
+  capacity_premium?: number;
+  capacity_basic?: number;
   image_url?: string;
 }): Promise<CommunityEvent> {
   const supabase = createServerSupabaseClient();

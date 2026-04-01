@@ -20,6 +20,8 @@ const CreateEventSchema = z.object({
   location: z.string().optional(),
   location_url: z.string().url().optional(),
   capacity: z.number().int().positive().optional(),
+  capacity_premium: z.number().int().min(0).optional(),
+  capacity_basic: z.number().int().min(0).optional(),
   image_url: z.string().url().optional(),
 });
 

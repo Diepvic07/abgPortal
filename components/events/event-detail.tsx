@@ -198,8 +198,11 @@ export function EventDetail({ eventId }: { eventId: string }) {
 
   const categoryLabel = EVENT_CATEGORY_LABELS[event.category]?.[locale === 'vi' ? 'vi' : 'en'] || event.category;
   const statusInfo = EVENT_STATUS_LABELS[event.status];
-  const capacityPercent = event.capacity ? (event.rsvp_count / event.capacity) * 100 : 0;
-  const isFull = event.capacity ? event.rsvp_count >= event.capacity : false;
+  const totalCapacity = (event.capacity_premium || 0) + (event.capacity_basic || 0) || event.capacity || 0;
+  const capacityPercent = totalCapacity ? (event.rsvp_count / totalCapacity) * 100 : 0;
+  const isFull = totalCapacity ? event.rsvp_count >= totalCapacity : false;
+  const isPremiumExclusive = event.capacity_basic === 0;
+  const hasTieredSeats = event.capacity_premium != null || event.capacity_basic != null;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -253,11 +256,33 @@ export function EventDetail({ eventId }: { eventId: string }) {
           <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-1.053M18 6.75a3 3 0 11-6 0 3 3 0 016 0zM6.75 9.75a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
           <span>
             {event.rsvp_count} {locale === 'vi' ? 'đăng ký' : 'RSVPs'}
-            {event.capacity && ` / ${event.capacity} ${locale === 'vi' ? 'chỗ' : 'capacity'}`}
+            {totalCapacity > 0 && ` / ${totalCapacity} ${locale === 'vi' ? 'chỗ' : 'seats'}`}
           </span>
+          {isPremiumExclusive && (
+            <span className="text-xs font-semibold bg-amber-400 text-white px-2 py-0.5 rounded-full">
+              Premium Exclusive
+            </span>
+          )}
         </div>
+        {/* Tiered seat display */}
+        {hasTieredSeats && (
+          <div className="ml-6 flex gap-4 text-xs text-gray-500">
+            {event.capacity_premium != null && (
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                Premium: {event.rsvp_count}/{event.capacity_premium}
+              </span>
+            )}
+            {event.capacity_basic != null && event.capacity_basic > 0 && (
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-gray-400 inline-block" />
+                Basic: {Math.max(0, event.rsvp_count - (event.capacity_premium || 0))}/{event.capacity_basic}
+              </span>
+            )}
+          </div>
+        )}
         {/* Capacity progress bar */}
-        {event.capacity && (
+        {totalCapacity > 0 && (
           <div className="w-48 ml-6">
             <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div
@@ -300,7 +325,14 @@ export function EventDetail({ eventId }: { eventId: string }) {
             </h2>
 
             {/* Tier info banner */}
-            {!isPremium && (
+            {!isPremium && isPremiumExclusive && (
+              <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 font-medium">
+                {locale === 'vi'
+                  ? 'Sự kiện dành riêng cho thành viên Premium. Nâng cấp để tham gia.'
+                  : 'This event is Premium exclusive. Upgrade to join.'}
+              </div>
+            )}
+            {!isPremium && !isPremiumExclusive && (
               <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
                 {locale === 'vi'
                   ? 'Thành viên Basic: đăng ký tùy theo số chỗ còn lại. Nâng cấp Premium để ưu tiên đăng ký.'
@@ -312,7 +344,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
               {RSVP_OPTIONS.map(({ level, points, icon }) => {
                 const isSelected = myRsvp === level;
                 const label = COMMITMENT_LABELS[level][locale === 'vi' ? 'vi' : 'en'];
-                const disabled = rsvpLoading || (isFull && !isSelected && !isPremium);
+                const disabled = rsvpLoading || (isFull && !isSelected) || (!isPremium && isPremiumExclusive);
 
                 return (
                   <button
@@ -365,12 +397,21 @@ export function EventDetail({ eventId }: { eventId: string }) {
             {locale === 'vi' ? 'Người tham gia' : 'Participants'} ({rsvps.length})
           </h2>
           <div className="flex flex-wrap gap-2">
-            {rsvps.map((rsvp) => (
+            {/* Sort: Leaders first, then participants, then interested */}
+            {[...rsvps].sort((a, b) => {
+              const order: Record<string, number> = { will_lead: 0, will_participate: 1, interested: 2 };
+              return (order[a.commitment_level] ?? 2) - (order[b.commitment_level] ?? 2);
+            }).map((rsvp) => (
               <div
                 key={rsvp.id}
-                className="flex items-center gap-2 bg-gray-50 rounded-full px-3 py-1.5 text-sm"
+                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ${
+                  rsvp.commitment_level === 'will_lead' ? 'bg-blue-50 ring-1 ring-blue-200' : 'bg-gray-50'
+                }`}
                 title={COMMITMENT_LABELS[rsvp.commitment_level]?.[locale === 'vi' ? 'vi' : 'en']}
               >
+                {rsvp.commitment_level === 'will_lead' && (
+                  <span className="text-amber-500 text-xs">👑</span>
+                )}
                 {rsvp.member_avatar_url ? (
                   <img src={rsvp.member_avatar_url} alt="" className="w-5 h-5 rounded-full" />
                 ) : (
@@ -378,7 +419,9 @@ export function EventDetail({ eventId }: { eventId: string }) {
                     {(rsvp.member_name || '?')[0]}
                   </div>
                 )}
-                <span className="text-gray-700">{rsvp.member_name || 'Member'}</span>
+                <span className={`${rsvp.commitment_level === 'will_lead' ? 'text-blue-800 font-medium' : 'text-gray-700'}`}>
+                  {rsvp.member_name || 'Member'}
+                </span>
               </div>
             ))}
           </div>

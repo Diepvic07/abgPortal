@@ -306,6 +306,8 @@ export interface CommunityEvent {
   location?: string;
   location_url?: string;
   capacity?: number;
+  capacity_premium?: number;
+  capacity_basic?: number;
   image_url?: string;
   created_by_member_id: string;
   proposal_id?: string;

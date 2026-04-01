@@ -19,6 +19,8 @@ const UpdateEventSchema = z.object({
   location: z.string().nullable().optional(),
   location_url: z.string().url().nullable().optional(),
   capacity: z.number().int().positive().nullable().optional(),
+  capacity_premium: z.number().int().min(0).nullable().optional(),
+  capacity_basic: z.number().int().min(0).nullable().optional(),
   image_url: z.string().url().nullable().optional(),
 });
 
