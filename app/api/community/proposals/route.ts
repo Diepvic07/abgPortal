@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const member = await requireAuth(request);
 
     const body = await request.json();
-    const { title, description, category, target_date, commitment_level } = body;
+    const { title, description, category, target_date, commitment_level, image_url } = body;
 
     if (!title || title.length < 5 || title.length > 200) {
       return errorResponse('Title must be between 5 and 200 characters', 400);
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       description,
       category,
       target_date: target_date || undefined,
+      image_url: image_url || undefined,
     });
 
     // Commit proposer at their chosen level

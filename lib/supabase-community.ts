@@ -28,6 +28,7 @@ function mapRowToProposal(row: Record<string, unknown>): CommunityProposal {
     selected_by_member_id: nullToUndefined(row.selected_by_member_id as string | null),
     completed_at: nullToUndefined(row.completed_at as string | null),
     admin_note: nullToUndefined(row.admin_note as string | null),
+    image_url: nullToUndefined(row.image_url as string | null),
     author_name: nullToUndefined(row.author_name as string | null),
     author_avatar_url: nullToUndefined(row.author_avatar_url as string | null),
     author_abg_class: nullToUndefined(row.author_abg_class as string | null),
@@ -70,6 +71,7 @@ export async function createProposal(data: {
   description: string;
   category: ProposalCategory;
   target_date?: string;
+  image_url?: string;
 }): Promise<CommunityProposal> {
   const supabase = createServerSupabaseClient();
   const id = generateId();
@@ -84,6 +86,7 @@ export async function createProposal(data: {
       description: data.description,
       category: data.category,
       target_date: data.target_date || null,
+      image_url: data.image_url || null,
       status: 'published',
       is_pinned: false,
       commitment_score: 0,

@@ -374,6 +374,7 @@ export interface Database {
           selected_by_member_id: string | null;
           completed_at: string | null;
           admin_note: string | null;
+          image_url: string | null;
         };
         Insert: {
           id: string;
@@ -394,6 +395,7 @@ export interface Database {
           selected_by_member_id?: string | null;
           completed_at?: string | null;
           admin_note?: string | null;
+          image_url?: string | null;
         };
         Update: Partial<Database['public']['Tables']['community_proposals']['Insert']>;
         Relationships: [];

@@ -31,6 +31,8 @@ export function NewProposalForm() {
   const [preview, setPreview] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [previewIsAI, setPreviewIsAI] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
   function buildDescription(): string {
@@ -42,6 +44,32 @@ export function NewProposalForm() {
     if (resources) parts.push(`${vi ? 'Cần hỗ trợ' : 'Resources needed'}: ${resources}`);
     if (extra) parts.push(`\n${extra}`);
     return parts.join('\n');
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError(vi ? 'Ảnh quá lớn. Tối đa 5MB.' : 'Image too large. Maximum 5MB.');
+      return;
+    }
+    setUploading(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/community/proposals/upload-image', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setImageUrl(data.url);
+      } else {
+        setError(data.error || (vi ? 'Không thể tải ảnh lên' : 'Failed to upload image'));
+      }
+    } catch {
+      setError(vi ? 'Lỗi tải ảnh' : 'Image upload error');
+    } finally {
+      setUploading(false);
+    }
   }
 
   function handleManualPreview() {
@@ -102,7 +130,7 @@ export function NewProposalForm() {
       const res = await fetch('/api/community/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, category, target_date: targetDate || undefined, commitment_level: commitmentLevel }),
+        body: JSON.stringify({ title, description, category, target_date: targetDate || undefined, commitment_level: commitmentLevel, image_url: imageUrl || undefined }),
       });
 
       const data = await res.json();
@@ -285,10 +313,54 @@ export function NewProposalForm() {
           />
         </div>
 
-        {/* Step 8: Commitment level */}
+        {/* Step 8: Image upload */}
+        <div className="bg-gray-50 rounded-xl p-5">
+          <label className="block text-sm font-semibold text-gray-900 mb-1">
+            8. {vi ? 'Ảnh minh họa (tùy chọn)' : 'Cover image (optional)'}
+          </label>
+          <p className="text-xs text-gray-500 mb-3">{vi ? 'Thêm ảnh để đề xuất hấp dẫn hơn. Tối đa 5MB.' : 'Add an image to make your proposal more engaging. Max 5MB.'}</p>
+          {imageUrl ? (
+            <div className="relative">
+              <img src={imageUrl} alt="Preview" className="w-full max-h-48 object-cover rounded-lg" />
+              <button
+                type="button"
+                onClick={() => setImageUrl('')}
+                className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-black/80"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${uploading ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-100'}`}>
+              <div className="flex flex-col items-center gap-1 text-gray-500">
+                {uploading ? (
+                  <>
+                    <svg className="animate-spin h-6 w-6 text-blue-500" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <span className="text-sm text-blue-600">{vi ? 'Đang tải...' : 'Uploading...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-2xl">📷</span>
+                    <span className="text-sm">{vi ? 'Nhấn để chọn ảnh' : 'Click to select image'}</span>
+                    <span className="text-xs text-gray-400">JPG, PNG, WebP, GIF</span>
+                  </>
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+
+        {/* Step 9: Commitment level */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label className="block text-sm font-semibold text-gray-900 mb-3">
-            8. {vi ? 'Bạn sẽ tham gia ở mức nào?' : 'How will you participate?'} *
+            9. {vi ? 'Bạn sẽ tham gia ở mức nào?' : 'How will you participate?'} *
           </label>
           <div className="grid grid-cols-3 gap-3">
             {([

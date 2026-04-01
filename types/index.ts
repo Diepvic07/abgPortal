@@ -242,6 +242,7 @@ export interface CommunityProposal {
   selected_by_member_id?: string;
   completed_at?: string;
   admin_note?: string;
+  image_url?: string;
   // Joined fields
   author_name?: string;
   author_avatar_url?: string;
