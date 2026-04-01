@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityEvent, EventRsvp, EventComment, CommitmentLevel, COMMITMENT_LABELS, EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS } from '@/types';
+import { CommunityEvent, EventRsvp, EventComment, CommitmentLevel, MembershipStatus, COMMITMENT_LABELS, EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS } from '@/types';
 
-const RSVP_OPTIONS: { level: CommitmentLevel; points: number }[] = [
-  { level: 'interested', points: 0 },
-  { level: 'will_participate', points: 3 },
-  { level: 'will_lead', points: 5 },
+// Order: Lead first (left), then Participate, then Interested
+const RSVP_OPTIONS: { level: CommitmentLevel; points: number; icon: string }[] = [
+  { level: 'will_lead', points: 5, icon: '👑' },
+  { level: 'will_participate', points: 3, icon: '🙌' },
+  { level: 'interested', points: 0, icon: '👀' },
 ];
 
 function formatDateTime(dateStr: string, locale: string): string {
@@ -58,6 +59,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [commentBody, setCommentBody] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
+  const [membershipStatus, setMembershipStatus] = useState<MembershipStatus>('basic');
 
   useEffect(() => {
     fetchEvent();
@@ -74,6 +76,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
           setEvent(data.event);
           setRsvps(data.rsvps || []);
           setMyRsvp(data.my_rsvp || null);
+          if (data.membership_status) setMembershipStatus(data.membership_status);
         }
       }
     } catch (error) {
@@ -286,43 +289,74 @@ export function EventDetail({ eventId }: { eventId: string }) {
       </div>
 
       {/* RSVP Section */}
-      {event.status === 'published' && (
-        <div className="mb-8 p-4 bg-gray-50 rounded-xl">
-          <h2 className="text-sm font-semibold text-gray-900 mb-3">
-            {locale === 'vi' ? 'Đăng ký tham gia' : 'RSVP'}
-          </h2>
-          <div className="flex gap-2">
-            {RSVP_OPTIONS.map(({ level }) => {
-              const isSelected = myRsvp === level;
-              const label = COMMITMENT_LABELS[level][locale === 'vi' ? 'vi' : 'en'];
-              return (
-                <button
-                  key={level}
-                  onClick={() => handleRsvp(level)}
-                  disabled={rsvpLoading || isFull}
-                  aria-pressed={isSelected}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    isSelected
-                      ? level === 'will_lead'
-                        ? 'bg-blue-800 text-white scale-[1.02]'
-                        : level === 'will_participate'
-                        ? 'bg-blue-600 text-white scale-[1.02]'
-                        : 'bg-gray-700 text-white scale-[1.02]'
-                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                  } ${rsvpLoading ? 'opacity-50 cursor-not-allowed' : ''} ${isFull && !isSelected ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {label}
-                </button>
-              );
-            })}
+      {event.status === 'published' && (() => {
+        const isPremium = membershipStatus === 'premium' || membershipStatus === 'grace-period';
+        const basicCanRsvp = !isFull; // Basic members can RSVP if not full
+
+        return (
+          <div className="mb-8 p-4 bg-gray-50 rounded-xl">
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">
+              {locale === 'vi' ? 'Đăng ký tham gia' : 'RSVP'}
+            </h2>
+
+            {/* Tier info banner */}
+            {!isPremium && (
+              <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                {locale === 'vi'
+                  ? 'Thành viên Basic: đăng ký tùy theo số chỗ còn lại. Nâng cấp Premium để ưu tiên đăng ký.'
+                  : 'Basic members: registration subject to availability. Upgrade to Premium for priority access.'}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              {RSVP_OPTIONS.map(({ level, points, icon }) => {
+                const isSelected = myRsvp === level;
+                const label = COMMITMENT_LABELS[level][locale === 'vi' ? 'vi' : 'en'];
+                const disabled = rsvpLoading || (isFull && !isSelected && !isPremium);
+
+                return (
+                  <button
+                    key={level}
+                    onClick={() => handleRsvp(level)}
+                    disabled={disabled}
+                    aria-pressed={isSelected}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      isSelected
+                        ? level === 'will_lead'
+                          ? 'bg-blue-800 text-white scale-[1.02] shadow-sm'
+                          : level === 'will_participate'
+                          ? 'bg-blue-600 text-white scale-[1.02] shadow-sm'
+                          : 'bg-gray-700 text-white scale-[1.02] shadow-sm'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <span>{icon}</span>
+                    <span>{label}</span>
+                    {points > 0 && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        isSelected ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        +{points}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {isFull && !myRsvp && !isPremium && (
+              <p className="text-sm text-red-600 mt-2 font-medium">
+                {locale === 'vi' ? 'Sự kiện đã đầy cho thành viên Basic' : 'Event is full for Basic members'}
+              </p>
+            )}
+            {isFull && !myRsvp && isPremium && (
+              <p className="text-sm text-amber-600 mt-2 font-medium">
+                {locale === 'vi' ? 'Sự kiện đã đầy nhưng bạn có thể đăng ký với tư cách Premium' : 'Event is full but you can register as Premium member'}
+              </p>
+            )}
           </div>
-          {isFull && !myRsvp && (
-            <p className="text-sm text-red-600 mt-2 font-medium">
-              {locale === 'vi' ? 'Sự kiện đã đầy' : 'Event is full'}
-            </p>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* RSVP participants list */}
       {rsvps.length > 0 && (

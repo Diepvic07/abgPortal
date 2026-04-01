@@ -21,10 +21,15 @@ export async function GET(request: NextRequest) {
       }
       const rsvps = await getRsvpsByEvent(eventId);
       const myRsvp = await getMemberRsvp(eventId, member.id);
+      // Derive membership status for RSVP tier gating
+      const { getMembershipStatus } = await import('@/types');
+      const membershipStatus = getMembershipStatus(member);
+
       return successResponse({
         event,
         rsvps,
         my_rsvp: myRsvp?.commitment_level || null,
+        membership_status: membershipStatus,
       });
     }
 
