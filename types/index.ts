@@ -276,6 +276,83 @@ export interface CommunityProposalComment {
   member_avatar_url?: string;
 }
 
+// Community Events
+export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
+export type EventCategory = 'charity' | 'event' | 'learning' | 'community_support' | 'networking' | 'other';
+
+export const EVENT_CATEGORY_LABELS: Record<EventCategory, { en: string; vi: string }> = {
+  charity: { en: 'Charity', vi: 'Từ thiện' },
+  event: { en: 'Event', vi: 'Sự kiện' },
+  learning: { en: 'Learning', vi: 'Học tập' },
+  community_support: { en: 'Community Support', vi: 'Hỗ trợ cộng đồng' },
+  networking: { en: 'Networking', vi: 'Kết nối' },
+  other: { en: 'Other', vi: 'Khác' },
+};
+
+export const EVENT_STATUS_LABELS: Record<EventStatus, { en: string; vi: string; color: string }> = {
+  draft: { en: 'Draft', vi: 'Bản nháp', color: 'gray' },
+  published: { en: 'Published', vi: 'Đã đăng', color: 'green' },
+  cancelled: { en: 'Cancelled', vi: 'Đã hủy', color: 'red' },
+  completed: { en: 'Completed', vi: 'Hoàn thành', color: 'blue' },
+};
+
+export interface CommunityEvent {
+  id: string;
+  title: string;
+  description: string;
+  category: EventCategory;
+  event_date: string;
+  event_end_date?: string;
+  location?: string;
+  location_url?: string;
+  capacity?: number;
+  image_url?: string;
+  created_by_member_id: string;
+  proposal_id?: string;
+  status: EventStatus;
+  rsvp_count: number;
+  rsvp_score: number;
+  comment_count: number;
+  created_at: string;
+  updated_at: string;
+  published_at?: string;
+  completed_at?: string;
+  outcome_summary?: string;
+  // Joined fields
+  author_name?: string;
+  author_avatar_url?: string;
+  author_abg_class?: string;
+  my_rsvp?: CommitmentLevel;
+}
+
+export interface EventRsvp {
+  id: string;
+  event_id: string;
+  member_id: string;
+  commitment_level: CommitmentLevel;
+  actual_attendance?: boolean;
+  actual_participation_score?: number;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  member_name?: string;
+  member_avatar_url?: string;
+  member_abg_class?: string;
+}
+
+export interface EventComment {
+  id: string;
+  event_id: string;
+  member_id: string;
+  body: string;
+  status: CommentStatus;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  member_name?: string;
+  member_avatar_url?: string;
+}
+
 export type NewsCategory = 'Edu' | 'Business' | 'Event' | 'Course' | 'Announcement';
 
 export interface NewsArticle {

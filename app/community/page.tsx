@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions);
 
-  // Logged-in members go to the full proposals list
+  // Logged-in members go to the events hub (the new default home)
   if (session) {
-    redirect('/proposals');
+    redirect('/events');
   }
 
   return (

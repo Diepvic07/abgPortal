@@ -22,3 +22,10 @@
 - **Effort:** S (human ~1 day / CC ~10 min)
 - **Priority:** P3
 - **Depends on:** v1 proposals + completed proposals existing
+
+### Create DESIGN.md (Design System)
+- **What:** Run /design-consultation to formalize the design system: colors, typography, spacing scale, component patterns, category color palette.
+- **Why:** The proposals UI established a de facto design system (blue CTAs, category pill colors, gray typography). As the platform grows (events, notifications, discussions), having a single source of truth prevents drift and inconsistency.
+- **Effort:** S (human ~2 hours / CC ~15 min via /design-consultation)
+- **Priority:** P3
+- **Depends on:** Nothing. Can run anytime.
