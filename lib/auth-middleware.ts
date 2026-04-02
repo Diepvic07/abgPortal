@@ -21,6 +21,11 @@ export async function getAuthenticatedMember(request?: NextRequest) {
         return null;
     }
 
+    // Check if account is approved
+    if (member.approval_status !== 'approved') {
+        return null;
+    }
+
     return member;
 }
 

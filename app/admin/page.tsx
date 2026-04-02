@@ -8,6 +8,7 @@ import { AdminMemberDirectory } from "@/components/admin/admin-member-directory"
 import { AdminNewsManager } from "@/components/admin/admin-news-manager";
 import { AdminPaymentReport } from "@/components/admin/admin-payment-report";
 import { AdminClassManager } from "@/components/admin/admin-class-manager";
+import { AdminProposalManager } from "@/components/admin/admin-proposal-manager";
 import { PaymentUpgradeModal } from "@/components/admin/payment-upgrade-modal";
 import { DuplicateReviewCard } from "@/components/admin/duplicate-review-card";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
@@ -48,7 +49,7 @@ export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [members, setMembers] = useState<AdminMember[]>([]);
-  const [activeTab, setActiveTab] = useState<"pending" | "duplicates" | "status" | "directory" | "news" | "payments" | "classes">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "duplicates" | "status" | "directory" | "news" | "payments" | "classes" | "proposals">("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -411,6 +412,15 @@ export default function AdminPage() {
             Payments ({pendingPaymentCount})
           </button>
           <button
+            onClick={() => setActiveTab("proposals")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === "proposals"
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+          >
+            Proposals
+          </button>
+          <button
             onClick={() => setActiveTab("classes")}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === "classes"
               ? "bg-blue-600 text-white"
@@ -421,7 +431,7 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {activeTab !== "directory" && activeTab !== "news" && activeTab !== "payments" && activeTab !== "classes" && activeTab !== "duplicates" && (
+        {activeTab !== "directory" && activeTab !== "news" && activeTab !== "payments" && activeTab !== "classes" && activeTab !== "duplicates" && activeTab !== "proposals" && (
           <div className="mb-4">
             <input
               type="text"
@@ -469,6 +479,10 @@ export default function AdminPage() {
         ) : activeTab === "classes" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">
             <AdminClassManager />
+          </div>
+        ) : activeTab === "proposals" ? (
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <AdminProposalManager />
           </div>
         ) : activeTab === "payments" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">

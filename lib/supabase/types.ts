@@ -354,6 +354,194 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['abg_classes']['Insert']>;
         Relationships: [];
       };
+      community_proposals: {
+        Row: {
+          id: string;
+          created_by_member_id: string;
+          title: string;
+          description: string;
+          category: string;
+          status: string;
+          is_pinned: boolean;
+          commitment_score: number;
+          commitment_count: number;
+          comment_count: number;
+          target_date: string | null;
+          created_at: string;
+          updated_at: string;
+          published_at: string | null;
+          selected_at: string | null;
+          selected_by_member_id: string | null;
+          completed_at: string | null;
+          admin_note: string | null;
+          image_url: string | null;
+        };
+        Insert: {
+          id: string;
+          created_by_member_id: string;
+          title: string;
+          description: string;
+          category?: string;
+          status?: string;
+          is_pinned?: boolean;
+          commitment_score?: number;
+          commitment_count?: number;
+          comment_count?: number;
+          target_date?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          published_at?: string | null;
+          selected_at?: string | null;
+          selected_by_member_id?: string | null;
+          completed_at?: string | null;
+          admin_note?: string | null;
+          image_url?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['community_proposals']['Insert']>;
+        Relationships: [];
+      };
+      community_commitments: {
+        Row: {
+          id: string;
+          proposal_id: string;
+          member_id: string;
+          commitment_level: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          proposal_id: string;
+          member_id: string;
+          commitment_level?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['community_commitments']['Insert']>;
+        Relationships: [];
+      };
+      community_proposal_comments: {
+        Row: {
+          id: string;
+          proposal_id: string;
+          member_id: string;
+          body: string;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          proposal_id: string;
+          member_id: string;
+          body: string;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['community_proposal_comments']['Insert']>;
+        Relationships: [];
+      };
+      community_events: {
+        Row: {
+          id: string;
+          title: string;
+          description: string;
+          category: string;
+          event_date: string;
+          event_end_date: string | null;
+          location: string | null;
+          location_url: string | null;
+          capacity: number | null;
+          capacity_premium: number | null;
+          capacity_basic: number | null;
+          image_url: string | null;
+          created_by_member_id: string;
+          proposal_id: string | null;
+          status: string;
+          rsvp_count: number;
+          rsvp_score: number;
+          comment_count: number;
+          created_at: string;
+          updated_at: string;
+          published_at: string | null;
+          completed_at: string | null;
+          outcome_summary: string | null;
+        };
+        Insert: {
+          id: string;
+          title: string;
+          description: string;
+          category?: string;
+          event_date: string;
+          event_end_date?: string | null;
+          location?: string | null;
+          location_url?: string | null;
+          capacity?: number | null;
+          capacity_premium?: number | null;
+          capacity_basic?: number | null;
+          image_url?: string | null;
+          created_by_member_id: string;
+          proposal_id?: string | null;
+          status?: string;
+          rsvp_count?: number;
+          rsvp_score?: number;
+          comment_count?: number;
+          created_at?: string;
+          updated_at?: string;
+          published_at?: string | null;
+          completed_at?: string | null;
+          outcome_summary?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['community_events']['Insert']>;
+        Relationships: [];
+      };
+      community_event_rsvps: {
+        Row: {
+          id: string;
+          event_id: string;
+          member_id: string;
+          commitment_level: string;
+          actual_attendance: boolean | null;
+          actual_participation_score: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          event_id: string;
+          member_id: string;
+          commitment_level?: string;
+          actual_attendance?: boolean | null;
+          actual_participation_score?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['community_event_rsvps']['Insert']>;
+        Relationships: [];
+      };
+      community_event_comments: {
+        Row: {
+          id: string;
+          event_id: string;
+          member_id: string;
+          body: string;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          event_id: string;
+          member_id: string;
+          body: string;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['community_event_comments']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

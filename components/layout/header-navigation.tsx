@@ -106,9 +106,14 @@ export function HeaderNavigation() {
               {t.nav.findConnection}
             </Link>
             {status === 'authenticated' && (
-              <Link href="/members" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
-                {t.nav.members}
-              </Link>
+              <>
+                <Link href="/events" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+                  {t.nav.events || 'Events'}
+                </Link>
+                <Link href="/members" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+                  {t.nav.members}
+                </Link>
+              </>
             )}
             <Link href="/news" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
               {t.nav.news}
@@ -178,13 +183,22 @@ export function HeaderNavigation() {
                 {t.nav.findConnection}
               </Link>
               {status === 'authenticated' && (
-                <Link
-                  href="/members"
-                  className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {t.nav.members}
-                </Link>
+                <>
+                  <Link
+                    href="/events"
+                    className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {t.nav.events || 'Events'}
+                  </Link>
+                  <Link
+                    href="/members"
+                    className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {t.nav.members}
+                  </Link>
+                </>
               )}
               <Link
                 href="/news"
