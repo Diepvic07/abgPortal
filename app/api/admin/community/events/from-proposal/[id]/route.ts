@@ -9,6 +9,7 @@ import { getMemberByEmail } from '@/lib/supabase-db';
 import { z } from 'zod';
 
 const CreateFromProposalSchema = z.object({
+  event_mode: z.enum(['offline', 'online', 'hybrid']).optional().default('offline'),
   event_date: z.string(),
   event_end_date: z.string().optional(),
   location: z.string().optional(),

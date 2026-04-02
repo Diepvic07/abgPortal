@@ -8,11 +8,13 @@ import { z } from 'zod';
 
 const EventCategory = z.enum(['charity', 'event', 'learning', 'community_support', 'networking', 'other']);
 const EventStatus = z.enum(['draft', 'published', 'cancelled', 'completed']);
+const EventMode = z.enum(['offline', 'online', 'hybrid']);
 
 const UpdateEventSchema = z.object({
   title: z.string().min(5).max(200).optional(),
   description: z.string().min(20).max(5000).optional(),
   category: EventCategory.optional(),
+  event_mode: EventMode.nullable().optional(),
   status: EventStatus.optional(),
   event_date: z.string().optional(),
   event_end_date: z.string().nullable().optional(),

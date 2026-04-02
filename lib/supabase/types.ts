@@ -448,6 +448,7 @@ export interface Database {
           title: string;
           description: string;
           category: string;
+          event_mode: string | null;
           event_date: string;
           event_end_date: string | null;
           location: string | null;
@@ -473,6 +474,7 @@ export interface Database {
           title: string;
           description: string;
           category?: string;
+          event_mode?: string | null;
           event_date: string;
           event_end_date?: string | null;
           location?: string | null;
@@ -502,6 +504,7 @@ export interface Database {
           event_id: string;
           member_id: string;
           commitment_level: string;
+          note: string | null;
           actual_attendance: boolean | null;
           actual_participation_score: number | null;
           created_at: string;
@@ -512,6 +515,7 @@ export interface Database {
           event_id: string;
           member_id: string;
           commitment_level?: string;
+          note?: string | null;
           actual_attendance?: boolean | null;
           actual_participation_score?: number | null;
           created_at?: string;
