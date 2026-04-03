@@ -62,6 +62,8 @@ export interface Database {
           month_reset_date: string | null;
           searches_this_month: number;
           search_month_reset_date: string | null;
+          public_profile_slug: string | null;
+          public_profile_enabled: boolean;
           updated_at: string;
         };
         Insert: {
@@ -122,8 +124,42 @@ export interface Database {
           month_reset_date?: string | null;
           searches_this_month?: number;
           search_month_reset_date?: string | null;
+          public_profile_slug?: string | null;
+          public_profile_enabled?: boolean;
         };
         Update: Partial<Database['public']['Tables']['members']['Insert']>;
+        Relationships: [];
+      };
+      member_references: {
+        Row: {
+          id: string;
+          writer_member_id: string;
+          recipient_member_id: string;
+          body: string;
+          relationship_context: string;
+          status: string;
+          is_publicly_visible: boolean;
+          created_at: string;
+          updated_at: string;
+          moderated_at: string | null;
+          moderated_by_member_id: string | null;
+          moderation_note: string | null;
+        };
+        Insert: {
+          id: string;
+          writer_member_id: string;
+          recipient_member_id: string;
+          body: string;
+          relationship_context: string;
+          status?: string;
+          is_publicly_visible?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          moderated_at?: string | null;
+          moderated_by_member_id?: string | null;
+          moderation_note?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['member_references']['Insert']>;
         Relationships: [];
       };
       requests: {
