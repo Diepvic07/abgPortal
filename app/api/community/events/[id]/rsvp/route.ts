@@ -1,11 +1,14 @@
 import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth-middleware';
-import { getEventById, upsertRsvp, removeRsvp, getMemberRsvp, getRsvpsByEvent } from '@/lib/supabase-events';
+import { getEventById, upsertRsvp, removeRsvp, getMemberRsvp } from '@/lib/supabase-events';
 import { getMembershipStatus } from '@/types';
 import { z } from 'zod';
 
-const CommitmentLevel = z.enum(['interested', 'will_participate', 'will_lead']);
+const EventRegistrationSchema = z.object({
+  commitment_level: z.enum(['will_participate', 'will_lead']),
+  note: z.string().trim().max(500).optional(),
+});
 
 const TERMINAL_STATUSES = ['cancelled', 'completed'];
 
@@ -23,10 +26,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const body = await request.json();
-    const parsed = CommitmentLevel.safeParse(body.commitment_level);
+    const parsed = EventRegistrationSchema.safeParse(body);
 
     if (!parsed.success) {
-      return errorResponse('Invalid commitment level. Must be: interested, will_participate, or will_lead', 400);
+      return errorResponse(parsed.error.issues.map((issue) => issue.message).join(', '), 400);
     }
 
     // Tier gating: enforce per-tier seat limits
@@ -35,14 +38,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Check if this is a new RSVP (not updating existing)
     const existingRsvp = await getMemberRsvp(id, member.id);
+    if (
+      parsed.data.commitment_level === 'will_lead' &&
+      existingRsvp?.commitment_level !== 'will_participate' &&
+      existingRsvp?.commitment_level !== 'will_lead'
+    ) {
+      return errorResponse('Join the event before volunteering to lead.', 400);
+    }
+
     if (!existingRsvp) {
       if (!isPremium && event.capacity_basic === 0) {
         return errorResponse('This event is Premium exclusive.', 403);
       }
 
-      // Count RSVPs by tier to check limits
-      const rsvps = await getRsvpsByEvent(id);
-      // We need member data to determine tier... for now use the RSVP count approach
       // Premium seats check
       if (isPremium && event.capacity_premium != null) {
         // Count how many premium members already RSVP'd (rough: we count all for now, admin manages)
@@ -62,7 +70,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const rsvp = await upsertRsvp({
       event_id: id,
       member_id: member.id,
-      commitment_level: parsed.data,
+      commitment_level: parsed.data.commitment_level,
+      note: parsed.data.note,
     });
 
     return successResponse({ rsvp });

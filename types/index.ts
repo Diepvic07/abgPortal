@@ -327,6 +327,8 @@ export interface CommunityProposalComment {
 // Community Events
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
 export type EventCategory = 'charity' | 'event' | 'learning' | 'community_support' | 'networking' | 'other';
+export type EventMode = 'offline' | 'online' | 'hybrid';
+export type EventRegistrationLevel = Extract<CommitmentLevel, 'will_participate' | 'will_lead'>;
 
 export const EVENT_CATEGORY_LABELS: Record<EventCategory, { en: string; vi: string }> = {
   charity: { en: 'Charity', vi: 'Từ thiện' },
@@ -344,11 +346,18 @@ export const EVENT_STATUS_LABELS: Record<EventStatus, { en: string; vi: string; 
   completed: { en: 'Completed', vi: 'Hoàn thành', color: 'blue' },
 };
 
+export const EVENT_MODE_LABELS: Record<EventMode, { en: string; vi: string }> = {
+  offline: { en: 'Offline', vi: 'Trực tiếp' },
+  online: { en: 'Online', vi: 'Trực tuyến' },
+  hybrid: { en: 'Hybrid', vi: 'Kết hợp' },
+};
+
 export interface CommunityEvent {
   id: string;
   title: string;
   description: string;
   category: EventCategory;
+  event_mode?: EventMode;
   event_date: string;
   event_end_date?: string;
   location?: string;
@@ -380,6 +389,7 @@ export interface EventRsvp {
   event_id: string;
   member_id: string;
   commitment_level: CommitmentLevel;
+  note?: string;
   actual_attendance?: boolean;
   actual_participation_score?: number;
   created_at: string;
