@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
@@ -135,19 +135,31 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [pendingRsvp, setPendingRsvp] = useState<EventRegistrationLevel | null>(null);
   const [rsvpNote, setRsvpNote] = useState('');
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const fetchEventDataRef = useRef<() => Promise<void>>(async () => {});
+  const fetchCommentsDataRef = useRef<() => Promise<void>>(async () => {});
 
-  const fetchEvent = useCallback(async () => {
+  async function fetchEventData() {
     setLoading(true);
     try {
       const res = await fetch(`/api/community/events?id=${eventId}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.event) {
-          setEvent(data.event);
-          setRsvps(data.rsvps || []);
-          setMyRsvp(data.my_rsvp || null);
-          if (data.membership_status) setMembershipStatus(data.membership_status);
-        }
+      if (!res.ok) {
+        setEvent(null);
+        setRsvps([]);
+        setMyRsvp(null);
+        showToast(locale === 'vi' ? 'Không thể tải thông tin sự kiện.' : 'Unable to load event details.');
+        return;
+      }
+
+      const data = await res.json();
+      if (data.event) {
+        setEvent(data.event);
+        setRsvps(data.rsvps || []);
+        setMyRsvp(data.my_rsvp || null);
+        if (data.membership_status) setMembershipStatus(data.membership_status);
+      } else {
+        setEvent(null);
+        setRsvps([]);
+        setMyRsvp(null);
       }
     } catch (error) {
       console.error('Failed to fetch event:', error);
@@ -155,9 +167,9 @@ export function EventDetail({ eventId }: { eventId: string }) {
     } finally {
       setLoading(false);
     }
-  }, [eventId, locale, showToast]);
+  }
 
-  const fetchComments = useCallback(async () => {
+  async function fetchCommentsData() {
     try {
       const res = await fetch(`/api/community/events/${eventId}/comments`);
       if (res.ok) {
@@ -167,12 +179,18 @@ export function EventDetail({ eventId }: { eventId: string }) {
     } catch (error) {
       console.error('Failed to fetch comments:', error);
     }
-  }, [eventId]);
+  }
+
+  fetchEventDataRef.current = fetchEventData;
+  fetchCommentsDataRef.current = fetchCommentsData;
 
   useEffect(() => {
-    fetchEvent();
-    fetchComments();
-  }, [fetchComments, fetchEvent]);
+    void fetchEventDataRef.current();
+  }, [eventId, locale]);
+
+  useEffect(() => {
+    void fetchCommentsDataRef.current();
+  }, [eventId]);
 
   async function submitRsvp(level: EventRegistrationLevel) {
     setRsvpLoading(true);
@@ -194,7 +212,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
 
       setPendingRsvp(null);
       setRsvpNote('');
-      await fetchEvent();
+      await fetchEventDataRef.current();
       showToast(
         level === 'will_lead'
           ? (locale === 'vi' ? 'Bạn đã đăng ký vai trò dẫn dắt.' : 'You are registered as a lead.')
@@ -220,7 +238,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
       }
 
       setConfirmRemove(false);
-      await fetchEvent();
+      await fetchEventDataRef.current();
       showToast(locale === 'vi' ? 'Đã hủy đăng ký tham gia.' : 'Your RSVP has been cancelled.', 'success');
     } catch (error) {
       console.error('Failed to remove RSVP:', error);
@@ -243,7 +261,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
       });
       if (res.ok) {
         setCommentBody('');
-        fetchComments();
+        void fetchCommentsDataRef.current();
         if (event) {
           setEvent({ ...event, comment_count: event.comment_count + 1 });
         }
