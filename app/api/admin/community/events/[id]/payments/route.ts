@@ -25,6 +25,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 const UpdatePaymentSchema = z.object({
   payment_id: z.string(),
   status: z.enum(['confirmed', 'rejected']),
+  amount_vnd: z.number().int().positive().optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -41,7 +42,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const admin = await getMemberByEmail(session.user.email);
-    const payment = await updateEventPaymentStatus(parsed.data.payment_id, parsed.data.status, admin?.id);
+    const payment = await updateEventPaymentStatus(parsed.data.payment_id, parsed.data.status, admin?.id, parsed.data.amount_vnd);
     return successResponse({ payment });
   } catch (error) {
     return handleApiError(error);

@@ -21,6 +21,7 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [editAmounts, setEditAmounts] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchData();
@@ -52,10 +53,15 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
     setActionLoading(paymentId);
     setMessage(null);
     try {
+      const payload: Record<string, unknown> = { payment_id: paymentId, status };
+      const editedAmount = editAmounts[paymentId];
+      if (editedAmount && parseInt(editedAmount) > 0) {
+        payload.amount_vnd = parseInt(editedAmount);
+      }
       const res = await fetch(`/api/admin/community/events/${eventId}/payments`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payment_id: paymentId, status }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         setMessage({ text: `Payment ${status}`, type: 'success' });
@@ -135,9 +141,16 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
                       <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{PAYER_TYPE_LABELS[p.payer_type]}</span>
                     </div>
                     <p className="text-sm text-gray-600">{p.payer_email}</p>
-                    <p className="text-sm font-semibold text-gray-900 mt-1">
-                      {new Intl.NumberFormat('vi-VN').format(p.amount_vnd)} VND
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="number"
+                        min="0"
+                        value={editAmounts[p.id] ?? String(p.amount_vnd)}
+                        onChange={(e) => setEditAmounts(prev => ({ ...prev, [p.id]: e.target.value }))}
+                        className="w-32 px-2 py-1 border border-gray-300 rounded text-sm font-semibold text-gray-900"
+                      />
+                      <span className="text-sm text-gray-500">VND</span>
+                    </div>
                     <p className="text-xs text-gray-500 mt-1">
                       {new Date(p.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
@@ -172,13 +185,35 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
           <div className="space-y-2">
             {otherPayments.map((p) => (
               <div key={p.id} className="border border-gray-200 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-gray-900">{p.payer_name}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[p.status]}`}>{p.status}</span>
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{PAYER_TYPE_LABELS[p.payer_type]}</span>
-                  <span className="text-xs text-gray-500">{new Intl.NumberFormat('vi-VN').format(p.amount_vnd)} VND</span>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-gray-900">{p.payer_name}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[p.status]}`}>{p.status}</span>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{PAYER_TYPE_LABELS[p.payer_type]}</span>
+                    </div>
+                    <p className="text-xs text-gray-500">{p.payer_email}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="number"
+                        min="0"
+                        value={editAmounts[p.id] ?? String(p.amount_vnd)}
+                        onChange={(e) => setEditAmounts(prev => ({ ...prev, [p.id]: e.target.value }))}
+                        className="w-28 px-2 py-0.5 border border-gray-200 rounded text-xs font-medium text-gray-700"
+                      />
+                      <span className="text-xs text-gray-400">VND</span>
+                      {editAmounts[p.id] && parseInt(editAmounts[p.id]) !== p.amount_vnd && (
+                        <button
+                          onClick={() => handlePaymentAction(p.id, p.status as 'confirmed' | 'rejected')}
+                          disabled={actionLoading === p.id}
+                          className="text-xs px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          Save
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500">{p.payer_email}</p>
               </div>
             ))}
           </div>

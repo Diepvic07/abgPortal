@@ -905,12 +905,13 @@ export async function getEventPayments(eventId: string): Promise<EventPayment[]>
   return (rows || []).map((r: Record<string, unknown>) => mapRowToPayment(r));
 }
 
-export async function updateEventPaymentStatus(paymentId: string, status: EventPaymentStatus, adminId?: string): Promise<EventPayment> {
+export async function updateEventPaymentStatus(paymentId: string, status: EventPaymentStatus, adminId?: string, amountVnd?: number): Promise<EventPayment> {
   const supabase = createServerSupabaseClient();
   const now = formatDate();
 
   const updateData: Record<string, unknown> = { status, updated_at: now };
   if (adminId) updateData.confirmed_by_admin_id = adminId;
+  if (amountVnd != null) updateData.amount_vnd = amountVnd;
 
   const { data: row, error } = await supabase
     .from('event_payments')
