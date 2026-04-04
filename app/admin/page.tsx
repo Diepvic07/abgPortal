@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslation } from '@/lib/i18n';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminMemberDirectory } from "@/components/admin/admin-member-directory";
@@ -50,6 +51,7 @@ interface AdminMember {
 
 export default function AdminPage() {
   const { status } = useSession();
+  const { t } = useTranslation();
   const router = useRouter();
   const [members, setMembers] = useState<AdminMember[]>([]);
   const [activeTab, setActiveTab] = useState<"pending" | "duplicates" | "status" | "directory" | "news" | "payments" | "classes" | "proposals" | "references" | "events" | "finance">("pending");
@@ -90,7 +92,7 @@ export default function AdminPage() {
       const res = await fetch("/api/admin/members");
       if (!res.ok) {
         if (res.status === 401) {
-          setError("Unauthorized. Admin access required.");
+          setError(t.admin.unauthorized);
           return;
         }
         throw new Error("Failed to fetch members");
@@ -113,10 +115,10 @@ export default function AdminPage() {
         body: JSON.stringify({ memberId: id }),
       });
       if (!res.ok) throw new Error("Failed to approve");
-      showToast("Member approved successfully", "success");
+      showToast(t.admin.pending.approveSuccess, "success");
       await fetchMembers();
     } catch {
-      showToast("Failed to approve member");
+      showToast(t.admin.pending.approveFailed);
     } finally {
       setActionLoading(null);
     }
@@ -124,10 +126,10 @@ export default function AdminPage() {
 
   const handleReject = (id: string) => {
     showConfirm({
-      title: "Reject Member",
-      message: "Are you sure you want to reject and remove this member? This action cannot be undone.",
+      title: t.admin.pending.rejectTitle,
+      message: t.admin.pending.rejectConfirm,
       variant: "danger",
-      confirmLabel: "Reject",
+      confirmLabel: t.admin.actions.reject,
       onConfirm: async () => {
         closeConfirm();
         setActionLoading(id);
@@ -138,10 +140,10 @@ export default function AdminPage() {
             body: JSON.stringify({ memberId: id }),
           });
           if (!res.ok) throw new Error("Failed to reject");
-          showToast("Member rejected", "success");
+          showToast(t.admin.pending.rejectSuccess, "success");
           await fetchMembers();
         } catch {
-          showToast("Failed to reject member");
+          showToast(t.admin.pending.rejectFailed);
         } finally {
           setActionLoading(null);
         }
@@ -176,7 +178,7 @@ export default function AdminPage() {
       if (!res.ok) throw new Error("Failed to change tier");
       await fetchMembers();
     } catch {
-      showToast("Failed to change tier");
+      showToast(t.admin.members.tierChangeFailed);
     } finally {
       setActionLoading(null);
     }
@@ -196,19 +198,18 @@ export default function AdminPage() {
       setExpiryValue("");
       await fetchMembers();
     } catch {
-      showToast("Failed to update expiry date");
+      showToast(t.admin.members.expiryUpdateFailed);
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleToggleAdmin = (id: string, currentIsAdmin: boolean) => {
-    const action = currentIsAdmin ? "remove admin privileges from" : "grant admin privileges to";
     showConfirm({
-      title: currentIsAdmin ? "Remove Admin" : "Grant Admin",
-      message: `Are you sure you want to ${action} this member?`,
+      title: currentIsAdmin ? t.admin.members.removeAdmin : t.admin.members.grantAdmin,
+      message: currentIsAdmin ? t.admin.members.removeAdminConfirm : t.admin.members.grantAdminConfirm,
       variant: currentIsAdmin ? "warning" : "info",
-      confirmLabel: currentIsAdmin ? "Remove" : "Grant",
+      confirmLabel: currentIsAdmin ? t.admin.actions.remove : t.admin.actions.confirm,
       onConfirm: async () => {
         closeConfirm();
         setActionLoading(id);
@@ -219,10 +220,10 @@ export default function AdminPage() {
             body: JSON.stringify({ memberId: id, isAdmin: !currentIsAdmin }),
           });
           if (!res.ok) throw new Error("Failed to toggle admin");
-          showToast(`Admin privileges ${currentIsAdmin ? "removed" : "granted"}`, "success");
+          showToast(currentIsAdmin ? t.admin.members.adminRemoved : t.admin.members.adminGranted, "success");
           await fetchMembers();
         } catch {
-          showToast("Failed to toggle admin status");
+          showToast(t.admin.members.adminToggleFailed);
         } finally {
           setActionLoading(null);
         }
@@ -240,7 +241,7 @@ export default function AdminPage() {
       if (!res.ok) throw new Error("Failed to clear flag");
       await fetchMembers();
     } catch {
-      showToast("Failed to clear duplicate flag");
+      showToast(t.admin.duplicates.clearFailed);
     }
   };
 
@@ -252,10 +253,10 @@ export default function AdminPage() {
         body: JSON.stringify({ memberId }),
       });
       if (!res.ok) throw new Error("Failed to delete");
-      showToast("Member deleted", "success");
+      showToast(t.admin.members.memberDeleted, "success");
       await fetchMembers();
     } catch {
-      showToast("Failed to delete member");
+      showToast(t.admin.members.deleteFailed);
     }
   };
 
@@ -296,10 +297,10 @@ export default function AdminPage() {
         throw new Error(data.error || "Failed to update");
       }
       setEditingMember(null);
-      showToast("Member updated", "success");
+      showToast(t.admin.members.memberUpdated, "success");
       await fetchMembers();
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to update member");
+      showToast(err instanceof Error ? err.message : t.admin.members.updateFailed);
     }
   };
 
@@ -332,10 +333,10 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">{t.admin.accessDenied}</h1>
           <p className="text-gray-600 mb-4">{error}</p>
           <Link href="/" className="text-blue-600 hover:underline">
-            Back to Home
+            {t.admin.backToHome}
           </Link>
         </div>
       </div>
@@ -346,10 +347,10 @@ export default function AdminPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-[1400px] mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.admin.title}</h1>
           <div className="flex items-center gap-4">
             <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
-              Back to App
+              {t.admin.backToApp}
             </Link>
           </div>
         </div>
@@ -363,7 +364,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            Pending ({pendingMembers.length})
+            {t.admin.tabs.pending} ({pendingMembers.length})
           </button>
           <button
             onClick={() => setActiveTab("duplicates")}
@@ -372,7 +373,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            Duplicates {duplicateMembers.length > 0 && (
+            {t.admin.tabs.duplicates} {duplicateMembers.length > 0 && (
               <span className={`ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${activeTab === "duplicates" ? "bg-white text-red-600" : "bg-red-100 text-red-700"}`}>
                 {duplicateMembers.length}
               </span>
@@ -385,7 +386,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            Member Status ({members.length})
+            {t.admin.tabs.memberStatus} ({members.length})
           </button>
           <button
             onClick={() => setActiveTab("directory")}
@@ -394,7 +395,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            Member Directory
+            {t.admin.tabs.directory}
           </button>
           <button
             onClick={() => setActiveTab("news")}
@@ -403,7 +404,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            News
+            {t.admin.tabs.news}
           </button>
           <button
             onClick={() => setActiveTab("payments")}
@@ -412,7 +413,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            Payments ({pendingPaymentCount})
+            {t.admin.tabs.payments} ({pendingPaymentCount})
           </button>
           <button
             onClick={() => setActiveTab("proposals")}
@@ -421,7 +422,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            Proposals
+            {t.admin.tabs.proposals}
           </button>
           <button
             onClick={() => setActiveTab("references")}
@@ -430,7 +431,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            References
+            {t.admin.tabs.references}
           </button>
           <button
             onClick={() => setActiveTab("events")}
@@ -439,7 +440,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            Events
+            {t.admin.tabs.events}
           </button>
           <button
             onClick={() => setActiveTab("finance")}
@@ -448,7 +449,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            Finance
+            {t.admin.tabs.finance}
           </button>
           <button
             onClick={() => setActiveTab("classes")}
@@ -457,7 +458,7 @@ export default function AdminPage() {
               : "bg-white text-gray-700 hover:bg-gray-100"
               }`}
           >
-            Classes
+            {t.admin.tabs.classes}
           </button>
         </div>
 
@@ -465,7 +466,7 @@ export default function AdminPage() {
           <div className="mb-4">
             <input
               type="text"
-              placeholder="Search by name, email, role, company, class..."
+              placeholder={t.admin.members.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -477,7 +478,7 @@ export default function AdminPage() {
           <div className="space-y-4">
             {duplicateMembers.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">
-                No potential duplicates found
+                {t.admin.duplicates.noDuplicates}
               </div>
             ) : (
               duplicateMembers.map((dm) => {
@@ -494,10 +495,10 @@ export default function AdminPage() {
                     onEdit={(m) => handleEditMember(m as unknown as AdminMember)}
                     onConfirmDelete={(member, proceed) => {
                       showConfirm({
-                        title: "Delete Profile",
-                        message: `Delete "${member.name}" (${member.email})? This action cannot be undone.`,
+                        title: t.admin.members.deleteMember,
+                        message: t.admin.members.deleteConfirm.replace('{name}', member.name).replace('{email}', member.email),
                         variant: "danger",
-                        confirmLabel: "Delete",
+                        confirmLabel: t.admin.actions.delete,
                         onConfirm: () => { closeConfirm(); proceed(); },
                       });
                     }}
@@ -547,22 +548,22 @@ export default function AdminPage() {
                   <thead>
                     <tr className="bg-gray-50 border-b sticky top-0 z-10">
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                        Name
+                        {t.admin.labels.name}
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                        Actions
+                        {t.admin.labels.actions}
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                        Tier
+                        {t.admin.labels.tier}
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                        Role
+                        {t.admin.labels.role}
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                        Status
+                        {t.admin.labels.status}
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                        Email
+                        {t.admin.labels.email}
                       </th>
                     </tr>
                   </thead>
@@ -571,8 +572,8 @@ export default function AdminPage() {
                       <tr>
                         <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                           {activeTab === "pending"
-                            ? "No pending applications"
-                            : "No members found"}
+                            ? t.admin.pending.noApps
+                            : t.admin.members.noMembers}
                         </td>
                       </tr>
                     ) : (
@@ -594,7 +595,7 @@ export default function AdminPage() {
                                 onClick={() => handleEditMember(member)}
                                 className="text-sm text-gray-600 hover:text-gray-800"
                               >
-                                Edit
+                                {t.admin.actions.edit}
                               </button>
                               {member.approval_status === "pending" && (
                                 <>
@@ -603,14 +604,14 @@ export default function AdminPage() {
                                     disabled={actionLoading === member.id}
                                     className="text-sm text-green-600 hover:text-green-800 disabled:opacity-50"
                                   >
-                                    {actionLoading === member.id ? "..." : "Approve"}
+                                    {actionLoading === member.id ? "..." : t.admin.actions.approve}
                                   </button>
                                   <button
                                     onClick={() => handleReject(member.id)}
                                     disabled={actionLoading === member.id}
                                     className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
                                   >
-                                    Reject
+                                    {t.admin.actions.reject}
                                   </button>
                                 </>
                               )}
@@ -624,8 +625,8 @@ export default function AdminPage() {
                                     {actionLoading === member.id
                                       ? "..."
                                       : member.paid
-                                        ? "Downgrade"
-                                        : "Upgrade"}
+                                        ? t.admin.members.downgrade
+                                        : t.admin.members.upgrade}
                                   </button>
                                   <button
                                     onClick={() => handleToggleAdmin(member.id, member.is_admin)}
@@ -638,8 +639,8 @@ export default function AdminPage() {
                                     {actionLoading === member.id
                                       ? "..."
                                       : member.is_admin
-                                        ? "Remove Admin"
-                                        : "Make Admin"}
+                                        ? t.admin.members.removeAdmin
+                                        : t.admin.members.makeAdmin}
                                   </button>
                                 </>
                               )}
@@ -656,11 +657,11 @@ export default function AdminPage() {
                                       : "bg-gray-100 text-gray-600"
                                   }`}
                               >
-                                {member.approval_status === "pending" ? "Pending" : member.paid ? "Premium" : "Basic"}
+                                {member.approval_status === "pending" ? t.admin.tabs.pending : member.paid ? t.admin.labels.premium : t.admin.labels.basic}
                               </span>
                               {member.is_admin && member.approval_status === "approved" && (
                                 <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                  Admin
+                                  {t.admin.labels.admin}
                                 </span>
                               )}
                             </div>
@@ -679,13 +680,13 @@ export default function AdminPage() {
                                       disabled={actionLoading === member.id}
                                       className="text-xs text-green-600 hover:text-green-800"
                                     >
-                                      Save
+                                      {t.admin.actions.save}
                                     </button>
                                     <button
                                       onClick={() => setEditingExpiry(null)}
                                       className="text-xs text-gray-400 hover:text-gray-600"
                                     >
-                                      Cancel
+                                      {t.admin.actions.cancel}
                                     </button>
                                   </div>
                                 ) : (
@@ -697,7 +698,7 @@ export default function AdminPage() {
                                     className="text-xs text-gray-400 hover:text-gray-600"
                                     title="Click to edit expiry date"
                                   >
-                                    Exp: {new Date(member.membership_expiry).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                                    {t.admin.members.expiry} {new Date(member.membership_expiry).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                                   </button>
                                 )}
                               </div>
@@ -724,7 +725,7 @@ export default function AdminPage() {
                             </span>
                             {member.is_csv_imported && (
                               <span className="ml-1 inline-flex px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-                                CSV
+                                {t.admin.members.csv}
                               </span>
                             )}
                           </td>
@@ -744,35 +745,35 @@ export default function AdminPage() {
             <div className="mt-6 grid grid-cols-2 md:grid-cols-6 gap-4">
               <div className="bg-white rounded-lg p-4 shadow-sm">
                 <p className="text-2xl font-bold text-gray-900">{members.length}</p>
-                <p className="text-sm text-gray-500">Total Members</p>
+                <p className="text-sm text-gray-500">{t.admin.members.totalMembers}</p>
               </div>
               <div className="bg-white rounded-lg p-4 shadow-sm">
                 <p className="text-2xl font-bold text-yellow-600">{pendingMembers.length}</p>
-                <p className="text-sm text-gray-500">Pending Approval</p>
+                <p className="text-sm text-gray-500">{t.admin.members.pendingApproval}</p>
               </div>
               <div className="bg-white rounded-lg p-4 shadow-sm">
                 <p className="text-2xl font-bold text-purple-600">
                   {members.filter((m) => m.paid).length}
                 </p>
-                <p className="text-sm text-gray-500">Premium Members</p>
+                <p className="text-sm text-gray-500">{t.admin.members.premiumMembers}</p>
               </div>
               <div className="bg-white rounded-lg p-4 shadow-sm">
                 <p className="text-2xl font-bold text-red-600">
                   {members.filter((m) => m.is_admin).length}
                 </p>
-                <p className="text-sm text-gray-500">Admins</p>
+                <p className="text-sm text-gray-500">{t.admin.members.admins}</p>
               </div>
               <div className="bg-white rounded-lg p-4 shadow-sm">
                 <p className="text-2xl font-bold text-orange-600">
                   {duplicateMembers.length}
                 </p>
-                <p className="text-sm text-gray-500">Duplicates</p>
+                <p className="text-sm text-gray-500">{t.admin.members.duplicates}</p>
               </div>
               <div className="bg-white rounded-lg p-4 shadow-sm">
                 <p className="text-2xl font-bold text-gray-600">
                   {members.filter((m) => m.is_csv_imported).length}
                 </p>
-                <p className="text-sm text-gray-500">CSV Imported</p>
+                <p className="text-sm text-gray-500">{t.admin.members.csvImported}</p>
               </div>
             </div>
           </>
@@ -784,13 +785,13 @@ export default function AdminPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b shrink-0">
-              <h2 className="text-lg font-semibold text-gray-900">Edit Member</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{t.admin.members.editMember}</h2>
               <p className="text-sm text-gray-500">{editingMember.name}</p>
             </div>
             <div className="px-6 py-4 space-y-3 overflow-y-auto">
               {/* Email field with warning */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.labels.email}</label>
                 <input
                   type="email"
                   value={editForm.email || ""}
@@ -804,20 +805,20 @@ export default function AdminPage() {
                 )}
               </div>
               {([
-                { key: "name", label: "Name" },
-                { key: "nickname", label: "Nickname" },
-                { key: "role", label: "Role" },
-                { key: "company", label: "Company" },
-                { key: "abg_class", label: "ABG Class" },
-                { key: "phone", label: "Phone" },
-                { key: "expertise", label: "Expertise" },
-                { key: "country", label: "Country" },
-                { key: "gender", label: "Gender" },
-                { key: "birth_year", label: "Birth Year" },
-                { key: "relationship_status", label: "Relationship Status" },
-                { key: "facebook_url", label: "Facebook URL" },
-                { key: "linkedin_url", label: "LinkedIn URL" },
-                { key: "company_website", label: "Company Website" },
+                { key: "name", label: t.admin.labels.name },
+                { key: "nickname", label: t.admin.form.nickname },
+                { key: "role", label: t.admin.labels.role },
+                { key: "company", label: t.admin.form.company },
+                { key: "abg_class", label: t.admin.form.abgClass },
+                { key: "phone", label: t.admin.labels.phone },
+                { key: "expertise", label: t.admin.form.expertise },
+                { key: "country", label: t.admin.form.country },
+                { key: "gender", label: t.admin.form.gender },
+                { key: "birth_year", label: t.admin.form.birthYear },
+                { key: "relationship_status", label: t.admin.form.relationshipStatus },
+                { key: "facebook_url", label: t.admin.form.facebookUrl },
+                { key: "linkedin_url", label: t.admin.form.linkedinUrl },
+                { key: "company_website", label: t.admin.form.companyWebsite },
               ] as const).map(({ key, label }) => (
                 <div key={key}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
@@ -831,9 +832,9 @@ export default function AdminPage() {
               ))}
               {/* Textarea fields */}
               {([
-                { key: "bio", label: "Bio" },
-                { key: "can_help_with", label: "Can Help With" },
-                { key: "looking_for", label: "Looking For" },
+                { key: "bio", label: t.admin.form.bio },
+                { key: "can_help_with", label: t.admin.form.canHelpWith },
+                { key: "looking_for", label: t.admin.form.lookingFor },
               ] as const).map(({ key, label }) => (
                 <div key={key}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
@@ -851,13 +852,13 @@ export default function AdminPage() {
                 onClick={() => setEditingMember(null)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
               >
-                Cancel
+                {t.admin.actions.cancel}
               </button>
               <button
                 onClick={handleSaveEdit}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
               >
-                Save Changes
+                {t.admin.actions.save}
               </button>
             </div>
           </div>

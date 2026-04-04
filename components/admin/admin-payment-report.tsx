@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from '@/lib/i18n';
 import { PaymentUpgradeModal } from "./payment-upgrade-modal";
 
 interface EnrichedPayment {
@@ -35,6 +36,7 @@ const vndFormatter = new Intl.NumberFormat("vi-VN", {
 });
 
 export function AdminPaymentReport() {
+  const { t } = useTranslation();
   const [data, setData] = useState<PaymentsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export function AdminPaymentReport() {
         setData(json);
       } catch (err) {
         console.error("Payment report error:", err);
-        setError("Failed to load payment records");
+        setError(t.admin.paymentReport.loadFailed);
       } finally {
         setIsLoading(false);
       }
@@ -61,7 +63,7 @@ export function AdminPaymentReport() {
   }, []);
 
   const handleDecline = async (memberId: string) => {
-    if (!confirm("Decline this payment?")) return;
+    if (!confirm(t.admin.paymentReport.declineConfirm)) return;
     setProcessingId(memberId);
     try {
       const res = await fetch("/api/admin/tier", {
@@ -77,7 +79,7 @@ export function AdminPaymentReport() {
       );
     } catch (err) {
       console.error("Decline error:", err);
-      alert("Failed to decline payment");
+      alert(t.admin.paymentReport.declineFailed);
     } finally {
       setProcessingId(null);
     }
@@ -97,7 +99,7 @@ export function AdminPaymentReport() {
       if (refreshRes.ok) setData(await refreshRes.json());
     } catch (err) {
       console.error("Upgrade error:", err);
-      alert("Failed to upgrade member");
+      alert(t.admin.paymentReport.upgradeFailed);
     } finally {
       setProcessingId(null);
       setModalMember(null);
@@ -122,18 +124,18 @@ export function AdminPaymentReport() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment Report</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">{t.admin.paymentReport.title}</h2>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-          <p className="text-sm text-green-700 font-medium">Total Cash-in</p>
+          <p className="text-sm text-green-700 font-medium">{t.admin.paymentReport.totalCashIn}</p>
           <p className="text-2xl font-bold text-green-800 mt-1">
             {vndFormatter.format(data.total_cash_in)}
           </p>
         </div>
         <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-          <p className="text-sm text-blue-700 font-medium">Payment Count</p>
+          <p className="text-sm text-blue-700 font-medium">{t.admin.paymentReport.paymentCount}</p>
           <p className="text-2xl font-bold text-blue-800 mt-1">{data.count}</p>
         </div>
       </div>
@@ -142,16 +144,16 @@ export function AdminPaymentReport() {
       {data.pending_payments.length > 0 && (
         <div className="mb-6">
           <h3 className="text-base font-semibold text-orange-700 mb-3">
-            Pending Verification ({data.pending_payments.length})
+            {t.admin.paymentReport.pendingVerification} ({data.pending_payments.length})
           </h3>
           <div className="overflow-auto rounded-lg border border-orange-200 bg-orange-50">
             <table className="w-full min-w-[500px] text-sm">
               <thead>
                 <tr className="border-b border-orange-200">
-                  <th className="px-4 py-3 text-left font-medium text-orange-700">Member</th>
-                  <th className="px-4 py-3 text-left font-medium text-orange-700">Class</th>
-                  <th className="px-4 py-3 text-left font-medium text-orange-700">Phone</th>
-                  <th className="px-4 py-3 text-left font-medium text-orange-700">Action</th>
+                  <th className="px-4 py-3 text-left font-medium text-orange-700">{t.admin.paymentReport.member}</th>
+                  <th className="px-4 py-3 text-left font-medium text-orange-700">{t.admin.paymentReport.class}</th>
+                  <th className="px-4 py-3 text-left font-medium text-orange-700">{t.admin.labels.phone}</th>
+                  <th className="px-4 py-3 text-left font-medium text-orange-700">{t.admin.labels.actions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-orange-100">
@@ -170,14 +172,14 @@ export function AdminPaymentReport() {
                           disabled={processingId === m.id}
                           className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors disabled:opacity-50"
                         >
-                          Upgrade Pro
+                          {t.admin.paymentReport.upgradePro}
                         </button>
                         <button
                           onClick={() => handleDecline(m.id)}
                           disabled={processingId === m.id}
                           className="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors disabled:opacity-50"
                         >
-                          {processingId === m.id ? "..." : "Decline"}
+                          {processingId === m.id ? "..." : t.admin.paymentReport.decline}
                         </button>
                       </div>
                     </td>
@@ -191,17 +193,17 @@ export function AdminPaymentReport() {
 
       {/* Payments table */}
       {data.payments.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">No payment records found</div>
+        <div className="text-center py-12 text-gray-500">{t.admin.paymentReport.noRecords}</div>
       ) : (
         <div className="overflow-auto rounded-lg border border-gray-200">
           <table className="w-full min-w-[700px] text-sm">
             <thead>
               <tr className="bg-gray-50 border-b">
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Member</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Amount (VND)</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Date</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Admin</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Notes</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600">{t.admin.paymentReport.member}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600">{t.admin.paymentReport.amountVnd}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600">{t.admin.labels.date}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600">{t.admin.labels.admin}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600">{t.admin.labels.notes}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

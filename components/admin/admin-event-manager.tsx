@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { CommunityEvent, EventStatus, EventCategory, EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS } from '@/types';
 import { AdminImageUpload } from './admin-article-image-upload';
 import { AdminEventPayments } from './admin-event-payments';
+import { useTranslation } from '@/lib/i18n';
 
 const CATEGORY_ICONS: Record<string, string> = {
   charity: '❤️', event: '🎉', learning: '📚', community_support: '🤝', networking: '🌐', other: '💡',
@@ -80,6 +81,7 @@ export function AdminEventManager() {
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [imageUploading, setImageUploading] = useState(false);
   const [viewingPayments, setViewingPayments] = useState<CommunityEvent | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchEvents();
@@ -201,15 +203,15 @@ export function AdminEventManager() {
       });
 
       if (res.ok) {
-        setMessage({ text: editingEvent ? 'Event updated' : 'Event created', type: 'success' });
+        setMessage({ text: editingEvent ? t.admin.events.eventUpdated : t.admin.events.eventCreated, type: 'success' });
         closeForm();
         await fetchEvents();
       } else {
         const data = await res.json();
-        setMessage({ text: data.error || 'Failed to save event', type: 'error' });
+        setMessage({ text: data.error || t.admin.events.saveFailed, type: 'error' });
       }
     } catch {
-      setMessage({ text: 'Something went wrong', type: 'error' });
+      setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
     } finally {
       setActionLoading(null);
     }
@@ -224,33 +226,33 @@ export function AdminEventManager() {
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
-        setMessage({ text: `Status changed to ${newStatus}`, type: 'success' });
+        setMessage({ text: t.admin.events.statusChanged.replace('{status}', newStatus), type: 'success' });
         await fetchEvents();
       } else {
         const data = await res.json();
-        setMessage({ text: data.error || 'Failed to update status', type: 'error' });
+        setMessage({ text: data.error || t.admin.events.saveFailed, type: 'error' });
       }
     } catch {
-      setMessage({ text: 'Something went wrong', type: 'error' });
+      setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
     } finally {
       setActionLoading(null);
     }
   }
 
   async function handleDelete(eventId: string, title: string) {
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    if (!confirm(t.admin.events.deleteConfirm.replace('{title}', title))) return;
     setActionLoading(eventId);
     try {
       const res = await fetch(`/api/admin/community/events/${eventId}`, { method: 'DELETE' });
       if (res.ok) {
-        setMessage({ text: 'Event deleted', type: 'success' });
+        setMessage({ text: t.admin.events.eventDeleted, type: 'success' });
         await fetchEvents();
       } else {
         const data = await res.json();
-        setMessage({ text: data.error || 'Failed to delete event', type: 'error' });
+        setMessage({ text: data.error || t.admin.events.deleteFailed, type: 'error' });
       }
     } catch {
-      setMessage({ text: 'Something went wrong', type: 'error' });
+      setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
     } finally {
       setActionLoading(null);
     }
@@ -267,12 +269,12 @@ export function AdminEventManager() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Community Events ({events.length})</h2>
+        <h2 className="text-xl font-bold text-gray-900">{t.admin.events.title} ({events.length})</h2>
         <button
           onClick={openCreateForm}
           className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
         >
-          + Create Event
+          {t.admin.events.createEvent}
         </button>
       </div>
 
@@ -288,7 +290,7 @@ export function AdminEventManager() {
           onClick={() => setFilterStatus('all')}
           className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${filterStatus === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
         >
-          All
+          {t.admin.events.all}
         </button>
         {ALL_STATUSES.map((s) => (
           <button
@@ -304,7 +306,7 @@ export function AdminEventManager() {
       {/* Event List */}
       {filteredEvents.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          {filterStatus === 'all' ? 'No events yet. Create your first event!' : `No ${filterStatus} events`}
+          {filterStatus === 'all' ? t.admin.events.noEvents : t.admin.events.noFilteredEvents.replace('{status}', filterStatus)}
         </div>
       ) : (
         <div className="space-y-4">
@@ -318,7 +320,7 @@ export function AdminEventManager() {
                       {event.status}
                     </span>
                     {event.proposal_id && (
-                      <span className="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">From Proposal</span>
+                      <span className="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">{t.admin.members.fromProposal}</span>
                     )}
                   </div>
                   <h3 className="font-semibold text-gray-900 text-lg">{event.title}</h3>
@@ -334,14 +336,14 @@ export function AdminEventManager() {
                     {event.location && <> · {event.location}</>}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {event.rsvp_count} RSVPs · Score: {event.rsvp_score} · {event.comment_count} comments
-                    {event.capacity_premium != null && <> · Premium seats: {event.capacity_premium}</>}
-                    {event.capacity_basic != null && <> · Basic seats: {event.capacity_basic}</>}
-                    {(event.guest_rsvp_count || 0) > 0 && <> · {event.guest_rsvp_count} guests</>}
+                    {event.rsvp_count} {t.admin.events.rsvps} · {t.admin.events.score} {event.rsvp_score} · {event.comment_count} {t.admin.events.comments}
+                    {event.capacity_premium != null && <> · {t.admin.events.premiumSeats} {event.capacity_premium}</>}
+                    {event.capacity_basic != null && <> · {t.admin.events.basicSeats} {event.capacity_basic}</>}
+                    {(event.guest_rsvp_count || 0) > 0 && <> · {event.guest_rsvp_count} {t.admin.events.guests}</>}
                   </p>
                   <div className="flex flex-wrap gap-1.5 mt-1">
-                    {event.is_public && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Public</span>}
-                    {event.fee_premium != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">Paid event</span>}
+                    {event.is_public && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{t.admin.events.publicBadge}</span>}
+                    {event.fee_premium != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{t.admin.events.paidBadge}</span>}
                   </div>
                   <p className="text-sm text-gray-600 mt-2 line-clamp-2">{event.description}</p>
                 </div>
@@ -351,7 +353,7 @@ export function AdminEventManager() {
                     onClick={() => openEditForm(event)}
                     className="text-xs px-3 py-1.5 border rounded-lg hover:bg-gray-50"
                   >
-                    Edit
+                    {t.admin.actions.edit}
                   </button>
                   <select
                     value={event.status}
@@ -367,14 +369,14 @@ export function AdminEventManager() {
                     onClick={() => setViewingPayments(event)}
                     className="text-xs px-3 py-1.5 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50"
                   >
-                    Payments
+                    {t.admin.events.payments}
                   </button>
                   <button
                     onClick={() => handleDelete(event.id, event.title)}
                     disabled={actionLoading === event.id}
                     className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
                   >
-                    Delete
+                    {t.admin.actions.delete}
                   </button>
                 </div>
               </div>
@@ -389,14 +391,14 @@ export function AdminEventManager() {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b shrink-0">
               <h2 className="text-lg font-semibold text-gray-900">
-                {editingEvent ? 'Edit Event' : 'Create New Event'}
+                {editingEvent ? t.admin.events.editEvent : t.admin.events.createNewEvent}
               </h2>
             </div>
             <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
               <div className="px-6 py-4 space-y-4 overflow-y-auto">
                 {/* Title */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formTitle}</label>
                   <input
                     type="text"
                     required
@@ -405,14 +407,14 @@ export function AdminEventManager() {
                     value={form.title}
                     onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Event title"
+                    placeholder={t.admin.events.titlePlaceholder}
                   />
                 </div>
 
                 {/* Category & Status */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formCategory}</label>
                     <select
                       value={form.category}
                       onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as EventCategory }))}
@@ -424,7 +426,7 @@ export function AdminEventManager() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formStatus}</label>
                     <select
                       value={form.status}
                       onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as EventStatus }))}
@@ -439,7 +441,7 @@ export function AdminEventManager() {
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formDescription}</label>
                   <textarea
                     required
                     minLength={20}
@@ -448,14 +450,14 @@ export function AdminEventManager() {
                     value={form.description}
                     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
-                    placeholder="Describe the event (min 20 characters)"
+                    placeholder={t.admin.events.descriptionPlaceholder}
                   />
                 </div>
 
                 {/* Dates */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date & Time *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formStartDate}</label>
                     <input
                       type="datetime-local"
                       required
@@ -465,7 +467,7 @@ export function AdminEventManager() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">End Date & Time</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formEndDate}</label>
                     <input
                       type="datetime-local"
                       value={form.event_end_date}
@@ -477,17 +479,17 @@ export function AdminEventManager() {
 
                 {/* Location */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formLocation}</label>
                   <input
                     type="text"
                     value={form.location}
                     onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g. Cafe/Bar, District 1, HCMC"
+                    placeholder={t.admin.events.locationPlaceholder}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Location URL</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formLocationUrl}</label>
                   <input
                     type="url"
                     value={form.location_url}
@@ -500,39 +502,39 @@ export function AdminEventManager() {
                 {/* Capacity */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Premium Seats</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formPremiumSeats}</label>
                     <input
                       type="number"
                       min="0"
                       value={form.capacity_premium}
                       onChange={(e) => setForm((f) => ({ ...f, capacity_premium: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Leave empty for unlimited"
+                      placeholder={t.admin.events.unlimitedPlaceholder}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Basic Seats</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formBasicSeats}</label>
                     <input
                       type="number"
                       min="0"
                       value={form.capacity_basic}
                       onChange={(e) => setForm((f) => ({ ...f, capacity_basic: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Leave empty for unlimited, 0 = Premium only"
+                      placeholder={t.admin.events.premiumOnlyPlaceholder}
                     />
                   </div>
                 </div>
 
                 {/* Guest Capacity */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Guest Seats</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formGuestSeats}</label>
                   <input
                     type="number"
                     min="0"
                     value={form.capacity_guest}
                     onChange={(e) => setForm((f) => ({ ...f, capacity_guest: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Leave empty for unlimited, 0 = no guests"
+                    placeholder={t.admin.events.guestPlaceholder}
                   />
                 </div>
 
@@ -545,47 +547,47 @@ export function AdminEventManager() {
                     className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Public Event</span>
-                    <p className="text-xs text-gray-500">Visible to visitors (non-members). Guests can register.</p>
+                    <span className="text-sm font-medium text-gray-700">{t.admin.events.formPublicEvent}</span>
+                    <p className="text-xs text-gray-500">{t.admin.events.formPublicHelp}</p>
                   </div>
                 </label>
 
                 {/* Event Fees */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Event Fees (VND)</label>
-                  <p className="text-xs text-gray-500 mb-2">Leave empty for free. Set 0 for explicitly free tier.</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formFees}</label>
+                  <p className="text-xs text-gray-500 mb-2">{t.admin.events.formFeesHelp}</p>
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Premium</label>
+                      <label className="block text-xs text-gray-500 mb-1">{t.admin.labels.premium}</label>
                       <input
                         type="number"
                         min="0"
                         value={form.fee_premium}
                         onChange={(e) => setForm((f) => ({ ...f, fee_premium: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Free"
+                        placeholder={t.admin.events.freePlaceholder}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Basic</label>
+                      <label className="block text-xs text-gray-500 mb-1">{t.admin.labels.basic}</label>
                       <input
                         type="number"
                         min="0"
                         value={form.fee_basic}
                         onChange={(e) => setForm((f) => ({ ...f, fee_basic: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Free"
+                        placeholder={t.admin.events.freePlaceholder}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Guest</label>
+                      <label className="block text-xs text-gray-500 mb-1">{t.admin.labels.guest}</label>
                       <input
                         type="number"
                         min="0"
                         value={form.fee_guest}
                         onChange={(e) => setForm((f) => ({ ...f, fee_guest: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Free"
+                        placeholder={t.admin.events.freePlaceholder}
                       />
                     </div>
                   </div>
@@ -595,23 +597,23 @@ export function AdminEventManager() {
                 {(form.fee_premium || form.fee_basic || form.fee_guest) && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Payment QR URL</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formPaymentQr}</label>
                       <input
                         type="url"
                         value={form.payment_qr_url}
                         onChange={(e) => setForm((f) => ({ ...f, payment_qr_url: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Leave empty to use default QR"
+                        placeholder={t.admin.events.formPaymentQrPlaceholder}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Payment Instructions</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formPaymentInstructions}</label>
                       <textarea
                         rows={2}
                         value={form.payment_instructions}
                         onChange={(e) => setForm((f) => ({ ...f, payment_instructions: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
-                        placeholder="e.g. Transfer to TPBank 158 8888 6666 - VU DINH HIEU"
+                        placeholder={t.admin.events.paymentInstructionsPlaceholder}
                       />
                     </div>
                   </>
@@ -632,14 +634,14 @@ export function AdminEventManager() {
                   onClick={closeForm}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
                 >
-                  Cancel
+                  {t.admin.actions.cancel}
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading === 'form' || imageUploading}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50"
                 >
-                  {imageUploading ? 'Uploading image...' : actionLoading === 'form' ? 'Saving...' : editingEvent ? 'Save Changes' : 'Create Event'}
+                  {imageUploading ? t.admin.events.formUploading : actionLoading === 'form' ? t.admin.actions.saving : editingEvent ? t.admin.events.formSaveChanges : t.admin.events.formCreateEvent}
                 </button>
               </div>
             </form>
@@ -652,7 +654,7 @@ export function AdminEventManager() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b flex items-center justify-between shrink-0">
-              <h2 className="text-lg font-semibold text-gray-900">Event Payments</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{t.admin.eventPayments.title}</h2>
               <button onClick={() => setViewingPayments(null)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
             </div>
             <div className="px-6 py-4 overflow-y-auto">

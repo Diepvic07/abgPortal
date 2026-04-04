@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MonthlyPnLRow, FinancialSettings, FinancialTransaction, ExpenseCategory, EXPENSE_CATEGORY_LABELS } from '@/types';
+import { useTranslation } from '@/lib/i18n';
+import { MonthlyPnLRow, FinancialSettings, FinancialTransaction, ExpenseCategory } from '@/types';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const ALL_CATEGORIES: ExpenseCategory[] = ['hosting', 'cloud_server', 'ai', 'event', 'operational', 'other'];
@@ -11,6 +12,7 @@ function formatVnd(amount: number): string {
 }
 
 export function AdminFinanceDashboard() {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [months, setMonths] = useState<MonthlyPnLRow[]>([]);
@@ -20,6 +22,15 @@ export function AdminFinanceDashboard() {
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+    hosting: t.admin.finance.catHosting,
+    cloud_server: t.admin.finance.catCloudServer,
+    ai: t.admin.finance.catAi,
+    event: t.admin.finance.catEvent,
+    operational: t.admin.finance.catOperational,
+    other: t.admin.finance.catOther,
+  };
 
   // Expense form
   const [expCategory, setExpCategory] = useState<ExpenseCategory>('operational');
@@ -80,32 +91,32 @@ export function AdminFinanceDashboard() {
         }),
       });
       if (res.ok) {
-        setMessage({ text: 'Expense added', type: 'success' });
+        setMessage({ text: t.admin.finance.expenseAdded, type: 'success' });
         setExpAmount('');
         setExpDescription('');
         setShowAddExpense(false);
         await fetchData();
       } else {
         const data = await res.json();
-        setMessage({ text: data.error || 'Failed', type: 'error' });
+        setMessage({ text: data.error || t.admin.messages.failed, type: 'error' });
       }
     } catch {
-      setMessage({ text: 'Something went wrong', type: 'error' });
+      setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
     } finally {
       setExpLoading(false);
     }
   }
 
   async function handleDeleteTransaction(id: string) {
-    if (!confirm('Delete this expense?')) return;
+    if (!confirm(t.admin.finance.deleteExpenseConfirm)) return;
     try {
       const res = await fetch(`/api/admin/finance/transactions/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        setMessage({ text: 'Expense deleted', type: 'success' });
+        setMessage({ text: t.admin.finance.expenseDeleted, type: 'success' });
         await fetchData();
       }
     } catch {
-      setMessage({ text: 'Failed to delete', type: 'error' });
+      setMessage({ text: t.admin.finance.deleteFailed, type: 'error' });
     }
   }
 
@@ -122,12 +133,12 @@ export function AdminFinanceDashboard() {
         }),
       });
       if (res.ok) {
-        setMessage({ text: 'Settings saved', type: 'success' });
+        setMessage({ text: t.admin.finance.settingsSaved, type: 'success' });
         setShowSettings(false);
         await fetchData();
       }
     } catch {
-      setMessage({ text: 'Failed to save settings', type: 'error' });
+      setMessage({ text: t.admin.finance.settingsFailed, type: 'error' });
     } finally {
       setSettingsLoading(false);
     }
@@ -145,7 +156,7 @@ export function AdminFinanceDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">Financial Dashboard</h2>
+        <h2 className="text-xl font-bold text-gray-900">{t.admin.finance.title}</h2>
         <div className="flex items-center gap-3">
           <select
             value={year}
@@ -160,13 +171,13 @@ export function AdminFinanceDashboard() {
             onClick={() => setShowSettings(!showSettings)}
             className="text-xs px-3 py-1.5 border rounded-lg hover:bg-gray-50"
           >
-            Settings
+            {t.admin.finance.settings}
           </button>
           <button
             onClick={() => setShowAddExpense(!showAddExpense)}
             className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            + Add Expense
+            {t.admin.finance.addExpense}
           </button>
         </div>
       </div>
@@ -180,21 +191,21 @@ export function AdminFinanceDashboard() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-          <p className="text-xs text-green-600 font-medium">YTD Revenue</p>
+          <p className="text-xs text-green-600 font-medium">{t.admin.finance.ytdRevenue}</p>
           <p className="text-lg font-bold text-green-800">{formatVnd(ytdRow?.ytd_revenue || 0)}</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <p className="text-xs text-red-600 font-medium">YTD Expenses</p>
+          <p className="text-xs text-red-600 font-medium">{t.admin.finance.ytdExpenses}</p>
           <p className="text-lg font-bold text-red-800">{formatVnd(ytdRow?.ytd_expenses || 0)}</p>
         </div>
         <div className={`border rounded-xl p-4 ${(ytdRow?.ytd_net || 0) >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-amber-50 border-amber-200'}`}>
-          <p className="text-xs font-medium" style={{ color: (ytdRow?.ytd_net || 0) >= 0 ? '#2563eb' : '#d97706' }}>YTD Net</p>
+          <p className="text-xs font-medium" style={{ color: (ytdRow?.ytd_net || 0) >= 0 ? '#2563eb' : '#d97706' }}>{t.admin.finance.ytdNet}</p>
           <p className="text-lg font-bold" style={{ color: (ytdRow?.ytd_net || 0) >= 0 ? '#1e40af' : '#92400e' }}>
             {formatVnd(ytdRow?.ytd_net || 0)}
           </p>
         </div>
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-600 font-medium">Cash Balance</p>
+          <p className="text-xs text-gray-600 font-medium">{t.admin.finance.cashBalance}</p>
           <p className="text-lg font-bold text-gray-900">{formatVnd(lastMonthWithData?.running_balance ?? settings?.opening_balance_vnd ?? 0)}</p>
         </div>
       </div>
@@ -202,10 +213,10 @@ export function AdminFinanceDashboard() {
       {/* Settings Form */}
       {showSettings && (
         <form onSubmit={handleSaveSettings} className="border border-gray-200 rounded-xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-900">Opening Balance Settings</h3>
+          <h3 className="text-sm font-semibold text-gray-900">{t.admin.finance.openingBalanceSettings}</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Opening Balance (VND)</label>
+              <label className="block text-xs text-gray-500 mb-1">{t.admin.finance.openingBalance}</label>
               <input
                 type="number"
                 value={settingsBalance}
@@ -214,7 +225,7 @@ export function AdminFinanceDashboard() {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+              <label className="block text-xs text-gray-500 mb-1">{t.admin.finance.startDate}</label>
               <input
                 type="date"
                 value={settingsDate}
@@ -225,9 +236,9 @@ export function AdminFinanceDashboard() {
           </div>
           <div className="flex gap-2">
             <button type="submit" disabled={settingsLoading} className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg disabled:opacity-50">
-              {settingsLoading ? 'Saving...' : 'Save'}
+              {settingsLoading ? t.admin.actions.saving : t.admin.actions.save}
             </button>
-            <button type="button" onClick={() => setShowSettings(false)} className="text-xs px-3 py-1.5 border rounded-lg">Cancel</button>
+            <button type="button" onClick={() => setShowSettings(false)} className="text-xs px-3 py-1.5 border rounded-lg">{t.admin.actions.cancel}</button>
           </div>
         </form>
       )}
@@ -235,22 +246,22 @@ export function AdminFinanceDashboard() {
       {/* Add Expense Form */}
       {showAddExpense && (
         <form onSubmit={handleAddExpense} className="border border-blue-200 bg-blue-50 rounded-xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-900">Add Expense</h3>
+          <h3 className="text-sm font-semibold text-gray-900">{t.admin.finance.addExpenseTitle}</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Category</label>
+              <label className="block text-xs text-gray-500 mb-1">{t.admin.labels.category}</label>
               <select
                 value={expCategory}
                 onChange={(e) => setExpCategory(e.target.value as ExpenseCategory)}
                 className="w-full px-3 py-2 border rounded-lg text-sm"
               >
                 {ALL_CATEGORIES.map(c => (
-                  <option key={c} value={c}>{EXPENSE_CATEGORY_LABELS[c]}</option>
+                  <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Amount (VND)</label>
+              <label className="block text-xs text-gray-500 mb-1">{t.admin.finance.amountVnd}</label>
               <input
                 type="number"
                 required
@@ -258,11 +269,11 @@ export function AdminFinanceDashboard() {
                 value={expAmount}
                 onChange={(e) => setExpAmount(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg text-sm"
-                placeholder="100000"
+                placeholder={t.admin.finance.amountPlaceholder}
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Date</label>
+              <label className="block text-xs text-gray-500 mb-1">{t.admin.labels.date}</label>
               <input
                 type="date"
                 required
@@ -272,22 +283,22 @@ export function AdminFinanceDashboard() {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Description</label>
+              <label className="block text-xs text-gray-500 mb-1">{t.admin.labels.description}</label>
               <input
                 type="text"
                 required
                 value={expDescription}
                 onChange={(e) => setExpDescription(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg text-sm"
-                placeholder="Monthly hosting fee"
+                placeholder={t.admin.finance.descriptionPlaceholder}
               />
             </div>
           </div>
           <div className="flex gap-2">
             <button type="submit" disabled={expLoading} className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg disabled:opacity-50">
-              {expLoading ? 'Adding...' : 'Add Expense'}
+              {expLoading ? t.admin.finance.adding : t.admin.finance.addExpenseTitle}
             </button>
-            <button type="button" onClick={() => setShowAddExpense(false)} className="text-xs px-3 py-1.5 border rounded-lg">Cancel</button>
+            <button type="button" onClick={() => setShowAddExpense(false)} className="text-xs px-3 py-1.5 border rounded-lg">{t.admin.actions.cancel}</button>
           </div>
         </form>
       )}
@@ -297,13 +308,13 @@ export function AdminFinanceDashboard() {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 text-left text-xs text-gray-500 border-b">
-              <th className="px-4 py-3 font-medium">Month</th>
-              <th className="px-4 py-3 font-medium text-right">Membership</th>
-              <th className="px-4 py-3 font-medium text-right">Events</th>
-              <th className="px-4 py-3 font-medium text-right text-green-600">Revenue</th>
-              <th className="px-4 py-3 font-medium text-right text-red-600">Expenses</th>
-              <th className="px-4 py-3 font-medium text-right">Net</th>
-              <th className="px-4 py-3 font-medium text-right">Balance</th>
+              <th className="px-4 py-3 font-medium">{t.admin.finance.month}</th>
+              <th className="px-4 py-3 font-medium text-right">{t.admin.finance.membership}</th>
+              <th className="px-4 py-3 font-medium text-right">{t.admin.finance.eventsCol}</th>
+              <th className="px-4 py-3 font-medium text-right text-green-600">{t.admin.finance.revenue}</th>
+              <th className="px-4 py-3 font-medium text-right text-red-600">{t.admin.finance.expensesCol}</th>
+              <th className="px-4 py-3 font-medium text-right">{t.admin.finance.net}</th>
+              <th className="px-4 py-3 font-medium text-right">{t.admin.finance.balance}</th>
             </tr>
           </thead>
           <tbody>
@@ -327,7 +338,7 @@ export function AdminFinanceDashboard() {
             })}
             {/* Totals Row */}
             <tr className="bg-gray-50 font-semibold border-t-2">
-              <td className="px-4 py-3 text-gray-900">YTD Total</td>
+              <td className="px-4 py-3 text-gray-900">{t.admin.finance.ytdTotal}</td>
               <td className="px-4 py-3 text-right">{formatVnd(months.reduce((s, m) => s + m.membership_revenue, 0))}</td>
               <td className="px-4 py-3 text-right">{formatVnd(months.reduce((s, m) => s + m.event_revenue, 0))}</td>
               <td className="px-4 py-3 text-right text-green-700">{formatVnd(ytdRow?.ytd_revenue || 0)}</td>
@@ -344,13 +355,13 @@ export function AdminFinanceDashboard() {
       {/* Recent Expenses */}
       {transactions.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">Expenses ({transactions.length})</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">{t.admin.finance.expenses} ({transactions.length})</h3>
           <div className="space-y-2">
             {transactions.map((tx) => (
               <div key={tx.id} className="border border-gray-200 rounded-lg p-3 flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{EXPENSE_CATEGORY_LABELS[tx.category]}</span>
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{CATEGORY_LABELS[tx.category]}</span>
                     <span className="text-sm font-medium text-gray-900">{formatVnd(tx.amount_vnd)} VND</span>
                     <span className="text-xs text-gray-500">{tx.transaction_date}</span>
                   </div>
@@ -360,7 +371,7 @@ export function AdminFinanceDashboard() {
                   onClick={() => handleDeleteTransaction(tx.id)}
                   className="text-xs text-red-500 hover:text-red-700 px-2 py-1 shrink-0"
                 >
-                  Delete
+                  {t.admin.actions.delete}
                 </button>
               </div>
             ))}

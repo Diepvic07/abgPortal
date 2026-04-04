@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from '@/lib/i18n';
 import type { MemberReference } from '@/types';
 
 export function AdminReferenceManager() {
+  const { t } = useTranslation();
   const [references, setReferences] = useState<MemberReference[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -52,11 +54,11 @@ export function AdminReferenceManager() {
   }
 
   if (loading) {
-    return <div className="text-sm text-gray-500">Loading references...</div>;
+    return <div className="text-sm text-gray-500">{t.admin.references.loadingRefs}</div>;
   }
 
   if (references.length === 0) {
-    return <div className="text-sm text-gray-500">No references found.</div>;
+    return <div className="text-sm text-gray-500">{t.admin.references.noRefs}</div>;
   }
 
   return (
@@ -72,10 +74,10 @@ export function AdminReferenceManager() {
                   {reference.writer_name || 'Member'} → {reference.recipient_name || 'Member'}
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-wide text-gray-500">
-                  status: {reference.status}
+                  {t.admin.references.statusLabel} {reference.status}
                 </p>
                 <p className="mt-3 text-sm text-gray-600">
-                  <span className="font-medium text-gray-700">Relationship context:</span> {reference.relationship_context}
+                  <span className="font-medium text-gray-700">{t.admin.references.relationshipContext}</span> {reference.relationship_context}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -89,7 +91,7 @@ export function AdminReferenceManager() {
                       : 'bg-red-100 text-red-700'
                   } disabled:opacity-50`}
                 >
-                  {isRemoved ? 'Restore' : 'Remove'}
+                  {isRemoved ? t.admin.actions.restore : t.admin.actions.remove}
                 </button>
               </div>
             </div>
@@ -102,7 +104,7 @@ export function AdminReferenceManager() {
               rows={2}
               maxLength={500}
               className="mt-4 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Moderation note (optional)"
+              placeholder={t.admin.references.moderationNote}
             />
           </div>
         );

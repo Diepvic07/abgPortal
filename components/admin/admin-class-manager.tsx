@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from '@/lib/i18n';
 import type { AbgClass } from '@/types';
 
 interface UnmappedClass {
@@ -9,6 +10,7 @@ interface UnmappedClass {
 }
 
 export function AdminClassManager() {
+  const { t } = useTranslation();
   const [classes, setClasses] = useState<AbgClass[]>([]);
   const [unmapped, setUnmapped] = useState<UnmappedClass[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +35,7 @@ export function AdminClassManager() {
       setUnmapped(data.unmapped || []);
       setError(null);
     } catch {
-      setError('Failed to load class data');
+      setError(t.admin.classes.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -58,7 +60,7 @@ export function AdminClassManager() {
       setNewOrder(0);
       await fetchData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to add class');
+      alert(err instanceof Error ? err.message : t.admin.classes.addClass);
     } finally {
       setActionLoading(null);
     }
@@ -76,7 +78,7 @@ export function AdminClassManager() {
       setEditingId(null);
       await fetchData();
     } catch {
-      alert('Failed to update class');
+      alert(t.admin.messages.failed);
     } finally {
       setActionLoading(null);
     }
@@ -93,21 +95,21 @@ export function AdminClassManager() {
       if (!res.ok) throw new Error('Failed to toggle');
       await fetchData();
     } catch {
-      alert('Failed to toggle class status');
+      alert(t.admin.classes.toggleFailed);
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this class? This will NOT change any member data.')) return;
+    if (!confirm(t.admin.classes.deleteConfirm)) return;
     setActionLoading(id);
     try {
       const res = await fetch(`/api/admin/classes/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete');
       await fetchData();
     } catch {
-      alert('Failed to delete class');
+      alert(t.admin.classes.deleteFailed);
     } finally {
       setActionLoading(null);
     }
@@ -124,10 +126,10 @@ export function AdminClassManager() {
       });
       if (!res.ok) throw new Error('Failed to remap');
       const data = await res.json();
-      alert(`Remapped ${data.remapped_count} member(s) from "${oldClass}" to "${newClass}"`);
+      alert(t.admin.classes.remapSuccess.replace('{count}', String(data.remapped_count)).replace('{oldClass}', oldClass).replace('{newClass}', newClass));
       await fetchData();
     } catch {
-      alert('Failed to remap class');
+      alert(t.admin.classes.remapFailed);
     } finally {
       setActionLoading(null);
     }
@@ -146,18 +148,18 @@ export function AdminClassManager() {
       {unmapped.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-orange-700 mb-3">
-            Unmapped Classes ({unmapped.length})
+            {t.admin.classes.unmapped} ({unmapped.length})
           </h3>
           <p className="text-sm text-gray-500 mb-3">
-            These class names in member records don&apos;t match any canonical class. Map them to a standard class name.
+            {t.admin.classes.unmappedHelp}
           </p>
           <div className="bg-orange-50 border border-orange-200 rounded-lg overflow-hidden">
             <table className="w-full">
               <thead>
                 <tr className="bg-orange-100">
-                  <th className="px-4 py-2 text-left text-sm font-medium text-orange-800">Current Name</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-orange-800">Members</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-orange-800">Map To</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-orange-800">{t.admin.classes.currentName}</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-orange-800">{t.admin.classes.members}</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-orange-800">{t.admin.classes.mapTo}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-orange-200">
@@ -179,24 +181,24 @@ export function AdminClassManager() {
       {/* Canonical Classes Section */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-3">
-          Canonical Classes ({classes.length})
+          {t.admin.classes.canonical} ({classes.length})
         </h3>
         <p className="text-sm text-gray-500 mb-3">
-          These are the standard class names. Members select from this list. Drag order or set display_order to control sort.
+          {t.admin.classes.canonicalHelp}
         </p>
 
         {/* Add new class */}
         <div className="flex gap-2 mb-4">
           <input
             type="text"
-            placeholder="New class name"
+            placeholder={t.admin.classes.newClassName}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input
             type="number"
-            placeholder="Order"
+            placeholder={t.admin.classes.order}
             value={newOrder}
             onChange={(e) => setNewOrder(parseInt(e.target.value) || 0)}
             className="w-24 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -206,7 +208,7 @@ export function AdminClassManager() {
             disabled={actionLoading === 'add' || !newName.trim()}
             className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
-            {actionLoading === 'add' ? '...' : 'Add Class'}
+            {actionLoading === 'add' ? '...' : t.admin.classes.addClass}
           </button>
         </div>
 
@@ -215,10 +217,10 @@ export function AdminClassManager() {
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50">
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Order</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Name</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Status</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Actions</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">{t.admin.classes.order}</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">{t.admin.labels.name}</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">{t.admin.labels.status}</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">{t.admin.labels.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -244,7 +246,7 @@ export function AdminClassManager() {
                       </td>
                       <td className="px-4 py-2">
                         <span className={`text-xs px-2 py-1 rounded-full ${cls.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                          {cls.is_active ? 'Active' : 'Inactive'}
+                          {cls.is_active ? t.admin.status.active : t.admin.status.inactive}
                         </span>
                       </td>
                       <td className="px-4 py-2">
@@ -254,13 +256,13 @@ export function AdminClassManager() {
                             disabled={actionLoading === cls.id}
                             className="text-xs text-green-600 hover:text-green-800"
                           >
-                            Save
+                            {t.admin.actions.save}
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
                             className="text-xs text-gray-500 hover:text-gray-700"
                           >
-                            Cancel
+                            {t.admin.actions.cancel}
                           </button>
                         </div>
                       </td>
@@ -271,7 +273,7 @@ export function AdminClassManager() {
                       <td className="px-4 py-2 text-sm font-medium text-gray-900">{cls.name}</td>
                       <td className="px-4 py-2">
                         <span className={`text-xs px-2 py-1 rounded-full ${cls.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                          {cls.is_active ? 'Active' : 'Inactive'}
+                          {cls.is_active ? t.admin.status.active : t.admin.status.inactive}
                         </span>
                       </td>
                       <td className="px-4 py-2">
@@ -280,21 +282,21 @@ export function AdminClassManager() {
                             onClick={() => { setEditingId(cls.id); setEditName(cls.name); setEditOrder(cls.display_order); }}
                             className="text-xs text-blue-600 hover:text-blue-800"
                           >
-                            Edit
+                            {t.admin.actions.edit}
                           </button>
                           <button
                             onClick={() => handleToggleActive(cls)}
                             disabled={actionLoading === cls.id}
                             className={`text-xs ${cls.is_active ? 'text-orange-600 hover:text-orange-800' : 'text-green-600 hover:text-green-800'}`}
                           >
-                            {cls.is_active ? 'Deactivate' : 'Activate'}
+                            {cls.is_active ? t.admin.classes.deactivate : t.admin.classes.activate}
                           </button>
                           <button
                             onClick={() => handleDelete(cls.id)}
                             disabled={actionLoading === cls.id}
                             className="text-xs text-red-600 hover:text-red-800"
                           >
-                            Delete
+                            {t.admin.actions.delete}
                           </button>
                         </div>
                       </td>
@@ -322,6 +324,7 @@ function UnmappedRow({
   onRemap: (oldClass: string, newClass: string) => void;
   loading: boolean;
 }) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState('');
 
   return (
@@ -337,7 +340,7 @@ function UnmappedRow({
             onChange={(e) => setSelected(e.target.value)}
             className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value="">Select target class...</option>
+            <option value="">{t.admin.classes.selectTarget}</option>
             {canonicalClasses.map(c => (
               <option key={c.id} value={c.name}>{c.name}</option>
             ))}
@@ -347,7 +350,7 @@ function UnmappedRow({
             disabled={loading || !selected}
             className="px-3 py-1 bg-orange-600 text-white rounded text-xs font-medium hover:bg-orange-700 disabled:opacity-50"
           >
-            {loading ? '...' : 'Remap'}
+            {loading ? '...' : t.admin.classes.remap}
           </button>
         </div>
       </td>

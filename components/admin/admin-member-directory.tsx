@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from '@/lib/i18n';
 import { Member } from '@/types';
 import { AdminMemberFilters } from './admin-member-filters';
 import { AdminMemberCard } from './admin-member-card';
@@ -24,6 +25,7 @@ interface DropdownOptions {
 const emptyFilters: FilterValues = { name: '', role: '', company: '', country: '', abg_class: '', expertise: '' };
 
 export function AdminMemberDirectory() {
+  const { t } = useTranslation();
   const [members, setMembers] = useState<Member[]>([]);
   const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState<FilterValues>(emptyFilters);
@@ -67,13 +69,13 @@ export function AdminMemberDirectory() {
       <AdminMemberFilters filters={filters} onFilterChange={handleFilterChange} dropdownOptions={dropdownOptions} />
 
       <div className="text-sm text-gray-500">
-        Showing {members.length} of {total} members
+        {t.admin.members.showingMembers.replace('{count}', String(members.length)).replace('{total}', String(total))}
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading members...</div>
+        <div className="text-center py-12 text-gray-500">{t.admin.members.loadingMembers}</div>
       ) : members.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">No members found</div>
+        <div className="text-center py-12 text-gray-500">{t.admin.members.noMembers}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {members.map(member => (

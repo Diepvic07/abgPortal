@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, ProposalStatus, PROPOSAL_CATEGORY_LABELS } from '@/types';
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -19,6 +20,7 @@ const STATUS_COLORS: Record<string, string> = {
 const ALL_STATUSES: ProposalStatus[] = ['published', 'selected', 'in_progress', 'completed', 'archived', 'removed'];
 
 export function AdminProposalManager() {
+  const { t } = useTranslation();
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -53,14 +55,14 @@ export function AdminProposalManager() {
         body: JSON.stringify({ action, ...extra }),
       });
       if (res.ok) {
-        setMessage(`Action "${action}" applied successfully`);
+        setMessage(t.admin.proposals.actionSuccess.replace('{action}', action));
         await fetchProposals();
       } else {
         const data = await res.json();
         setMessage(`Error: ${data.error}`);
       }
     } catch {
-      setMessage('Something went wrong');
+      setMessage(t.admin.messages.somethingWrong);
     } finally {
       setActionLoading(null);
     }
@@ -76,11 +78,11 @@ export function AdminProposalManager() {
       });
       if (res.ok) {
         const data = await res.json();
-        setMessage(`Recalculated scores for ${data.recalculated} proposals`);
+        setMessage(t.admin.proposals.recalcSuccess.replace('{count}', String(data.recalculated)));
         await fetchProposals();
       }
     } catch {
-      setMessage('Failed to recalculate');
+      setMessage(t.admin.proposals.recalcFailed);
     } finally {
       setActionLoading(null);
     }
@@ -93,13 +95,13 @@ export function AdminProposalManager() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Community Proposals ({proposals.length})</h2>
+        <h2 className="text-xl font-bold text-gray-900">{t.admin.proposals.title} ({proposals.length})</h2>
         <button
           onClick={handleRecalculate}
           disabled={actionLoading === 'recalculate'}
           className="text-sm bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
         >
-          {actionLoading === 'recalculate' ? 'Recalculating...' : '🔄 Recalculate Scores'}
+          {actionLoading === 'recalculate' ? t.admin.proposals.recalculating : `🔄 ${t.admin.proposals.recalculate}`}
         </button>
       </div>
 
@@ -108,7 +110,7 @@ export function AdminProposalManager() {
       )}
 
       {proposals.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">No proposals yet</div>
+        <div className="text-center py-12 text-gray-500">{t.admin.proposals.noProposals}</div>
       ) : (
         <div className="space-y-4">
           {proposals.map((proposal) => (
@@ -120,11 +122,11 @@ export function AdminProposalManager() {
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[proposal.status]}`}>
                       {proposal.status}
                     </span>
-                    {proposal.is_pinned && <span className="text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">📌 Pinned</span>}
+                    {proposal.is_pinned && <span className="text-xs text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">📌 {t.admin.members.pinned}</span>}
                   </div>
                   <h3 className="font-semibold text-gray-900 text-lg">{proposal.title}</h3>
                   <p className="text-sm text-gray-500 mt-1">
-                    by {proposal.author_name || 'Unknown'} · Score: {proposal.commitment_score} · {proposal.commitment_count} committed · {proposal.comment_count} comments
+                    {t.admin.proposals.by} {proposal.author_name || 'Unknown'} · {t.admin.proposals.score} {proposal.commitment_score} · {proposal.commitment_count} {t.admin.proposals.committed} · {proposal.comment_count} {t.admin.proposals.comments}
                   </p>
                   <p className="text-sm text-gray-600 mt-2 line-clamp-2">{proposal.description}</p>
                 </div>
@@ -136,7 +138,7 @@ export function AdminProposalManager() {
                     disabled={actionLoading === proposal.id}
                     className="text-xs px-3 py-1.5 border rounded-lg hover:bg-gray-50 disabled:opacity-50"
                   >
-                    {proposal.is_pinned ? '📌 Unpin' : '📌 Pin'}
+                    {proposal.is_pinned ? `📌 ${t.admin.proposals.unpin}` : `📌 ${t.admin.proposals.pin}`}
                   </button>
 
                   {/* Status dropdown */}
@@ -155,14 +157,14 @@ export function AdminProposalManager() {
                   {proposal.status !== 'removed' && (
                     <button
                       onClick={() => {
-                        if (confirm('Remove this proposal? It will be hidden from members.')) {
+                        if (confirm(t.admin.proposals.removeConfirm)) {
                           handleAction(proposal.id, 'remove');
                         }
                       }}
                       disabled={actionLoading === proposal.id}
                       className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
                     >
-                      🗑️ Remove
+                      🗑️ {t.admin.actions.remove}
                     </button>
                   )}
                 </div>

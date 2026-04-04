@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { EventPayment, EventGuestRsvp } from '@/types';
+import { useTranslation } from '@/lib/i18n';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-800',
@@ -9,19 +10,20 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: 'bg-red-100 text-red-800',
 };
 
-const PAYER_TYPE_LABELS: Record<string, string> = {
-  premium: 'Premium',
-  basic: 'Basic',
-  guest: 'Guest',
-};
-
 export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; eventTitle: string }) {
+  const { t } = useTranslation();
   const [payments, setPayments] = useState<EventPayment[]>([]);
   const [guestRsvps, setGuestRsvps] = useState<EventGuestRsvp[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [editAmounts, setEditAmounts] = useState<Record<string, string>>({});
+
+  const PAYER_TYPE_LABELS: Record<string, string> = {
+    premium: t.admin.labels.premium,
+    basic: t.admin.labels.basic,
+    guest: t.admin.labels.guest,
+  };
 
   useEffect(() => {
     fetchData();
@@ -64,14 +66,14 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        setMessage({ text: `Payment ${status}`, type: 'success' });
+        setMessage({ text: (t.admin.eventPayments.paymentStatus as string).replace('{status}', status), type: 'success' });
         await fetchData();
       } else {
         const data = await res.json();
-        setMessage({ text: data.error || 'Failed', type: 'error' });
+        setMessage({ text: data.error || t.admin.messages.failed, type: 'error' });
       }
     } catch {
-      setMessage({ text: 'Something went wrong', type: 'error' });
+      setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
     } finally {
       setActionLoading(null);
     }
@@ -88,9 +90,9 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900">
-          Payments & Guests — {eventTitle}
+          {t.admin.eventPayments.title} — {eventTitle}
         </h3>
-        <button onClick={fetchData} className="text-xs text-blue-600 hover:underline">Refresh</button>
+        <button onClick={fetchData} className="text-xs text-blue-600 hover:underline">{t.admin.actions.refresh}</button>
       </div>
 
       {/* Revenue Summary */}
@@ -102,19 +104,19 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
         return (
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-              <p className="text-xs text-green-600 font-medium">Confirmed</p>
+              <p className="text-xs text-green-600 font-medium">{t.admin.eventPayments.confirmed}</p>
               <p className="text-lg font-bold text-green-800">{new Intl.NumberFormat('vi-VN').format(confirmedTotal)}</p>
-              <p className="text-xs text-green-600">{confirmed.length} payments</p>
+              <p className="text-xs text-green-600">{confirmed.length} {t.admin.eventPayments.paymentsCount}</p>
             </div>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
-              <p className="text-xs text-amber-600 font-medium">Pending</p>
+              <p className="text-xs text-amber-600 font-medium">{t.admin.eventPayments.pending}</p>
               <p className="text-lg font-bold text-amber-800">{new Intl.NumberFormat('vi-VN').format(pendingTotal)}</p>
-              <p className="text-xs text-amber-600">{pending.length} payments</p>
+              <p className="text-xs text-amber-600">{pending.length} {t.admin.eventPayments.paymentsCount}</p>
             </div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
-              <p className="text-xs text-blue-600 font-medium">Total</p>
+              <p className="text-xs text-blue-600 font-medium">{t.admin.eventPayments.total}</p>
               <p className="text-lg font-bold text-blue-800">{new Intl.NumberFormat('vi-VN').format(confirmedTotal + pendingTotal)}</p>
-              <p className="text-xs text-blue-600">{payments.length} payments</p>
+              <p className="text-xs text-blue-600">{payments.length} {t.admin.eventPayments.paymentsCount}</p>
             </div>
           </div>
         );
@@ -129,7 +131,7 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
       {/* Pending Payments */}
       {pendingPayments.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-amber-800 mb-2">Pending Payments ({pendingPayments.length})</h4>
+          <h4 className="text-sm font-semibold text-amber-800 mb-2">{t.admin.eventPayments.pendingPayments} ({pendingPayments.length})</h4>
           <div className="space-y-3">
             {pendingPayments.map((p) => (
               <div key={p.id} className="border border-amber-200 bg-amber-50 rounded-xl p-4">
@@ -149,7 +151,7 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
                         onChange={(e) => setEditAmounts(prev => ({ ...prev, [p.id]: e.target.value }))}
                         className="w-32 px-2 py-1 border border-gray-300 rounded text-sm font-semibold text-gray-900"
                       />
-                      <span className="text-sm text-gray-500">VND</span>
+                      <span className="text-sm text-gray-500">{t.admin.eventPayments.vnd}</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
                       {new Date(p.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -161,14 +163,14 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
                       disabled={actionLoading === p.id}
                       className="text-xs px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                     >
-                      Confirm
+                      {t.admin.actions.confirm}
                     </button>
                     <button
                       onClick={() => handlePaymentAction(p.id, 'rejected')}
                       disabled={actionLoading === p.id}
                       className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
                     >
-                      Reject
+                      {t.admin.actions.reject}
                     </button>
                   </div>
                 </div>
@@ -181,7 +183,7 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
       {/* Confirmed/Rejected Payments */}
       {otherPayments.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-2">Payment History ({otherPayments.length})</h4>
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">{t.admin.eventPayments.paymentHistory} ({otherPayments.length})</h4>
           <div className="space-y-2">
             {otherPayments.map((p) => (
               <div key={p.id} className="border border-gray-200 rounded-xl p-4">
@@ -201,14 +203,14 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
                         onChange={(e) => setEditAmounts(prev => ({ ...prev, [p.id]: e.target.value }))}
                         className="w-28 px-2 py-0.5 border border-gray-200 rounded text-xs font-medium text-gray-700"
                       />
-                      <span className="text-xs text-gray-400">VND</span>
+                      <span className="text-xs text-gray-400">{t.admin.eventPayments.vnd}</span>
                       {editAmounts[p.id] && parseInt(editAmounts[p.id]) !== p.amount_vnd && (
                         <button
                           onClick={() => handlePaymentAction(p.id, p.status as 'confirmed' | 'rejected')}
                           disabled={actionLoading === p.id}
                           className="text-xs px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                         >
-                          Save
+                          {t.admin.actions.save}
                         </button>
                       )}
                     </div>
@@ -221,21 +223,21 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
       )}
 
       {payments.length === 0 && (
-        <p className="text-sm text-gray-500">No payments yet.</p>
+        <p className="text-sm text-gray-500">{t.admin.eventPayments.noPayments}</p>
       )}
 
       {/* Guest RSVPs */}
       {guestRsvps.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-2">Guest Registrations ({guestRsvps.length})</h4>
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">{t.admin.eventPayments.guestRegistrations} ({guestRsvps.length})</h4>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                  <th className="pb-2 pr-4">Name</th>
-                  <th className="pb-2 pr-4">Email</th>
-                  <th className="pb-2 pr-4">Phone</th>
-                  <th className="pb-2">Registered</th>
+                  <th className="pb-2 pr-4">{t.admin.labels.name}</th>
+                  <th className="pb-2 pr-4">{t.admin.labels.email}</th>
+                  <th className="pb-2 pr-4">{t.admin.labels.phone}</th>
+                  <th className="pb-2">{t.admin.eventPayments.registered}</th>
                 </tr>
               </thead>
               <tbody>
