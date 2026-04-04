@@ -1,17 +1,55 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityEvent, EventRsvp, EventComment, CommitmentLevel, MembershipStatus, COMMITMENT_LABELS, EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS } from '@/types';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
+import { ToastNotification, useToasts } from '@/components/ui/toast-notification';
+import {
+  CommunityEvent,
+  EventRsvp,
+  EventComment,
+  CommitmentLevel,
+  EventMode,
+  EventRegistrationLevel,
+  MembershipStatus,
+  EVENT_MODE_LABELS,
+  EVENT_CATEGORY_LABELS,
+  EVENT_STATUS_LABELS,
+} from '@/types';
 
-// Order: Lead first (left), then Participate, then Interested
-const RSVP_OPTIONS: { level: CommitmentLevel; points: number; icon: string }[] = [
-  { level: 'will_lead', points: 5, icon: '👑' },
-  { level: 'will_participate', points: 3, icon: '🙌' },
-  { level: 'interested', points: 0, icon: '👀' },
+const RSVP_ACTIONS: Array<{
+  level: EventRegistrationLevel;
+  icon: string;
+  label: { en: string; vi: string };
+  helper: { en: string; vi: string };
+}> = [
+  {
+    level: 'will_participate',
+    icon: '🙌',
+    label: { en: 'Will Join', vi: 'Sẽ tham gia' },
+    helper: {
+      en: 'Reserve your spot and receive event updates.',
+      vi: 'Giữ chỗ của bạn và nhận cập nhật về sự kiện.',
+    },
+  },
+  {
+    level: 'will_lead',
+    icon: '👑',
+    label: { en: 'Will Lead', vi: 'Sẽ dẫn dắt' },
+    helper: {
+      en: 'Volunteer to help host or coordinate this event.',
+      vi: 'Tình nguyện hỗ trợ tổ chức hoặc điều phối sự kiện này.',
+    },
+  },
 ];
+
+const RSVP_LABELS: Record<EventRegistrationLevel, { en: string; vi: string }> = {
+  will_participate: { en: 'Will Join', vi: 'Sẽ tham gia' },
+  will_lead: { en: 'Will Lead', vi: 'Sẽ dẫn dắt' },
+};
 
 function formatDateTime(dateStr: string, locale: string): string {
   try {
@@ -19,6 +57,21 @@ function formatDateTime(dateStr: string, locale: string): string {
     return date.toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', {
       weekday: 'long',
       month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function formatShortDateTime(dateStr: string, locale: string): string {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
@@ -48,9 +101,28 @@ function formatRelativeTime(dateStr: string, locale: string): string {
   }
 }
 
+function deriveEventMode(event: CommunityEvent): EventMode {
+  if (event.event_mode) return event.event_mode;
+  if (event.location && event.location_url) return 'hybrid';
+  if (event.location_url) return 'online';
+  return 'offline';
+}
+
+function getModePillClasses(mode: EventMode): string {
+  switch (mode) {
+    case 'online':
+      return 'bg-sky-50 text-sky-700';
+    case 'hybrid':
+      return 'bg-emerald-50 text-emerald-700';
+    default:
+      return 'bg-stone-100 text-stone-700';
+  }
+}
+
 export function EventDetail({ eventId }: { eventId: string }) {
-  const { t, locale } = useTranslation();
+  const { locale } = useTranslation();
   const { data: session } = useSession();
+  const { toasts, showToast, dismissToast } = useToasts();
   const [event, setEvent] = useState<CommunityEvent | null>(null);
   const [rsvps, setRsvps] = useState<EventRsvp[]>([]);
   const [comments, setComments] = useState<EventComment[]>([]);
@@ -60,13 +132,11 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [commentBody, setCommentBody] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
   const [membershipStatus, setMembershipStatus] = useState<MembershipStatus>('basic');
+  const [pendingRsvp, setPendingRsvp] = useState<EventRegistrationLevel | null>(null);
+  const [rsvpNote, setRsvpNote] = useState('');
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
-  useEffect(() => {
-    fetchEvent();
-    fetchComments();
-  }, [eventId]);
-
-  async function fetchEvent() {
+  const fetchEvent = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/community/events?id=${eventId}`);
@@ -81,12 +151,13 @@ export function EventDetail({ eventId }: { eventId: string }) {
       }
     } catch (error) {
       console.error('Failed to fetch event:', error);
+      showToast(locale === 'vi' ? 'Không thể tải thông tin sự kiện.' : 'Unable to load event details.');
     } finally {
       setLoading(false);
     }
-  }
+  }, [eventId, locale, showToast]);
 
-  async function fetchComments() {
+  const fetchComments = useCallback(async () => {
     try {
       const res = await fetch(`/api/community/events/${eventId}/comments`);
       if (res.ok) {
@@ -96,54 +167,64 @@ export function EventDetail({ eventId }: { eventId: string }) {
     } catch (error) {
       console.error('Failed to fetch comments:', error);
     }
-  }
+  }, [eventId]);
 
-  async function handleRsvp(level: CommitmentLevel) {
-    if (rsvpLoading) return;
+  useEffect(() => {
+    fetchEvent();
+    fetchComments();
+  }, [fetchComments, fetchEvent]);
 
-    // If clicking the same level, remove RSVP
-    if (myRsvp === level) {
-      setRsvpLoading(true);
-      try {
-        const res = await fetch(`/api/community/events/${eventId}/rsvp`, { method: 'DELETE' });
-        if (res.ok) {
-          setMyRsvp(null);
-          // Optimistic: decrement count
-          if (event) setEvent({ ...event, rsvp_count: Math.max(0, event.rsvp_count - 1) });
-          fetchEvent(); // refresh full data
-        }
-      } catch (error) {
-        console.error('Failed to remove RSVP:', error);
-      } finally {
-        setRsvpLoading(false);
-      }
-      return;
-    }
-
+  async function submitRsvp(level: EventRegistrationLevel) {
     setRsvpLoading(true);
-    const wasNew = myRsvp === null;
-    setMyRsvp(level); // Optimistic update
-    if (wasNew && event) {
-      setEvent({ ...event, rsvp_count: event.rsvp_count + 1 });
-    }
-
     try {
       const res = await fetch(`/api/community/events/${eventId}/rsvp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commitment_level: level }),
+        body: JSON.stringify({
+          commitment_level: level,
+          note: rsvpNote.trim() || undefined,
+        }),
       });
+
       if (!res.ok) {
-        // Revert optimistic update
-        setMyRsvp(null);
-        if (wasNew && event) setEvent({ ...event, rsvp_count: event.rsvp_count });
-      } else {
-        fetchEvent(); // refresh to get accurate counts
+        const data = await res.json().catch(() => null);
+        showToast(data?.error || (locale === 'vi' ? 'Không thể cập nhật đăng ký.' : 'Unable to update RSVP.'));
+        return;
       }
+
+      setPendingRsvp(null);
+      setRsvpNote('');
+      await fetchEvent();
+      showToast(
+        level === 'will_lead'
+          ? (locale === 'vi' ? 'Bạn đã đăng ký vai trò dẫn dắt.' : 'You are registered as a lead.')
+          : (locale === 'vi' ? 'Bạn đã đăng ký tham gia sự kiện.' : 'You are registered for the event.'),
+        'success',
+      );
     } catch (error) {
       console.error('Failed to RSVP:', error);
-      setMyRsvp(null);
-      if (wasNew && event) setEvent({ ...event, rsvp_count: event.rsvp_count });
+      showToast(locale === 'vi' ? 'Không thể cập nhật đăng ký.' : 'Unable to update RSVP.');
+    } finally {
+      setRsvpLoading(false);
+    }
+  }
+
+  async function handleRemoveRsvp() {
+    setRsvpLoading(true);
+    try {
+      const res = await fetch(`/api/community/events/${eventId}/rsvp`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        showToast(data?.error || (locale === 'vi' ? 'Không thể hủy đăng ký.' : 'Unable to cancel RSVP.'));
+        return;
+      }
+
+      setConfirmRemove(false);
+      await fetchEvent();
+      showToast(locale === 'vi' ? 'Đã hủy đăng ký tham gia.' : 'Your RSVP has been cancelled.', 'success');
+    } catch (error) {
+      console.error('Failed to remove RSVP:', error);
+      showToast(locale === 'vi' ? 'Không thể hủy đăng ký.' : 'Unable to cancel RSVP.');
     } finally {
       setRsvpLoading(false);
     }
@@ -163,23 +244,36 @@ export function EventDetail({ eventId }: { eventId: string }) {
       if (res.ok) {
         setCommentBody('');
         fetchComments();
-        if (event) setEvent({ ...event, comment_count: event.comment_count + 1 });
+        if (event) {
+          setEvent({ ...event, comment_count: event.comment_count + 1 });
+        }
+      } else {
+        showToast(locale === 'vi' ? 'Không thể gửi bình luận.' : 'Unable to post comment.');
       }
     } catch (error) {
       console.error('Failed to post comment:', error);
+      showToast(locale === 'vi' ? 'Không thể gửi bình luận.' : 'Unable to post comment.');
     } finally {
       setCommentLoading(false);
     }
   }
 
+  const activeRsvps = useMemo(
+    () => rsvps.filter((rsvp) => rsvp.commitment_level === 'will_participate' || rsvp.commitment_level === 'will_lead'),
+    [rsvps],
+  );
+
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-100 rounded w-3/4 mb-4" />
-          <div className="h-4 bg-gray-50 rounded w-1/2 mb-8" />
-          <div className="h-32 bg-gray-50 rounded mb-8" />
-          <div className="h-12 bg-gray-50 rounded w-full" />
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-10 bg-gray-100 rounded w-2/3" />
+          <div className="h-72 bg-gray-50 rounded-3xl" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="h-28 bg-gray-50 rounded-2xl" />
+            <div className="h-28 bg-gray-50 rounded-2xl" />
+          </div>
+          <div className="h-48 bg-gray-50 rounded-3xl" />
         </div>
       </div>
     );
@@ -196,260 +290,392 @@ export function EventDetail({ eventId }: { eventId: string }) {
     );
   }
 
+  const eventMode = deriveEventMode(event);
+  const modeLabel = EVENT_MODE_LABELS[eventMode][locale === 'vi' ? 'vi' : 'en'];
   const categoryLabel = EVENT_CATEGORY_LABELS[event.category]?.[locale === 'vi' ? 'vi' : 'en'] || event.category;
   const statusInfo = EVENT_STATUS_LABELS[event.status];
+  const isPremium = membershipStatus === 'premium' || membershipStatus === 'grace-period';
+  const registeredCount = activeRsvps.length;
   const totalCapacity = (event.capacity_premium || 0) + (event.capacity_basic || 0) || event.capacity || 0;
-  const capacityPercent = totalCapacity ? (event.rsvp_count / totalCapacity) * 100 : 0;
-  const isFull = totalCapacity ? event.rsvp_count >= totalCapacity : false;
+  const capacityPercent = totalCapacity ? (registeredCount / totalCapacity) * 100 : 0;
+  const isFull = totalCapacity ? registeredCount >= totalCapacity : false;
   const isPremiumExclusive = event.capacity_basic === 0;
-  const hasTieredSeats = event.capacity_premium != null || event.capacity_basic != null;
+  const hasRsvp = myRsvp === 'will_participate' || myRsvp === 'will_lead';
+  const canUpgradeToLead = myRsvp === 'will_participate' || myRsvp === 'will_lead';
+
+  function openRsvpModal(level: EventRegistrationLevel) {
+    if (rsvpLoading) return;
+    if (level === myRsvp) return;
+    if (level === 'will_lead' && !canUpgradeToLead) {
+      showToast(locale === 'vi' ? 'Hãy đăng ký tham gia trước khi chọn vai trò dẫn dắt.' : 'Join the event first before volunteering to lead.');
+      return;
+    }
+    if (isFull && !hasRsvp) {
+      showToast(locale === 'vi' ? 'Sự kiện đã hết chỗ đăng ký.' : 'This event is currently full.');
+      return;
+    }
+    if (!isPremium && isPremiumExclusive) {
+      showToast(locale === 'vi' ? 'Sự kiện này chỉ dành cho thành viên Premium.' : 'This event is for Premium members only.');
+      return;
+    }
+
+    setPendingRsvp(level);
+    setRsvpNote('');
+  }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      {/* Breadcrumb */}
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <nav className="text-sm text-gray-500 mb-4">
         <Link href="/events" className="hover:text-blue-600">{locale === 'vi' ? 'Sự kiện' : 'Events'}</Link>
         <span className="mx-2">&gt;</span>
         <span className="text-gray-900">{event.title}</span>
       </nav>
 
-      {/* Title and badges */}
-      <h1 className="text-2xl font-bold text-gray-900 mb-3">{event.title}</h1>
-      <div className="flex items-center gap-2 mb-4">
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-          event.category === 'charity' ? 'bg-rose-50 text-rose-600' :
-          event.category === 'event' ? 'bg-amber-50 text-amber-600' :
-          event.category === 'learning' ? 'bg-blue-50 text-blue-600' :
-          event.category === 'community_support' ? 'bg-emerald-50 text-emerald-600' :
-          event.category === 'networking' ? 'bg-teal-50 text-teal-600' :
-          'bg-violet-50 text-violet-600'
-        }`}>
-          {categoryLabel}
-        </span>
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-          statusInfo.color === 'green' ? 'bg-green-50 text-green-600' :
-          statusInfo.color === 'blue' ? 'bg-blue-50 text-blue-600' :
-          statusInfo.color === 'red' ? 'bg-red-50 text-red-600' :
-          'bg-gray-50 text-gray-600'
-        }`}>
-          {statusInfo[locale === 'vi' ? 'vi' : 'en']}
-        </span>
-      </div>
-
-      {/* Event metadata */}
-      <div className="space-y-2 mb-6 text-sm text-gray-600">
-        <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
-          <span>{formatDateTime(event.event_date, locale)}</span>
+      {event.image_url && (
+        <div className="mb-6 overflow-hidden rounded-3xl border border-stone-200 bg-stone-50">
+          <img src={event.image_url} alt="" className="h-72 w-full object-cover" />
         </div>
-        {event.location && (
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
-            {event.location_url ? (
-              <a href={event.location_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{event.location}</a>
-            ) : (
-              <span>{event.location}</span>
-            )}
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-1.053M18 6.75a3 3 0 11-6 0 3 3 0 016 0zM6.75 9.75a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-          <span>
-            {event.rsvp_count} {locale === 'vi' ? 'đăng ký' : 'RSVPs'}
-            {totalCapacity > 0 && ` / ${totalCapacity} ${locale === 'vi' ? 'chỗ' : 'seats'}`}
+      )}
+
+      <div className="mb-6">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getModePillClasses(eventMode)}`}>
+            {modeLabel}
+          </span>
+          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+            {categoryLabel}
+          </span>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            statusInfo.color === 'green'
+              ? 'bg-green-50 text-green-700'
+              : statusInfo.color === 'blue'
+              ? 'bg-blue-50 text-blue-700'
+              : statusInfo.color === 'red'
+              ? 'bg-red-50 text-red-700'
+              : 'bg-gray-100 text-gray-700'
+          }`}>
+            {statusInfo[locale === 'vi' ? 'vi' : 'en']}
           </span>
           {isPremiumExclusive && (
-            <span className="text-xs font-semibold bg-amber-400 text-white px-2 py-0.5 rounded-full">
-              Premium Exclusive
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+              {locale === 'vi' ? 'Chỉ dành cho Premium' : 'Premium only'}
             </span>
           )}
         </div>
-        {/* Tiered seat display */}
-        {hasTieredSeats && (
-          <div className="ml-6 flex gap-4 text-xs text-gray-500">
-            {event.capacity_premium != null && (
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
-                Premium: {event.rsvp_count}/{event.capacity_premium}
-              </span>
-            )}
-            {event.capacity_basic != null && event.capacity_basic > 0 && (
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-gray-400 inline-block" />
-                Basic: {Math.max(0, event.rsvp_count - (event.capacity_premium || 0))}/{event.capacity_basic}
-              </span>
-            )}
-          </div>
-        )}
-        {/* Capacity progress bar */}
-        {totalCapacity > 0 && (
-          <div className="w-48 ml-6">
-            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${
-                  capacityPercent > 95 ? 'bg-red-500' :
-                  capacityPercent > 80 ? 'bg-amber-500' :
-                  'bg-blue-500'
-                }`}
-                style={{ width: `${Math.min(100, capacityPercent)}%` }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* Proposal attribution */}
-      {event.proposal_id && (
-        <p className="text-sm text-gray-500 mb-4">
-          {locale === 'vi' ? 'Từ đề xuất của' : 'From proposal by'}{' '}
-          <Link href={`/proposals/${event.proposal_id}`} className="text-blue-600 hover:underline">
-            {event.author_name || 'member'}
-          </Link>
+        <h1 className="text-3xl font-semibold tracking-tight text-gray-900">{event.title}</h1>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-600">
+          {locale === 'vi'
+            ? 'Thông tin tham gia được tóm tắt bên dưới để bạn biết rõ hình thức, địa điểm và cách đăng ký trước khi xác nhận.'
+            : 'Everything you need before registering is summarized below: format, schedule, location, and the registration rules.'}
         </p>
-      )}
-
-      {/* Description */}
-      <div className="prose prose-sm max-w-none mb-8 text-gray-700 whitespace-pre-wrap">
-        {event.description}
       </div>
 
-      {/* RSVP Section */}
-      {event.status === 'published' && (() => {
-        const isPremium = membershipStatus === 'premium' || membershipStatus === 'grace-period';
-        const basicCanRsvp = !isFull; // Basic members can RSVP if not full
-
-        return (
-          <div className="mb-8 p-4 bg-gray-50 rounded-xl">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">
-              {locale === 'vi' ? 'Đăng ký tham gia' : 'RSVP'}
-            </h2>
-
-            {/* Tier info banner */}
-            {!isPremium && isPremiumExclusive && (
-              <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 font-medium">
-                {locale === 'vi'
-                  ? 'Sự kiện dành riêng cho thành viên Premium. Nâng cấp để tham gia.'
-                  : 'This event is Premium exclusive. Upgrade to join.'}
-              </div>
-            )}
-            {!isPremium && !isPremiumExclusive && (
-              <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
-                {locale === 'vi'
-                  ? 'Thành viên Basic: đăng ký tùy theo số chỗ còn lại. Nâng cấp Premium để ưu tiên đăng ký.'
-                  : 'Basic members: registration subject to availability. Upgrade to Premium for priority access.'}
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              {RSVP_OPTIONS.map(({ level, points, icon }) => {
-                const isSelected = myRsvp === level;
-                const label = COMMITMENT_LABELS[level][locale === 'vi' ? 'vi' : 'en'];
-                const disabled = rsvpLoading || (isFull && !isSelected) || (!isPremium && isPremiumExclusive);
-
-                return (
-                  <button
-                    key={level}
-                    onClick={() => handleRsvp(level)}
-                    disabled={disabled}
-                    aria-pressed={isSelected}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                      isSelected
-                        ? level === 'will_lead'
-                          ? 'bg-blue-800 text-white scale-[1.02] shadow-sm'
-                          : level === 'will_participate'
-                          ? 'bg-blue-600 text-white scale-[1.02] shadow-sm'
-                          : 'bg-gray-700 text-white scale-[1.02] shadow-sm'
-                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                    } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <span>{icon}</span>
-                    <span>{label}</span>
-                    {points > 0 && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                        isSelected ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        +{points}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {isFull && !myRsvp && !isPremium && (
-              <p className="text-sm text-red-600 mt-2 font-medium">
-                {locale === 'vi' ? 'Sự kiện đã đầy cho thành viên Basic' : 'Event is full for Basic members'}
-              </p>
-            )}
-            {isFull && !myRsvp && isPremium && (
-              <p className="text-sm text-amber-600 mt-2 font-medium">
-                {locale === 'vi' ? 'Sự kiện đã đầy nhưng bạn có thể đăng ký với tư cách Premium' : 'Event is full but you can register as Premium member'}
-              </p>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* RSVP participants list */}
-      {rsvps.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-sm font-semibold text-gray-900 mb-3">
-            {locale === 'vi' ? 'Người tham gia' : 'Participants'} ({rsvps.length})
+      <div className="grid gap-4 md:grid-cols-2">
+        <section className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-stone-500">
+            {locale === 'vi' ? 'Thông tin chính' : 'At a Glance'}
           </h2>
-          <div className="flex flex-wrap gap-2">
-            {/* Sort: Leaders first, then participants, then interested */}
-            {[...rsvps].sort((a, b) => {
-              const order: Record<string, number> = { will_lead: 0, will_participate: 1, interested: 2 };
-              return (order[a.commitment_level] ?? 2) - (order[b.commitment_level] ?? 2);
-            }).map((rsvp) => (
-              <div
-                key={rsvp.id}
-                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ${
-                  rsvp.commitment_level === 'will_lead' ? 'bg-blue-50 ring-1 ring-blue-200' : 'bg-gray-50'
-                }`}
-                title={COMMITMENT_LABELS[rsvp.commitment_level]?.[locale === 'vi' ? 'vi' : 'en']}
-              >
-                {rsvp.commitment_level === 'will_lead' && (
-                  <span className="text-amber-500 text-xs">👑</span>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <InfoBlock
+              label={locale === 'vi' ? 'Bắt đầu' : 'Starts'}
+              value={formatDateTime(event.event_date, locale)}
+            />
+            <InfoBlock
+              label={locale === 'vi' ? 'Kết thúc' : 'Ends'}
+              value={event.event_end_date ? formatDateTime(event.event_end_date, locale) : (locale === 'vi' ? 'Chưa đặt' : 'Not set')}
+            />
+            <InfoBlock
+              label={locale === 'vi' ? 'Hình thức' : 'Mode'}
+              value={modeLabel}
+            />
+            <InfoBlock
+              label={locale === 'vi' ? 'Người tổ chức' : 'Organizer'}
+              value={event.author_name || 'ABG Alumni'}
+            />
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-stone-200 bg-stone-50 p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-stone-500">
+            {locale === 'vi' ? 'Cách tham gia' : 'How to Attend'}
+          </h2>
+          <div className="mt-4 space-y-4 text-sm text-stone-700">
+            {(eventMode === 'offline' || eventMode === 'hybrid') && (
+              <div>
+                <p className="font-medium text-stone-900">{locale === 'vi' ? 'Địa điểm' : 'Venue'}</p>
+                <p className="mt-1">{event.location || (locale === 'vi' ? 'Sẽ cập nhật sau' : 'To be announced')}</p>
+                {event.location_url && (
+                  <a
+                    href={event.location_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center text-sm font-medium text-blue-700 hover:text-blue-800"
+                  >
+                    {locale === 'vi' ? 'Mở chỉ đường hoặc chi tiết địa điểm' : 'Open venue details'}
+                  </a>
                 )}
-                {rsvp.member_avatar_url ? (
-                  <img src={rsvp.member_avatar_url} alt="" className="w-5 h-5 rounded-full" />
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center text-xs text-white">
-                    {(rsvp.member_name || '?')[0]}
-                  </div>
-                )}
-                <span className={`${rsvp.commitment_level === 'will_lead' ? 'text-blue-800 font-medium' : 'text-gray-700'}`}>
-                  {rsvp.member_name || 'Member'}
-                </span>
               </div>
-            ))}
+            )}
+
+            {eventMode === 'online' && (
+              <div>
+                <p className="font-medium text-stone-900">{locale === 'vi' ? 'Nền tảng tham gia' : 'Meeting platform'}</p>
+                <p className="mt-1">{event.location || (locale === 'vi' ? 'Sự kiện trực tuyến' : 'Online event')}</p>
+                {event.location_url ? (
+                  <a
+                    href={event.location_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center text-sm font-medium text-blue-700 hover:text-blue-800"
+                  >
+                    {locale === 'vi' ? 'Mở liên kết tham gia' : 'Open join link'}
+                  </a>
+                ) : (
+                  <p className="mt-2 text-stone-500">
+                    {locale === 'vi' ? 'Liên kết tham gia sẽ được gửi sau khi đăng ký.' : 'The join link will be shared after registration.'}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {eventMode === 'hybrid' && event.location_url && (
+              <div>
+                <p className="font-medium text-stone-900">{locale === 'vi' ? 'Tham gia trực tuyến' : 'Join online'}</p>
+                <a
+                  href={event.location_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex items-center text-sm font-medium text-blue-700 hover:text-blue-800"
+                >
+                  {locale === 'vi' ? 'Mở liên kết tham gia' : 'Open join link'}
+                </a>
+              </div>
+            )}
+
+            <div className="rounded-2xl bg-white px-4 py-3 text-stone-600">
+              {locale === 'vi'
+                ? 'Sau khi đăng ký, bạn có thể hủy đăng ký bất kỳ lúc nào trước khi sự kiện kết thúc.'
+                : 'After registering, you can cancel your RSVP any time before the event is closed.'}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-2xl">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {locale === 'vi' ? 'Giới thiệu sự kiện' : 'About This Event'}
+            </h2>
+            <div className="prose prose-sm mt-3 max-w-none whitespace-pre-wrap text-gray-700">
+              {event.description}
+            </div>
+          </div>
+
+          <div className="min-w-[240px] rounded-2xl bg-stone-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">
+              {locale === 'vi' ? 'Đăng ký hiện tại' : 'Registration Snapshot'}
+            </p>
+            <p className="mt-3 text-2xl font-semibold text-stone-900">
+              {registeredCount}
+              {totalCapacity > 0 && <span className="text-lg text-stone-500"> / {totalCapacity}</span>}
+            </p>
+            <p className="mt-1 text-sm text-stone-600">
+              {locale === 'vi' ? 'thành viên đã xác nhận tham gia' : 'members confirmed to attend'}
+            </p>
+            {totalCapacity > 0 && (
+              <div className="mt-4">
+                <div className="h-2 overflow-hidden rounded-full bg-stone-200">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      capacityPercent >= 95 ? 'bg-red-500' :
+                      capacityPercent >= 80 ? 'bg-amber-500' :
+                      'bg-blue-600'
+                    }`}
+                    style={{ width: `${Math.min(100, capacityPercent)}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-stone-500">
+                  {isFull
+                    ? (locale === 'vi' ? 'Hiện tại không còn chỗ trống.' : 'No open seats at the moment.')
+                    : (locale === 'vi' ? 'Số chỗ có thể thay đổi theo loại thành viên.' : 'Availability may vary by membership tier.')}
+                </p>
+              </div>
+            )}
           </div>
         </div>
+      </section>
+
+      {event.status === 'published' && (
+        <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {locale === 'vi' ? 'Đăng ký tham gia' : 'Register'}
+              </h2>
+              <p className="mt-1 text-sm text-gray-600">
+                {locale === 'vi'
+                  ? 'Chỉ những người chọn tham gia hoặc dẫn dắt mới được tính là đã đăng ký.'
+                  : 'Only members who choose to join or lead are counted as registered attendees.'}
+              </p>
+            </div>
+
+            {myRsvp === 'will_participate' && (
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+                {locale === 'vi' ? 'Bạn đã đăng ký tham gia' : 'You are registered to join'}
+              </span>
+            )}
+            {myRsvp === 'will_lead' && (
+              <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800">
+                {locale === 'vi' ? 'Bạn đang tham gia với vai trò dẫn dắt' : 'You are registered as a lead'}
+              </span>
+            )}
+          </div>
+
+          {!isPremium && isPremiumExclusive && (
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              {locale === 'vi'
+                ? 'Sự kiện này chỉ dành cho thành viên Premium. Vui lòng nâng cấp để đăng ký.'
+                : 'This event is reserved for Premium members. Upgrade before registering.'}
+            </div>
+          )}
+
+          {!isPremium && !isPremiumExclusive && (
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              {locale === 'vi'
+                ? 'Thành viên Basic có thể đăng ký khi còn chỗ. Premium được ưu tiên khi số lượng chỗ có giới hạn.'
+                : 'Basic members can register while seats remain. Premium members receive priority when seats are limited.'}
+            </div>
+          )}
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {RSVP_ACTIONS.map((action) => {
+              const isSelected = myRsvp === action.level;
+              const isDisabled =
+                rsvpLoading ||
+                (!isPremium && isPremiumExclusive) ||
+                (isFull && !hasRsvp) ||
+                (action.level === 'will_lead' && !canUpgradeToLead);
+
+              return (
+                <button
+                  key={action.level}
+                  type="button"
+                  disabled={isDisabled}
+                  aria-pressed={isSelected}
+                  onClick={() => openRsvpModal(action.level)}
+                  className={`rounded-2xl border px-4 py-4 text-left transition ${
+                    isSelected
+                      ? action.level === 'will_lead'
+                        ? 'border-amber-300 bg-amber-50'
+                        : 'border-blue-300 bg-blue-50'
+                      : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50'
+                  } ${isDisabled ? 'cursor-not-allowed opacity-60' : ''}`}
+                >
+                  <div className="flex items-center gap-2 text-base font-semibold text-gray-900">
+                    <span>{action.icon}</span>
+                    <span>{action.label[locale === 'vi' ? 'vi' : 'en']}</span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    {action.helper[locale === 'vi' ? 'vi' : 'en']}
+                  </p>
+                  {action.level === 'will_lead' && !canUpgradeToLead && (
+                    <p className="mt-3 text-xs font-medium text-amber-700">
+                      {locale === 'vi'
+                        ? 'Hãy chọn "Sẽ tham gia" trước, sau đó bạn có thể nâng cấp lên vai trò dẫn dắt.'
+                        : 'Choose "Will Join" first, then you can upgrade to a lead role.'}
+                    </p>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+            {isFull && !hasRsvp && (
+              <span className="text-red-600">
+                {locale === 'vi' ? 'Sự kiện hiện đã đủ số lượng đăng ký.' : 'This event is currently full.'}
+              </span>
+            )}
+            {myRsvp === 'will_lead' && (
+              <span>
+                {locale === 'vi' ? 'Bạn có thể chuyển lại về chế độ tham gia bình thường bất kỳ lúc nào.' : 'You can switch back to a normal attendee role at any time.'}
+              </span>
+            )}
+            {hasRsvp && (
+              <button
+                type="button"
+                onClick={() => setConfirmRemove(true)}
+                className="font-medium text-red-600 hover:text-red-700"
+              >
+                {locale === 'vi' ? 'Hủy đăng ký' : 'Cancel RSVP'}
+              </button>
+            )}
+          </div>
+        </section>
       )}
 
-      {/* Discussion Section */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-900 mb-4">
+      {activeRsvps.length > 0 && (
+        <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {locale === 'vi' ? 'Người đã đăng ký' : 'Registered Members'} ({activeRsvps.length})
+          </h2>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {[...activeRsvps]
+              .sort((a, b) => {
+                const order: Record<string, number> = { will_lead: 0, will_participate: 1 };
+                return (order[a.commitment_level] ?? 9) - (order[b.commitment_level] ?? 9);
+              })
+              .map((rsvp) => {
+                const isLead = rsvp.commitment_level === 'will_lead';
+                return (
+                  <div
+                    key={rsvp.id}
+                    className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm ${
+                      isLead ? 'bg-amber-50 text-amber-900 ring-1 ring-amber-200' : 'bg-stone-100 text-stone-700'
+                    }`}
+                    title={RSVP_LABELS[rsvp.commitment_level as EventRegistrationLevel]?.[locale === 'vi' ? 'vi' : 'en']}
+                  >
+                    {isLead && <span>👑</span>}
+                    {rsvp.member_avatar_url ? (
+                      <img src={rsvp.member_avatar_url} alt="" className="h-6 w-6 rounded-full" />
+                    ) : (
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-stone-300 text-xs text-white">
+                        {(rsvp.member_name || '?')[0]}
+                      </div>
+                    )}
+                    <span className="font-medium">{rsvp.member_name || 'Member'}</span>
+                  </div>
+                );
+              })}
+          </div>
+        </section>
+      )}
+
+      <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-900">
           {locale === 'vi' ? 'Thảo luận' : 'Discussion'} ({event.comment_count})
         </h2>
 
-        {/* Comment input */}
         {session && event.status === 'published' && (
-          <form onSubmit={handleComment} className="mb-6">
+          <form onSubmit={handleComment} className="mt-4">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              {locale === 'vi' ? 'Bạn muốn hỏi hoặc chia sẻ gì về sự kiện này?' : 'Questions or notes for the event discussion'}
+            </label>
             <textarea
               value={commentBody}
               onChange={(e) => setCommentBody(e.target.value)}
-              placeholder={locale === 'vi' ? 'Bắt đầu cuộc trò chuyện! Chia sẻ điều bạn mong đợi.' : 'Start the conversation! Share what you\'re looking forward to.'}
-              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder={locale === 'vi' ? 'Ví dụ: Tôi nên chuẩn bị gì trước khi tham gia?' : 'For example: Is there anything I should prepare before joining?'}
+              className="w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={3}
               maxLength={2000}
             />
-            <div className="flex justify-end mt-2">
+            <div className="mt-3 flex justify-end">
               <button
                 type="submit"
                 disabled={!commentBody.trim() || commentLoading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {commentLoading
                   ? (locale === 'vi' ? 'Đang gửi...' : 'Posting...')
@@ -459,34 +685,117 @@ export function EventDetail({ eventId }: { eventId: string }) {
           </form>
         )}
 
-        {/* Comments list */}
         {comments.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-8">
-            {locale === 'vi' ? 'Bắt đầu cuộc trò chuyện! Chia sẻ điều bạn mong đợi.' : 'Start the conversation! Share what you\'re looking forward to.'}
+          <p className="py-8 text-center text-sm text-gray-500">
+            {locale === 'vi' ? 'Chưa có bình luận nào. Hãy bắt đầu cuộc trò chuyện.' : 'No comments yet. Start the conversation.'}
           </p>
         ) : (
-          <div className="space-y-4" aria-live="polite">
+          <div className="mt-5 space-y-4" aria-live="polite">
             {comments.map((comment) => (
-              <div key={comment.id} className="flex gap-3">
+              <div key={comment.id} className="flex gap-3 rounded-2xl bg-stone-50 p-4">
                 {comment.member_avatar_url ? (
-                  <img src={comment.member_avatar_url} alt="" className="w-8 h-8 rounded-full flex-shrink-0" />
+                  <img src={comment.member_avatar_url} alt="" className="h-9 w-9 rounded-full" />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm text-white flex-shrink-0">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-stone-300 text-sm text-white">
                     {(comment.member_name || '?')[0]}
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-900">{comment.member_name || 'Member'}</span>
-                    <span className="text-xs text-gray-400">{formatRelativeTime(comment.created_at, locale)}</span>
+                    <span className="text-xs text-gray-500">{formatRelativeTime(comment.created_at, locale)}</span>
                   </div>
-                  <p className="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap">{comment.body}</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">{comment.body}</p>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
+
+      {pendingRsvp && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={() => !rsvpLoading && setPendingRsvp(null)} />
+          <div className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-semibold text-gray-900">
+              {pendingRsvp === 'will_lead'
+                ? (locale === 'vi' ? 'Xác nhận vai trò dẫn dắt' : 'Confirm lead role')
+                : (locale === 'vi' ? 'Xác nhận đăng ký tham gia' : 'Confirm registration')}
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              {locale === 'vi'
+                ? 'Hãy kiểm tra lại thông tin trước khi xác nhận. Bạn có thể thêm ghi chú hoặc câu hỏi cho ban tổ chức nếu cần.'
+                : 'Review the event details before confirming. You can add an optional note or question for the organizer.'}
+            </p>
+
+            <div className="mt-5 rounded-2xl bg-stone-50 p-4 text-sm text-stone-700">
+              <p><span className="font-medium text-stone-900">{locale === 'vi' ? 'Sự kiện:' : 'Event:'}</span> {event.title}</p>
+              <p className="mt-2"><span className="font-medium text-stone-900">{locale === 'vi' ? 'Thời gian:' : 'When:'}</span> {formatShortDateTime(event.event_date, locale)}</p>
+              <p className="mt-2"><span className="font-medium text-stone-900">{locale === 'vi' ? 'Hình thức:' : 'Mode:'}</span> {modeLabel}</p>
+              <p className="mt-2"><span className="font-medium text-stone-900">{locale === 'vi' ? 'Phản hồi của bạn:' : 'Your response:'}</span> {RSVP_LABELS[pendingRsvp][locale === 'vi' ? 'vi' : 'en']}</p>
+            </div>
+
+            <label className="mt-5 block text-sm font-medium text-gray-700">
+              {locale === 'vi' ? 'Ghi chú hoặc câu hỏi cho ban tổ chức (không bắt buộc)' : 'Note or question for the organizer (optional)'}
+            </label>
+            <textarea
+              value={rsvpNote}
+              onChange={(e) => setRsvpNote(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder={locale === 'vi' ? 'Ví dụ: Tôi sẽ đến muộn 10 phút.' : 'For example: I may arrive 10 minutes late.'}
+              className="mt-2 w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingRsvp(null)}
+                disabled={rsvpLoading}
+                className="flex-1 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {locale === 'vi' ? 'Quay lại' : 'Back'}
+              </button>
+              <button
+                type="button"
+                onClick={() => submitRsvp(pendingRsvp)}
+                disabled={rsvpLoading}
+                className="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {rsvpLoading
+                  ? (locale === 'vi' ? 'Đang xác nhận...' : 'Confirming...')
+                  : (locale === 'vi' ? 'Xác nhận đăng ký' : 'Confirm RSVP')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        open={confirmRemove}
+        title={locale === 'vi' ? 'Hủy đăng ký?' : 'Cancel your RSVP?'}
+        message={
+          locale === 'vi'
+            ? 'Bạn có thể đăng ký lại sau nếu còn chỗ. Hành động này sẽ xóa trạng thái tham gia hiện tại của bạn.'
+            : 'You can register again later if seats remain. This will remove your current RSVP status.'
+        }
+        variant="warning"
+        confirmLabel={locale === 'vi' ? 'Hủy đăng ký' : 'Cancel RSVP'}
+        cancelLabel={locale === 'vi' ? 'Giữ nguyên' : 'Keep RSVP'}
+        onConfirm={handleRemoveRsvp}
+        onCancel={() => setConfirmRemove(false)}
+      />
+
+      <ToastNotification toasts={toasts} onDismiss={dismissToast} />
+    </div>
+  );
+}
+
+function InfoBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-stone-50 px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">{label}</p>
+      <p className="mt-2 text-sm font-medium leading-6 text-stone-900">{value}</p>
     </div>
   );
 }

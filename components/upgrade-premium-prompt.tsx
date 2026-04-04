@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from '@/lib/i18n';
+import posthog from 'posthog-js';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import Link from 'next/link';
 
@@ -39,6 +40,11 @@ const PREMIUM_BENEFITS = {
 export function UpgradePremiumPrompt() {
   const { t, locale } = useTranslation();
   const [isConfirming, setIsConfirming] = useState(false);
+
+  // Track upgrade page view
+  useEffect(() => {
+    posthog.capture('upgrade_prompt_viewed');
+  }, []);
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

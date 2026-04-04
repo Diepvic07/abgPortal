@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n";
+import posthog from "posthog-js";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -64,6 +65,9 @@ export function LoginForm() {
         }
       } else {
         setEmailSent(true);
+        // Identify user and track magic link login
+        posthog.identify(email.trim().toLowerCase());
+        posthog.capture('login_magic_link_requested', { email: email.trim().toLowerCase() });
       }
     } catch {
       setError(t.auth.somethingWentWrong);

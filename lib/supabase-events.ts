@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from './supabase/server';
-import { CommunityEvent, EventRsvp, EventComment, EventCategory, EventStatus, CommitmentLevel, CommentStatus, COMMITMENT_WEIGHTS } from '@/types';
+import { CommunityEvent, EventRsvp, EventComment, EventCategory, EventStatus, EventMode, CommitmentLevel, CommentStatus } from '@/types';
 import { generateId, formatDate } from '@/lib/utils';
 
 function nullToUndefined<T>(val: T | null): T | undefined {
@@ -14,6 +14,7 @@ function mapRowToEvent(row: Record<string, unknown>): CommunityEvent {
     title: row.title as string,
     description: row.description as string,
     category: (row.category as EventCategory) || 'event',
+    event_mode: nullToUndefined(row.event_mode as EventMode | null),
     event_date: row.event_date as string,
     event_end_date: nullToUndefined(row.event_end_date as string | null),
     location: nullToUndefined(row.location as string | null),
@@ -45,6 +46,7 @@ function mapRowToRsvp(row: Record<string, unknown>): EventRsvp {
     event_id: row.event_id as string,
     member_id: row.member_id as string,
     commitment_level: (row.commitment_level as CommitmentLevel) || 'interested',
+    note: nullToUndefined(row.note as string | null),
     actual_attendance: nullToUndefined(row.actual_attendance as boolean | null),
     actual_participation_score: nullToUndefined(row.actual_participation_score as number | null),
     created_at: row.created_at as string,
@@ -75,6 +77,7 @@ export async function createEvent(data: {
   title: string;
   description: string;
   category: EventCategory;
+  event_mode?: EventMode;
   event_date: string;
   event_end_date?: string;
   location?: string;
@@ -99,6 +102,7 @@ export async function createEvent(data: {
       title: data.title,
       description: data.description,
       category: data.category,
+      event_mode: data.event_mode || 'offline',
       event_date: data.event_date,
       event_end_date: data.event_end_date || null,
       location: data.location || null,
@@ -217,6 +221,7 @@ export async function updateEvent(id: string, data: Partial<{
   title: string;
   description: string;
   category: EventCategory;
+  event_mode: EventMode | null;
   event_date: string;
   event_end_date: string | null;
   location: string | null;
@@ -253,6 +258,7 @@ export async function upsertRsvp(data: {
   event_id: string;
   member_id: string;
   commitment_level: CommitmentLevel;
+  note?: string;
 }): Promise<EventRsvp> {
   const supabase = createServerSupabaseClient();
   const now = formatDate();
@@ -267,7 +273,7 @@ export async function upsertRsvp(data: {
   if (existing) {
     const { data: row, error } = await supabase
       .from('community_event_rsvps')
-      .update({ commitment_level: data.commitment_level, updated_at: now })
+      .update({ commitment_level: data.commitment_level, note: data.note || null, updated_at: now })
       .eq('id', (existing as Record<string, unknown>).id as string)
       .select()
       .single();
@@ -286,6 +292,7 @@ export async function upsertRsvp(data: {
       event_id: data.event_id,
       member_id: data.member_id,
       commitment_level: data.commitment_level,
+      note: data.note || null,
       created_at: now,
       updated_at: now,
     })
@@ -451,6 +458,7 @@ export async function deleteEventComment(commentId: string): Promise<void> {
 // ==================== Admin: Create from Proposal ====================
 
 export async function createEventFromProposal(proposalId: string, adminMemberId: string, eventData: {
+  event_mode?: EventMode;
   event_date: string;
   event_end_date?: string;
   location?: string;
@@ -480,6 +488,7 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
     title: p.title as string,
     description: p.description as string,
     category: (p.category as EventCategory) || 'event',
+    event_mode: eventData.event_mode || 'offline',
     event_date: eventData.event_date,
     event_end_date: eventData.event_end_date,
     location: eventData.location,

@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useSession, signIn } from 'next-auth/react';
+import posthog from 'posthog-js';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { PaymentInfoModal } from '@/components/ui/payment-info-modal';
@@ -171,7 +172,18 @@ export function MemberOnboardingForm() {
       setGeneratedBio(result.bio);
       setMemberId(result.memberId);
       setSuccess(true);
+
+      // Identify user and track signup submission
+      const userEmail = data.email || session?.user?.email;
+      if (userEmail) {
+        posthog.identify(userEmail, { name: data.name, email: userEmail });
+      }
+      posthog.capture('signup_submitted', {
+        abg_class: data.abg_class,
+        auth_provider: session?.user?.email ? 'google' : 'email',
+      });
     } catch (err) {
+      posthog.captureException(err instanceof Error ? err : new Error(String(err)));
       setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setIsSubmitting(false);

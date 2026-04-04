@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getContactRequestByToken, updateContactRequestStatus, getMemberById, addConnection } from "@/lib/supabase-db";
 import { sendContactAcceptedEmail, sendContactDeclinedEmail } from "@/lib/resend";
 import { generateId, formatDate } from "@/lib/utils";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,6 +47,11 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Track contact request accepted
+      const posthogAccept = getPostHogClient();
+      posthogAccept.capture({ distinctId: target.email, event: 'contact_request_accepted' });
+      await posthogAccept.shutdown();
+
       await sendContactAcceptedEmail({
         requester: {
           id: requester.id,
@@ -75,6 +81,12 @@ export async function GET(request: NextRequest) {
 
     // Decline
     await updateContactRequestStatus(contactRequest.id, "declined");
+
+    // Track contact request declined
+    const posthogDecline = getPostHogClient();
+    posthogDecline.capture({ distinctId: target.email, event: 'contact_request_declined' });
+    await posthogDecline.shutdown();
+
     await sendContactDeclinedEmail({
       requester_email: requester.email,
       requester_name: requester.name,

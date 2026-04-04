@@ -9,6 +9,7 @@ import { Member } from '@/types';
 import { requireSession } from '@/lib/auth-middleware';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import { getPostHogClient } from '@/lib/posthog-server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -237,6 +238,15 @@ export async function POST(request: NextRequest) {
     }
 
     await sendOnboardingConfirmation(email, name, bio, locale);
+
+    // Track signup submission
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: email,
+      event: 'signup_submitted',
+      properties: { abg_class, auth_provider: authProvider, is_existing_member: !!existingMember },
+    });
+    await posthog.shutdown();
 
     // Notify admins about new signup needing approval (only for truly new users)
     if (!existingMember) {

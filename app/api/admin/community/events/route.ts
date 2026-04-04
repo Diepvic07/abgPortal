@@ -9,11 +9,13 @@ import { z } from 'zod';
 
 const EventCategory = z.enum(['charity', 'event', 'learning', 'community_support', 'networking', 'other']);
 const EventStatus = z.enum(['draft', 'published', 'cancelled', 'completed']);
+const EventMode = z.enum(['offline', 'online', 'hybrid']);
 
 const CreateEventSchema = z.object({
   title: z.string().min(5).max(200),
   description: z.string().min(20).max(5000),
   category: EventCategory,
+  event_mode: EventMode.optional().default('offline'),
   status: EventStatus.optional().default('draft'),
   event_date: z.string(),
   event_end_date: z.string().optional(),
@@ -40,8 +42,13 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || undefined;
     const status = searchParams.get('status') || undefined;
     const search = searchParams.get('search') || undefined;
+    const parsedStatus = status ? EventStatus.safeParse(status) : null;
 
-    const events = await getAllEvents({ category, status: status as any, search });
+    const events = await getAllEvents({
+      category,
+      status: parsedStatus?.success ? parsedStatus.data : undefined,
+      search,
+    });
 
     return successResponse({ events });
   } catch (error) {
