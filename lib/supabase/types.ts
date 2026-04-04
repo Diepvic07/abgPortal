@@ -504,6 +504,14 @@ export interface Database {
           published_at: string | null;
           completed_at: string | null;
           outcome_summary: string | null;
+          fee_premium: number | null;
+          fee_basic: number | null;
+          fee_guest: number | null;
+          capacity_guest: number | null;
+          is_public: boolean;
+          payment_qr_url: string | null;
+          payment_instructions: string | null;
+          guest_rsvp_count: number;
         };
         Insert: {
           id: string;
@@ -530,6 +538,14 @@ export interface Database {
           published_at?: string | null;
           completed_at?: string | null;
           outcome_summary?: string | null;
+          fee_premium?: number | null;
+          fee_basic?: number | null;
+          fee_guest?: number | null;
+          capacity_guest?: number | null;
+          is_public?: boolean;
+          payment_qr_url?: string | null;
+          payment_instructions?: string | null;
+          guest_rsvp_count?: number;
         };
         Update: Partial<Database['public']['Tables']['community_events']['Insert']>;
         Relationships: [];
@@ -580,6 +596,64 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database['public']['Tables']['community_event_comments']['Insert']>;
+        Relationships: [];
+      };
+      event_guest_rsvps: {
+        Row: {
+          id: string;
+          event_id: string;
+          guest_name: string;
+          guest_email: string;
+          guest_phone: string | null;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          event_id: string;
+          guest_name: string;
+          guest_email: string;
+          guest_phone?: string | null;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['event_guest_rsvps']['Insert']>;
+        Relationships: [];
+      };
+      event_payments: {
+        Row: {
+          id: string;
+          event_id: string;
+          payer_type: string;
+          member_id: string | null;
+          guest_rsvp_id: string | null;
+          amount_vnd: number;
+          status: string;
+          confirmed_by_admin_id: string | null;
+          payer_name: string;
+          payer_email: string;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          event_id: string;
+          payer_type: string;
+          member_id?: string | null;
+          guest_rsvp_id?: string | null;
+          amount_vnd: number;
+          status?: string;
+          confirmed_by_admin_id?: string | null;
+          payer_name: string;
+          payer_email: string;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['event_payments']['Insert']>;
         Relationships: [];
       };
     };
