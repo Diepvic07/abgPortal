@@ -3,7 +3,7 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api-respon
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { isAdminAsync } from '@/lib/admin-utils-server';
-import { getEventById, updateEvent } from '@/lib/supabase-events';
+import { getEventById, updateEvent, deleteEvent } from '@/lib/supabase-events';
 import { z } from 'zod';
 
 const EventCategory = z.enum(['charity', 'event', 'learning', 'community_support', 'networking', 'other']);
@@ -53,6 +53,31 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const updated = await updateEvent(id, parsed.data);
     return successResponse({ event: updated });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return errorResponse('Authentication required', 401);
+    }
+    const isAdmin = await isAdminAsync(session.user.email);
+    if (!isAdmin) {
+      return errorResponse('Admin access required', 403);
+    }
+
+    const { id } = await params;
+
+    const event = await getEventById(id);
+    if (!event) {
+      return errorResponse('Event not found', 404);
+    }
+
+    await deleteEvent(id);
+    return successResponse({ message: 'Event deleted' });
   } catch (error) {
     return handleApiError(error);
   }

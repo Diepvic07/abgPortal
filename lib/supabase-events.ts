@@ -441,6 +441,20 @@ export async function updateEventComment(commentId: string, body: string): Promi
   return mapRowToComment(row as Record<string, unknown>);
 }
 
+export async function deleteEvent(eventId: string): Promise<void> {
+  const supabase = createServerSupabaseClient();
+
+  const { error } = await supabase
+    .from('community_events')
+    .delete()
+    .eq('id', eventId);
+
+  if (error) {
+    console.error('Error deleting event:', error);
+    throw new Error('Failed to delete event');
+  }
+}
+
 export async function deleteEventComment(commentId: string): Promise<void> {
   const supabase = createServerSupabaseClient();
 

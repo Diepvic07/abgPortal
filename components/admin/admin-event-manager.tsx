@@ -184,6 +184,25 @@ export function AdminEventManager() {
     }
   }
 
+  async function handleDelete(eventId: string, title: string) {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    setActionLoading(eventId);
+    try {
+      const res = await fetch(`/api/admin/community/events/${eventId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setMessage({ text: 'Event deleted', type: 'success' });
+        await fetchEvents();
+      } else {
+        const data = await res.json();
+        setMessage({ text: data.error || 'Failed to delete event', type: 'error' });
+      }
+    } catch {
+      setMessage({ text: 'Something went wrong', type: 'error' });
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   const filteredEvents = filterStatus === 'all'
     ? events
     : events.filter((e) => e.status === filterStatus);
@@ -286,6 +305,13 @@ export function AdminEventManager() {
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
+                  <button
+                    onClick={() => handleDelete(event.id, event.title)}
+                    disabled={actionLoading === event.id}
+                    className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
