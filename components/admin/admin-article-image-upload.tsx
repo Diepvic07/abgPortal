@@ -7,9 +7,10 @@ interface AdminImageUploadProps {
   imageUrl: string;
   onImageChange: (url: string) => void;
   uploadEndpoint?: string;
+  onUploadingChange?: (uploading: boolean) => void;
 }
 
-export function AdminImageUpload({ imageUrl, onImageChange, uploadEndpoint = "/api/admin/news/upload-image" }: AdminImageUploadProps) {
+export function AdminImageUpload({ imageUrl, onImageChange, uploadEndpoint = "/api/admin/news/upload-image", onUploadingChange }: AdminImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -21,6 +22,7 @@ export function AdminImageUpload({ imageUrl, onImageChange, uploadEndpoint = "/a
     }
 
     setIsUploading(true);
+    onUploadingChange?.(true);
     try {
       // Compress client-side if browser-image-compression is available
       let fileToUpload = file;
@@ -55,6 +57,7 @@ export function AdminImageUpload({ imageUrl, onImageChange, uploadEndpoint = "/a
       alert(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsUploading(false);
+      onUploadingChange?.(false);
     }
   };
 

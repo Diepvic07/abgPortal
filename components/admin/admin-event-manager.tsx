@@ -55,6 +55,7 @@ export function AdminEventManager() {
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CommunityEvent | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
+  const [imageUploading, setImageUploading] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -465,6 +466,7 @@ export function AdminEventManager() {
                   imageUrl={form.image_url}
                   onImageChange={(url) => setForm((f) => ({ ...f, image_url: url }))}
                   uploadEndpoint="/api/admin/community/events/upload-image"
+                  onUploadingChange={setImageUploading}
                 />
               </div>
 
@@ -478,10 +480,10 @@ export function AdminEventManager() {
                 </button>
                 <button
                   type="submit"
-                  disabled={actionLoading === 'form'}
+                  disabled={actionLoading === 'form' || imageUploading}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50"
                 >
-                  {actionLoading === 'form' ? 'Saving...' : editingEvent ? 'Save Changes' : 'Create Event'}
+                  {imageUploading ? 'Uploading image...' : actionLoading === 'form' ? 'Saving...' : editingEvent ? 'Save Changes' : 'Create Event'}
                 </button>
               </div>
             </form>
