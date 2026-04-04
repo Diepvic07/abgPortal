@@ -507,6 +507,7 @@ export default function AdminPage() {
         ) : activeTab === "references" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">
             <AdminReferenceManager />
+          </div>
         ) : activeTab === "events" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">
             <AdminEventManager />
