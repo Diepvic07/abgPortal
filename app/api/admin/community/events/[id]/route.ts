@@ -24,6 +24,13 @@ const UpdateEventSchema = z.object({
   capacity_premium: z.number().int().min(0).nullable().optional(),
   capacity_basic: z.number().int().min(0).nullable().optional(),
   image_url: z.string().url().nullable().optional(),
+  fee_premium: z.number().int().min(0).nullable().optional(),
+  fee_basic: z.number().int().min(0).nullable().optional(),
+  fee_guest: z.number().int().min(0).nullable().optional(),
+  capacity_guest: z.number().int().min(0).nullable().optional(),
+  is_public: z.boolean().optional(),
+  payment_qr_url: z.string().url().nullable().optional(),
+  payment_instructions: z.string().nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

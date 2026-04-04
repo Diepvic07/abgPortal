@@ -525,6 +525,41 @@ export function EventDetail({ eventId }: { eventId: string }) {
         </div>
       </section>
 
+      {/* Fee Pricing */}
+      {event.status === 'published' && (event.fee_premium != null || event.fee_basic != null || event.fee_guest != null) && (
+        <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {locale === 'vi' ? 'Phí tham gia' : 'Event Fees'}
+          </h2>
+          <div className="grid gap-3 md:grid-cols-3">
+            {event.fee_premium != null && (
+              <div className="rounded-2xl border border-stone-200 p-4 text-center">
+                <p className="text-xs font-medium text-gray-500 mb-1">ABG Premium</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {event.fee_premium === 0 ? (locale === 'vi' ? 'Miễn phí' : 'Free') : `${new Intl.NumberFormat('vi-VN').format(event.fee_premium)} VND`}
+                </p>
+              </div>
+            )}
+            {event.fee_basic != null && (
+              <div className="rounded-2xl border border-stone-200 p-4 text-center">
+                <p className="text-xs font-medium text-gray-500 mb-1">ABG Basic</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {event.fee_basic === 0 ? (locale === 'vi' ? 'Miễn phí' : 'Free') : `${new Intl.NumberFormat('vi-VN').format(event.fee_basic)} VND`}
+                </p>
+              </div>
+            )}
+            {event.fee_guest != null && (
+              <div className="rounded-2xl border border-stone-200 p-4 text-center">
+                <p className="text-xs font-medium text-gray-500 mb-1">{locale === 'vi' ? 'Khách' : 'Guest'}</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {event.fee_guest === 0 ? (locale === 'vi' ? 'Miễn phí' : 'Free') : `${new Intl.NumberFormat('vi-VN').format(event.fee_guest)} VND`}
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {event.status === 'published' && (
         <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">

@@ -29,7 +29,14 @@ interface EventForm {
   location_url: string;
   capacity_premium: string;
   capacity_basic: string;
+  capacity_guest: string;
   image_url: string;
+  fee_premium: string;
+  fee_basic: string;
+  fee_guest: string;
+  is_public: boolean;
+  payment_qr_url: string;
+  payment_instructions: string;
 }
 
 const emptyForm: EventForm = {
@@ -43,7 +50,14 @@ const emptyForm: EventForm = {
   location_url: '',
   capacity_premium: '',
   capacity_basic: '',
+  capacity_guest: '',
   image_url: '',
+  fee_premium: '',
+  fee_basic: '',
+  fee_guest: '',
+  is_public: false,
+  payment_qr_url: '',
+  payment_instructions: '',
 };
 
 export function AdminEventManager() {
@@ -95,7 +109,14 @@ export function AdminEventManager() {
       location_url: event.location_url || '',
       capacity_premium: event.capacity_premium != null ? String(event.capacity_premium) : '',
       capacity_basic: event.capacity_basic != null ? String(event.capacity_basic) : '',
+      capacity_guest: event.capacity_guest != null ? String(event.capacity_guest) : '',
       image_url: event.image_url || '',
+      fee_premium: event.fee_premium != null ? String(event.fee_premium) : '',
+      fee_basic: event.fee_basic != null ? String(event.fee_basic) : '',
+      fee_guest: event.fee_guest != null ? String(event.fee_guest) : '',
+      is_public: event.is_public || false,
+      payment_qr_url: event.payment_qr_url || '',
+      payment_instructions: event.payment_instructions || '',
     });
     setShowForm(true);
   }
@@ -136,6 +157,26 @@ export function AdminEventManager() {
 
     if (form.image_url) payload.image_url = form.image_url;
     else if (editingEvent) payload.image_url = null;
+
+    if (form.fee_premium !== '') payload.fee_premium = parseInt(form.fee_premium);
+    else if (editingEvent) payload.fee_premium = null;
+
+    if (form.fee_basic !== '') payload.fee_basic = parseInt(form.fee_basic);
+    else if (editingEvent) payload.fee_basic = null;
+
+    if (form.fee_guest !== '') payload.fee_guest = parseInt(form.fee_guest);
+    else if (editingEvent) payload.fee_guest = null;
+
+    if (form.capacity_guest !== '') payload.capacity_guest = parseInt(form.capacity_guest);
+    else if (editingEvent) payload.capacity_guest = null;
+
+    payload.is_public = form.is_public;
+
+    if (form.payment_qr_url) payload.payment_qr_url = form.payment_qr_url;
+    else if (editingEvent) payload.payment_qr_url = null;
+
+    if (form.payment_instructions) payload.payment_instructions = form.payment_instructions;
+    else if (editingEvent) payload.payment_instructions = null;
 
     try {
       const url = editingEvent
@@ -286,7 +327,12 @@ export function AdminEventManager() {
                     {event.rsvp_count} RSVPs · Score: {event.rsvp_score} · {event.comment_count} comments
                     {event.capacity_premium != null && <> · Premium seats: {event.capacity_premium}</>}
                     {event.capacity_basic != null && <> · Basic seats: {event.capacity_basic}</>}
+                    {(event.guest_rsvp_count || 0) > 0 && <> · {event.guest_rsvp_count} guests</>}
                   </p>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {event.is_public && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Public</span>}
+                    {event.fee_premium != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">Paid event</span>}
+                  </div>
                   <p className="text-sm text-gray-600 mt-2 line-clamp-2">{event.description}</p>
                 </div>
 
@@ -460,6 +506,100 @@ export function AdminEventManager() {
                     />
                   </div>
                 </div>
+
+                {/* Guest Capacity */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Guest Seats</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.capacity_guest}
+                    onChange={(e) => setForm((f) => ({ ...f, capacity_guest: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Leave empty for unlimited, 0 = no guests"
+                  />
+                </div>
+
+                {/* Public Event Toggle */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.is_public}
+                    onChange={(e) => setForm((f) => ({ ...f, is_public: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Public Event</span>
+                    <p className="text-xs text-gray-500">Visible to visitors (non-members). Guests can register.</p>
+                  </div>
+                </label>
+
+                {/* Event Fees */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Event Fees (VND)</label>
+                  <p className="text-xs text-gray-500 mb-2">Leave empty for free. Set 0 for explicitly free tier.</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Premium</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.fee_premium}
+                        onChange={(e) => setForm((f) => ({ ...f, fee_premium: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Free"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Basic</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.fee_basic}
+                        onChange={(e) => setForm((f) => ({ ...f, fee_basic: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Free"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Guest</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.fee_guest}
+                        onChange={(e) => setForm((f) => ({ ...f, fee_guest: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Free"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment QR & Instructions (only show if any fee is set) */}
+                {(form.fee_premium || form.fee_basic || form.fee_guest) && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Payment QR URL</label>
+                      <input
+                        type="url"
+                        value={form.payment_qr_url}
+                        onChange={(e) => setForm((f) => ({ ...f, payment_qr_url: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Leave empty to use default QR"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Payment Instructions</label>
+                      <textarea
+                        rows={2}
+                        value={form.payment_instructions}
+                        onChange={(e) => setForm((f) => ({ ...f, payment_instructions: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
+                        placeholder="e.g. Transfer to TPBank 158 8888 6666 - VU DINH HIEU"
+                      />
+                    </div>
+                  </>
+                )}
 
                 {/* Event Image */}
                 <AdminImageUpload

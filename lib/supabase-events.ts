@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from './supabase/server';
-import { CommunityEvent, EventRsvp, EventComment, EventCategory, EventStatus, EventMode, CommitmentLevel, CommentStatus } from '@/types';
+import { CommunityEvent, EventRsvp, EventComment, EventGuestRsvp, EventPayment, EventCategory, EventStatus, EventMode, EventPaymentStatus, PayerType, CommitmentLevel, CommentStatus } from '@/types';
 import { generateId, formatDate } from '@/lib/utils';
 
 function nullToUndefined<T>(val: T | null): T | undefined {
@@ -33,6 +33,14 @@ function mapRowToEvent(row: Record<string, unknown>): CommunityEvent {
     updated_at: row.updated_at as string,
     published_at: nullToUndefined(row.published_at as string | null),
     completed_at: nullToUndefined(row.completed_at as string | null),
+    fee_premium: nullToUndefined(row.fee_premium as number | null),
+    fee_basic: nullToUndefined(row.fee_basic as number | null),
+    fee_guest: nullToUndefined(row.fee_guest as number | null),
+    capacity_guest: nullToUndefined(row.capacity_guest as number | null),
+    is_public: (row.is_public as boolean) || false,
+    payment_qr_url: nullToUndefined(row.payment_qr_url as string | null),
+    payment_instructions: nullToUndefined(row.payment_instructions as string | null),
+    guest_rsvp_count: (row.guest_rsvp_count as number) || 0,
     outcome_summary: nullToUndefined(row.outcome_summary as string | null),
     author_name: nullToUndefined(row.author_name as string | null),
     author_avatar_url: nullToUndefined(row.author_avatar_url as string | null),
@@ -86,6 +94,13 @@ export async function createEvent(data: {
   capacity_premium?: number;
   capacity_basic?: number;
   image_url?: string;
+  fee_premium?: number;
+  fee_basic?: number;
+  fee_guest?: number;
+  capacity_guest?: number;
+  is_public?: boolean;
+  payment_qr_url?: string;
+  payment_instructions?: string;
   created_by_member_id: string;
   proposal_id?: string;
   status?: EventStatus;
@@ -111,6 +126,14 @@ export async function createEvent(data: {
       capacity_premium: data.capacity_premium ?? null,
       capacity_basic: data.capacity_basic ?? null,
       image_url: data.image_url || null,
+      fee_premium: data.fee_premium ?? null,
+      fee_basic: data.fee_basic ?? null,
+      fee_guest: data.fee_guest ?? null,
+      capacity_guest: data.capacity_guest ?? null,
+      is_public: data.is_public || false,
+      payment_qr_url: data.payment_qr_url || null,
+      payment_instructions: data.payment_instructions || null,
+      guest_rsvp_count: 0,
       created_by_member_id: data.created_by_member_id,
       proposal_id: data.proposal_id || null,
       status,
@@ -649,4 +672,257 @@ export async function getEventByProposalId(proposalId: string): Promise<Communit
     author_avatar_url: members?.avatar_url || null,
     author_abg_class: members?.abg_class || null,
   });
+}
+
+// ==================== Public Events (no auth) ====================
+
+export async function getPublicEvents(options?: {
+  page?: number;
+  limit?: number;
+}): Promise<{ events: CommunityEvent[]; total: number }> {
+  const supabase = createServerSupabaseClient();
+  const page = options?.page || 1;
+  const limit = options?.limit || 10;
+  const offset = (page - 1) * limit;
+  const now = formatDate();
+
+  const { data: rows, error, count } = await supabase
+    .from('community_events')
+    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)', { count: 'exact' })
+    .eq('status', 'published')
+    .eq('is_public', true)
+    .gte('event_date', now)
+    .order('event_date', { ascending: true })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    console.error('Error fetching public events:', error);
+    throw new Error('Failed to fetch public events');
+  }
+
+  const events = (rows || []).map((row: Record<string, unknown>) => {
+    const m = row.members as Record<string, unknown> | null;
+    return mapRowToEvent({
+      ...row,
+      author_name: m?.name || null,
+      author_avatar_url: m?.avatar_url || null,
+      author_abg_class: m?.abg_class || null,
+    });
+  });
+
+  return { events, total: count || 0 };
+}
+
+export async function getPublicEventById(eventId: string): Promise<CommunityEvent | null> {
+  const supabase = createServerSupabaseClient();
+
+  const { data: row, error } = await supabase
+    .from('community_events')
+    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)')
+    .eq('id', eventId)
+    .eq('status', 'published')
+    .eq('is_public', true)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching public event:', error);
+    return null;
+  }
+  if (!row) return null;
+
+  const m = (row as Record<string, unknown>).members as Record<string, unknown> | null;
+  return mapRowToEvent({
+    ...(row as Record<string, unknown>),
+    author_name: m?.name || null,
+    author_avatar_url: m?.avatar_url || null,
+    author_abg_class: m?.abg_class || null,
+  });
+}
+
+// ==================== Guest RSVPs ====================
+
+function mapRowToGuestRsvp(row: Record<string, unknown>): EventGuestRsvp {
+  return {
+    id: row.id as string,
+    event_id: row.event_id as string,
+    guest_name: row.guest_name as string,
+    guest_email: row.guest_email as string,
+    guest_phone: nullToUndefined(row.guest_phone as string | null),
+    status: (row.status as EventGuestRsvp['status']) || 'registered',
+    created_at: row.created_at as string,
+    updated_at: row.updated_at as string,
+  };
+}
+
+export async function createGuestRsvp(data: {
+  event_id: string;
+  guest_name: string;
+  guest_email: string;
+  guest_phone?: string;
+}): Promise<EventGuestRsvp> {
+  const supabase = createServerSupabaseClient();
+  const id = generateId();
+  const now = formatDate();
+
+  const { data: row, error } = await supabase
+    .from('event_guest_rsvps')
+    .insert({
+      id,
+      event_id: data.event_id,
+      guest_name: data.guest_name,
+      guest_email: data.guest_email,
+      guest_phone: data.guest_phone || null,
+      status: 'registered',
+      created_at: now,
+      updated_at: now,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('You have already registered for this event');
+    }
+    console.error('Error creating guest RSVP:', error);
+    throw new Error('Failed to register');
+  }
+
+  return mapRowToGuestRsvp(row as Record<string, unknown>);
+}
+
+export async function getGuestRsvpsByEvent(eventId: string): Promise<EventGuestRsvp[]> {
+  const supabase = createServerSupabaseClient();
+
+  const { data: rows, error } = await supabase
+    .from('event_guest_rsvps')
+    .select('*')
+    .eq('event_id', eventId)
+    .eq('status', 'registered')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching guest RSVPs:', error);
+    throw new Error('Failed to fetch guest RSVPs');
+  }
+
+  return (rows || []).map((r: Record<string, unknown>) => mapRowToGuestRsvp(r));
+}
+
+export async function getGuestRsvpByEmail(eventId: string, email: string): Promise<EventGuestRsvp | null> {
+  const supabase = createServerSupabaseClient();
+
+  const { data: row, error } = await supabase
+    .from('event_guest_rsvps')
+    .select('*')
+    .eq('event_id', eventId)
+    .eq('guest_email', email)
+    .eq('status', 'registered')
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error checking guest RSVP:', error);
+    return null;
+  }
+
+  return row ? mapRowToGuestRsvp(row as Record<string, unknown>) : null;
+}
+
+// ==================== Event Payments ====================
+
+function mapRowToPayment(row: Record<string, unknown>): EventPayment {
+  return {
+    id: row.id as string,
+    event_id: row.event_id as string,
+    payer_type: row.payer_type as PayerType,
+    member_id: nullToUndefined(row.member_id as string | null),
+    guest_rsvp_id: nullToUndefined(row.guest_rsvp_id as string | null),
+    amount_vnd: row.amount_vnd as number,
+    status: (row.status as EventPaymentStatus) || 'pending',
+    confirmed_by_admin_id: nullToUndefined(row.confirmed_by_admin_id as string | null),
+    payer_name: row.payer_name as string,
+    payer_email: row.payer_email as string,
+    notes: nullToUndefined(row.notes as string | null),
+    created_at: row.created_at as string,
+    updated_at: row.updated_at as string,
+  };
+}
+
+export async function createEventPayment(data: {
+  event_id: string;
+  payer_type: PayerType;
+  member_id?: string;
+  guest_rsvp_id?: string;
+  amount_vnd: number;
+  payer_name: string;
+  payer_email: string;
+  notes?: string;
+}): Promise<EventPayment> {
+  const supabase = createServerSupabaseClient();
+  const id = generateId();
+  const now = formatDate();
+
+  const { data: row, error } = await supabase
+    .from('event_payments')
+    .insert({
+      id,
+      event_id: data.event_id,
+      payer_type: data.payer_type,
+      member_id: data.member_id || null,
+      guest_rsvp_id: data.guest_rsvp_id || null,
+      amount_vnd: data.amount_vnd,
+      status: 'pending',
+      payer_name: data.payer_name,
+      payer_email: data.payer_email,
+      notes: data.notes || null,
+      created_at: now,
+      updated_at: now,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating event payment:', error);
+    throw new Error('Failed to create payment record');
+  }
+
+  return mapRowToPayment(row as Record<string, unknown>);
+}
+
+export async function getEventPayments(eventId: string): Promise<EventPayment[]> {
+  const supabase = createServerSupabaseClient();
+
+  const { data: rows, error } = await supabase
+    .from('event_payments')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching event payments:', error);
+    throw new Error('Failed to fetch event payments');
+  }
+
+  return (rows || []).map((r: Record<string, unknown>) => mapRowToPayment(r));
+}
+
+export async function updateEventPaymentStatus(paymentId: string, status: EventPaymentStatus, adminId?: string): Promise<EventPayment> {
+  const supabase = createServerSupabaseClient();
+  const now = formatDate();
+
+  const updateData: Record<string, unknown> = { status, updated_at: now };
+  if (adminId) updateData.confirmed_by_admin_id = adminId;
+
+  const { data: row, error } = await supabase
+    .from('event_payments')
+    .update(updateData)
+    .eq('id', paymentId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating payment status:', error);
+    throw new Error('Failed to update payment');
+  }
+
+  return mapRowToPayment(row as Record<string, unknown>);
 }

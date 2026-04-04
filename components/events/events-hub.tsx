@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityEvent, CommunityProposal, EventCategory, EVENT_CATEGORY_LABELS, PROPOSAL_CATEGORY_LABELS, ProposalCategory } from '@/types';
@@ -37,7 +38,11 @@ function formatEventDate(dateStr: string, locale: string): string {
 export function EventsHub() {
   const { t, locale } = useTranslation();
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState<TabKey>('events');
+  const searchParams = useSearchParams();
+  const initialTab = (['events', 'proposals', 'past'] as TabKey[]).includes(searchParams.get('tab') as TabKey)
+    ? (searchParams.get('tab') as TabKey)
+    : 'events';
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [events, setEvents] = useState<CommunityEvent[]>([]);
   const [pastEvents, setPastEvents] = useState<CommunityEvent[]>([]);
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);

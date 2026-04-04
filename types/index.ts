@@ -372,6 +372,15 @@ export interface CommunityEvent {
   rsvp_count: number;
   rsvp_score: number;
   comment_count: number;
+  // Fee & public event fields
+  fee_premium?: number;
+  fee_basic?: number;
+  fee_guest?: number;
+  capacity_guest?: number;
+  is_public?: boolean;
+  payment_qr_url?: string;
+  payment_instructions?: string;
+  guest_rsvp_count?: number;
   created_at: string;
   updated_at: string;
   published_at?: string;
@@ -411,6 +420,37 @@ export interface EventComment {
   // Joined fields
   member_name?: string;
   member_avatar_url?: string;
+}
+
+export type GuestRsvpStatus = 'registered' | 'cancelled';
+export type EventPaymentStatus = 'pending' | 'confirmed' | 'rejected';
+export type PayerType = 'premium' | 'basic' | 'guest';
+
+export interface EventGuestRsvp {
+  id: string;
+  event_id: string;
+  guest_name: string;
+  guest_email: string;
+  guest_phone?: string;
+  status: GuestRsvpStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventPayment {
+  id: string;
+  event_id: string;
+  payer_type: PayerType;
+  member_id?: string;
+  guest_rsvp_id?: string;
+  amount_vnd: number;
+  status: EventPaymentStatus;
+  confirmed_by_admin_id?: string;
+  payer_name: string;
+  payer_email: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export type NewsCategory = 'Edu' | 'Business' | 'Event' | 'Course' | 'Announcement';

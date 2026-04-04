@@ -7,7 +7,6 @@ const FROM_EMAIL = process.env.EMAIL_FROM || 'ABG Connect <onboarding@resend.dev
 // Test mode: emails that receive fallback notifications when Resend domain is unverified
 const TEST_MODE_EMAILS = [
   'diepvic@gmail.com',
-  'diep@ejoylearning.com',
   'ttvietduc@gmail.com',
   'quephc@gmail.com',
   'diu.tran@abg.edu.vn',
@@ -1356,5 +1355,76 @@ export async function sendPaymentNotificationEmail(data: {
       return;
     }
     console.error('Failed to send payment notification email:', error);
+  }
+}
+
+export async function sendEventPaymentNotificationEmail(data: {
+  eventTitle: string;
+  eventId: string;
+  payerName: string;
+  payerEmail: string;
+  payerType: string;
+  amountVnd: number;
+  payerPhone?: string;
+}): Promise<void> {
+  const adminEmails = await getAllAdminEmails();
+  if (adminEmails.length === 0) {
+    console.warn('[Resend] No admin emails configured, skipping event payment notification');
+    return;
+  }
+
+  const resend = getResendClient();
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+  const formattedAmount = new Intl.NumberFormat('vi-VN').format(data.amountVnd);
+
+  const subject = `[ABG Event] Payment confirmed: ${escapeHtml(data.payerName)} - ${escapeHtml(data.eventTitle)}`;
+  const emailHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#2563eb;padding:24px 40px;">
+          <h1 style="margin:0;font-size:20px;color:#ffffff;font-weight:600;">Event Payment Confirmation</h1>
+        </td></tr>
+        <tr><td style="padding:28px 40px;">
+          <p style="margin:0 0 16px;font-size:15px;color:#1f2937;">A participant has confirmed their event payment and is waiting for verification.</p>
+
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#1f2937;">
+              <tr><td style="padding:4px 0;font-weight:600;width:80px;">Event:</td><td style="padding:4px 0;">${escapeHtml(data.eventTitle)}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">Name:</td><td style="padding:4px 0;">${escapeHtml(data.payerName)}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">Email:</td><td style="padding:4px 0;">${escapeHtml(data.payerEmail)}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">Type:</td><td style="padding:4px 0;">${escapeHtml(data.payerType)}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">Amount:</td><td style="padding:4px 0;">${formattedAmount} VND</td></tr>
+              ${data.payerPhone ? `<tr><td style="padding:4px 0;font-weight:600;">Phone:</td><td style="padding:4px 0;">${escapeHtml(data.payerPhone)}</td></tr>` : ''}
+            </table>
+          </div>
+
+          <p style="margin:0 0 16px;font-size:14px;color:#6b7280;">Please verify the bank transfer and confirm the payment in the Admin Panel.</p>
+
+          <table width="100%" cellpadding="0" cellspacing="0"><tr><td>
+            <a href="${appUrl}/admin" style="display:inline-block;padding:12px 28px;background:#2563eb;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">Review in Admin Panel</a>
+          </td></tr></table>
+        </td></tr>
+        <tr><td style="padding:20px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Connect &mdash; Event Payment Notification</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to: adminEmails, subject, html: emailHtml });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      const testAdmins = adminEmails.filter(e => TEST_MODE_EMAILS.includes(e));
+      if (testAdmins.length > 0) {
+        await resend.emails.send({ from: FROM_EMAIL, to: testAdmins, subject: `[TEST] ${subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+      }
+      return;
+    }
+    console.error('Failed to send event payment notification email:', error);
   }
 }

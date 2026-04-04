@@ -25,6 +25,13 @@ const CreateEventSchema = z.object({
   capacity_premium: z.number().int().min(0).optional(),
   capacity_basic: z.number().int().min(0).optional(),
   image_url: z.string().url().optional(),
+  fee_premium: z.number().int().min(0).optional(),
+  fee_basic: z.number().int().min(0).optional(),
+  fee_guest: z.number().int().min(0).optional(),
+  capacity_guest: z.number().int().min(0).optional(),
+  is_public: z.boolean().optional(),
+  payment_qr_url: z.string().url().optional(),
+  payment_instructions: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {

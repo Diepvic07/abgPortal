@@ -81,7 +81,7 @@ export function ProposalDetail({ proposalId }: Props) {
     try {
       const res = await fetch(`/api/community/proposals/${proposalId}`);
       if (!res.ok) {
-        router.push('/proposals');
+        router.push('/events?tab=proposals');
         return;
       }
       const data = await res.json();
@@ -90,7 +90,7 @@ export function ProposalDetail({ proposalId }: Props) {
       setComments(data.comments || []);
       setMyCommitment(data.proposal?.my_commitment || null);
     } catch {
-      router.push('/proposals');
+      router.push('/events?tab=proposals');
     } finally {
       setLoading(false);
     }
@@ -152,7 +152,7 @@ export function ProposalDetail({ proposalId }: Props) {
   return (
     <div className="space-y-8">
       {/* Back link */}
-      <Link href="/proposals" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+      <Link href="/events?tab=proposals" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
