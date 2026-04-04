@@ -11,6 +11,7 @@ import { AdminClassManager } from "@/components/admin/admin-class-manager";
 import { AdminProposalManager } from "@/components/admin/admin-proposal-manager";
 import { AdminReferenceManager } from "@/components/admin/admin-reference-manager";
 import { AdminEventManager } from "@/components/admin/admin-event-manager";
+import { AdminFinanceDashboard } from "@/components/admin/admin-finance-dashboard";
 import { PaymentUpgradeModal } from "@/components/admin/payment-upgrade-modal";
 import { DuplicateReviewCard } from "@/components/admin/duplicate-review-card";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
@@ -51,7 +52,7 @@ export default function AdminPage() {
   const { status } = useSession();
   const router = useRouter();
   const [members, setMembers] = useState<AdminMember[]>([]);
-  const [activeTab, setActiveTab] = useState<"pending" | "duplicates" | "status" | "directory" | "news" | "payments" | "classes" | "proposals" | "references" | "events">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "duplicates" | "status" | "directory" | "news" | "payments" | "classes" | "proposals" | "references" | "events" | "finance">("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -441,6 +442,15 @@ export default function AdminPage() {
             Events
           </button>
           <button
+            onClick={() => setActiveTab("finance")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === "finance"
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+          >
+            Finance
+          </button>
+          <button
             onClick={() => setActiveTab("classes")}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === "classes"
               ? "bg-blue-600 text-white"
@@ -511,6 +521,10 @@ export default function AdminPage() {
         ) : activeTab === "events" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">
             <AdminEventManager />
+          </div>
+        ) : activeTab === "finance" ? (
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <AdminFinanceDashboard />
           </div>
         ) : activeTab === "payments" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">

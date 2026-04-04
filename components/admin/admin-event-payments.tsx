@@ -87,6 +87,33 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
         <button onClick={fetchData} className="text-xs text-blue-600 hover:underline">Refresh</button>
       </div>
 
+      {/* Revenue Summary */}
+      {payments.length > 0 && (() => {
+        const confirmed = payments.filter(p => p.status === 'confirmed');
+        const pending = payments.filter(p => p.status === 'pending');
+        const confirmedTotal = confirmed.reduce((s, p) => s + p.amount_vnd, 0);
+        const pendingTotal = pending.reduce((s, p) => s + p.amount_vnd, 0);
+        return (
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+              <p className="text-xs text-green-600 font-medium">Confirmed</p>
+              <p className="text-lg font-bold text-green-800">{new Intl.NumberFormat('vi-VN').format(confirmedTotal)}</p>
+              <p className="text-xs text-green-600">{confirmed.length} payments</p>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+              <p className="text-xs text-amber-600 font-medium">Pending</p>
+              <p className="text-lg font-bold text-amber-800">{new Intl.NumberFormat('vi-VN').format(pendingTotal)}</p>
+              <p className="text-xs text-amber-600">{pending.length} payments</p>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+              <p className="text-xs text-blue-600 font-medium">Total</p>
+              <p className="text-lg font-bold text-blue-800">{new Intl.NumberFormat('vi-VN').format(confirmedTotal + pendingTotal)}</p>
+              <p className="text-xs text-blue-600">{payments.length} payments</p>
+            </div>
+          </div>
+        );
+      })()}
+
       {message && (
         <div className={`p-3 rounded-lg text-sm ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
           {message.text}

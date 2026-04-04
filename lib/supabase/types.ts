@@ -656,6 +656,52 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['event_payments']['Insert']>;
         Relationships: [];
       };
+      financial_transactions: {
+        Row: {
+          id: string;
+          type: string;
+          category: string;
+          amount_vnd: number;
+          description: string;
+          transaction_date: string;
+          event_id: string | null;
+          created_by_admin_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          type?: string;
+          category: string;
+          amount_vnd: number;
+          description: string;
+          transaction_date: string;
+          event_id?: string | null;
+          created_by_admin_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['financial_transactions']['Insert']>;
+        Relationships: [];
+      };
+      financial_settings: {
+        Row: {
+          id: string;
+          opening_balance_vnd: number;
+          opening_balance_date: string;
+          updated_by_admin_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          opening_balance_vnd?: number;
+          opening_balance_date?: string;
+          updated_by_admin_id?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['financial_settings']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

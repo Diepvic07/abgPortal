@@ -453,6 +453,53 @@ export interface EventPayment {
   updated_at: string;
 }
 
+// Financial Management
+export type ExpenseCategory = 'hosting' | 'cloud_server' | 'ai' | 'event' | 'operational' | 'other';
+
+export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+  hosting: 'Hosting',
+  cloud_server: 'Cloud/Server',
+  ai: 'AI Services',
+  event: 'Event',
+  operational: 'Operational',
+  other: 'Other',
+};
+
+export interface FinancialTransaction {
+  id: string;
+  type: 'expense';
+  category: ExpenseCategory;
+  amount_vnd: number;
+  description: string;
+  transaction_date: string;
+  event_id?: string;
+  created_by_admin_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FinancialSettings {
+  id: string;
+  opening_balance_vnd: number;
+  opening_balance_date: string;
+  updated_by_admin_id?: string;
+  updated_at: string;
+}
+
+export interface MonthlyPnLRow {
+  month: string;
+  membership_revenue: number;
+  event_revenue: number;
+  total_revenue: number;
+  expenses_by_category: Record<ExpenseCategory, number>;
+  total_expenses: number;
+  net: number;
+  ytd_revenue: number;
+  ytd_expenses: number;
+  ytd_net: number;
+  running_balance: number;
+}
+
 export type NewsCategory = 'Edu' | 'Business' | 'Event' | 'Course' | 'Announcement';
 
 export interface NewsArticle {
