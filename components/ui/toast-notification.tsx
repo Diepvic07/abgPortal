@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export interface Toast {
   id: string;
@@ -66,13 +66,13 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
 export function useToasts() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const show = (message: string, type: 'success' | 'error' = 'error') => {
+  const show = useCallback((message: string, type: 'success' | 'error' = 'error') => {
     setToasts((prev) => [...prev, { id: Date.now().toString(), message, type }]);
-  };
+  }, []);
 
-  const dismiss = (id: string) => {
+  const dismiss = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+  }, []);
 
   return { toasts, showToast: show, dismissToast: dismiss } as const;
 }

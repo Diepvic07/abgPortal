@@ -2,8 +2,11 @@ import { notFound, redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getMemberById, getMemberByEmail, areMembersConnected } from '@/lib/supabase-db';
+import { getReferenceByWriterAndRecipient } from '@/lib/member-references';
 import { MemberProfileCard } from '@/components/ui/member-profile-card';
+import { MemberReferenceComposer } from '@/components/profile/member-reference-composer';
 import Link from 'next/link';
+import { isEligibleForPremiumFeatures } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +37,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     const isConnected = isOwner || isAdmin ? false : await areMembersConnected(currentUser.id, targetMember.id);
 
     const isAuthorized = isOwner || isAdmin || isConnected;
+    const existingReference = !isOwner
+      ? await getReferenceByWriterAndRecipient(currentUser.id, targetMember.id)
+      : null;
 
     // Strip contact info for non-connected viewers
     const visibleMember = isAuthorized
@@ -57,6 +63,14 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     Contact info is hidden. Request an introduction to connect with this member.
                 </div>
             )}
+            <MemberReferenceComposer
+                recipientId={targetMember.id}
+                recipientName={targetMember.name}
+                writerEligible={isEligibleForPremiumFeatures(currentUser)}
+                recipientEligible={isEligibleForPremiumFeatures(targetMember)}
+                isSelf={isOwner}
+                existingReference={existingReference}
+            />
         </div>
     );
 }

@@ -67,6 +67,19 @@ export interface Member {
   search_month_reset_date?: string;
   // Locale preference for emails
   locale?: 'en' | 'vi';
+  // Public profile metadata
+  public_profile_slug?: string;
+  public_profile_enabled?: boolean;
+}
+
+export interface PublicProfileMember {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  abg_class?: string;
+  avatar_url?: string;
+  public_profile_slug: string;
 }
 
 // Membership status for badge display
@@ -108,6 +121,14 @@ export function getAvatarMemberStatus(member: Member): 'basic' | 'pro' | 'admin'
   if (member.is_admin && member.approval_status === 'approved') return 'admin';
   if (member.paid || member.payment_status === 'paid') return 'pro';
   return 'basic';
+}
+
+export function isEligibleForPremiumFeatures(member: Member): boolean {
+  return (
+    member.status === 'active' &&
+    member.approval_status === 'approved' &&
+    (getMembershipStatus(member) === 'premium' || getMembershipStatus(member) === 'grace-period')
+  );
 }
 
 export interface AbgClass {
@@ -183,6 +204,33 @@ export interface PaymentRecord {
   admin_id: string;
   notes?: string;
   created_at: string;
+}
+
+export type MemberReferenceStatus =
+  | 'submitted'
+  | 'visible'
+  | 'hidden_by_recipient'
+  | 'removed_by_admin';
+
+export interface MemberReference {
+  id: string;
+  writer_member_id: string;
+  recipient_member_id: string;
+  body: string;
+  relationship_context: string;
+  status: MemberReferenceStatus;
+  is_publicly_visible: boolean;
+  created_at: string;
+  updated_at: string;
+  moderated_at?: string;
+  moderated_by_member_id?: string;
+  moderation_note?: string;
+  writer_name?: string;
+  writer_avatar_url?: string;
+  writer_role?: string;
+  writer_company?: string;
+  recipient_name?: string;
+  recipient_avatar_url?: string;
 }
 
 export type BugReportStatus = 'open' | 'fixed' | 'wontfix';

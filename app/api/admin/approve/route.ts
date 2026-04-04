@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getMemberById, updateMember } from "@/lib/supabase-db";
 import { isAdminAsync } from "@/lib/admin-utils-server";
 import { sendApprovalEmail } from "@/lib/resend";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { captureServerEvent } from "@/lib/posthog-server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,9 +32,7 @@ export async function POST(request: NextRequest) {
     await sendApprovalEmail(member.email, member.name, member.locale || 'vi');
 
     // Track member approval
-    const posthog = getPostHogClient();
-    posthog.capture({ distinctId: member.email, event: 'member_approved' });
-    await posthog.shutdown();
+    captureServerEvent(member.id, 'member_approved');
 
     return NextResponse.json({ success: true });
   } catch (error) {

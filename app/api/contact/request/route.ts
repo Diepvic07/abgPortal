@@ -3,7 +3,7 @@ import { requireAuth } from "@/lib/auth-middleware";
 import { getMemberTier } from "@/lib/tier-utils";
 import { getMemberById, createContactRequest, getContactRequestsByRequesterAndTarget, countTodayContactRequests } from "@/lib/supabase-db";
 import { sendContactRequestEmail } from "@/lib/resend";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { captureServerEvent } from "@/lib/posthog-server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -91,9 +91,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Track contact request sent
-    const posthog = getPostHogClient();
-    posthog.capture({ distinctId: member.email, event: 'contact_request_sent', properties: { target_id: target.id } });
-    await posthog.shutdown();
+    captureServerEvent(member.id, 'contact_request_sent', { target_id: target.id });
 
     return NextResponse.json({ success: true, requestId: id });
   } catch (error) {

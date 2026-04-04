@@ -68,6 +68,8 @@ function mapRowToMember(row: Record<string, unknown>): Member {
     searches_this_month: (row.searches_this_month as number) || 0,
     search_month_reset_date: nullToUndefined(row.search_month_reset_date as string | null),
     locale: (nullToUndefined(row.locale as string | null) as 'en' | 'vi' | undefined) ?? 'vi',
+    public_profile_slug: nullToUndefined(row.public_profile_slug as string | null),
+    public_profile_enabled: (row.public_profile_enabled as boolean) || false,
   };
 }
 
@@ -167,6 +169,16 @@ export async function getMemberById(id: string): Promise<Member | null> {
   return data ? mapRowToMember(data as unknown as Record<string, unknown>) : null;
 }
 
+export async function getMemberByPublicProfileSlug(slug: string): Promise<Member | null> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db.from('members').select('*').eq('public_profile_slug', slug).maybeSingle();
+  if (error) {
+    console.error('[SupabaseDB] getMemberByPublicProfileSlug error:', error);
+    throw new Error(`Failed to get member by public profile slug: ${error.message}`);
+  }
+  return data ? mapRowToMember(data as unknown as Record<string, unknown>) : null;
+}
+
 export async function getMemberByEmail(email: string): Promise<Member | null> {
   const db = createServerSupabaseClient();
   // Use .select() (not .maybeSingle()) to handle potential duplicate rows gracefully.
@@ -259,6 +271,8 @@ export async function addMember(member: Member): Promise<void> {
     searches_this_month: member.searches_this_month ?? 0,
     search_month_reset_date: member.search_month_reset_date ?? null,
     locale: member.locale ?? 'vi',
+    public_profile_slug: member.public_profile_slug ?? null,
+    public_profile_enabled: member.public_profile_enabled ?? false,
   });
   if (error) {
     console.error(`[SupabaseDB] addMember error for ${member.email}:`, error);

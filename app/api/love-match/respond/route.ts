@@ -4,7 +4,7 @@ import { getLoveMatchRequestById, updateLoveMatchRequest, getMemberById } from '
 import { sendLoveMatchAcceptEmail } from '@/lib/resend';
 import { formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
-import { getPostHogClient } from '@/lib/posthog-server';
+import { captureServerEvent } from '@/lib/posthog-server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,9 +66,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Track love match accepted
-      const posthogAccept = getPostHogClient();
-      posthogAccept.capture({ distinctId: member.email, event: 'love_match_accepted' });
-      await posthogAccept.shutdown();
+      captureServerEvent(member.id, 'love_match_accepted');
 
       return successResponse({ message: 'Love match accepted! Introduction emails sent to both parties.' });
     }
@@ -80,9 +78,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Track love match refused
-    const posthogRefuse = getPostHogClient();
-    posthogRefuse.capture({ distinctId: member.email, event: 'love_match_refused' });
-    await posthogRefuse.shutdown();
+    captureServerEvent(member.id, 'love_match_refused');
 
     // No email to searcher on refuse (privacy)
     return successResponse({ message: 'Love match request declined.' });
