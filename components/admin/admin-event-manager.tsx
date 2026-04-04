@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CommunityEvent, EventStatus, EventCategory, EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS } from '@/types';
 import { AdminImageUpload } from './admin-article-image-upload';
+import { AdminEventPayments } from './admin-event-payments';
 
 const CATEGORY_ICONS: Record<string, string> = {
   charity: '❤️', event: '🎉', learning: '📚', community_support: '🤝', networking: '🌐', other: '💡',
@@ -78,6 +79,7 @@ export function AdminEventManager() {
   const [editingEvent, setEditingEvent] = useState<CommunityEvent | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [imageUploading, setImageUploading] = useState(false);
+  const [viewingPayments, setViewingPayments] = useState<CommunityEvent | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -362,6 +364,12 @@ export function AdminEventManager() {
                     ))}
                   </select>
                   <button
+                    onClick={() => setViewingPayments(event)}
+                    className="text-xs px-3 py-1.5 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50"
+                  >
+                    Payments
+                  </button>
+                  <button
                     onClick={() => handleDelete(event.id, event.title)}
                     disabled={actionLoading === event.id}
                     className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
@@ -635,6 +643,21 @@ export function AdminEventManager() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Payments & Guests Modal */}
+      {viewingPayments && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b flex items-center justify-between shrink-0">
+              <h2 className="text-lg font-semibold text-gray-900">Event Payments</h2>
+              <button onClick={() => setViewingPayments(null)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+            </div>
+            <div className="px-6 py-4 overflow-y-auto">
+              <AdminEventPayments eventId={viewingPayments.id} eventTitle={viewingPayments.title} />
+            </div>
           </div>
         </div>
       )}
