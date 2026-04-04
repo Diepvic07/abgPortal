@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth-middleware';
-import { getEvents, getEventById, getRsvpsByEvent, getMemberRsvp } from '@/lib/supabase-events';
+import { getEvents, getEventById, getRsvpsByEvent, getMemberRsvp, getEventPayments } from '@/lib/supabase-events';
 import { z } from 'zod';
 
 const EventCategory = z.enum(['charity', 'event', 'learning', 'community_support', 'networking', 'other']);
@@ -25,11 +25,16 @@ export async function GET(request: NextRequest) {
       const { getMembershipStatus } = await import('@/types');
       const membershipStatus = getMembershipStatus(member);
 
+      // Check member's payment status for this event
+      const allPayments = await getEventPayments(eventId);
+      const myPayment = allPayments.find(p => p.member_id === member.id);
+
       return successResponse({
         event,
         rsvps,
         my_rsvp: myRsvp?.commitment_level === 'interested' ? null : myRsvp?.commitment_level || null,
         membership_status: membershipStatus,
+        my_payment_status: myPayment?.status || null,
       });
     }
 

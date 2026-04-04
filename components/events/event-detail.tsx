@@ -137,6 +137,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [pendingRsvp, setPendingRsvp] = useState<EventRegistrationLevel | null>(null);
   const [rsvpNote, setRsvpNote] = useState('');
   const [showPaymentFlow, setShowPaymentFlow] = useState(false);
+  const [myPaymentStatus, setMyPaymentStatus] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const fetchEventDataRef = useRef<() => Promise<void>>(async () => {});
   const fetchCommentsDataRef = useRef<() => Promise<void>>(async () => {});
@@ -158,11 +159,13 @@ export function EventDetail({ eventId }: { eventId: string }) {
         setEvent(data.event);
         setRsvps(data.rsvps || []);
         setMyRsvp(data.my_rsvp || null);
+        setMyPaymentStatus(data.my_payment_status || null);
         if (data.membership_status) setMembershipStatus(data.membership_status);
       } else {
         setEvent(null);
         setRsvps([]);
         setMyRsvp(null);
+        setMyPaymentStatus(null);
       }
     } catch (error) {
       console.error('Failed to fetch event:', error);
@@ -586,46 +589,72 @@ export function EventDetail({ eventId }: { eventId: string }) {
             </div>
 
             {myRsvp === 'will_participate' && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
                   {locale === 'vi' ? 'Bạn đã đăng ký tham gia' : 'You are registered to join'}
                 </span>
                 {(() => {
                   const isPrem = membershipStatus === 'premium' || membershipStatus === 'grace-period';
                   const fee = isPrem ? event.fee_premium : event.fee_basic;
-                  if (fee != null && fee > 0) {
+                  if (fee == null || fee <= 0) return null;
+                  if (myPaymentStatus === 'confirmed') {
                     return (
-                      <button
-                        onClick={() => setShowPaymentFlow(true)}
-                        className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800 hover:bg-amber-200 transition-colors"
-                      >
-                        {locale === 'vi' ? 'Thanh toán' : 'Pay Now'}
-                      </button>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        {locale === 'vi' ? 'Đã thanh toán' : 'Paid'}
+                      </span>
                     );
                   }
-                  return null;
+                  if (myPaymentStatus === 'pending') {
+                    return (
+                      <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800">
+                        {locale === 'vi' ? 'Chờ xác nhận thanh toán' : 'Payment pending'}
+                      </span>
+                    );
+                  }
+                  return (
+                    <button
+                      onClick={() => setShowPaymentFlow(true)}
+                      className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800 hover:bg-amber-200 transition-colors"
+                    >
+                      {locale === 'vi' ? 'Thanh toán' : 'Pay Now'}
+                    </button>
+                  );
                 })()}
               </div>
             )}
             {myRsvp === 'will_lead' && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800">
                   {locale === 'vi' ? 'Bạn đang tham gia với vai trò dẫn dắt' : 'You are registered as a lead'}
                 </span>
                 {(() => {
                   const isPrem = membershipStatus === 'premium' || membershipStatus === 'grace-period';
                   const fee = isPrem ? event.fee_premium : event.fee_basic;
-                  if (fee != null && fee > 0) {
+                  if (fee == null || fee <= 0) return null;
+                  if (myPaymentStatus === 'confirmed') {
                     return (
-                      <button
-                        onClick={() => setShowPaymentFlow(true)}
-                        className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800 hover:bg-amber-200 transition-colors"
-                      >
-                        {locale === 'vi' ? 'Thanh toán' : 'Pay Now'}
-                      </button>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        {locale === 'vi' ? 'Đã thanh toán' : 'Paid'}
+                      </span>
                     );
                   }
-                  return null;
+                  if (myPaymentStatus === 'pending') {
+                    return (
+                      <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800">
+                        {locale === 'vi' ? 'Chờ xác nhận thanh toán' : 'Payment pending'}
+                      </span>
+                    );
+                  }
+                  return (
+                    <button
+                      onClick={() => setShowPaymentFlow(true)}
+                      className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800 hover:bg-amber-200 transition-colors"
+                    >
+                      {locale === 'vi' ? 'Thanh toán' : 'Pay Now'}
+                    </button>
+                  );
                 })()}
               </div>
             )}
