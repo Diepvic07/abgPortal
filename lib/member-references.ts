@@ -1,8 +1,8 @@
 import { createServerSupabaseClient } from './supabase/server';
 import { formatDate, generateId } from './utils';
-import { getMemberById, getMemberByPublicProfileSlug } from './supabase-db';
-import type { Member, MemberReference } from '@/types';
-import { getMembershipStatus, isEligibleForPremiumFeatures } from '@/types';
+import { getMemberById } from './supabase-db';
+import type { Member, MemberReference, PublicProfileMember } from '@/types';
+import { isEligibleForPremiumFeatures } from '@/types';
 
 function nullToUndefined<T>(val: T | null): T | undefined {
   return val === null ? undefined : val;
@@ -31,6 +31,18 @@ function mapRowToReference(row: Record<string, unknown>): MemberReference {
     writer_company: nullToUndefined(writer?.company as string | null),
     recipient_name: nullToUndefined(recipient?.name as string | null),
     recipient_avatar_url: nullToUndefined(recipient?.avatar_url as string | null),
+  };
+}
+
+function mapRowToPublicProfileMember(row: Record<string, unknown>): PublicProfileMember {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    role: (row.role as string) || '',
+    company: (row.company as string) || '',
+    abg_class: nullToUndefined(row.abg_class as string | null),
+    avatar_url: nullToUndefined(row.avatar_url as string | null),
+    public_profile_slug: row.public_profile_slug as string,
   };
 }
 
@@ -116,6 +128,10 @@ export async function createMemberReference(input: {
 
   if (error) {
     console.error('[MemberReferences] createMemberReference error:', error);
+    const errorCode = (error as { code?: string }).code;
+    if (errorCode === '23505') {
+      throw new Error('You have already submitted a reference for this member.');
+    }
     throw new Error(`Failed to create reference: ${error.message}`);
   }
 
@@ -272,23 +288,30 @@ export async function moderateMemberReference(input: {
 }
 
 export async function getPublicProfileBySlug(slug: string): Promise<{
-  member: Member;
+  member: PublicProfileMember;
   references: MemberReference[];
 } | null> {
-  const member = await getMemberByPublicProfileSlug(slug);
-  if (!member) return null;
+  const db = createServerSupabaseClient();
+  const { data: memberRow, error: memberError } = await db
+    .from('members')
+    .select('id, name, role, company, abg_class, avatar_url, public_profile_slug, public_profile_enabled')
+    .eq('public_profile_slug', slug)
+    .maybeSingle();
 
-  const membershipStatus = getMembershipStatus(member);
-  const isAccessible =
-    member.status === 'active' &&
-    member.approval_status === 'approved' &&
-    (membershipStatus === 'premium' || membershipStatus === 'grace-period');
+  if (memberError) {
+    console.error('[MemberReferences] getPublicProfileBySlug member lookup error:', memberError);
+    throw new Error(`Failed to fetch public profile: ${memberError.message}`);
+  }
 
-  if (!isAccessible) {
+  if (!memberRow) {
     return null;
   }
 
-  const db = createServerSupabaseClient();
+  if ((memberRow.public_profile_enabled as boolean) !== true) {
+    return null;
+  }
+
+  const member = mapRowToPublicProfileMember(memberRow as Record<string, unknown>);
   const { data, error } = await db
     .from('member_references')
     .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company)')

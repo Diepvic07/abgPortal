@@ -3,6 +3,8 @@
 import { notFound } from 'next/navigation';
 import { getPublicProfileBySlug } from '@/lib/member-references';
 
+export const dynamic = 'force-dynamic';
+
 interface PublicProfilePageProps {
   params: Promise<{ slug: string }>;
 }
@@ -26,7 +28,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
               <img src={member.avatar_url} alt="" className="h-20 w-20 rounded-full object-cover" />
             ) : (
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-100 text-2xl font-semibold text-blue-700">
-                {member.name[0]}
+                {member.name?.[0] || '?'}
               </div>
             )}
             <div>

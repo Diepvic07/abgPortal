@@ -119,6 +119,11 @@ export function PublicReferencesManager({ member, membershipStatus }: PublicRefe
                     type="button"
                     disabled={updatingId === reference.id}
                     onClick={() => toggleVisibility(reference.id, !reference.is_publicly_visible)}
+                    aria-label={
+                      reference.is_publicly_visible
+                        ? `Hide reference from ${reference.writer_name || 'member'} on public profile`
+                        : `Show reference from ${reference.writer_name || 'member'} on public profile`
+                    }
                     className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
                       reference.is_publicly_visible
                         ? 'bg-emerald-100 text-emerald-800'

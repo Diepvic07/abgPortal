@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,6 +13,7 @@ import { PaymentInfoModal } from '@/components/ui/payment-info-modal';
 import { useTranslation } from '@/lib/i18n';
 
 const ONBOARDING_STORAGE_KEY = 'abg_onboarding_draft';
+const POSTHOG_ENABLED = Boolean(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN);
 
 // Create schema with translated messages
 // Email is optional in schema - for unauthenticated users it will be filled after OAuth
@@ -174,16 +176,13 @@ export function MemberOnboardingForm() {
       setSuccess(true);
 
       // Identify user and track signup submission
-      const userEmail = data.email || session?.user?.email;
-      if (userEmail) {
-        posthog.identify(userEmail, { name: data.name, email: userEmail });
+      if (POSTHOG_ENABLED && result.memberId) {
+        posthog.identify(result.memberId, { name: data.name });
       }
-      posthog.capture('signup_submitted', {
-        abg_class: data.abg_class,
-        auth_provider: session?.user?.email ? 'google' : 'email',
-      });
     } catch (err) {
-      posthog.captureException(err instanceof Error ? err : new Error(String(err)));
+      if (POSTHOG_ENABLED) {
+        posthog.captureException(err instanceof Error ? err : new Error(String(err)));
+      }
       setError(err instanceof Error ? err.message : t.common.error);
     } finally {
       setIsSubmitting(false);
@@ -274,10 +273,13 @@ export function MemberOnboardingForm() {
           className="cursor-pointer relative group"
         >
           {avatarPreview ? (
-            <img
+            <Image
               src={avatarPreview}
               alt="Avatar preview"
-              className="w-24 h-24 rounded-full object-cover border-2 border-border group-hover:border-brand transition-colors"
+              width={96}
+              height={96}
+              unoptimized
+              className="h-24 w-24 rounded-full border-2 border-border object-cover transition-colors group-hover:border-brand"
             />
           ) : (
             <div className="relative">

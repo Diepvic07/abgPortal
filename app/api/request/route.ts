@@ -8,7 +8,7 @@ import { ConnectionRequest, RequestCategory } from '@/types';
 import { requireAuth } from '@/lib/auth-middleware';
 import { checkForAbuse } from '@/lib/abuse-detection';
 import { canMakeRequest, getMemberTier, createBlurredMatch, TIER_LIMITS } from '@/lib/tier-utils';
-import { getPostHogClient } from '@/lib/posthog-server';
+import { captureServerEvent } from '@/lib/posthog-server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -287,13 +287,10 @@ export async function POST(request: NextRequest) {
     await addRequest(connectionRequest);
 
     // Track connection request
-    const posthog = getPostHogClient();
-    posthog.capture({
-      distinctId: requester.email,
-      event: 'connection_request_submitted',
-      properties: { category, tier: memberTier },
+    captureServerEvent(requester.id, 'connection_request_submitted', {
+      category,
+      tier: memberTier,
     });
-    await posthog.shutdown();
 
     // Audit success
     await logAudit(true, undefined, connectionRequest.id);

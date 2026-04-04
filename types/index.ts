@@ -72,6 +72,16 @@ export interface Member {
   public_profile_enabled?: boolean;
 }
 
+export interface PublicProfileMember {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  abg_class?: string;
+  avatar_url?: string;
+  public_profile_slug: string;
+}
+
 // Membership status for badge display
 export type MembershipStatus = 'premium' | 'basic' | 'pending' | 'grace-period' | 'expired';
 

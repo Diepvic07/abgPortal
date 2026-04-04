@@ -5,7 +5,7 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api-respon
 import { createMemberReference } from '@/lib/member-references';
 
 const CreateReferenceSchema = z.object({
-  recipient_member_id: z.string().min(1),
+  recipient_member_id: z.string().uuid('Invalid recipient member ID'),
   body: z.string().trim().min(40).max(2000),
   relationship_context: z.string().trim().min(10).max(500),
 });

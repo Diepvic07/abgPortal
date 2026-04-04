@@ -7,7 +7,7 @@ import { sendLoveMatchNotificationEmail } from '@/lib/resend';
 import { generateId, formatDate } from '@/lib/utils';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { LoveMatchRequest } from '@/types';
-import { getPostHogClient } from '@/lib/posthog-server';
+import { captureServerEvent } from '@/lib/posthog-server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -97,9 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Track love match sent
-    const posthog = getPostHogClient();
-    posthog.capture({ distinctId: member.email, event: 'love_match_sent', properties: { to_id } });
-    await posthog.shutdown();
+    captureServerEvent(member.id, 'love_match_sent', { to_id });
 
     return successResponse({
       love_match_id: loveMatchId,
