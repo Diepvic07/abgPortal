@@ -15,10 +15,12 @@ import {
   EventMode,
   EventRegistrationLevel,
   MembershipStatus,
+  PayerType,
   EVENT_MODE_LABELS,
   EVENT_CATEGORY_LABELS,
   EVENT_STATUS_LABELS,
 } from '@/types';
+import { EventPaymentFlow } from './event-payment-flow';
 
 const RSVP_ACTIONS: Array<{
   level: EventRegistrationLevel;
@@ -134,6 +136,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [membershipStatus, setMembershipStatus] = useState<MembershipStatus>('basic');
   const [pendingRsvp, setPendingRsvp] = useState<EventRegistrationLevel | null>(null);
   const [rsvpNote, setRsvpNote] = useState('');
+  const [showPaymentFlow, setShowPaymentFlow] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const fetchEventDataRef = useRef<() => Promise<void>>(async () => {});
   const fetchCommentsDataRef = useRef<() => Promise<void>>(async () => {});
@@ -213,12 +216,20 @@ export function EventDetail({ eventId }: { eventId: string }) {
       setPendingRsvp(null);
       setRsvpNote('');
       await fetchEventDataRef.current();
-      showToast(
-        level === 'will_lead'
-          ? (locale === 'vi' ? 'Bạn đã đăng ký vai trò dẫn dắt.' : 'You are registered as a lead.')
-          : (locale === 'vi' ? 'Bạn đã đăng ký tham gia sự kiện.' : 'You are registered for the event.'),
-        'success',
-      );
+
+      // Check if event requires payment for this member's tier
+      const isPrem = membershipStatus === 'premium' || membershipStatus === 'grace-period';
+      const fee = isPrem ? event?.fee_premium : event?.fee_basic;
+      if (fee != null && fee > 0) {
+        setShowPaymentFlow(true);
+      } else {
+        showToast(
+          level === 'will_lead'
+            ? (locale === 'vi' ? 'Bạn đã đăng ký vai trò dẫn dắt.' : 'You are registered as a lead.')
+            : (locale === 'vi' ? 'Bạn đã đăng ký tham gia sự kiện.' : 'You are registered for the event.'),
+          'success',
+        );
+      }
     } catch (error) {
       console.error('Failed to RSVP:', error);
       showToast(locale === 'vi' ? 'Không thể cập nhật đăng ký.' : 'Unable to update RSVP.');
@@ -575,14 +586,48 @@ export function EventDetail({ eventId }: { eventId: string }) {
             </div>
 
             {myRsvp === 'will_participate' && (
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-                {locale === 'vi' ? 'Bạn đã đăng ký tham gia' : 'You are registered to join'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+                  {locale === 'vi' ? 'Bạn đã đăng ký tham gia' : 'You are registered to join'}
+                </span>
+                {(() => {
+                  const isPrem = membershipStatus === 'premium' || membershipStatus === 'grace-period';
+                  const fee = isPrem ? event.fee_premium : event.fee_basic;
+                  if (fee != null && fee > 0) {
+                    return (
+                      <button
+                        onClick={() => setShowPaymentFlow(true)}
+                        className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800 hover:bg-amber-200 transition-colors"
+                      >
+                        {locale === 'vi' ? 'Thanh toán' : 'Pay Now'}
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
             )}
             {myRsvp === 'will_lead' && (
-              <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800">
-                {locale === 'vi' ? 'Bạn đang tham gia với vai trò dẫn dắt' : 'You are registered as a lead'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800">
+                  {locale === 'vi' ? 'Bạn đang tham gia với vai trò dẫn dắt' : 'You are registered as a lead'}
+                </span>
+                {(() => {
+                  const isPrem = membershipStatus === 'premium' || membershipStatus === 'grace-period';
+                  const fee = isPrem ? event.fee_premium : event.fee_basic;
+                  if (fee != null && fee > 0) {
+                    return (
+                      <button
+                        onClick={() => setShowPaymentFlow(true)}
+                        className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800 hover:bg-amber-200 transition-colors"
+                      >
+                        {locale === 'vi' ? 'Thanh toán' : 'Pay Now'}
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
             )}
           </div>
 
@@ -838,6 +883,38 @@ export function EventDetail({ eventId }: { eventId: string }) {
         onConfirm={handleRemoveRsvp}
         onCancel={() => setConfirmRemove(false)}
       />
+
+      {/* Payment Flow Modal */}
+      {showPaymentFlow && event && session?.user && (() => {
+        const isPrem = membershipStatus === 'premium' || membershipStatus === 'grace-period';
+        const payerType: PayerType = isPrem ? 'premium' : 'basic';
+        return (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
+            <div className="relative w-full max-w-lg rounded-3xl bg-white shadow-2xl max-h-[90vh] overflow-y-auto">
+              <div className="px-6 py-4 border-b flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {locale === 'vi' ? 'Thanh toán phí sự kiện' : 'Event Payment'}
+                </h2>
+                <button onClick={() => setShowPaymentFlow(false)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+              </div>
+              <div className="p-6">
+                <EventPaymentFlow
+                  event={event}
+                  payerType={payerType}
+                  payerName={session.user.name || session.user.email || ''}
+                  payerEmail={session.user.email || ''}
+                  paymentId=""
+                  onComplete={() => {
+                    setShowPaymentFlow(false);
+                    showToast(locale === 'vi' ? 'Đã gửi xác nhận thanh toán!' : 'Payment confirmation sent!', 'success');
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <ToastNotification toasts={toasts} onDismiss={dismissToast} />
     </div>
