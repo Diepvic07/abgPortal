@@ -6,9 +6,10 @@ import Image from "next/image";
 interface AdminImageUploadProps {
   imageUrl: string;
   onImageChange: (url: string) => void;
+  uploadEndpoint?: string;
 }
 
-export function AdminImageUpload({ imageUrl, onImageChange }: AdminImageUploadProps) {
+export function AdminImageUpload({ imageUrl, onImageChange, uploadEndpoint = "/api/admin/news/upload-image" }: AdminImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,7 +39,7 @@ export function AdminImageUpload({ imageUrl, onImageChange }: AdminImageUploadPr
       const formData = new FormData();
       formData.append("file", fileToUpload);
 
-      const res = await fetch("/api/admin/news/upload-image", {
+      const res = await fetch(uploadEndpoint, {
         method: "POST",
         body: formData,
       });

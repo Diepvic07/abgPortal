@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CommunityEvent, EventStatus, EventCategory, EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS } from '@/types';
+import { AdminImageUpload } from './admin-article-image-upload';
 
 const CATEGORY_ICONS: Record<string, string> = {
   charity: '❤️', event: '🎉', learning: '📚', community_support: '🤝', networking: '🌐', other: '💡',
@@ -459,17 +460,12 @@ export function AdminEventManager() {
                   </div>
                 </div>
 
-                {/* Image URL */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                  <input
-                    type="url"
-                    value={form.image_url}
-                    onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="https://..."
-                  />
-                </div>
+                {/* Event Image */}
+                <AdminImageUpload
+                  imageUrl={form.image_url}
+                  onImageChange={(url) => setForm((f) => ({ ...f, image_url: url }))}
+                  uploadEndpoint="/api/admin/community/events/upload-image"
+                />
               </div>
 
               <div className="px-6 py-4 border-t flex justify-end gap-2 shrink-0">
