@@ -60,6 +60,14 @@ const emptyForm: EventForm = {
   payment_instructions: '',
 };
 
+// Convert UTC ISO string to local datetime-local input value
+function utcToLocalInput(utcStr: string): string {
+  const date = new Date(utcStr);
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
 export function AdminEventManager() {
   const [events, setEvents] = useState<CommunityEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,8 +111,8 @@ export function AdminEventManager() {
       description: event.description,
       category: event.category,
       status: event.status,
-      event_date: event.event_date ? new Date(event.event_date).toISOString().slice(0, 16) : '',
-      event_end_date: event.event_end_date ? new Date(event.event_end_date).toISOString().slice(0, 16) : '',
+      event_date: event.event_date ? utcToLocalInput(event.event_date) : '',
+      event_end_date: event.event_end_date ? utcToLocalInput(event.event_end_date) : '',
       location: event.location || '',
       location_url: event.location_url || '',
       capacity_premium: event.capacity_premium != null ? String(event.capacity_premium) : '',
