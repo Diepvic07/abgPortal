@@ -37,9 +37,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     const isConnected = isOwner || isAdmin ? false : await areMembersConnected(currentUser.id, targetMember.id);
 
     const isAuthorized = isOwner || isAdmin || isConnected;
-    const existingReference = !isOwner
-      ? await getReferenceByWriterAndRecipient(currentUser.id, targetMember.id)
-      : null;
+    let existingReference = null;
+    let canLoadReferenceComposer = false;
+
+    if (!isOwner) {
+        try {
+            existingReference = await getReferenceByWriterAndRecipient(currentUser.id, targetMember.id);
+            canLoadReferenceComposer = true;
+        } catch (error) {
+            // Keep the core profile page available even if the optional references feature is unavailable.
+            console.error('[ProfilePage] Failed to load reference composer state:', error);
+        }
+    }
 
     // Strip contact info for non-connected viewers
     const visibleMember = isAuthorized
@@ -63,14 +72,16 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     Contact info is hidden. Request an introduction to connect with this member.
                 </div>
             )}
-            <MemberReferenceComposer
-                recipientId={targetMember.id}
-                recipientName={targetMember.name}
-                writerEligible={isEligibleForPremiumFeatures(currentUser)}
-                recipientEligible={isEligibleForPremiumFeatures(targetMember)}
-                isSelf={isOwner}
-                existingReference={existingReference}
-            />
+            {canLoadReferenceComposer && (
+                <MemberReferenceComposer
+                    recipientId={targetMember.id}
+                    recipientName={targetMember.name}
+                    writerEligible={isEligibleForPremiumFeatures(currentUser)}
+                    recipientEligible={isEligibleForPremiumFeatures(targetMember)}
+                    isSelf={isOwner}
+                    existingReference={existingReference}
+                />
+            )}
         </div>
     );
 }
