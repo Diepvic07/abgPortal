@@ -96,7 +96,7 @@ export async function getReactionSummaries(
   const summaries: Record<string, ReactionSummary> = {};
 
   for (const id of commentIds) {
-    summaries[id] = { like: 0, heart: 0, haha: 0, wow: 0, sad: 0 };
+    summaries[id] = { like: 0, heart: 0, haha: 0, wow: 0, sad: 0, cold: 0, fire: 0, hug: 0, highfive: 0 };
   }
 
   for (const row of (rows || []) as Array<Record<string, unknown>>) {

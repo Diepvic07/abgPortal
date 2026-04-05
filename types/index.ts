@@ -253,7 +253,7 @@ export type CommitmentLevel = 'interested' | 'will_participate' | 'will_lead';
 export type CommentStatus = 'visible' | 'hidden' | 'removed';
 
 // Comment Reactions
-export type ReactionType = 'like' | 'heart' | 'haha' | 'wow' | 'sad';
+export type ReactionType = 'like' | 'heart' | 'haha' | 'wow' | 'sad' | 'cold' | 'fire' | 'hug' | 'highfive';
 export type CommentType = 'event' | 'proposal';
 
 export const REACTION_EMOJI: Record<ReactionType, string> = {
@@ -262,6 +262,10 @@ export const REACTION_EMOJI: Record<ReactionType, string> = {
   haha: '😄',
   wow: '😮',
   sad: '😢',
+  cold: '🥶',
+  fire: '🤯',
+  hug: '🤗',
+  highfive: '🙏',
 };
 
 export interface ReactionSummary {
@@ -270,6 +274,10 @@ export interface ReactionSummary {
   haha: number;
   wow: number;
   sad: number;
+  cold: number;
+  fire: number;
+  hug: number;
+  highfive: number;
   my_reaction?: ReactionType;
 }
 

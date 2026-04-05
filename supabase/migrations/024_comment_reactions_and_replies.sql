@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS comment_reactions (
   comment_id TEXT NOT NULL,
   comment_type TEXT NOT NULL CHECK (comment_type IN ('event', 'proposal')),
   member_id TEXT NOT NULL REFERENCES members(id),
-  reaction_type TEXT NOT NULL CHECK (reaction_type IN ('like', 'heart', 'haha', 'wow', 'sad')),
+  reaction_type TEXT NOT NULL CHECK (reaction_type IN ('like', 'heart', 'haha', 'wow', 'sad', 'cold', 'fire', 'hug', 'highfive')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(comment_id, comment_type, member_id)
 );

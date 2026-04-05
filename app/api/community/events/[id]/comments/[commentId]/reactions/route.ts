@@ -3,7 +3,7 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api-respon
 import { requireAuth } from '@/lib/auth-middleware';
 import { upsertReaction, removeReaction } from '@/lib/supabase-reactions';
 
-const VALID_REACTIONS = ['like', 'heart', 'haha', 'wow', 'sad'];
+const VALID_REACTIONS = ['like', 'heart', 'haha', 'wow', 'sad', 'cold', 'fire', 'hug', 'highfive'];
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string; commentId: string }> }) {
   try {
