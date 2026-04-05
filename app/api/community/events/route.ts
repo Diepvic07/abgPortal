@@ -4,7 +4,7 @@ import { requireAuth } from '@/lib/auth-middleware';
 import { getEvents, getEventById, getRsvpsByEvent, getMemberRsvp, getEventPayments } from '@/lib/supabase-events';
 import { z } from 'zod';
 
-const EventCategory = z.enum(['charity', 'event', 'learning', 'community_support', 'networking', 'other']);
+const EventCategory = z.enum(['abg_talks', 'fieldtrip', 'networking', 'learning', 'webinar', 'event', 'community_support', 'abg_business_connect', 'other']);
 
 export async function GET(request: NextRequest) {
   try {

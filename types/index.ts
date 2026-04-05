@@ -326,16 +326,19 @@ export interface CommunityProposalComment {
 
 // Community Events
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
-export type EventCategory = 'charity' | 'event' | 'learning' | 'community_support' | 'networking' | 'other';
+export type EventCategory = 'abg_talks' | 'fieldtrip' | 'networking' | 'learning' | 'webinar' | 'event' | 'community_support' | 'abg_business_connect' | 'other';
 export type EventMode = 'offline' | 'online' | 'hybrid';
 export type EventRegistrationLevel = Extract<CommitmentLevel, 'will_participate' | 'will_lead'>;
 
 export const EVENT_CATEGORY_LABELS: Record<EventCategory, { en: string; vi: string }> = {
-  charity: { en: 'Charity', vi: 'Từ thiện' },
-  event: { en: 'Event', vi: 'Sự kiện' },
+  abg_talks: { en: 'ABG Talks', vi: 'ABG Talks' },
+  fieldtrip: { en: 'Fieldtrip', vi: 'Fieldtrip' },
+  networking: { en: 'Networking', vi: 'Networking' },
   learning: { en: 'Learning', vi: 'Học tập' },
+  webinar: { en: 'Webinar', vi: 'Webinar' },
+  event: { en: 'Event', vi: 'Sự kiện' },
   community_support: { en: 'Community Support', vi: 'Hỗ trợ cộng đồng' },
-  networking: { en: 'Networking', vi: 'Kết nối' },
+  abg_business_connect: { en: 'ABG Business Connect', vi: 'ABG Business Connect' },
   other: { en: 'Other', vi: 'Khác' },
 };
 
@@ -380,6 +383,7 @@ export interface CommunityEvent {
   is_public?: boolean;
   payment_qr_url?: string;
   payment_instructions?: string;
+  allow_cancellation?: boolean;
   guest_rsvp_count?: number;
   created_at: string;
   updated_at: string;

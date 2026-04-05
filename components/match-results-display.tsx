@@ -67,7 +67,8 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ request_id: requestId, exclude_ids: allShownIds }),
       });
-      const result = await res.json();
+      let result;
+      try { result = await res.json(); } catch { throw new Error(t.common.error); }
       if (!res.ok) throw new Error(result.error || t.common.error);
       if (result.matches?.length > 0) {
         const newMatches = result.matches as MatchWithMember[];
@@ -102,7 +103,8 @@ export function MatchResultsDisplay({ matches: initialMatches, requestId, catego
           match_reason: match.reason, custom_intro_text: customIntro || undefined, locale,
         }),
       });
-      const result = await res.json();
+      let result;
+      try { result = await res.json(); } catch { throw new Error(t.common.error); }
       if (!res.ok) throw new Error(result.error || t.common.error);
       setSuccess(true);
       setTimeout(() => { setShowModal(false); setSuccess(false); }, 1500);

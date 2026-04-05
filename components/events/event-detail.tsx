@@ -410,11 +410,11 @@ export function EventDetail({ eventId }: { eventId: string }) {
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <InfoBlock
-              label={locale === 'vi' ? 'Bắt đầu' : 'Starts'}
+              label={locale === 'vi' ? 'Mở đăng ký' : 'Registration Opens'}
               value={formatDateTime(event.event_date, locale)}
             />
             <InfoBlock
-              label={locale === 'vi' ? 'Kết thúc' : 'Ends'}
+              label={locale === 'vi' ? 'Hạn đăng ký' : 'Registration Closes'}
               value={event.event_end_date ? formatDateTime(event.event_end_date, locale) : (locale === 'vi' ? 'Chưa đặt' : 'Not set')}
             />
             <InfoBlock
@@ -486,9 +486,13 @@ export function EventDetail({ eventId }: { eventId: string }) {
             )}
 
             <div className="rounded-2xl bg-white px-4 py-3 text-stone-600">
-              {locale === 'vi'
-                ? 'Sau khi đăng ký, bạn có thể hủy đăng ký bất kỳ lúc nào trước khi sự kiện kết thúc.'
-                : 'After registering, you can cancel your RSVP any time before the event is closed.'}
+              {event.allow_cancellation !== false
+                ? (locale === 'vi'
+                  ? 'Sau khi đăng ký, bạn có thể hủy đăng ký bất kỳ lúc nào trước khi sự kiện kết thúc.'
+                  : 'After registering, you can cancel your RSVP any time before the event is closed.')
+                : (locale === 'vi'
+                  ? 'Sau khi đăng ký, bạn không thể tự hủy đăng ký. Vui lòng liên hệ ban tổ chức nếu cần.'
+                  : 'After registering, cancellation is not available. Please contact the organizer if needed.')}
             </div>
           </div>
         </section>
@@ -730,7 +734,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                 {locale === 'vi' ? 'Bạn có thể chuyển lại về chế độ tham gia bình thường bất kỳ lúc nào.' : 'You can switch back to a normal attendee role at any time.'}
               </span>
             )}
-            {hasRsvp && (
+            {hasRsvp && event.allow_cancellation !== false && (
               <button
                 type="button"
                 onClick={() => setConfirmRemove(true)}

@@ -25,14 +25,18 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
     redirect('/onboard');
   }
 
+  const membershipStatus = getMembershipStatus(member);
+
   // Check if member has completed profile (required fields)
-  if (!member.role || !member.company || !member.expertise) {
+  // Skip redirect for premium users — let them edit their profile directly
+  const isProfileIncomplete = !member.role || !member.company || !member.expertise;
+  const isPremium = member.paid || member.payment_status === 'paid';
+  if (isProfileIncomplete && !isPremium) {
     redirect('/onboard');
   }
 
-  const membershipStatus = getMembershipStatus(member);
   const resolvedSearchParams = await searchParams;
-  const isEditMode = resolvedSearchParams.edit === 'true';
+  const isEditMode = resolvedSearchParams.edit === 'true' || (isProfileIncomplete && isPremium);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">

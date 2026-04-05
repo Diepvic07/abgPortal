@@ -160,7 +160,7 @@ export function NewProposalForm() {
 
         {/* Step 1: Category */}
         <div className="bg-gray-50 rounded-xl p-5">
-          <label className="block text-sm font-semibold text-gray-900 mb-3">
+          <label className="block text-base font-semibold text-gray-900 mb-3">
             1. {vi ? 'Loại hoạt động' : 'Activity type'}
           </label>
           <div className="flex flex-wrap gap-2">
@@ -183,10 +183,10 @@ export function NewProposalForm() {
 
         {/* Step 2: Title */}
         <div className="bg-gray-50 rounded-xl p-5">
-          <label htmlFor="title" className="block text-sm font-semibold text-gray-900 mb-1">
+          <label htmlFor="title" className="block text-base font-semibold text-gray-900 mb-1">
             2. {vi ? 'Tên hoạt động' : 'Activity name'} *
           </label>
-          <p className="text-xs text-gray-500 mb-2">{vi ? 'Đặt tên ngắn gọn, dễ hiểu' : 'Short, clear name'}</p>
+          <p className="text-sm text-gray-500 mb-2">{vi ? 'Đặt tên ngắn gọn, dễ hiểu' : 'Short, clear name'}</p>
           <input
             id="title"
             type="text"
@@ -201,10 +201,10 @@ export function NewProposalForm() {
 
         {/* Step 3: What — the main description */}
         <div className="bg-gray-50 rounded-xl p-5">
-          <label htmlFor="what" className="block text-sm font-semibold text-gray-900 mb-1">
+          <label htmlFor="what" className="block text-base font-semibold text-gray-900 mb-1">
             3. {vi ? 'Bạn muốn làm gì?' : 'What do you want to do?'} *
           </label>
-          <p className="text-xs text-gray-500 mb-2">{vi ? 'Mô tả ngắn gọn ý tưởng (2-3 câu là đủ)' : 'Brief description (2-3 sentences is enough)'}</p>
+          <p className="text-sm text-gray-500 mb-2">{vi ? 'Mô tả ngắn gọn ý tưởng (2-3 câu là đủ)' : 'Brief description (2-3 sentences is enough)'}</p>
           <textarea
             id="what"
             value={what}
@@ -219,10 +219,10 @@ export function NewProposalForm() {
 
         {/* Step 4: Why */}
         <div className="bg-gray-50 rounded-xl p-5">
-          <label htmlFor="why" className="block text-sm font-semibold text-gray-900 mb-1">
+          <label htmlFor="why" className="block text-base font-semibold text-gray-900 mb-1">
             4. {vi ? 'Tại sao hoạt động này quan trọng?' : 'Why does this matter?'}
           </label>
-          <p className="text-xs text-gray-500 mb-2">{vi ? 'Giúp mọi người hiểu giá trị của hoạt động' : 'Help people understand the value'}</p>
+          <p className="text-sm text-gray-500 mb-2">{vi ? 'Giúp mọi người hiểu giá trị của hoạt động' : 'Help people understand the value'}</p>
           <input
             id="why"
             type="text"
@@ -238,7 +238,7 @@ export function NewProposalForm() {
         {/* Step 5: Who + How many */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 rounded-xl p-5">
-            <label htmlFor="who" className="block text-sm font-semibold text-gray-900 mb-1">
+            <label htmlFor="who" className="block text-base font-semibold text-gray-900 mb-1">
               5. {vi ? 'Ai nên tham gia?' : 'Who should join?'}
             </label>
             <input
@@ -251,7 +251,7 @@ export function NewProposalForm() {
             />
           </div>
           <div className="bg-gray-50 rounded-xl p-5">
-            <label htmlFor="howMany" className="block text-sm font-semibold text-gray-900 mb-1">
+            <label htmlFor="howMany" className="block text-base font-semibold text-gray-900 mb-1">
               {vi ? 'Cần bao nhiêu người?' : 'How many people needed?'}
             </label>
             <input
@@ -268,7 +268,7 @@ export function NewProposalForm() {
         {/* Step 6: Resources + Date */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 rounded-xl p-5">
-            <label htmlFor="resources" className="block text-sm font-semibold text-gray-900 mb-1">
+            <label htmlFor="resources" className="block text-base font-semibold text-gray-900 mb-1">
               6. {vi ? 'Cần hỗ trợ gì?' : 'What support is needed?'}
             </label>
             <input
@@ -281,7 +281,7 @@ export function NewProposalForm() {
             />
           </div>
           <div className="bg-gray-50 rounded-xl p-5">
-            <label htmlFor="targetDate" className="block text-sm font-semibold text-gray-900 mb-1">
+            <label htmlFor="targetDate" className="block text-base font-semibold text-gray-900 mb-1">
               {vi ? 'Dự kiến khi nào?' : 'Target date'}
             </label>
             <input
@@ -296,10 +296,10 @@ export function NewProposalForm() {
 
         {/* Step 7: Extra / paste anything */}
         <div className="bg-gray-50 rounded-xl p-5">
-          <label htmlFor="extra" className="block text-sm font-semibold text-gray-900 mb-1">
+          <label htmlFor="extra" className="block text-base font-semibold text-gray-900 mb-1">
             7. {vi ? 'Thông tin thêm (tùy chọn)' : 'Additional info (optional)'}
           </label>
-          <p className="text-xs text-gray-500 mb-2">
+          <p className="text-sm text-gray-500 mb-2">
             {vi ? 'Paste nội dung có sẵn, thêm chi tiết, link tham khảo, hoặc bất cứ gì bạn muốn chia sẻ' : 'Paste existing content, add details, reference links, or anything else you want to share'}
           </p>
           <textarea
@@ -315,7 +315,7 @@ export function NewProposalForm() {
 
         {/* Step 8: Image upload */}
         <div className="bg-gray-50 rounded-xl p-5">
-          <label className="block text-sm font-semibold text-gray-900 mb-1">
+          <label className="block text-base font-semibold text-gray-900 mb-1">
             8. {vi ? 'Ảnh minh họa (tùy chọn)' : 'Cover image (optional)'}
           </label>
           <p className="text-xs text-gray-500 mb-3">{vi ? 'Thêm ảnh để đề xuất hấp dẫn hơn. Tối đa 5MB.' : 'Add an image to make your proposal more engaging. Max 5MB.'}</p>
@@ -359,7 +359,7 @@ export function NewProposalForm() {
 
         {/* Step 9: Commitment level */}
         <div className="bg-gray-50 rounded-xl p-5">
-          <label className="block text-sm font-semibold text-gray-900 mb-3">
+          <label className="block text-base font-semibold text-gray-900 mb-3">
             9. {vi ? 'Bạn sẽ tham gia ở mức nào?' : 'How will you participate?'} *
           </label>
           <div className="grid grid-cols-3 gap-3">

@@ -7,7 +7,7 @@ import { getAllEvents, createEvent } from '@/lib/supabase-events';
 import { getMemberByEmail } from '@/lib/supabase-db';
 import { z } from 'zod';
 
-const EventCategory = z.enum(['charity', 'event', 'learning', 'community_support', 'networking', 'other']);
+const EventCategory = z.enum(['abg_talks', 'fieldtrip', 'networking', 'learning', 'webinar', 'event', 'community_support', 'abg_business_connect', 'other']);
 const EventStatus = z.enum(['draft', 'published', 'cancelled', 'completed']);
 const EventMode = z.enum(['offline', 'online', 'hybrid']);
 
@@ -30,6 +30,7 @@ const CreateEventSchema = z.object({
   fee_guest: z.number().int().min(0).optional(),
   capacity_guest: z.number().int().min(0).optional(),
   is_public: z.boolean().optional(),
+  allow_cancellation: z.boolean().optional(),
   payment_qr_url: z.string().url().optional(),
   payment_instructions: z.string().optional(),
 });

@@ -18,7 +18,7 @@ const STATUS_COLORS: Record<EventStatus, string> = {
 };
 
 const ALL_STATUSES: EventStatus[] = ['draft', 'published', 'cancelled', 'completed'];
-const ALL_CATEGORIES: EventCategory[] = ['charity', 'event', 'learning', 'community_support', 'networking', 'other'];
+const ALL_CATEGORIES: EventCategory[] = ['abg_talks', 'fieldtrip', 'networking', 'learning', 'webinar', 'event', 'community_support', 'abg_business_connect', 'other'];
 
 interface EventForm {
   title: string;
@@ -37,6 +37,7 @@ interface EventForm {
   fee_basic: string;
   fee_guest: string;
   is_public: boolean;
+  allow_cancellation: boolean;
   payment_qr_url: string;
   payment_instructions: string;
 }
@@ -58,6 +59,7 @@ const emptyForm: EventForm = {
   fee_basic: '',
   fee_guest: '',
   is_public: false,
+  allow_cancellation: true,
   payment_qr_url: '',
   payment_instructions: '',
 };
@@ -127,6 +129,7 @@ export function AdminEventManager() {
       fee_basic: event.fee_basic != null ? String(event.fee_basic) : '',
       fee_guest: event.fee_guest != null ? String(event.fee_guest) : '',
       is_public: event.is_public || false,
+      allow_cancellation: event.allow_cancellation !== false,
       payment_qr_url: event.payment_qr_url || '',
       payment_instructions: event.payment_instructions || '',
     });
@@ -183,6 +186,7 @@ export function AdminEventManager() {
     else if (editingEvent) payload.capacity_guest = null;
 
     payload.is_public = form.is_public;
+    payload.allow_cancellation = form.allow_cancellation;
 
     if (form.payment_qr_url) payload.payment_qr_url = form.payment_qr_url;
     else if (editingEvent) payload.payment_qr_url = null;
@@ -388,7 +392,7 @@ export function AdminEventManager() {
       {/* Create/Edit Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b shrink-0">
               <h2 className="text-lg font-semibold text-gray-900">
                 {editingEvent ? t.admin.events.editEvent : t.admin.events.createNewEvent}
@@ -446,7 +450,7 @@ export function AdminEventManager() {
                     required
                     minLength={20}
                     maxLength={5000}
-                    rows={4}
+                    rows={8}
                     value={form.description}
                     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
@@ -549,6 +553,20 @@ export function AdminEventManager() {
                   <div>
                     <span className="text-sm font-medium text-gray-700">{t.admin.events.formPublicEvent}</span>
                     <p className="text-xs text-gray-500">{t.admin.events.formPublicHelp}</p>
+                  </div>
+                </label>
+
+                {/* Allow Cancellation Toggle */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.allow_cancellation}
+                    onChange={(e) => setForm((f) => ({ ...f, allow_cancellation: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">{t.admin.events.formAllowCancellation}</span>
+                    <p className="text-xs text-gray-500">{t.admin.events.formAllowCancellationHelp}</p>
                   </div>
                 </label>
 

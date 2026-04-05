@@ -228,9 +228,13 @@ export function ProfileEditFormComponent({ member }: ProfileEditFormComponentPro
               onChange={handleAvatarChange}
               className="hidden"
             />
-            <p className="text-sm text-gray-500">
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              className="px-4 py-2 text-sm font-medium text-brand border border-brand/30 rounded-lg hover:bg-brand/5 transition-colors"
+            >
               {t.onboard.form.avatar}
-            </p>
+            </button>
           </div>
 
           {/* Basic Info Section */}

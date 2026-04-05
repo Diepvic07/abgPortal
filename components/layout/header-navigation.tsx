@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 import { LanguageSwitcherDropdown } from '@/components/ui/language-switcher-dropdown';
 import { HeaderUserMenu } from '@/components/ui/header-user-menu';
@@ -16,6 +17,8 @@ import { PaymentInfoModal } from '@/components/ui/payment-info-modal';
 export function HeaderNavigation() {
   const { t } = useTranslation();
   const { data: session, status } = useSession();
+  const pathname = usePathname();
+  const router = useRouter();
   const [member, setMember] = useState<Member | null>(null);
   const [isLoadingMember, setIsLoadingMember] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -102,7 +105,17 @@ export function HeaderNavigation() {
                 {t.nav.join}
               </Link>
             )}
-            <Link href="/request" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+            <Link
+              href="/request"
+              onClick={(e) => {
+                if (pathname === '/request') {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  router.refresh();
+                }
+              }}
+              className="text-white/80 hover:text-white text-sm font-medium transition-colors"
+            >
               {t.nav.findConnection}
             </Link>
             {status === 'authenticated' && (
@@ -112,6 +125,9 @@ export function HeaderNavigation() {
                 </Link>
                 <Link href="/members" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
                   {t.nav.members}
+                </Link>
+                <Link href="/profile" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+                  {t.nav.profile || 'Profile'}
                 </Link>
               </>
             )}
@@ -178,7 +194,14 @@ export function HeaderNavigation() {
               <Link
                 href="/request"
                 className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  if (pathname === '/request') {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    router.refresh();
+                  }
+                }}
               >
                 {t.nav.findConnection}
               </Link>
@@ -197,6 +220,13 @@ export function HeaderNavigation() {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {t.nav.members}
+                  </Link>
+                  <Link
+                    href="/profile"
+                    className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {t.nav.profile || 'Profile'}
                   </Link>
                 </>
               )}

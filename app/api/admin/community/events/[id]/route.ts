@@ -6,7 +6,7 @@ import { isAdminAsync } from '@/lib/admin-utils-server';
 import { getEventById, updateEvent, deleteEvent } from '@/lib/supabase-events';
 import { z } from 'zod';
 
-const EventCategory = z.enum(['charity', 'event', 'learning', 'community_support', 'networking', 'other']);
+const EventCategory = z.enum(['abg_talks', 'fieldtrip', 'networking', 'learning', 'webinar', 'event', 'community_support', 'abg_business_connect', 'other']);
 const EventStatus = z.enum(['draft', 'published', 'cancelled', 'completed']);
 const EventMode = z.enum(['offline', 'online', 'hybrid']);
 
@@ -29,6 +29,7 @@ const UpdateEventSchema = z.object({
   fee_guest: z.number().int().min(0).nullable().optional(),
   capacity_guest: z.number().int().min(0).nullable().optional(),
   is_public: z.boolean().optional(),
+  allow_cancellation: z.boolean().optional(),
   payment_qr_url: z.string().url().nullable().optional(),
   payment_instructions: z.string().nullable().optional(),
 });
