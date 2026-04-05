@@ -31,6 +31,7 @@ const CreateEventSchema = z.object({
   capacity_guest: z.number().int().min(0).optional(),
   is_public: z.boolean().optional(),
   allow_cancellation: z.boolean().optional(),
+  registration_deadline: z.string().optional(),
   payment_qr_url: z.string().url().optional(),
   payment_instructions: z.string().optional(),
 });

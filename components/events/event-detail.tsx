@@ -457,12 +457,16 @@ export function EventDetail({ eventId }: { eventId: string }) {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <InfoBlock
               label={locale === 'vi' ? 'Ngày diễn ra' : 'Event Date'}
-              value={formatDateTime(event.event_date, locale)}
+              value={event.event_end_date
+                ? `${formatDateTime(event.event_date, locale)} — ${formatDateTime(event.event_end_date, locale)}`
+                : formatDateTime(event.event_date, locale)}
             />
-            <InfoBlock
-              label={locale === 'vi' ? 'Hạn chót đăng ký' : 'Registration Deadline'}
-              value={event.event_end_date ? formatDateTime(event.event_end_date, locale) : (locale === 'vi' ? 'Chưa đặt' : 'Not set')}
-            />
+            {event.registration_deadline && (
+              <InfoBlock
+                label={locale === 'vi' ? 'Hạn chót đăng ký' : 'Registration Deadline'}
+                value={formatDateTime(event.registration_deadline, locale)}
+              />
+            )}
             <InfoBlock
               label={locale === 'vi' ? 'Hình thức' : 'Mode'}
               value={modeLabel}

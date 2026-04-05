@@ -38,6 +38,7 @@ interface EventForm {
   fee_guest: string;
   is_public: boolean;
   allow_cancellation: boolean;
+  registration_deadline: string;
   payment_qr_url: string;
   payment_instructions: string;
 }
@@ -60,6 +61,7 @@ const emptyForm: EventForm = {
   fee_guest: '',
   is_public: false,
   allow_cancellation: true,
+  registration_deadline: '',
   payment_qr_url: '',
   payment_instructions: '',
 };
@@ -130,6 +132,7 @@ export function AdminEventManager() {
       fee_guest: event.fee_guest != null ? String(event.fee_guest) : '',
       is_public: event.is_public || false,
       allow_cancellation: event.allow_cancellation !== false,
+      registration_deadline: event.registration_deadline ? utcToLocalInput(event.registration_deadline) : '',
       payment_qr_url: event.payment_qr_url || '',
       payment_instructions: event.payment_instructions || '',
     });
@@ -187,6 +190,9 @@ export function AdminEventManager() {
 
     payload.is_public = form.is_public;
     payload.allow_cancellation = form.allow_cancellation;
+
+    if (form.registration_deadline) payload.registration_deadline = new Date(form.registration_deadline).toISOString();
+    else if (editingEvent) payload.registration_deadline = null;
 
     if (form.payment_qr_url) payload.payment_qr_url = form.payment_qr_url;
     else if (editingEvent) payload.payment_qr_url = null;
@@ -479,6 +485,17 @@ export function AdminEventManager() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
+                </div>
+
+                {/* Registration Deadline */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formRegistrationDeadline}</label>
+                  <input
+                    type="datetime-local"
+                    value={form.registration_deadline}
+                    onChange={(e) => setForm((f) => ({ ...f, registration_deadline: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
 
                 {/* Location */}

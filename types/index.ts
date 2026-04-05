@@ -384,6 +384,7 @@ export interface CommunityEvent {
   payment_qr_url?: string;
   payment_instructions?: string;
   allow_cancellation?: boolean;
+  registration_deadline?: string;
   guest_rsvp_count?: number;
   created_at: string;
   updated_at: string;
