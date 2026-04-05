@@ -1072,15 +1072,37 @@ export function EventDetail({ eventId }: { eventId: string }) {
                             <span className="text-sm font-medium text-gray-900">{reply.member_name || 'Member'}</span>
                             <span className="text-xs text-gray-500">{formatRelativeTime(reply.created_at, locale)}</span>
                           </div>
-                          <p className="mt-0.5 whitespace-pre-wrap text-sm leading-5 text-gray-700">{reply.body}</p>
-                          <div className="mt-1">
+                          {editingComment === reply.id ? (
+                            <div className="mt-1">
+                              <textarea
+                                value={editBody}
+                                onChange={(e) => setEditBody(e.target.value)}
+                                className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                rows={2}
+                                maxLength={2000}
+                                autoFocus
+                              />
+                              <div className="mt-1 flex gap-2 justify-end">
+                                <button onClick={() => setEditingComment(null)} className="text-xs text-gray-500 px-2 py-1">{locale === 'vi' ? 'Hủy' : 'Cancel'}</button>
+                                <button onClick={() => handleEditComment(reply.id)} disabled={!editBody.trim()} className="rounded-lg bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-50">{locale === 'vi' ? 'Lưu' : 'Save'}</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="mt-0.5 whitespace-pre-wrap text-sm leading-5 text-gray-700">{reply.body}</p>
+                          )}
+                          <div className="mt-1 flex items-center gap-3">
                             <CommentReactions
                               commentId={reply.id}
                               commentType="event"
                               entityId={eventId}
                               reactions={reply.reactions}
-                              onReactionChange={() => void fetchCommentsDataRef.current()}
                             />
+                            {currentMemberId === reply.member_id && (
+                              <>
+                                <button onClick={() => { setEditingComment(reply.id); setEditBody(reply.body); }} className="text-xs text-gray-400 hover:text-blue-600 transition-colors">{locale === 'vi' ? 'Sửa' : 'Edit'}</button>
+                                <button onClick={() => { if (confirm(locale === 'vi' ? 'Xóa bình luận này?' : 'Delete this comment?')) handleDeleteComment(reply.id); }} className="text-xs text-gray-400 hover:text-red-600 transition-colors">{locale === 'vi' ? 'Xóa' : 'Delete'}</button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
