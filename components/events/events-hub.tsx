@@ -107,16 +107,6 @@ export function EventsHub() {
 
   return (
     <div>
-      {/* Beta banner */}
-      <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
-        <span className="text-xs font-semibold bg-amber-400 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">Beta</span>
-        <p className="text-sm text-amber-800">
-          {locale === 'vi'
-            ? 'Tính năng đang trong giai đoạn thử nghiệm. Dữ liệu hiện tại là dữ liệu mẫu và có thể không chính xác.'
-            : 'This feature is in beta. Current data is sample data and may not be accurate.'}
-        </p>
-      </div>
-
       {/* Header with tabs and CTA */}
       <div className="flex items-center justify-between mb-2">
         <nav className="flex gap-6" role="tablist">

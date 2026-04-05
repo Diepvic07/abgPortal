@@ -1,18 +1,36 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CommunityEvent, EVENT_CATEGORY_LABELS, EVENT_MODE_LABELS, EventMode } from '@/types';
 import { GuestRsvpModal } from './guest-rsvp-modal';
 
-function formatDateTime(dateStr: string): string {
+const AIRBNB_CARD_SHADOW = 'rgba(0,0,0,0.02) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 6px, rgba(0,0,0,0.1) 0px 4px 8px';
+
+function formatDateParts(dateStr: string): { date: string; time: string } {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
-    });
-  } catch { return dateStr; }
+    return {
+      date: date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      time: date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    };
+  } catch {
+    return { date: dateStr, time: '' };
+  }
+}
+
+function formatCurrencyVnd(amount: number): string {
+  if (amount === 0) return 'Free';
+  return `${new Intl.NumberFormat('vi-VN').format(amount)} VND`;
 }
 
 function deriveEventMode(event: CommunityEvent): EventMode {
@@ -28,11 +46,7 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
   const [showGuestRsvp, setShowGuestRsvp] = useState(false);
   const [guestCount, setGuestCount] = useState(0);
 
-  useEffect(() => {
-    fetchEvent();
-  }, [eventId]);
-
-  async function fetchEvent() {
+  const fetchEvent = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/public/events/${eventId}`);
@@ -46,23 +60,41 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [eventId]);
+
+  useEffect(() => {
+    void fetchEvent();
+  }, [fetchEvent]);
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-8 animate-pulse space-y-6">
-        <div className="h-8 bg-gray-200 rounded w-2/3" />
-        <div className="h-64 bg-gray-200 rounded-3xl" />
-        <div className="h-32 bg-gray-200 rounded-3xl" />
+      <div className="mx-auto max-w-6xl px-1 py-6">
+        <div className="animate-pulse space-y-5">
+          <div className="h-5 w-32 rounded-full bg-stone-200" />
+          <div className="h-14 w-3/4 rounded-3xl bg-stone-200" />
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.55fr)_360px]">
+            <div className="space-y-5">
+              <div className="aspect-[16/10] rounded-[32px] bg-stone-200" />
+              <div className="grid gap-5 md:grid-cols-2">
+                <div className="h-52 rounded-[28px] bg-stone-100" />
+                <div className="h-52 rounded-[28px] bg-stone-100" />
+              </div>
+              <div className="h-64 rounded-[28px] bg-stone-100" />
+            </div>
+            <div className="h-[360px] rounded-[28px] bg-stone-100" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!event) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-8 text-center">
-        <p className="text-gray-600">Event not found or not available.</p>
-        <Link href="/events" className="text-blue-600 hover:underline mt-2 inline-block">Back to events</Link>
+      <div className="mx-auto max-w-3xl px-4 py-12 text-center text-[#222222]">
+        <p className="text-[#6a6a6a]">Event not found or not available.</p>
+        <Link href="/events" className="mt-3 inline-flex text-sm font-medium text-[#ff385c] hover:text-[#e00b41]">
+          Back to events
+        </Link>
       </div>
     );
   }
@@ -73,127 +105,195 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
   const hasFees = event.fee_premium != null || event.fee_basic != null || event.fee_guest != null;
   const guestCapacityFull = event.capacity_guest != null && event.capacity_guest > 0 && guestCount >= event.capacity_guest;
   const noGuests = event.capacity_guest === 0;
+  const eventStartParts = formatDateParts(event.event_date);
+  const eventEndParts = event.event_end_date ? formatDateParts(event.event_end_date) : null;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <nav className="text-sm text-gray-500 mb-4">
-        <Link href="/events" className="hover:text-blue-600">Events</Link>
-        <span className="mx-2">&gt;</span>
-        <span className="text-gray-900">{event.title}</span>
+    <div className="mx-auto max-w-6xl px-1 py-4 text-[#222222]">
+      <nav className="mb-6 text-sm text-[#6a6a6a]">
+        <Link href="/events" className="transition-colors hover:text-[#222222]">Events</Link>
+        <span className="mx-2">/</span>
+        <span className="text-[#222222]">{event.title}</span>
       </nav>
 
-      {event.image_url && (
-        <div className="mb-6 overflow-hidden rounded-3xl border border-stone-200 bg-stone-50">
-          <img src={event.image_url} alt="" className="h-72 w-full object-cover" />
-        </div>
-      )}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.55fr)_360px]">
+        <div className="space-y-8">
+          <section>
+            <div className="flex flex-wrap items-center gap-2">
+              <SoftBadge tone="stone">{modeLabel}</SoftBadge>
+              <SoftBadge tone="plain">{categoryLabel}</SoftBadge>
+              {event.is_public && <SoftBadge tone="rose">Public event</SoftBadge>}
+            </div>
 
-      <div className="mb-6">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold text-stone-700">{modeLabel}</span>
-          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{categoryLabel}</span>
-          {event.is_public && (
-            <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">Public Event</span>
-          )}
-        </div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{event.title}</h1>
-      </div>
+            <h1 className="mt-5 font-heading text-4xl font-semibold leading-tight tracking-[-0.03em] text-[#222222] md:text-[2.85rem]">
+              {event.title}
+            </h1>
+            <p className="mt-4 max-w-3xl text-[15px] leading-7 text-[#6a6a6a]">
+              Key event details at a glance — register as a guest or log in as an ABG member for the full experience.
+            </p>
+          </section>
 
-      {/* Event Info */}
-      <section className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="flex items-start gap-3">
-            <span className="text-xl">📅</span>
-            <div>
-              <p className="text-sm font-medium text-gray-900">{formatDateTime(event.event_date)}</p>
-              {event.event_end_date && (
-                <p className="text-xs text-gray-500">to {formatDateTime(event.event_end_date)}</p>
+          <section className="overflow-hidden rounded-[32px] bg-white" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+            {event.image_url ? (
+              <div className="aspect-[16/10] bg-[#f7f7f7]">
+                <img src={event.image_url} alt="" className="h-full w-full object-cover" />
+              </div>
+            ) : (
+              <div className="flex aspect-[16/10] items-end bg-[linear-gradient(135deg,#fff8f6_0%,#ffffff_48%,#f7f7f7_100%)] p-8">
+                <div className="max-w-md">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">Public event</p>
+                  <p className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
+                    Xem chi tiết sự kiện trước khi đăng ký tham gia.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-4 border-t border-black/5 p-5 sm:grid-cols-3 sm:p-6">
+              <HeroFact
+                label="When"
+                value={(
+                  <DateTimeValue date={eventStartParts.date} time={eventStartParts.time} />
+                )}
+              />
+              <HeroFact label="Where" value={event.location || (eventMode === 'online' ? 'Online event' : 'To be announced')} />
+              <HeroFact
+                label="Guest spots"
+                value={
+                  event.capacity_guest != null && event.capacity_guest > 0
+                    ? `${guestCount} / ${event.capacity_guest}`
+                    : (noGuests ? 'Members only' : 'Open guest access')
+                }
+              />
+            </div>
+          </section>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            <section className="rounded-[28px] bg-white p-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+              <SectionEyebrow>At a glance</SectionEyebrow>
+              <div className="mt-4 grid gap-3">
+                <InfoBlock
+                  label="Event date"
+                  value={<DateTimeValue date={eventStartParts.date} time={eventStartParts.time} />}
+                />
+                {eventEndParts && (
+                  <InfoBlock
+                    label="Ends"
+                    value={<DateTimeValue date={eventEndParts.date} time={eventEndParts.time} />}
+                  />
+                )}
+                <InfoBlock label="Mode" value={modeLabel} />
+                <InfoBlock label="Guest availability" value={noGuests ? 'Members only' : guestCapacityFull ? 'Guest registration full' : 'Guest registration open'} />
+              </div>
+            </section>
+
+            <section className="rounded-[28px] bg-white p-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+              <SectionEyebrow>Venue & access</SectionEyebrow>
+              <div className="mt-4 space-y-4">
+                <VenueRow
+                  label={eventMode === 'online' ? 'Join online' : 'Location'}
+                  value={event.location || (eventMode === 'online' ? 'Online event' : 'To be announced')}
+                  href={event.location_url || undefined}
+                  linkLabel={event.location_url ? (eventMode === 'online' ? 'Open join link' : 'View on map') : undefined}
+                />
+                <VenueRow
+                  label="Member access"
+                  value="ABG members can log in for the full RSVP, payment, and discussion experience."
+                  href="/login"
+                  linkLabel="Log in as member"
+                  internal
+                />
+              </div>
+            </section>
+          </div>
+
+          <section className="rounded-[28px] bg-white p-6 md:p-7" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+            <SectionEyebrow>About this event</SectionEyebrow>
+            <h2 className="mt-3 font-heading text-[1.9rem] font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
+              What to expect before you register.
+            </h2>
+            <div className="prose prose-sm mt-4 max-w-none whitespace-pre-wrap text-[#3f3f3f]">
+              {event.description}
+            </div>
+
+            {hasFees && (
+              <div className="mt-8 border-t border-black/5 pt-6">
+                <SectionEyebrow>Pricing</SectionEyebrow>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {event.fee_premium != null && (
+                    <PricingCard title="ABG Premium" value={formatCurrencyVnd(event.fee_premium)} />
+                  )}
+                  {event.fee_basic != null && (
+                    <PricingCard title="ABG Basic" value={formatCurrencyVnd(event.fee_basic)} />
+                  )}
+                  {event.fee_guest != null && (
+                    <PricingCard title="Guest" value={formatCurrencyVnd(event.fee_guest)} featured />
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+
+        <div className="space-y-5 lg:sticky lg:top-28 lg:self-start">
+          <section className="rounded-[28px] bg-white p-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+            <SectionEyebrow>Guest registration</SectionEyebrow>
+            <div className="mt-4 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-3xl font-semibold tracking-[-0.03em] text-[#222222]">
+                  {event.capacity_guest != null && event.capacity_guest > 0 ? `${guestCount} / ${event.capacity_guest}` : guestCount}
+                </p>
+                <p className="mt-1 text-sm text-[#6a6a6a]">
+                  {event.capacity_guest != null && event.capacity_guest > 0 ? 'guest spots used' : 'guest registrations'}
+                </p>
+              </div>
+              {event.fee_guest != null && (
+                <div className="text-right">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">Guest fee</p>
+                  <p className="mt-1 text-base font-semibold text-[#222222]">{formatCurrencyVnd(event.fee_guest)}</p>
+                </div>
               )}
             </div>
-          </div>
-          {event.location && (
-            <div className="flex items-start gap-3">
-              <span className="text-xl">📍</span>
-              <div>
-                <p className="text-sm font-medium text-gray-900">{event.location}</p>
-                {event.location_url && (
-                  <a href={event.location_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">View on map</a>
-                )}
-              </div>
+
+            {noGuests ? (
+              <NoticeBox>
+                This event is for ABG members only. <Link href="/login" className="font-medium text-[#ff385c] hover:text-[#e00b41]">Log in</Link> or <Link href="/onboard" className="font-medium text-[#ff385c] hover:text-[#e00b41]">apply for membership</Link>.
+              </NoticeBox>
+            ) : guestCapacityFull ? (
+              <NoticeBox tone="rose">
+                Guest registration is full. <Link href="/login" className="font-medium text-[#ff385c] hover:text-[#e00b41]">Log in</Link> as an ABG member to check member seats.
+              </NoticeBox>
+            ) : (
+              <>
+                <p className="mt-5 text-sm leading-6 text-[#6a6a6a]">
+                  Register as a guest to attend this event. ABG members can <Link href="/login" className="font-medium text-[#ff385c] hover:text-[#e00b41]">log in</Link> for the full event experience.
+                </p>
+                <button
+                  onClick={() => setShowGuestRsvp(true)}
+                  className="mt-5 w-full rounded-xl bg-[#ff385c] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#e00b41]"
+                >
+                  Register as guest
+                </button>
+              </>
+            )}
+          </section>
+
+          <section className="rounded-[28px] bg-white p-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+            <SectionEyebrow>ABG member access</SectionEyebrow>
+            <div className="mt-4 space-y-3 rounded-[24px] bg-[#f7f7f7] p-4">
+              <MetaLine label="Member RSVP" value="Available after login" />
+              <MetaLine label="Payments" value="Handled in member flow" />
+              <MetaLine label="Discussion" value="Visible to members" />
             </div>
-          )}
+            <Link
+              href="/login"
+              className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-medium text-[#222222] transition-colors hover:bg-[#f7f7f7]"
+            >
+              Log in
+            </Link>
+          </section>
         </div>
-      </section>
-
-      {/* Description */}
-      <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">About This Event</h2>
-        <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">{event.description}</div>
-      </section>
-
-      {/* Fee Pricing */}
-      {hasFees && (
-        <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Event Fees</h2>
-          <div className="grid gap-3 md:grid-cols-3">
-            {event.fee_premium != null && (
-              <div className="rounded-2xl border border-stone-200 p-4 text-center">
-                <p className="text-xs font-medium text-gray-500 mb-1">ABG Premium</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {event.fee_premium === 0 ? 'Free' : `${new Intl.NumberFormat('vi-VN').format(event.fee_premium)} VND`}
-                </p>
-              </div>
-            )}
-            {event.fee_basic != null && (
-              <div className="rounded-2xl border border-stone-200 p-4 text-center">
-                <p className="text-xs font-medium text-gray-500 mb-1">ABG Basic</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {event.fee_basic === 0 ? 'Free' : `${new Intl.NumberFormat('vi-VN').format(event.fee_basic)} VND`}
-                </p>
-              </div>
-            )}
-            {event.fee_guest != null && (
-              <div className="rounded-2xl border border-stone-200 p-4 text-center bg-blue-50 border-blue-200">
-                <p className="text-xs font-medium text-blue-600 mb-1">Guest</p>
-                <p className="text-xl font-bold text-blue-900">
-                  {event.fee_guest === 0 ? 'Free' : `${new Intl.NumberFormat('vi-VN').format(event.fee_guest)} VND`}
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Guest Registration */}
-      <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Join This Event</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Register as a guest to attend this event. ABG members can <Link href="/login" className="text-blue-600 hover:underline">log in</Link> for full access.
-        </p>
-
-        {noGuests ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            This event is for ABG members only. <Link href="/login" className="text-blue-600 hover:underline">Log in</Link> or <Link href="/onboard" className="text-blue-600 hover:underline">apply for membership</Link>.
-          </div>
-        ) : guestCapacityFull ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-            Guest registration is full. <Link href="/login" className="text-blue-600 hover:underline">Log in</Link> as an ABG member to check member seats.
-          </div>
-        ) : (
-          <button
-            onClick={() => setShowGuestRsvp(true)}
-            className="w-full md:w-auto px-8 py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-2xl transition-colors"
-          >
-            Register as Guest
-          </button>
-        )}
-
-        {event.capacity_guest != null && event.capacity_guest > 0 && (
-          <p className="mt-3 text-xs text-gray-500">
-            Guest spots: {guestCount} / {event.capacity_guest}
-          </p>
-        )}
-      </section>
+      </div>
 
       {showGuestRsvp && (
         <GuestRsvpModal
@@ -202,6 +302,141 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
           onSuccess={fetchEvent}
         />
       )}
+    </div>
+  );
+}
+
+function SectionEyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">
+      {children}
+    </p>
+  );
+}
+
+function SoftBadge({
+  children,
+  tone,
+}: {
+  children: React.ReactNode;
+  tone: 'plain' | 'stone' | 'rose';
+}) {
+  const classes = {
+    plain: 'bg-white text-[#222222] border border-black/8',
+    stone: 'bg-[#f7f7f7] text-[#3f3f3f] border border-black/5',
+    rose: 'bg-[#fff1eb] text-[#b42318] border border-[#f2d4c9]',
+  };
+
+  return (
+    <span className={`inline-flex rounded-full px-3.5 py-1.5 text-xs font-semibold ${classes[tone]}`}>
+      {children}
+    </span>
+  );
+}
+
+function HeroFact({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded-[24px] bg-[#fcfcfc] p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{label}</p>
+      <div className="mt-2 text-sm font-medium leading-6 text-[#222222]">{value}</div>
+    </div>
+  );
+}
+
+function InfoBlock({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded-[24px] bg-[#f7f7f7] px-4 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{label}</p>
+      <div className="mt-2 text-sm font-medium leading-6 text-[#222222]">{value}</div>
+    </div>
+  );
+}
+
+function DateTimeValue({ date, time }: { date: string; time?: string }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[1.05rem] font-semibold leading-7 tracking-[-0.02em] text-[#222222]">{date}</p>
+      {time && <p className="text-sm font-normal leading-5 text-[#6a6a6a]">{time}</p>}
+    </div>
+  );
+}
+
+function VenueRow({
+  label,
+  value,
+  href,
+  linkLabel,
+  internal = false,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+  linkLabel?: string;
+  internal?: boolean;
+}) {
+  return (
+    <div className="rounded-[24px] bg-[#f7f7f7] p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{label}</p>
+      <p className="mt-2 text-sm font-medium leading-6 text-[#222222]">{value}</p>
+      {href && linkLabel && !internal && (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex text-sm font-medium text-[#ff385c] transition-colors hover:text-[#e00b41]"
+        >
+          {linkLabel}
+        </a>
+      )}
+      {href && linkLabel && internal && (
+        <Link href={href} className="mt-3 inline-flex text-sm font-medium text-[#ff385c] transition-colors hover:text-[#e00b41]">
+          {linkLabel}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function PricingCard({
+  title,
+  value,
+  featured = false,
+}: {
+  title: string;
+  value: string;
+  featured?: boolean;
+}) {
+  return (
+    <div className={`rounded-[24px] border p-4 ${featured ? 'border-[#f2d4c9] bg-[#fff8f6]' : 'border-black/8 bg-[#fcfcfc]'}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{title}</p>
+      <p className="mt-3 text-xl font-semibold tracking-[-0.03em] text-[#222222]">{value}</p>
+    </div>
+  );
+}
+
+function NoticeBox({
+  children,
+  tone = 'sand',
+}: {
+  children: React.ReactNode;
+  tone?: 'sand' | 'rose';
+}) {
+  return (
+    <div className={`mt-5 rounded-[24px] px-4 py-3 text-sm leading-6 ${
+      tone === 'rose'
+        ? 'border border-[#f2d4c9] bg-[#fff1eb] text-[#b42318]'
+        : 'border border-[#f0ddc3] bg-[#fdf4ea] text-[#8a4b14]'
+    }`}>
+      {children}
+    </div>
+  );
+}
+
+function MetaLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <span className="text-sm text-[#6a6a6a]">{label}</span>
+      <span className="text-right text-sm font-medium leading-6 text-[#222222]">{value}</span>
     </div>
   );
 }
