@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { Member, MemberReference, MembershipStatus } from '@/types';
 import { ToastNotification, useToasts } from '@/components/ui/toast-notification';
+import { getMemberPublicProfileUrl } from '@/lib/profile-url';
 
 interface PublicReferencesManagerProps {
   member: Member;
@@ -16,9 +17,8 @@ export function PublicReferencesManager({ member, membershipStatus }: PublicRefe
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const profileUrl = useMemo(() => {
-    if (!member.public_profile_slug) return null;
-    return `/u/${member.public_profile_slug}`;
-  }, [member.public_profile_slug]);
+    return getMemberPublicProfileUrl(member);
+  }, [member]);
   const isProfileLive = membershipStatus === 'premium' || membershipStatus === 'grace-period';
 
   useEffect(() => {

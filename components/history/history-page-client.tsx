@@ -24,6 +24,7 @@ interface EnrichedRequest {
     role: string;
     company: string;
     avatar_url?: string;
+    public_profile_slug?: string;
   } | null;
 }
 
@@ -37,6 +38,7 @@ interface EnrichedConnection {
     role: string;
     company: string;
     avatar_url?: string;
+    public_profile_slug?: string;
   } | null;
 }
 

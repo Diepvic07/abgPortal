@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
                 role: m.role,
                 company: m.company,
                 avatar_url: m.avatar_url,
+                public_profile_slug: m.public_profile_slug,
               };
             }
           }
@@ -95,6 +96,7 @@ export async function GET(request: NextRequest) {
               role: requesterMember.role,
               company: requesterMember.company,
               avatar_url: requesterMember.avatar_url,
+              public_profile_slug: requesterMember.public_profile_slug,
             };
           }
 

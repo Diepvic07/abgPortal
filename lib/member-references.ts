@@ -3,6 +3,7 @@ import { formatDate, generateId } from './utils';
 import { getMemberById } from './supabase-db';
 import type { Member, MemberReference, PublicProfileMember } from '@/types';
 import { isEligibleForPremiumFeatures } from '@/types';
+import { getPublicProfileUrl as getCanonicalPublicProfileUrl } from './profile-url';
 
 function nullToUndefined<T>(val: T | null): T | undefined {
   return val === null ? undefined : val;
@@ -51,7 +52,7 @@ function canReceivePublicProfile(member: Member): boolean {
 }
 
 export function getPublicProfileUrl(slug: string): string {
-  return `/u/${slug}`;
+  return getCanonicalPublicProfileUrl(slug);
 }
 
 export async function getReferenceByWriterAndRecipient(

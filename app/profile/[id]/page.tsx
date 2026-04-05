@@ -1,12 +1,13 @@
 import { notFound, redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { getMemberById, getMemberByEmail, areMembersConnected } from '@/lib/supabase-db';
+import { getMemberById, getMemberByEmail, getMemberByPublicProfileSlug, areMembersConnected } from '@/lib/supabase-db';
 import { getReferenceByWriterAndRecipient } from '@/lib/member-references';
 import { MemberProfileCard } from '@/components/ui/member-profile-card';
 import { MemberReferenceComposer } from '@/components/profile/member-reference-composer';
 import Link from 'next/link';
 import { isEligibleForPremiumFeatures } from '@/types';
+import { getInternalProfileUrl, isUuid } from '@/lib/profile-url';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,20 +16,24 @@ interface ProfilePageProps {
 }
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
-    const { id } = await params;
+    const { id: identifier } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
-        redirect(`/login?callbackUrl=/profile/${id}`);
+        redirect(`/login?callbackUrl=/profile/${identifier}`);
     }
 
     const [currentUser, targetMember] = await Promise.all([
         getMemberByEmail(session.user.email),
-        getMemberById(id),
+        isUuid(identifier) ? getMemberById(identifier) : getMemberByPublicProfileSlug(identifier),
     ]);
 
     if (!currentUser || !targetMember) {
         notFound();
+    }
+
+    if (isUuid(identifier)) {
+        redirect(getInternalProfileUrl(targetMember));
     }
 
     // Check Authorization

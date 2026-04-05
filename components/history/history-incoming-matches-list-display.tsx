@@ -5,6 +5,7 @@ import { useTranslation } from '@/lib/i18n';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { LoveMatchRequest } from '@/types';
 import { IncomingLoveMatchCard } from './incoming-love-match-card';
+import { getInternalProfileUrl } from '@/lib/profile-url';
 
 interface EnrichedConnection {
   id: string;
@@ -16,6 +17,7 @@ interface EnrichedConnection {
     role: string;
     company: string;
     avatar_url?: string;
+    public_profile_slug?: string;
   } | null;
 }
 
@@ -84,7 +86,7 @@ export function IncomingMatchesList({
             {connections.map((connection) => {
               const CardWrapper = connection.requester?.id
                 ? ({ children }: { children: React.ReactNode }) => (
-                  <Link href={`/profile/${connection.requester!.id}`} className="block border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-brand/40 transition-all bg-white group">
+                  <Link href={getInternalProfileUrl(connection.requester!)} className="block border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-brand/40 transition-all bg-white group">
                     {children}
                   </Link>
                 )

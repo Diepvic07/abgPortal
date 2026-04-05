@@ -7,6 +7,7 @@ import { useTranslation } from "@/lib/i18n";
 import type { SearchResultBasic, SearchResultPro } from "@/lib/search-utils";
 import { ContactRequestModal } from "./contact-request-modal";
 import { PaymentInfoModal } from "@/components/ui/payment-info-modal";
+import { getInternalProfileUrl } from "@/lib/profile-url";
 
 type SearchResult = SearchResultBasic | SearchResultPro;
 
@@ -34,7 +35,7 @@ export function MemberSearchResultCard({ result, viewerTier }: MemberSearchResul
 
   return (
     <>
-      <Link href={`/profile/${result.id}`} className="block border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-blue-300 transition-all bg-white group cursor-pointer relative">
+      <Link href={getInternalProfileUrl(result)} className="block border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-blue-300 transition-all bg-white group cursor-pointer relative">
         <div className="flex items-start gap-3">
           <MemberAvatar
             name={result.name}
