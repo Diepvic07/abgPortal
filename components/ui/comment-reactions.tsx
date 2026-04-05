@@ -49,7 +49,7 @@ export function CommentReactions({ commentId, commentType, entityId, reactions, 
     }
   };
 
-  const reactionTypes: ReactionType[] = ['like', 'heart', 'haha', 'wow', 'sad'];
+  const reactionTypes: ReactionType[] = ['like', 'heart', 'haha', 'wow', 'sad', 'cold', 'fire', 'hug', 'highfive'];
   const activeReactions = reactionTypes.filter(t => reactions && reactions[t] > 0);
 
   return (
