@@ -69,6 +69,25 @@ function formatDateTime(dateStr: string, locale: string): string {
   }
 }
 
+function formatEventDateRange(startStr: string, endStr: string | undefined, locale: string): string {
+  if (!endStr) return formatDateTime(startStr, locale);
+  try {
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+    const loc = locale === 'vi' ? 'vi-VN' : 'en-US';
+    const sameDay = start.toDateString() === end.toDateString();
+    if (sameDay) {
+      const timeStart = start.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
+      const timeEnd = end.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
+      const datePart = start.toLocaleDateString(loc, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      return `${timeStart} – ${timeEnd}, ${datePart}`;
+    }
+    return `${formatDateTime(startStr, locale)} – ${formatDateTime(endStr, locale)}`;
+  } catch {
+    return formatDateTime(startStr, locale);
+  }
+}
+
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
   'bg-indigo-500', 'bg-teal-500', 'bg-orange-500', 'bg-cyan-500', 'bg-emerald-500',
@@ -456,17 +475,15 @@ export function EventDetail({ eventId }: { eventId: string }) {
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <InfoBlock
-              label={locale === 'vi' ? 'Ngày diễn ra' : 'Event Date'}
-              value={event.event_end_date
-                ? `${formatDateTime(event.event_date, locale)} — ${formatDateTime(event.event_end_date, locale)}`
-                : formatDateTime(event.event_date, locale)}
+              label={locale === 'vi' ? 'Ngày sự kiện' : 'Event Date'}
+              value={formatEventDateRange(event.event_date, event.event_end_date, locale)}
             />
-            {event.registration_deadline && (
-              <InfoBlock
-                label={locale === 'vi' ? 'Hạn chót đăng ký' : 'Registration Deadline'}
-                value={formatDateTime(event.registration_deadline, locale)}
-              />
-            )}
+            <InfoBlock
+              label={locale === 'vi' ? 'Hạn chót đăng ký' : 'Registration Deadline'}
+              value={event.registration_deadline
+                ? formatDateTime(event.registration_deadline, locale)
+                : (locale === 'vi' ? 'Chưa đặt' : 'Not set')}
+            />
             <InfoBlock
               label={locale === 'vi' ? 'Hình thức' : 'Mode'}
               value={modeLabel}
