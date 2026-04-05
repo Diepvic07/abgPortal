@@ -31,7 +31,7 @@ const RSVP_ACTIONS: Array<{
   {
     level: 'will_participate',
     icon: '🙌',
-    label: { en: 'Will Join', vi: 'Sẽ tham gia' },
+    label: { en: 'Join Now', vi: 'Tham gia ngay' },
     helper: {
       en: 'Reserve your spot and receive event updates.',
       vi: 'Giữ chỗ của bạn và nhận cập nhật về sự kiện.',
@@ -40,7 +40,7 @@ const RSVP_ACTIONS: Array<{
   {
     level: 'will_lead',
     icon: '👑',
-    label: { en: 'Will Lead', vi: 'Sẽ dẫn dắt' },
+    label: { en: 'Help Organize', vi: 'Chung tay tổ chức' },
     helper: {
       en: 'Volunteer to help host or coordinate this event.',
       vi: 'Tình nguyện hỗ trợ tổ chức hoặc điều phối sự kiện này.',
@@ -49,8 +49,8 @@ const RSVP_ACTIONS: Array<{
 ];
 
 const RSVP_LABELS: Record<EventRegistrationLevel, { en: string; vi: string }> = {
-  will_participate: { en: 'Will Join', vi: 'Sẽ tham gia' },
-  will_lead: { en: 'Will Lead', vi: 'Sẽ dẫn dắt' },
+  will_participate: { en: 'Joined', vi: 'Tham gia' },
+  will_lead: { en: 'Organizer', vi: 'Tổ chức' },
 };
 
 function formatDateTime(dateStr: string, locale: string): string {
@@ -67,6 +67,21 @@ function formatDateTime(dateStr: string, locale: string): string {
   } catch {
     return dateStr;
   }
+}
+
+const AVATAR_COLORS = [
+  'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
+  'bg-indigo-500', 'bg-teal-500', 'bg-orange-500', 'bg-cyan-500', 'bg-emerald-500',
+  'bg-violet-500', 'bg-rose-500', 'bg-amber-500', 'bg-sky-500', 'bg-fuchsia-500',
+  'bg-lime-600', 'bg-yellow-600',
+];
+
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 function formatShortDateTime(dateStr: string, locale: string): string {
@@ -377,17 +392,48 @@ export function EventDetail({ eventId }: { eventId: string }) {
           <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
             {categoryLabel}
           </span>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            statusInfo.color === 'green'
-              ? 'bg-green-50 text-green-700'
-              : statusInfo.color === 'blue'
-              ? 'bg-blue-50 text-blue-700'
-              : statusInfo.color === 'red'
-              ? 'bg-red-50 text-red-700'
-              : 'bg-gray-100 text-gray-700'
-          }`}>
-            {statusInfo[locale === 'vi' ? 'vi' : 'en']}
-          </span>
+          {(() => {
+            if (event.status === 'published') {
+              const eventDate = new Date(event.event_date);
+              const now = new Date();
+              const diffMs = eventDate.getTime() - now.getTime();
+              const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+              if (diffDays > 1) {
+                return (
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    {locale === 'vi' ? `Còn ${diffDays} ngày` : `In ${diffDays} days`}
+                  </span>
+                );
+              } else if (diffDays === 1) {
+                return (
+                  <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+                    {locale === 'vi' ? 'Diễn ra ngày mai' : 'Tomorrow'}
+                  </span>
+                );
+              } else if (diffDays === 0 || (diffMs > 0 && diffDays <= 0)) {
+                return (
+                  <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 animate-pulse">
+                    {locale === 'vi' ? 'Diễn ra hôm nay' : 'Today'}
+                  </span>
+                );
+              } else {
+                return (
+                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+                    {locale === 'vi' ? 'Đã diễn ra' : 'Past event'}
+                  </span>
+                );
+              }
+            }
+            return (
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                statusInfo.color === 'blue' ? 'bg-blue-50 text-blue-700'
+                : statusInfo.color === 'red' ? 'bg-red-50 text-red-700'
+                : 'bg-gray-100 text-gray-700'
+              }`}>
+                {statusInfo[locale === 'vi' ? 'vi' : 'en']}
+              </span>
+            );
+          })()}
           {isPremiumExclusive && (
             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
               {locale === 'vi' ? 'Chỉ dành cho Premium' : 'Premium only'}
@@ -410,11 +456,11 @@ export function EventDetail({ eventId }: { eventId: string }) {
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <InfoBlock
-              label={locale === 'vi' ? 'Mở đăng ký' : 'Registration Opens'}
+              label={locale === 'vi' ? 'Ngày diễn ra' : 'Event Date'}
               value={formatDateTime(event.event_date, locale)}
             />
             <InfoBlock
-              label={locale === 'vi' ? 'Hạn đăng ký' : 'Registration Closes'}
+              label={locale === 'vi' ? 'Kết thúc' : 'Ends'}
               value={event.event_end_date ? formatDateTime(event.event_end_date, locale) : (locale === 'vi' ? 'Chưa đặt' : 'Not set')}
             />
             <InfoBlock
@@ -430,7 +476,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
 
         <section className="rounded-3xl border border-stone-200 bg-stone-50 p-5">
           <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-stone-500">
-            {locale === 'vi' ? 'Cách tham gia' : 'How to Attend'}
+            {locale === 'vi' ? 'Địa điểm tổ chức' : 'Event Venue'}
           </h2>
           <div className="mt-4 space-y-4 text-sm text-stone-700">
             {(eventMode === 'offline' || eventMode === 'hybrid') && (
@@ -485,15 +531,6 @@ export function EventDetail({ eventId }: { eventId: string }) {
               </div>
             )}
 
-            <div className="rounded-2xl bg-white px-4 py-3 text-stone-600">
-              {event.allow_cancellation !== false
-                ? (locale === 'vi'
-                  ? 'Sau khi đăng ký, bạn có thể hủy đăng ký bất kỳ lúc nào trước khi sự kiện kết thúc.'
-                  : 'After registering, you can cancel your RSVP any time before the event is closed.')
-                : (locale === 'vi'
-                  ? 'Sau khi đăng ký, bạn không thể tự hủy đăng ký. Vui lòng liên hệ ban tổ chức nếu cần.'
-                  : 'After registering, cancellation is not available. Please contact the organizer if needed.')}
-            </div>
           </div>
         </section>
       </div>
@@ -585,11 +622,18 @@ export function EventDetail({ eventId }: { eventId: string }) {
               <h2 className="text-lg font-semibold text-gray-900">
                 {locale === 'vi' ? 'Đăng ký tham gia' : 'Register'}
               </h2>
-              <p className="mt-1 text-sm text-gray-600">
-                {locale === 'vi'
-                  ? 'Chỉ những người chọn tham gia hoặc dẫn dắt mới được tính là đã đăng ký.'
-                  : 'Only members who choose to join or lead are counted as registered attendees.'}
-              </p>
+              <div className="mt-1 flex items-center gap-3 flex-wrap">
+                <p className="text-sm text-gray-600">
+                  {locale === 'vi'
+                    ? 'Chỉ những người chọn tham gia hoặc dẫn dắt mới được tính là đã đăng ký.'
+                    : 'Only members who choose to join or lead are counted as registered attendees.'}
+                </p>
+                {event.rsvp_score > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                    <span>🔥</span> {locale === 'vi' ? 'Điểm cam kết' : 'Commitment'}: {event.rsvp_score}
+                  </span>
+                )}
+              </div>
             </div>
 
             {myRsvp === 'will_participate' && (
@@ -696,17 +740,21 @@ export function EventDetail({ eventId }: { eventId: string }) {
                   disabled={isDisabled}
                   aria-pressed={isSelected}
                   onClick={() => openRsvpModal(action.level)}
-                  className={`rounded-2xl border px-4 py-4 text-left transition ${
+                  className={`rounded-2xl border-2 px-5 py-5 text-left transition-all duration-200 ${
                     isSelected
                       ? action.level === 'will_lead'
-                        ? 'border-amber-300 bg-amber-50'
-                        : 'border-blue-300 bg-blue-50'
-                      : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50'
+                        ? 'border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 shadow-md shadow-amber-100'
+                        : 'border-blue-400 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md shadow-blue-100'
+                      : action.level === 'will_lead'
+                        ? 'border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 hover:border-amber-300 hover:shadow-md'
+                        : 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 hover:border-blue-300 hover:shadow-md'
                   } ${isDisabled ? 'cursor-not-allowed opacity-60' : ''}`}
                 >
-                  <div className="flex items-center gap-2 text-base font-semibold text-gray-900">
-                    <span>{action.icon}</span>
-                    <span>{action.label[locale === 'vi' ? 'vi' : 'en']}</span>
+                  <div className="flex items-center gap-2.5 text-lg font-bold">
+                    <span className="text-xl">{action.icon}</span>
+                    <span className={action.level === 'will_lead' ? 'text-amber-800' : 'text-blue-800'}>
+                      {action.label[locale === 'vi' ? 'vi' : 'en']}
+                    </span>
                   </div>
                   <p className="mt-2 text-sm leading-6 text-gray-600">
                     {action.helper[locale === 'vi' ? 'vi' : 'en']}
@@ -714,8 +762,8 @@ export function EventDetail({ eventId }: { eventId: string }) {
                   {action.level === 'will_lead' && !canUpgradeToLead && (
                     <p className="mt-3 text-xs font-medium text-amber-700">
                       {locale === 'vi'
-                        ? 'Hãy chọn "Sẽ tham gia" trước, sau đó bạn có thể nâng cấp lên vai trò dẫn dắt.'
-                        : 'Choose "Will Join" first, then you can upgrade to a lead role.'}
+                        ? 'Hãy chọn "Tham gia ngay" trước, sau đó bạn có thể nâng cấp lên vai trò tổ chức.'
+                        : 'Choose "Join Now" first, then you can upgrade to an organizer role.'}
                     </p>
                   )}
                 </button>
@@ -744,6 +792,17 @@ export function EventDetail({ eventId }: { eventId: string }) {
               </button>
             )}
           </div>
+          {hasRsvp && (
+            <p className="mt-3 text-xs text-gray-500">
+              {event.allow_cancellation !== false
+                ? (locale === 'vi'
+                  ? 'Bạn có thể hủy đăng ký bất kỳ lúc nào trước khi sự kiện kết thúc.'
+                  : 'You can cancel your RSVP any time before the event is closed.')
+                : (locale === 'vi'
+                  ? 'Sau khi đăng ký, bạn không thể tự hủy. Vui lòng liên hệ ban tổ chức nếu cần.'
+                  : 'Cancellation is not available. Please contact the organizer if needed.')}
+            </p>
+          )}
         </section>
       )}
 
@@ -770,10 +829,10 @@ export function EventDetail({ eventId }: { eventId: string }) {
                   >
                     {isLead && <span>👑</span>}
                     {rsvp.member_avatar_url ? (
-                      <img src={rsvp.member_avatar_url} alt="" className="h-6 w-6 rounded-full" />
+                      <img src={rsvp.member_avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
                     ) : (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-stone-300 text-xs text-white">
-                        {(rsvp.member_name || '?')[0]}
+                      <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold text-white ${getAvatarColor(rsvp.member_name || '?')}`}>
+                        {(rsvp.member_name || '?')[0].toUpperCase()}
                       </div>
                     )}
                     <span className="font-medium">{rsvp.member_name || 'Member'}</span>

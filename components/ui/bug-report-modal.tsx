@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useToast } from './toast-provider';
 import { LoadingSpinner } from './loading-spinner';
+import { useTranslation } from '@/lib/i18n';
 import imageCompression from 'browser-image-compression';
 
 interface BugReportModalProps {
@@ -12,6 +13,8 @@ interface BugReportModalProps {
 
 export function BugReportModal({ isOpen, onClose }: BugReportModalProps) {
   const { showToast } = useToast();
+  const { locale } = useTranslation();
+  const vi = locale === 'vi';
   const [description, setDescription] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -66,7 +69,7 @@ export function BugReportModal({ isOpen, onClose }: BugReportModalProps) {
 
   const handleSubmit = async () => {
     if (!description.trim()) {
-      setError('Please describe the bug');
+      setError(vi ? 'Vui lòng mô tả lỗi' : 'Please describe the bug');
       return;
     }
 
@@ -82,13 +85,13 @@ export function BugReportModal({ isOpen, onClose }: BugReportModalProps) {
       const res = await fetch('/api/bugs', { method: 'POST', body: formData });
       const result = await res.json();
 
-      if (!res.ok) throw new Error(result.error || 'Failed to submit');
+      if (!res.ok) throw new Error(result.error || (vi ? 'Gửi thất bại' : 'Failed to submit'));
 
-      showToast('Bug report submitted', 'success');
+      showToast(vi ? 'Đã gửi báo lỗi thành công' : 'Bug report submitted', 'success');
       resetForm();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : (vi ? 'Có lỗi xảy ra' : 'Something went wrong'));
     } finally {
       setIsSubmitting(false);
     }
@@ -111,20 +114,22 @@ export function BugReportModal({ isOpen, onClose }: BugReportModalProps) {
           </svg>
         </button>
 
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Report a Bug</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-1">
+          {vi ? 'Báo lỗi' : 'Report a Bug'}
+        </h2>
         <p className="text-sm text-gray-500 mb-4 truncate" title={pageUrl}>
-          Page: {pageUrl}
+          {vi ? 'Trang' : 'Page'}: {pageUrl}
         </p>
 
         {/* Description */}
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          What&apos;s wrong?
+          {vi ? 'Có gì sai?' : 'What\u0027s wrong?'}
         </label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           onPaste={handlePaste}
-          placeholder="Describe the bug... (you can also paste a screenshot here)"
+          placeholder={vi ? 'Mô tả lỗi... (bạn cũng có thể dán ảnh chụp màn hình)' : 'Describe the bug... (you can also paste a screenshot here)'}
           rows={4}
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none mb-4"
         />
@@ -132,7 +137,7 @@ export function BugReportModal({ isOpen, onClose }: BugReportModalProps) {
         {/* Screenshot upload */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Screenshot (optional)
+            {vi ? 'Ảnh chụp màn hình (tùy chọn)' : 'Screenshot (optional)'}
           </label>
           <input
             ref={fileInputRef}
@@ -143,7 +148,7 @@ export function BugReportModal({ isOpen, onClose }: BugReportModalProps) {
           />
           {previewUrl && (
             <div className="mt-2 relative">
-              <img src={previewUrl} alt="Screenshot preview" className="max-h-32 rounded border" />
+              <img src={previewUrl} alt={vi ? 'Xem trước ảnh chụp' : 'Screenshot preview'} className="max-h-32 rounded border" />
               <button
                 type="button"
                 onClick={() => { setScreenshot(null); setPreviewUrl(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
@@ -170,7 +175,7 @@ export function BugReportModal({ isOpen, onClose }: BugReportModalProps) {
             disabled={isSubmitting}
             className="flex-1 py-2.5 px-4 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
           >
-            Cancel
+            {vi ? 'Hủy' : 'Cancel'}
           </button>
           <button
             type="button"
@@ -181,10 +186,10 @@ export function BugReportModal({ isOpen, onClose }: BugReportModalProps) {
             {isSubmitting ? (
               <>
                 <LoadingSpinner size="sm" />
-                <span>Submitting...</span>
+                <span>{vi ? 'Đang gửi...' : 'Submitting...'}</span>
               </>
             ) : (
-              'Submit Report'
+              vi ? 'Gửi báo lỗi' : 'Submit Report'
             )}
           </button>
         </div>

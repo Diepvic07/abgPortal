@@ -15,12 +15,33 @@ export function BugReportButton() {
       <button
         onClick={() => setIsOpen(true)}
         title="Báo lỗi"
-        className="fixed bottom-6 right-6 z-40 h-12 px-4 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+        className="fixed bottom-6 right-6 z-40 group"
       >
-        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        {/* Ladybug SVG */}
+        <svg width="52" height="52" viewBox="0 0 52 52" className="drop-shadow-lg hover:drop-shadow-xl transition-all group-hover:scale-110 duration-200">
+          {/* Body */}
+          <ellipse cx="26" cy="30" rx="16" ry="14" fill="#DC2626" />
+          {/* Center line */}
+          <line x1="26" y1="16" x2="26" y2="44" stroke="#1a1a1a" strokeWidth="1.5" />
+          {/* Spots */}
+          <circle cx="20" cy="24" r="3" fill="#1a1a1a" />
+          <circle cx="32" cy="24" r="3" fill="#1a1a1a" />
+          <circle cx="19" cy="33" r="2.5" fill="#1a1a1a" />
+          <circle cx="33" cy="33" r="2.5" fill="#1a1a1a" />
+          <circle cx="26" cy="38" r="2" fill="#1a1a1a" />
+          {/* Head */}
+          <circle cx="26" cy="17" r="7" fill="#1a1a1a" />
+          {/* Eyes */}
+          <circle cx="23" cy="15" r="2" fill="white" />
+          <circle cx="29" cy="15" r="2" fill="white" />
+          <circle cx="23.5" cy="15.5" r="1" fill="#1a1a1a" />
+          <circle cx="29.5" cy="15.5" r="1" fill="#1a1a1a" />
+          {/* Antennae */}
+          <line x1="23" y1="11" x2="18" y2="5" stroke="#1a1a1a" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="29" y1="11" x2="34" y2="5" stroke="#1a1a1a" strokeWidth="1.5" strokeLinecap="round" />
+          <circle cx="18" cy="5" r="1.5" fill="#1a1a1a" />
+          <circle cx="34" cy="5" r="1.5" fill="#1a1a1a" />
         </svg>
-        <span className="text-sm font-medium whitespace-nowrap">Báo lỗi</span>
       </button>
       <BugReportModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
