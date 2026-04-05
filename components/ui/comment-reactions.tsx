@@ -15,19 +15,27 @@ const REACTION_LABELS: Record<ReactionType, string> = {
   highfive: 'Yeah',
 };
 
+const EMPTY_REACTIONS: ReactionSummary = { like: 0, heart: 0, haha: 0, wow: 0, sad: 0, cold: 0, fire: 0, hug: 0, highfive: 0 };
+
 interface CommentReactionsProps {
   commentId: string;
   commentType: CommentType;
   entityId: string;
   reactions?: ReactionSummary;
-  onReactionChange: () => void;
+  onReactionChange?: () => void;
 }
 
-export function CommentReactions({ commentId, commentType, entityId, reactions, onReactionChange }: CommentReactionsProps) {
+export function CommentReactions({ commentId, commentType, entityId, reactions: initialReactions, onReactionChange }: CommentReactionsProps) {
+  const [localReactions, setLocalReactions] = useState<ReactionSummary>(initialReactions || EMPTY_REACTIONS);
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hoveredReaction, setHoveredReaction] = useState<ReactionType | null>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
+
+  // Sync with props when they change (e.g. after a full refetch)
+  useEffect(() => {
+    if (initialReactions) setLocalReactions(initialReactions);
+  }, [initialReactions]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -41,38 +49,53 @@ export function CommentReactions({ commentId, commentType, entityId, reactions, 
 
   const handleReaction = async (type: ReactionType) => {
     if (loading) return;
-    setLoading(true);
     setShowPicker(false);
     setHoveredReaction(null);
 
+    // Optimistic update
+    const prev = localReactions;
+    const isRemoving = prev.my_reaction === type;
+    const updated = { ...prev };
+
+    if (isRemoving) {
+      updated[type] = Math.max(0, updated[type] - 1);
+      updated.my_reaction = undefined;
+    } else {
+      // Remove old reaction if switching
+      if (prev.my_reaction) {
+        updated[prev.my_reaction] = Math.max(0, updated[prev.my_reaction] - 1);
+      }
+      updated[type] = updated[type] + 1;
+      updated.my_reaction = type;
+    }
+    setLocalReactions(updated);
+
+    // Fire API in background
+    setLoading(true);
     try {
       const url = `/api/community/${commentType === 'event' ? 'events' : 'proposals'}/${entityId}/comments/${commentId}/reactions`;
 
-      let res: Response;
-      if (reactions?.my_reaction === type) {
-        res = await fetch(url, { method: 'DELETE' });
-      } else {
-        res = await fetch(url, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reaction_type: type }),
-        });
-      }
+      const res = isRemoving
+        ? await fetch(url, { method: 'DELETE' })
+        : await fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reaction_type: type }),
+          });
 
       if (!res.ok) {
-        console.error('Reaction failed:', res.status, await res.text());
+        console.error('Reaction failed:', res.status);
+        setLocalReactions(prev); // rollback
       }
-
-      onReactionChange();
-    } catch (err) {
-      console.error('Reaction error:', err);
+    } catch {
+      setLocalReactions(prev); // rollback
     } finally {
       setLoading(false);
     }
   };
 
   const reactionTypes: ReactionType[] = ['like', 'heart', 'haha', 'wow', 'sad', 'cold', 'fire', 'hug', 'highfive'];
-  const activeReactions = reactionTypes.filter(t => reactions && reactions[t] > 0);
+  const activeReactions = reactionTypes.filter(t => localReactions[t] > 0);
 
   return (
     <div className="flex items-center gap-1 relative">
@@ -81,7 +104,7 @@ export function CommentReactions({ commentId, commentType, entityId, reactions, 
           key={type}
           onClick={() => handleReaction(type)}
           className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-colors ${
-            reactions?.my_reaction === type
+            localReactions.my_reaction === type
               ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
@@ -89,7 +112,7 @@ export function CommentReactions({ commentId, commentType, entityId, reactions, 
           title={REACTION_LABELS[type]}
         >
           <span>{REACTION_EMOJI[type]}</span>
-          <span>{reactions![type]}</span>
+          <span>{localReactions[type]}</span>
         </button>
       ))}
 
@@ -99,14 +122,14 @@ export function CommentReactions({ commentId, commentType, entityId, reactions, 
           className={`inline-flex items-center justify-center w-7 h-7 rounded-full transition-all text-sm ${
             showPicker
               ? 'bg-blue-100 scale-110'
-              : reactions?.my_reaction
+              : localReactions.my_reaction
                 ? 'hover:scale-125 hover:bg-gray-100'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100 hover:scale-110 animate-pulse hover:animate-none'
           }`}
           disabled={loading}
           title="React"
         >
-          {reactions?.my_reaction ? REACTION_EMOJI[reactions.my_reaction] : '🫠'}
+          {localReactions.my_reaction ? REACTION_EMOJI[localReactions.my_reaction] : '🫠'}
         </button>
 
         {showPicker && (
@@ -126,7 +149,7 @@ export function CommentReactions({ commentId, commentType, entityId, reactions, 
                   onMouseEnter={() => setHoveredReaction(type)}
                   onMouseLeave={() => setHoveredReaction(null)}
                   className={`w-9 h-9 flex items-center justify-center rounded-full transition-all duration-150 text-xl ${
-                    reactions?.my_reaction === type
+                    localReactions.my_reaction === type
                       ? 'bg-blue-50 scale-110'
                       : 'hover:bg-gray-100'
                   } ${hoveredReaction === type ? 'scale-[1.4] -translate-y-1' : 'hover:scale-125'}`}
