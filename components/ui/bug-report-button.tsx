@@ -42,8 +42,8 @@ export function BugReportButton() {
           <circle cx="18" cy="5" r="1.5" fill="#1a1a1a" />
           <circle cx="34" cy="5" r="1.5" fill="#1a1a1a" />
         </svg>
-        <span className="text-[10px] font-semibold text-red-700 leading-tight text-center drop-shadow-sm">
-          Báo lỗi<br />Report Bug
+        <span className="bg-red-600 text-white text-[11px] font-bold leading-tight text-center px-2.5 py-1 rounded-full shadow-md whitespace-nowrap">
+          Báo lỗi
         </span>
       </button>
       <BugReportModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
