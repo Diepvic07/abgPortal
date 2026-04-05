@@ -2,12 +2,19 @@
 ALTER TABLE community_events ADD COLUMN slug TEXT UNIQUE;
 
 -- Generate slugs for existing events from title
--- Uses lowercase, replaces non-alphanumeric with hyphens, trims hyphens
+-- Transliterates Vietnamese characters to ASCII, then slugifies
 UPDATE community_events
 SET slug = LOWER(
   TRIM(BOTH '-' FROM
     REGEXP_REPLACE(
-      REGEXP_REPLACE(title, '[^\w\s-]', '', 'g'),
+      REGEXP_REPLACE(
+        TRANSLATE(
+          LOWER(title),
+          'àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ',
+          'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd'
+        ),
+        '[^a-z0-9\s-]', '', 'g'
+      ),
       '\s+', '-', 'g'
     )
   )

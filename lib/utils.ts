@@ -17,7 +17,11 @@ export function cn(...inputs: ClassValue[]) {
 export function generateSlug(title: string): string {
   return title
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s-]/gu, '') // keep letters (including Vietnamese), numbers, spaces, hyphens
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // strip diacritics/tones
+    .replace(/[đ]/g, 'd')
+    .replace(/[Đ]/g, 'd')
+    .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
