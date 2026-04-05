@@ -38,7 +38,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
               </p>
               {member.abg_class && (
                 <p className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                  {member.abg_class}
+                  Tham gia khóa ABG: {member.abg_class}
                 </p>
               )}
             </div>
@@ -53,16 +53,39 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
             <div className="mt-5 space-y-5">
               {references.map((reference) => (
                 <article key={reference.id} className="rounded-2xl bg-stone-50 p-5">
-                  <p className="font-medium text-stone-900">{reference.writer_name || 'Member'}</p>
-                  {(reference.writer_role || reference.writer_company) && (
-                    <p className="mt-1 text-sm text-stone-500">
-                      {[reference.writer_role, reference.writer_company].filter(Boolean).join(' @ ')}
+                  <div className="flex items-start gap-4">
+                    {reference.writer_avatar_url ? (
+                      <img
+                        src={reference.writer_avatar_url}
+                        alt=""
+                        className="h-12 w-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-base font-semibold text-blue-700">
+                        {reference.writer_name?.[0] || 'M'}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-stone-900">{reference.writer_name || 'Member'}</p>
+                      {(reference.writer_role || reference.writer_company) && (
+                        <p className="mt-1 text-sm text-stone-500">
+                          {[reference.writer_role, reference.writer_company].filter(Boolean).join(' @ ')}
+                        </p>
+                      )}
+                      {reference.writer_abg_class && (
+                        <p className="mt-2 text-xs font-medium text-blue-700">
+                          Tham gia khóa ABG: {reference.writer_abg_class}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <p className="mt-4 whitespace-pre-line text-sm leading-7 text-stone-700">{reference.body}</p>
+                  {reference.relationship_context && (
+                    <p className="mt-3 text-xs text-stone-500">
+                      <span className="font-medium text-stone-600">Context:</span>{' '}
+                      {reference.relationship_context}
                     </p>
                   )}
-                  <p className="mt-3 text-sm text-stone-600">
-                    <span className="font-medium text-stone-700">Context:</span> {reference.relationship_context}
-                  </p>
-                  <p className="mt-3 whitespace-pre-line text-sm leading-7 text-stone-700">{reference.body}</p>
                 </article>
               ))}
             </div>

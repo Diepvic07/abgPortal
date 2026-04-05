@@ -30,6 +30,7 @@ function mapRowToReference(row: Record<string, unknown>): MemberReference {
     writer_avatar_url: nullToUndefined(writer?.avatar_url as string | null),
     writer_role: nullToUndefined(writer?.role as string | null),
     writer_company: nullToUndefined(writer?.company as string | null),
+    writer_abg_class: nullToUndefined(writer?.abg_class as string | null),
     recipient_name: nullToUndefined(recipient?.name as string | null),
     recipient_avatar_url: nullToUndefined(recipient?.avatar_url as string | null),
   };
@@ -63,7 +64,7 @@ export async function getReferenceByWriterAndRecipient(
 
   const { data, error } = await db
     .from('member_references')
-    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company)')
+    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company, abg_class)')
     .eq('writer_member_id', writerMemberId)
     .eq('recipient_member_id', recipientMemberId)
     .maybeSingle();
@@ -124,7 +125,7 @@ export async function createMemberReference(input: {
       created_at: now,
       updated_at: now,
     })
-    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company)')
+    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company, abg_class)')
     .single();
 
   if (error) {
@@ -147,7 +148,7 @@ export async function getReceivedReferences(
 
   let query = db
     .from('member_references')
-    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company)')
+    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company, abg_class)')
     .eq('recipient_member_id', recipientMemberId)
     .order('created_at', { ascending: false });
 
@@ -207,7 +208,7 @@ export async function updateReferenceVisibility(input: {
     })
     .eq('id', input.referenceId)
     .eq('recipient_member_id', input.recipientMemberId)
-    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company)')
+    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company, abg_class)')
     .single();
 
   if (error) {
@@ -222,7 +223,7 @@ export async function listMemberReferencesForAdmin(): Promise<MemberReference[]>
   const db = createServerSupabaseClient();
   const { data, error } = await db
     .from('member_references')
-    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company), recipient:members!member_references_recipient_member_id_fkey(name, avatar_url)')
+    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company, abg_class), recipient:members!member_references_recipient_member_id_fkey(name, avatar_url)')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -277,7 +278,7 @@ export async function moderateMemberReference(input: {
       updated_at: formatDate(),
     })
     .eq('id', input.referenceId)
-    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company), recipient:members!member_references_recipient_member_id_fkey(name, avatar_url)')
+    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company, abg_class), recipient:members!member_references_recipient_member_id_fkey(name, avatar_url)')
     .single();
 
   if (error) {
@@ -315,7 +316,7 @@ export async function getPublicProfileBySlug(slug: string): Promise<{
   const member = mapRowToPublicProfileMember(memberRow as Record<string, unknown>);
   const { data, error } = await db
     .from('member_references')
-    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company)')
+    .select('*, writer:members!member_references_writer_member_id_fkey(name, avatar_url, role, company, abg_class)')
     .eq('recipient_member_id', member.id)
     .eq('is_publicly_visible', true)
     .eq('status', 'visible')
