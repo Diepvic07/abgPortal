@@ -115,23 +115,34 @@ export function PublicReferencesManager({ member, membershipStatus }: PublicRefe
                       <span className="font-medium text-gray-700">Context:</span> {reference.relationship_context}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    disabled={updatingId === reference.id}
-                    onClick={() => toggleVisibility(reference.id, !reference.is_publicly_visible)}
-                    aria-label={
-                      reference.is_publicly_visible
-                        ? `Hide reference from ${reference.writer_name || 'member'} on public profile`
-                        : `Show reference from ${reference.writer_name || 'member'} on public profile`
-                    }
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                      reference.is_publicly_visible
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-gray-100 text-gray-700'
-                    } disabled:opacity-50`}
-                  >
-                    {reference.is_publicly_visible ? 'Public' : 'Hidden'}
-                  </button>
+                  <div className="flex flex-col items-start gap-2 md:items-end">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        reference.is_publicly_visible
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {reference.is_publicly_visible ? 'Status: Public' : 'Status: Hidden'}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={updatingId === reference.id}
+                      onClick={() => toggleVisibility(reference.id, !reference.is_publicly_visible)}
+                      aria-label={
+                        reference.is_publicly_visible
+                          ? `Hide reference from ${reference.writer_name || 'member'} on public profile`
+                          : `Publish reference from ${reference.writer_name || 'member'} to public profile`
+                      }
+                      className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                        reference.is_publicly_visible
+                          ? 'border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      {reference.is_publicly_visible ? 'Hide From Public Profile' : 'Publish To Public Profile'}
+                    </button>
+                  </div>
                 </div>
                 <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-700">{reference.body}</p>
               </div>
