@@ -7,6 +7,21 @@ import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, COMMITMENT_LABELS, PROPOSAL_CATEGORY_LABELS } from '@/types';
 
+const AVATAR_COLORS = [
+  'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
+  'bg-indigo-500', 'bg-teal-500', 'bg-orange-500', 'bg-cyan-500', 'bg-emerald-500',
+  'bg-violet-500', 'bg-rose-500', 'bg-amber-500', 'bg-sky-500', 'bg-fuchsia-500',
+  'bg-lime-600', 'bg-yellow-600',
+];
+
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 const CATEGORY_ICONS: Record<string, string> = {
   charity: '❤️', event: '🎉', learning: '📚', community_support: '🤝', other: '💡',
 };
@@ -343,9 +358,13 @@ export function ProposalDetail({ proposalId }: Props) {
           {comments.map((c) => (
             <div key={c.id} className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium">
-                  {(c.member_name || '?')[0]}
-                </div>
+                {c.member_avatar_url ? (
+                  <img src={c.member_avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white ${getAvatarColor(c.member_name || '?')}`}>
+                    {(c.member_name || '?')[0].toUpperCase()}
+                  </div>
+                )}
                 <span className="font-medium text-sm text-gray-900">{c.member_name || 'Unknown'}</span>
                 <span className="text-xs text-gray-500">{timeAgo(c.created_at, locale || 'vi')}</span>
               </div>

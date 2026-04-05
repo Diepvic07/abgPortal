@@ -907,10 +907,10 @@ export function EventDetail({ eventId }: { eventId: string }) {
             {comments.map((comment) => (
               <div key={comment.id} className="flex gap-3 rounded-2xl bg-stone-50 p-4">
                 {comment.member_avatar_url ? (
-                  <img src={comment.member_avatar_url} alt="" className="h-9 w-9 rounded-full" />
+                  <img src={comment.member_avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
                 ) : (
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-stone-300 text-sm text-white">
-                    {(comment.member_name || '?')[0]}
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white ${getAvatarColor(comment.member_name || '?')}`}>
+                    {(comment.member_name || '?')[0].toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
