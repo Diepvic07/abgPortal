@@ -3,9 +3,24 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { EventDetail } from '@/components/events/event-detail';
 import { PublicEventDetail } from '@/components/events/public-event-detail';
-import { getEventBySlug, getPublicEventBySlug } from '@/lib/supabase-events';
+import { getEventById, getEventBySlug, getPublicEventBySlug } from '@/lib/supabase-events';
 
 export const dynamic = 'force-dynamic';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function resolveEvent(slugOrId: string) {
+  // Try slug first
+  const bySlug = await getEventBySlug(slugOrId);
+  if (bySlug) return bySlug;
+
+  // Fallback: if it looks like a UUID, try by ID (old links)
+  if (UUID_REGEX.test(slugOrId)) {
+    return getEventById(slugOrId);
+  }
+
+  return null;
+}
 
 interface EventPageProps {
   params: Promise<{ slug: string }>;
@@ -13,7 +28,7 @@ interface EventPageProps {
 
 export async function generateMetadata({ params }: EventPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const event = await getEventBySlug(slug);
+  const event = await resolveEvent(slug);
 
   if (!event) {
     return {
@@ -39,20 +54,25 @@ export default async function EventPage({ params }: EventPageProps) {
   const session = await getServerSession(authOptions);
   const { slug } = await params;
 
-  // Look up the event by slug to get the actual ID for components
+  const event = await resolveEvent(slug);
+
+  // Redirect old UUID URLs to the new slug URL
+  if (event && UUID_REGEX.test(slug)) {
+    const { redirect } = await import('next/navigation');
+    return redirect(`/events/${event.slug}`);
+  }
+
   if (session) {
-    const event = await getEventBySlug(slug);
     if (!event) {
       const { redirect } = await import('next/navigation');
       return redirect('/events');
     }
-    return <EventDetail eventId={event!.id} />;
+    return <EventDetail eventId={event.id} />;
   }
 
   // Check if event is public — show guest view
-  const publicEvent = await getPublicEventBySlug(slug);
-  if (publicEvent) {
-    return <PublicEventDetail eventId={publicEvent.id} />;
+  if (event?.is_public && event.status === 'published') {
+    return <PublicEventDetail eventId={event.id} />;
   }
 
   // Not logged in + not a public event → redirect to login
