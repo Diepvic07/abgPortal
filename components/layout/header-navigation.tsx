@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -23,6 +23,8 @@ export function HeaderNavigation() {
   const [isLoadingMember, setIsLoadingMember] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobilePaymentModalOpen, setIsMobilePaymentModalOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     async function fetchMember() {
@@ -46,7 +48,14 @@ export function HeaderNavigation() {
 
   useEffect(() => {
     if (isMobileMenuOpen) {
-      const handleClickOutside = () => setIsMobileMenuOpen(false);
+      const handleClickOutside = (e: MouseEvent) => {
+        const target = e.target as Node;
+        if (
+          mobileMenuRef.current?.contains(target) ||
+          hamburgerRef.current?.contains(target)
+        ) return;
+        setIsMobileMenuOpen(false);
+      };
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
@@ -79,6 +88,7 @@ export function HeaderNavigation() {
 
           {/* Mobile hamburger button */}
           <button
+            ref={hamburgerRef}
             onClick={(e) => {
               e.stopPropagation();
               setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -178,8 +188,8 @@ export function HeaderNavigation() {
         {/* Mobile menu overlay */}
         {isMobileMenuOpen && (
           <div
+            ref={mobileMenuRef}
             className="md:hidden absolute top-full left-0 right-0 bg-brand-dark border-t border-white/10 shadow-lg z-50"
-            onClick={(e) => e.stopPropagation()}
           >
             <nav className="flex flex-col p-4 gap-1">
               {status !== 'authenticated' && (
