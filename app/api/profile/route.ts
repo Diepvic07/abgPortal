@@ -101,7 +101,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Handle avatar upload via Vercel Blob
-    if (avatarFile && avatarFile.size > 0) {
+    if (avatarFile && avatarFile.size > 0 && process.env.BLOB_READ_WRITE_TOKEN) {
       try {
         const ext = avatarFile.name.split('.').pop() || 'jpg';
         const blob = await put(`avatars/${member.id}.${ext}`, avatarFile, {

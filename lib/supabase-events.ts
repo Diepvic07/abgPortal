@@ -252,11 +252,20 @@ export async function updateEvent(id: string, data: Partial<{
   capacity: number | null;
   capacity_premium: number | null;
   capacity_basic: number | null;
+  capacity_guest: number | null;
   image_url: string | null;
   status: EventStatus;
   published_at: string | null;
   completed_at: string | null;
   outcome_summary: string | null;
+  fee_premium: number | null;
+  fee_basic: number | null;
+  fee_guest: number | null;
+  is_public: boolean;
+  allow_cancellation: boolean;
+  registration_deadline: string | null;
+  payment_qr_url: string | null;
+  payment_instructions: string | null;
 }>): Promise<CommunityEvent> {
   const supabase = createServerSupabaseClient();
 

@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       });
 
       let avatar_url = existingMember.avatar_url;
-      if (avatarFile && avatarFile.size > 0) {
+      if (avatarFile && avatarFile.size > 0 && process.env.BLOB_READ_WRITE_TOKEN) {
         try {
           const ext = avatarFile.name.split('.').pop() || 'jpg';
           const blob = await put(`avatars/${existingMember.id}.${ext}`, avatarFile, {
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       console.log(`[API] Merged data for existing member ${email}`);
     } else {
       let avatar_url: string | undefined;
-      if (avatarFile && avatarFile.size > 0) {
+      if (avatarFile && avatarFile.size > 0 && process.env.BLOB_READ_WRITE_TOKEN) {
         try {
           const ext = avatarFile.name.split('.').pop() || 'jpg';
           const blob = await put(`avatars/${generateId()}.${ext}`, avatarFile, {
