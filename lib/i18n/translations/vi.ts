@@ -1103,7 +1103,7 @@ export const vi: Translations = {
       formStatus: 'Trạng thái',
       formDescription: 'Mô tả *',
       formStartDate: 'Ngày & giờ diễn ra *',
-      formEndDate: 'Ngày & giờ kết thúc',
+      formEndDate: 'Hạn chót đăng ký',
       formLocation: 'Địa điểm',
       formLocationUrl: 'URL địa điểm',
       formPremiumSeats: 'Chỗ Premium',

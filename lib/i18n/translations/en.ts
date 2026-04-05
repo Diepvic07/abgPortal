@@ -1117,7 +1117,7 @@ export const en = {
       formStatus: 'Status',
       formDescription: 'Description *',
       formStartDate: 'Event Date & Time *',
-      formEndDate: 'End Date & Time',
+      formEndDate: 'Registration Deadline',
       formLocation: 'Location',
       formLocationUrl: 'Location URL',
       formPremiumSeats: 'Premium Seats',

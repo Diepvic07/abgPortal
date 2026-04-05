@@ -460,7 +460,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
               value={formatDateTime(event.event_date, locale)}
             />
             <InfoBlock
-              label={locale === 'vi' ? 'Kết thúc' : 'Ends'}
+              label={locale === 'vi' ? 'Hạn chót đăng ký' : 'Registration Deadline'}
               value={event.event_end_date ? formatDateTime(event.event_end_date, locale) : (locale === 'vi' ? 'Chưa đặt' : 'Not set')}
             />
             <InfoBlock
