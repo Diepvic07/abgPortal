@@ -23,7 +23,9 @@
     "migrate:csv:dry": "npx tsx scripts/migrate-csv-to-supabase.ts --dry-run",
     "migrate:xlsx": "npx tsx scripts/migrate-xlsx-to-supabase.ts",
     "migrate:xlsx:dry": "npx tsx scripts/migrate-xlsx-to-supabase.ts --dry-run",
-    "fetch:bugs": "npx tsx scripts/fetch-bug-reports.ts"
+    "fetch:bugs": "npx tsx scripts/fetch-bug-reports.ts",
+    "backfill:profile-slugs": "npx tsx scripts/backfill-public-profile-slugs.ts",
+    "backfill:profile-slugs:dry": "npx tsx scripts/backfill-public-profile-slugs.ts --dry-run"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { RequestCategory } from '@/types';
+import { getInternalProfileUrl } from '@/lib/profile-url';
 
 interface EnrichedRequest {
   id: string;
@@ -17,6 +18,7 @@ interface EnrichedRequest {
     role: string;
     company: string;
     avatar_url?: string;
+    public_profile_slug?: string;
   } | null;
 }
 
@@ -100,7 +102,7 @@ export function RequestHistoryList({ requests }: RequestHistoryListProps) {
 
         const CardWrapper = isConnected && hasMember
           ? ({ children }: { children: React.ReactNode }) => (
-            <Link href={`/profile/${request.matched_member!.id}`} className="block border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-brand/40 transition-all bg-white group">
+            <Link href={getInternalProfileUrl(request.matched_member!)} className="block border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-brand/40 transition-all bg-white group">
               {children}
             </Link>
           )

@@ -45,6 +45,7 @@ export interface SearchResultBasic {
   name: string;
   avatar_url?: string;
   is_csv_imported?: boolean;
+  public_profile_slug?: string;
 }
 
 export interface SearchResultPro extends SearchResultBasic {
@@ -64,6 +65,7 @@ export function filterSearchResultByTier(
     name: member.name,
     avatar_url: member.avatar_url,
     is_csv_imported: member.is_csv_imported,
+    public_profile_slug: member.public_profile_slug,
   };
   if (viewerTier === "premium") {
     return {

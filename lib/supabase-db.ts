@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from './supabase/server';
 import { Member, ConnectionRequest, Connection, LoveMatchRequest, NewsArticle, NewsCategory, ContactRequest, PaymentRecord, BugReport, AbgClass } from '@/types';
+import { generateProfileSlug } from './profile-url';
 
 // ==================== Helpers ====================
 
@@ -271,7 +272,7 @@ export async function addMember(member: Member): Promise<void> {
     searches_this_month: member.searches_this_month ?? 0,
     search_month_reset_date: member.search_month_reset_date ?? null,
     locale: member.locale ?? 'vi',
-    public_profile_slug: member.public_profile_slug ?? null,
+    public_profile_slug: member.public_profile_slug ?? generateProfileSlug(member.name, member.id),
     public_profile_enabled: member.public_profile_enabled ?? false,
   });
   if (error) {

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { MatchResult, Member } from '@/types';
 import { useTranslation, interpolate } from '@/lib/i18n';
+import { getInternalProfileUrl } from '@/lib/profile-url';
 
 interface MatchWithMember extends MatchResult {
   member: Member;
@@ -148,7 +149,7 @@ export function MatchResultCard({ match, isSelected, isLove, onSelect, onRequest
         </button>
         {!isLove && (
           <Link
-            href={`/profile/${match.id}`}
+            href={getInternalProfileUrl(match.member)}
             target="_blank"
             onClick={(e) => e.stopPropagation()}
             className="px-4 py-2.5 text-sm font-semibold rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all duration-200"

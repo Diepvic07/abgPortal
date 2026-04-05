@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { getTranslations, interpolate, type Locale } from '@/lib/i18n';
 import { getAllAdminEmails } from '@/lib/admin-utils-server';
+import { getInternalProfileUrl } from '@/lib/profile-url';
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'ABG Connect <onboarding@resend.dev>';
 
@@ -579,6 +580,7 @@ interface ContactMemberInfo {
   name: string;
   role: string;
   company: string;
+  public_profile_slug?: string;
   phone?: string;
   facebook_url?: string;
   linkedin_url?: string;
@@ -629,7 +631,7 @@ function buildContactCard(member: ContactMemberInfo, t: ReturnType<typeof getTra
       ${roleInfo ? `<p style="margin:0 0 16px;font-size:14px;color:#4b5563;">${roleInfo}</p>` : '<div style="margin:0 0 16px;"></div>'}
       <table width="100%" cellpadding="0" cellspacing="0">${rows.join('')}</table>
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;"><tr><td align="center">
-        <a href="${appUrl}/profile/${member.id}" style="display:inline-block;padding:12px 36px;background:#16a34a;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;width:100%;text-align:center;">View Full Profile</a>
+        <a href="${appUrl}${getInternalProfileUrl(member)}" style="display:inline-block;padding:12px 36px;background:#16a34a;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;width:100%;text-align:center;">View Full Profile</a>
       </td></tr></table>
     </td></tr>
   </table>`;

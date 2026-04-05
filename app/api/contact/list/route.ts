@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
           direction: r.requester_id === member.id ? "sent" : "received",
           other_name: other?.name || "Unknown",
           other_avatar: other?.avatar_url,
+          other_public_profile_slug: other?.public_profile_slug,
         };
       })
     );

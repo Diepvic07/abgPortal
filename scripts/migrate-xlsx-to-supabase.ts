@@ -18,6 +18,7 @@ import * as fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import { generateProfileSlug } from '../lib/profile-url';
 
 // ── Config ───────────────────────────────────────────────────────────────────
 
@@ -198,6 +199,7 @@ interface NewMember {
   free_requests_used: number;
   total_requests_count: number;
   requests_today: number;
+  public_profile_slug: string;
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -362,8 +364,9 @@ async function migrate() {
 
       if (!existing) {
         // New member → INSERT
+        const id = uuidv4();
         insertBatch.push({
-          id: uuidv4(),
+          id,
           name: rawName!,
           email: rawEmail,
           phone,
@@ -381,6 +384,7 @@ async function migrate() {
           free_requests_used: 0,
           total_requests_count: 0,
           requests_today: 0,
+          public_profile_slug: generateProfileSlug(rawName, id),
         });
         if (insertBatch.length >= BATCH_SIZE) await flushBatch();
       } else {

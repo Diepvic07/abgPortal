@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from 'next/link';
 import { MemberAvatar } from "@/components/ui/member-avatar";
+import { getInternalProfileUrl } from "@/lib/profile-url";
 
 interface ContactRequestItem {
   id: string;
@@ -15,6 +16,7 @@ interface ContactRequestItem {
   direction: "sent" | "received";
   other_name: string;
   other_avatar?: string;
+  other_public_profile_slug?: string;
 }
 
 const statusConfig = {
@@ -94,22 +96,16 @@ function RequestCard({ request }: { request: ContactRequestItem }) {
   // If direction is sent, the other person is the target_id
   // If direction is received, the other person is the requester_id
   const otherId = request.direction === "sent" ? request.target_id : request.requester_id;
+  const profileHref = isAccepted && otherId
+    ? getInternalProfileUrl({
+        id: otherId,
+        name: request.other_name,
+        public_profile_slug: request.other_public_profile_slug,
+      })
+    : null;
 
-  const CardWrapper = isAccepted && otherId
-    ? ({ children }: { children: React.ReactNode }) => (
-      <Link href={`/profile/${otherId}`} className="block border border-gray-100 rounded-xl p-4 shadow-sm bg-white hover:shadow-md hover:border-brand/40 transition-all group">
-        {children}
-      </Link>
-    )
-    : ({ children }: { children: React.ReactNode }) => (
-      <div className={`border border-gray-100 rounded-xl p-4 shadow-sm ${request.status !== "pending" ? "opacity-60 bg-gray-50" : "bg-white hover:shadow-md transition-shadow"
-        }`}>
-        {children}
-      </div>
-    );
-
-  return (
-    <CardWrapper>
+  const content = (
+    <>
       <div className="flex items-center gap-3">
         <MemberAvatar
           name={request.other_name}
@@ -142,6 +138,24 @@ function RequestCard({ request }: { request: ContactRequestItem }) {
           </p>
         </div>
       </div>
-    </CardWrapper>
+    </>
+  );
+
+  if (profileHref) {
+    return (
+      <Link
+        href={profileHref}
+        className="block border border-gray-100 rounded-xl p-4 shadow-sm bg-white hover:shadow-md hover:border-brand/40 transition-all group"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={`border border-gray-100 rounded-xl p-4 shadow-sm ${request.status !== "pending" ? "opacity-60 bg-gray-50" : "bg-white hover:shadow-md transition-shadow"
+      }`}>
+      {content}
+    </div>
   );
 }
