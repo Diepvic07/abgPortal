@@ -132,7 +132,7 @@ export function ProposalsList() {
           {proposals.map((proposal) => {
             const colors = CATEGORY_COLORS[proposal.category] || CATEGORY_COLORS.other;
             return (
-              <Link key={proposal.id} href={`/proposals/${proposal.id}`}>
+              <Link key={proposal.id} href={`/proposals/${proposal.slug}`}>
                 <div className={`rounded-xl border border-l-4 overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${
                   proposal.is_pinned ? 'border-yellow-300 bg-yellow-50/20 border-l-yellow-400' : `border-gray-200 ${colors.border}`
                 }`}>

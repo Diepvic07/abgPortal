@@ -139,7 +139,7 @@ export function NewProposalForm() {
         return;
       }
 
-      router.push(`/proposals/${data.proposal.id}`);
+      router.push(`/proposals/${data.proposal.slug}`);
     } catch {
       setError(vi ? 'Có lỗi xảy ra' : 'Something went wrong');
     } finally {

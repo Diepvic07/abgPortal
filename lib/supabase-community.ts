@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from './supabase/server';
 import { CommunityProposal, CommunityCommitment, CommunityProposalComment, ProposalCategory, ProposalStatus, CommitmentLevel, CommentStatus, COMMITMENT_WEIGHTS } from '@/types';
-import { generateId, formatDate } from '@/lib/utils';
+import { generateId, formatDate, generateSlug } from '@/lib/utils';
 
 function nullToUndefined<T>(val: T | null): T | undefined {
   return val === null ? undefined : val;
@@ -11,6 +11,7 @@ function nullToUndefined<T>(val: T | null): T | undefined {
 function mapRowToProposal(row: Record<string, unknown>): CommunityProposal {
   return {
     id: row.id as string,
+    slug: (row.slug as string) || '',
     created_by_member_id: row.created_by_member_id as string,
     title: row.title as string,
     description: row.description as string,
@@ -77,10 +78,13 @@ export async function createProposal(data: {
   const id = generateId();
   const now = formatDate();
 
+  const slug = generateSlug(data.title);
+
   const { data: row, error } = await supabase
     .from('community_proposals')
     .insert({
       id,
+      slug,
       created_by_member_id: data.created_by_member_id,
       title: data.title,
       description: data.description,
@@ -168,6 +172,31 @@ export async function getProposalById(id: string): Promise<CommunityProposal | n
 
   if (error) {
     console.error('Error fetching proposal:', error);
+    throw new Error('Failed to fetch proposal');
+  }
+
+  if (!row) return null;
+
+  const members = (row as Record<string, unknown>).members as Record<string, unknown> | null;
+  return mapRowToProposal({
+    ...(row as Record<string, unknown>),
+    author_name: members?.name || null,
+    author_avatar_url: members?.avatar_url || null,
+    author_abg_class: members?.abg_class || null,
+  });
+}
+
+export async function getProposalBySlug(slug: string): Promise<CommunityProposal | null> {
+  const supabase = createServerSupabaseClient();
+
+  const { data: row, error } = await supabase
+    .from('community_proposals')
+    .select('*, members!community_proposals_created_by_member_id_fkey(name, avatar_url, abg_class)')
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching proposal by slug:', error);
     throw new Error('Failed to fetch proposal');
   }
 

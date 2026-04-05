@@ -274,6 +274,7 @@ export const PROPOSAL_CATEGORY_LABELS: Record<ProposalCategory, { en: string; vi
 
 export interface CommunityProposal {
   id: string;
+  slug: string;
   created_by_member_id: string;
   title: string;
   description: string;

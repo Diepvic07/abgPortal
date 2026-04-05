@@ -329,7 +329,7 @@ function ProposalRow({ proposal, locale }: { proposal: CommunityProposal; locale
   const categoryLabel = PROPOSAL_CATEGORY_LABELS[proposal.category]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.category;
 
   return (
-    <Link href={`/proposals/${proposal.id}`} className="block">
+    <Link href={`/proposals/${proposal.slug}`} className="block">
       <div className="py-4 flex items-center justify-between hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-lg">
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-gray-900 text-base truncate">{proposal.title}</h3>
