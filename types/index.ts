@@ -229,6 +229,7 @@ export interface MemberReference {
   writer_avatar_url?: string;
   writer_role?: string;
   writer_company?: string;
+  writer_abg_class?: string;
   recipient_name?: string;
   recipient_avatar_url?: string;
 }
