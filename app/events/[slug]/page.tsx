@@ -12,9 +12,26 @@ interface EventPageProps {
 }
 
 export async function generateMetadata({ params }: EventPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const event = await getEventBySlug(slug);
+
+  if (!event) {
+    return {
+      title: 'Event | ABG Alumni Connect',
+      description: 'View event details, RSVP, and join the discussion.',
+    };
+  }
+
+  const description = event.description.replace(/\s+/g, ' ').slice(0, 160);
+
   return {
-    title: `Event | ABG Alumni Connect`,
-    description: 'View event details, RSVP, and join the discussion.',
+    title: `${event.title} | ABG Alumni Connect`,
+    description,
+    openGraph: {
+      title: event.title,
+      description,
+      ...(event.image_url && { images: [{ url: event.image_url }] }),
+    },
   };
 }
 
