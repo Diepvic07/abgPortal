@@ -14,8 +14,8 @@ export function BugReportButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        title="Báo lỗi"
-        className="fixed bottom-6 right-6 z-40 group"
+        title="Báo lỗi / Report Bug"
+        className="fixed bottom-6 right-6 z-40 group flex flex-col items-center gap-1"
       >
         {/* Ladybug SVG */}
         <svg width="52" height="52" viewBox="0 0 52 52" className="drop-shadow-lg hover:drop-shadow-xl transition-all group-hover:scale-110 duration-200">
@@ -42,6 +42,9 @@ export function BugReportButton() {
           <circle cx="18" cy="5" r="1.5" fill="#1a1a1a" />
           <circle cx="34" cy="5" r="1.5" fill="#1a1a1a" />
         </svg>
+        <span className="text-[10px] font-semibold text-red-700 leading-tight text-center drop-shadow-sm">
+          Báo lỗi<br />Report Bug
+        </span>
       </button>
       <BugReportModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
