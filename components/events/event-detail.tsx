@@ -316,13 +316,30 @@ export function EventDetail({ eventId }: { eventId: string }) {
         body: JSON.stringify({ body, parent_comment_id: parentCommentId }),
       });
       if (res.ok) {
+        const data = await res.json();
+        const newComment: EventComment = {
+          ...data.comment,
+          member_name: session?.user?.name || 'Me',
+          member_avatar_url: session?.user?.image || undefined,
+          reactions: { like: 0, heart: 0, haha: 0, wow: 0, sad: 0, cold: 0, fire: 0, hug: 0, highfive: 0 },
+          replies: [],
+        };
+        if (!currentMemberId && newComment.member_id) {
+          setCurrentMemberId(newComment.member_id);
+        }
+
         if (parentCommentId) {
           setReplyBody('');
           setReplyingTo(null);
+          setComments(prev => prev.map(c =>
+            c.id === parentCommentId
+              ? { ...c, replies: [...(c.replies || []), newComment] }
+              : c
+          ));
         } else {
           setCommentBody('');
+          setComments(prev => [...prev, newComment]);
         }
-        void fetchCommentsDataRef.current();
         if (event) {
           setEvent({ ...event, comment_count: event.comment_count + 1 });
         }
@@ -339,33 +356,43 @@ export function EventDetail({ eventId }: { eventId: string }) {
 
   async function handleEditComment(commentId: string) {
     if (!editBody.trim()) return;
+    const newBody = editBody.trim();
+    setEditingComment(null);
+    setEditBody('');
+
+    // Optimistic update
+    const updateBody = (list: EventComment[]): EventComment[] =>
+      list.map(c => c.id === commentId
+        ? { ...c, body: newBody }
+        : { ...c, replies: c.replies ? updateBody(c.replies) : [] }
+      );
+    setComments(prev => updateBody(prev));
+
     try {
-      const res = await fetch(`/api/community/events/${eventId}/comments/${commentId}`, {
+      await fetch(`/api/community/events/${eventId}/comments/${commentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body: editBody.trim() }),
+        body: JSON.stringify({ body: newBody }),
       });
-      if (res.ok) {
-        setEditingComment(null);
-        setEditBody('');
-        void fetchCommentsDataRef.current();
-      }
     } catch (error) {
       console.error('Failed to edit comment:', error);
     }
   }
 
   async function handleDeleteComment(commentId: string) {
+    // Optimistic delete
+    setComments(prev => prev
+      .filter(c => c.id !== commentId)
+      .map(c => ({ ...c, replies: (c.replies || []).filter(r => r.id !== commentId) }))
+    );
+    if (event) {
+      setEvent({ ...event, comment_count: Math.max(0, event.comment_count - 1) });
+    }
+
     try {
-      const res = await fetch(`/api/community/events/${eventId}/comments/${commentId}`, {
+      await fetch(`/api/community/events/${eventId}/comments/${commentId}`, {
         method: 'DELETE',
       });
-      if (res.ok) {
-        void fetchCommentsDataRef.current();
-        if (event) {
-          setEvent({ ...event, comment_count: Math.max(0, event.comment_count - 1) });
-        }
-      }
     } catch (error) {
       console.error('Failed to delete comment:', error);
     }
