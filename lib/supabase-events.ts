@@ -42,6 +42,8 @@ function mapRowToEvent(row: Record<string, unknown>): CommunityEvent {
     payment_instructions: nullToUndefined(row.payment_instructions as string | null),
     guest_rsvp_count: (row.guest_rsvp_count as number) || 0,
     outcome_summary: nullToUndefined(row.outcome_summary as string | null),
+    registration_deadline: nullToUndefined(row.registration_deadline as string | null),
+    allow_cancellation: (row.allow_cancellation as boolean) ?? true,
     author_name: nullToUndefined(row.author_name as string | null),
     author_avatar_url: nullToUndefined(row.author_avatar_url as string | null),
     author_abg_class: nullToUndefined(row.author_abg_class as string | null),
@@ -101,6 +103,8 @@ export async function createEvent(data: {
   is_public?: boolean;
   payment_qr_url?: string;
   payment_instructions?: string;
+  registration_deadline?: string;
+  allow_cancellation?: boolean;
   created_by_member_id: string;
   proposal_id?: string;
   status?: EventStatus;
@@ -133,6 +137,8 @@ export async function createEvent(data: {
       is_public: data.is_public || false,
       payment_qr_url: data.payment_qr_url || null,
       payment_instructions: data.payment_instructions || null,
+      registration_deadline: data.registration_deadline || null,
+      allow_cancellation: data.allow_cancellation ?? true,
       guest_rsvp_count: 0,
       created_by_member_id: data.created_by_member_id,
       proposal_id: data.proposal_id || null,
