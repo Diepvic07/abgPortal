@@ -291,7 +291,7 @@ function EventRow({ event, locale }: { event: CommunityEvent; locale: string }) 
   const categoryLabel = EVENT_CATEGORY_LABELS[event.category]?.[locale === 'vi' ? 'vi' : 'en'] || event.category;
 
   return (
-    <Link href={`/events/${event.id}`} className="block">
+    <Link href={`/events/${event.slug}`} className="block">
       <div className="py-4 flex items-center justify-between hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-lg">
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-gray-900 text-base truncate">{event.title}</h3>
@@ -361,7 +361,7 @@ function PastEventRow({ event, locale }: { event: CommunityEvent; locale: string
 
   // Count actual attendees from rsvp_count (in completed state, this is still total RSVPs)
   return (
-    <Link href={`/events/${event.id}`} className="block">
+    <Link href={`/events/${event.slug}`} className="block">
       <div className="py-4 flex items-center justify-between hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-lg">
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-gray-900 text-base truncate">{event.title}</h3>

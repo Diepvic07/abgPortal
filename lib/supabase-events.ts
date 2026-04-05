@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from './supabase/server';
 import { CommunityEvent, EventRsvp, EventComment, EventGuestRsvp, EventPayment, EventCategory, EventStatus, EventMode, EventPaymentStatus, PayerType, CommitmentLevel, CommentStatus } from '@/types';
-import { generateId, formatDate } from '@/lib/utils';
+import { generateId, formatDate, generateSlug } from '@/lib/utils';
 
 function nullToUndefined<T>(val: T | null): T | undefined {
   return val === null ? undefined : val;
@@ -11,6 +11,7 @@ function nullToUndefined<T>(val: T | null): T | undefined {
 function mapRowToEvent(row: Record<string, unknown>): CommunityEvent {
   return {
     id: row.id as string,
+    slug: (row.slug as string) || '',
     title: row.title as string,
     description: row.description as string,
     category: (row.category as EventCategory) || 'event',
@@ -114,10 +115,13 @@ export async function createEvent(data: {
   const now = formatDate();
   const status = data.status || 'draft';
 
+  const slug = generateSlug(data.title);
+
   const { data: row, error } = await supabase
     .from('community_events')
     .insert({
       id,
+      slug,
       title: data.title,
       description: data.description,
       category: data.category,
@@ -232,6 +236,31 @@ export async function getEventById(id: string): Promise<CommunityEvent | null> {
 
   if (error) {
     console.error('Error fetching event:', error);
+    throw new Error('Failed to fetch event');
+  }
+
+  if (!row) return null;
+
+  const members = (row as Record<string, unknown>).members as Record<string, unknown> | null;
+  return mapRowToEvent({
+    ...(row as Record<string, unknown>),
+    author_name: members?.name || null,
+    author_avatar_url: members?.avatar_url || null,
+    author_abg_class: members?.abg_class || null,
+  });
+}
+
+export async function getEventBySlug(slug: string): Promise<CommunityEvent | null> {
+  const supabase = createServerSupabaseClient();
+
+  const { data: row, error } = await supabase
+    .from('community_events')
+    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)')
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching event by slug:', error);
     throw new Error('Failed to fetch event');
   }
 
@@ -741,6 +770,32 @@ export async function getPublicEventById(eventId: string): Promise<CommunityEven
 
   if (error) {
     console.error('Error fetching public event:', error);
+    return null;
+  }
+  if (!row) return null;
+
+  const m = (row as Record<string, unknown>).members as Record<string, unknown> | null;
+  return mapRowToEvent({
+    ...(row as Record<string, unknown>),
+    author_name: m?.name || null,
+    author_avatar_url: m?.avatar_url || null,
+    author_abg_class: m?.abg_class || null,
+  });
+}
+
+export async function getPublicEventBySlug(slug: string): Promise<CommunityEvent | null> {
+  const supabase = createServerSupabaseClient();
+
+  const { data: row, error } = await supabase
+    .from('community_events')
+    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .eq('is_public', true)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching public event by slug:', error);
     return null;
   }
   if (!row) return null;

@@ -3,12 +3,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { EventDetail } from '@/components/events/event-detail';
 import { PublicEventDetail } from '@/components/events/public-event-detail';
-import { getPublicEventById } from '@/lib/supabase-events';
+import { getEventBySlug, getPublicEventBySlug } from '@/lib/supabase-events';
 
 export const dynamic = 'force-dynamic';
 
 interface EventPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: EventPageProps): Promise<Metadata> {
@@ -20,17 +20,22 @@ export async function generateMetadata({ params }: EventPageProps): Promise<Meta
 
 export default async function EventPage({ params }: EventPageProps) {
   const session = await getServerSession(authOptions);
-  const { id } = await params;
+  const { slug } = await params;
 
-  // If logged in, show full member experience
+  // Look up the event by slug to get the actual ID for components
   if (session) {
-    return <EventDetail eventId={id} />;
+    const event = await getEventBySlug(slug);
+    if (!event) {
+      const { redirect } = await import('next/navigation');
+      return redirect('/events');
+    }
+    return <EventDetail eventId={event!.id} />;
   }
 
   // Check if event is public — show guest view
-  const publicEvent = await getPublicEventById(id);
+  const publicEvent = await getPublicEventBySlug(slug);
   if (publicEvent) {
-    return <PublicEventDetail eventId={id} />;
+    return <PublicEventDetail eventId={publicEvent.id} />;
   }
 
   // Not logged in + not a public event → redirect to login

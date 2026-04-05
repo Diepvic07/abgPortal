@@ -358,6 +358,7 @@ export const EVENT_MODE_LABELS: Record<EventMode, { en: string; vi: string }> = 
 
 export interface CommunityEvent {
   id: string;
+  slug: string;
   title: string;
   description: string;
   category: EventCategory;
