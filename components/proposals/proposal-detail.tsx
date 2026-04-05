@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, COMMITMENT_LABELS, PROPOSAL_CATEGORY_LABELS } from '@/types';
+import { CommentReactions } from '@/components/ui/comment-reactions';
 
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
@@ -85,6 +86,8 @@ export function ProposalDetail({ proposalId }: Props) {
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyBody, setReplyBody] = useState('');
   const [submittingCommitment, setSubmittingCommitment] = useState(false);
 
   useEffect(() => {
@@ -137,18 +140,24 @@ export function ProposalDetail({ proposalId }: Props) {
     }
   }
 
-  async function handleComment(e: React.FormEvent) {
+  async function handleComment(e: React.FormEvent, parentCommentId?: string) {
     e.preventDefault();
-    if (!commentText.trim()) return;
+    const body = parentCommentId ? replyBody.trim() : commentText.trim();
+    if (!body) return;
     setSubmittingComment(true);
     try {
       const res = await fetch(`/api/community/proposals/${proposalId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body: commentText }),
+        body: JSON.stringify({ body, parent_comment_id: parentCommentId }),
       });
       if (res.ok) {
-        setCommentText('');
+        if (parentCommentId) {
+          setReplyBody('');
+          setReplyingTo(null);
+        } else {
+          setCommentText('');
+        }
         await fetchProposal();
       }
     } catch {} finally {
@@ -356,19 +365,99 @@ export function ProposalDetail({ proposalId }: Props) {
 
         <div className="space-y-4">
           {comments.map((c) => (
-            <div key={c.id} className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                {c.member_avatar_url ? (
-                  <img src={c.member_avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
-                ) : (
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white ${getAvatarColor(c.member_name || '?')}`}>
-                    {(c.member_name || '?')[0].toUpperCase()}
-                  </div>
-                )}
-                <span className="font-medium text-sm text-gray-900">{c.member_name || 'Unknown'}</span>
-                <span className="text-xs text-gray-500">{timeAgo(c.created_at, locale || 'vi')}</span>
+            <div key={c.id}>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  {c.member_avatar_url ? (
+                    <img src={c.member_avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                  ) : (
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white ${getAvatarColor(c.member_name || '?')}`}>
+                      {(c.member_name || '?')[0].toUpperCase()}
+                    </div>
+                  )}
+                  <span className="font-medium text-sm text-gray-900">{c.member_name || 'Unknown'}</span>
+                  <span className="text-xs text-gray-500">{timeAgo(c.created_at, locale || 'vi')}</span>
+                </div>
+                <p className="text-gray-700 text-sm whitespace-pre-wrap">{c.body}</p>
+                <div className="mt-2 flex items-center gap-3">
+                  <CommentReactions
+                    commentId={c.id}
+                    commentType="proposal"
+                    entityId={proposalId}
+                    reactions={c.reactions}
+                    onReactionChange={() => void fetchProposal()}
+                  />
+                  {session && (
+                    <button
+                      onClick={() => { setReplyingTo(replyingTo === c.id ? null : c.id); setReplyBody(''); }}
+                      className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                    >
+                      {locale === 'vi' ? 'Trả lời' : 'Reply'}
+                    </button>
+                  )}
+                </div>
               </div>
-              <p className="text-gray-700 text-sm whitespace-pre-wrap">{c.body}</p>
+
+              {/* Replies */}
+              {c.replies && c.replies.length > 0 && (
+                <div className="ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-4">
+                  {c.replies.map((reply) => (
+                    <div key={reply.id} className="bg-gray-50 border border-gray-100 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        {reply.member_avatar_url ? (
+                          <img src={reply.member_avatar_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        ) : (
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold text-white ${getAvatarColor(reply.member_name || '?')}`}>
+                            {(reply.member_name || '?')[0].toUpperCase()}
+                          </div>
+                        )}
+                        <span className="font-medium text-sm text-gray-900">{reply.member_name || 'Unknown'}</span>
+                        <span className="text-xs text-gray-500">{timeAgo(reply.created_at, locale || 'vi')}</span>
+                      </div>
+                      <p className="text-gray-700 text-sm whitespace-pre-wrap">{reply.body}</p>
+                      <div className="mt-1">
+                        <CommentReactions
+                          commentId={reply.id}
+                          commentType="proposal"
+                          entityId={proposalId}
+                          reactions={reply.reactions}
+                          onReactionChange={() => void fetchProposal()}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Reply form */}
+              {replyingTo === c.id && (
+                <form onSubmit={(e) => handleComment(e, c.id)} className="ml-8 mt-2 pl-4">
+                  <textarea
+                    value={replyBody}
+                    onChange={(e) => setReplyBody(e.target.value)}
+                    placeholder={locale === 'vi' ? 'Viết trả lời...' : 'Write a reply...'}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[60px]"
+                    maxLength={2000}
+                    autoFocus
+                  />
+                  <div className="mt-2 flex items-center gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => { setReplyingTo(null); setReplyBody(''); }}
+                      className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1"
+                    >
+                      {locale === 'vi' ? 'Hủy' : 'Cancel'}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!replyBody.trim() || submittingComment}
+                      className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {locale === 'vi' ? 'Gửi' : 'Reply'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           ))}
           {comments.length === 0 && (

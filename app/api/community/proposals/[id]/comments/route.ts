@@ -5,7 +5,7 @@ import { getProposalById, getCommentsByProposal, createComment } from '@/lib/sup
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAuth(request);
+    const member = await requireAuth(request);
     const { id } = await params;
 
     const proposal = await getProposalById(id);
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return errorResponse('Proposal not found', 404);
     }
 
-    const comments = await getCommentsByProposal(id);
+    const comments = await getCommentsByProposal(id, member.id);
     return successResponse({ comments });
   } catch (error) {
     return handleApiError(error);
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const body = await request.json();
-    const { body: commentBody } = body;
+    const { body: commentBody, parent_comment_id } = body;
 
     if (!commentBody || commentBody.length < 1 || commentBody.length > 2000) {
       return errorResponse('Comment must be between 1 and 2000 characters', 400);
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       proposal_id: id,
       member_id: member.id,
       body: commentBody,
+      parent_comment_id: parent_comment_id || undefined,
     });
 
     return successResponse({ comment }, 201);

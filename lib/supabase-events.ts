@@ -75,6 +75,7 @@ function mapRowToComment(row: Record<string, unknown>): EventComment {
     member_id: row.member_id as string,
     body: row.body as string,
     status: (row.status as CommentStatus) || 'visible',
+    parent_comment_id: nullToUndefined(row.parent_comment_id as string | null),
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
     member_name: nullToUndefined(row.member_name as string | null),
@@ -439,6 +440,7 @@ export async function createEventComment(data: {
   event_id: string;
   member_id: string;
   body: string;
+  parent_comment_id?: string;
 }): Promise<EventComment> {
   const supabase = createServerSupabaseClient();
   const now = formatDate();
@@ -450,6 +452,7 @@ export async function createEventComment(data: {
       event_id: data.event_id,
       member_id: data.member_id,
       body: data.body,
+      parent_comment_id: data.parent_comment_id || null,
       status: 'visible',
       created_at: now,
       updated_at: now,
@@ -465,7 +468,7 @@ export async function createEventComment(data: {
   return mapRowToComment(row as Record<string, unknown>);
 }
 
-export async function getEventComments(eventId: string): Promise<EventComment[]> {
+export async function getEventComments(eventId: string, currentMemberId?: string): Promise<EventComment[]> {
   const supabase = createServerSupabaseClient();
 
   const { data: rows, error } = await supabase
@@ -480,7 +483,7 @@ export async function getEventComments(eventId: string): Promise<EventComment[]>
     throw new Error('Failed to fetch comments');
   }
 
-  return (rows || []).map((row: Record<string, unknown>) => {
+  const allComments = (rows || []).map((row: Record<string, unknown>) => {
     const members = row.members as Record<string, unknown> | null;
     return mapRowToComment({
       ...row,
@@ -488,6 +491,33 @@ export async function getEventComments(eventId: string): Promise<EventComment[]>
       member_avatar_url: members?.avatar_url || null,
     });
   });
+
+  // Fetch reactions for all comments
+  const commentIds = allComments.map(c => c.id);
+  const { getReactionSummaries } = await import('@/lib/supabase-reactions');
+  const reactions = await getReactionSummaries(commentIds, 'event', currentMemberId);
+
+  // Build threaded structure
+  const topLevel: EventComment[] = [];
+  const repliesByParent: Record<string, EventComment[]> = {};
+
+  for (const comment of allComments) {
+    comment.reactions = reactions[comment.id];
+    if (comment.parent_comment_id) {
+      if (!repliesByParent[comment.parent_comment_id]) {
+        repliesByParent[comment.parent_comment_id] = [];
+      }
+      repliesByParent[comment.parent_comment_id].push(comment);
+    } else {
+      topLevel.push(comment);
+    }
+  }
+
+  for (const comment of topLevel) {
+    comment.replies = repliesByParent[comment.id] || [];
+  }
+
+  return topLevel;
 }
 
 export async function updateEventComment(commentId: string, body: string): Promise<EventComment> {

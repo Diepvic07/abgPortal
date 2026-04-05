@@ -21,6 +21,7 @@ import {
   EVENT_STATUS_LABELS,
 } from '@/types';
 import { EventPaymentFlow } from './event-payment-flow';
+import { CommentReactions } from '@/components/ui/comment-reactions';
 
 const RSVP_ACTIONS: Array<{
   level: EventRegistrationLevel;
@@ -167,6 +168,8 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [commentBody, setCommentBody] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyBody, setReplyBody] = useState('');
   const [membershipStatus, setMembershipStatus] = useState<MembershipStatus>('basic');
   const [pendingRsvp, setPendingRsvp] = useState<EventRegistrationLevel | null>(null);
   const [rsvpNote, setRsvpNote] = useState('');
@@ -296,19 +299,25 @@ export function EventDetail({ eventId }: { eventId: string }) {
     }
   }
 
-  async function handleComment(e: React.FormEvent) {
+  async function handleComment(e: React.FormEvent, parentCommentId?: string) {
     e.preventDefault();
-    if (!commentBody.trim() || commentLoading) return;
+    const body = parentCommentId ? replyBody.trim() : commentBody.trim();
+    if (!body || commentLoading) return;
 
     setCommentLoading(true);
     try {
       const res = await fetch(`/api/community/events/${eventId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body: commentBody.trim() }),
+        body: JSON.stringify({ body, parent_comment_id: parentCommentId }),
       });
       if (res.ok) {
-        setCommentBody('');
+        if (parentCommentId) {
+          setReplyBody('');
+          setReplyingTo(null);
+        } else {
+          setCommentBody('');
+        }
         void fetchCommentsDataRef.current();
         if (event) {
           setEvent({ ...event, comment_count: event.comment_count + 1 });
@@ -905,21 +914,106 @@ export function EventDetail({ eventId }: { eventId: string }) {
         ) : (
           <div className="mt-5 space-y-4" aria-live="polite">
             {comments.map((comment) => (
-              <div key={comment.id} className="flex gap-3 rounded-2xl bg-stone-50 p-4">
-                {comment.member_avatar_url ? (
-                  <img src={comment.member_avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
-                ) : (
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white ${getAvatarColor(comment.member_name || '?')}`}>
-                    {(comment.member_name || '?')[0].toUpperCase()}
+              <div key={comment.id}>
+                <div className="flex gap-3 rounded-2xl bg-stone-50 p-4">
+                  {comment.member_avatar_url ? (
+                    <img src={comment.member_avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
+                  ) : (
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white ${getAvatarColor(comment.member_name || '?')}`}>
+                      {(comment.member_name || '?')[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-900">{comment.member_name || 'Member'}</span>
+                      <span className="text-xs text-gray-500">{formatRelativeTime(comment.created_at, locale)}</span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">{comment.body}</p>
+                    <div className="mt-2 flex items-center gap-3">
+                      <CommentReactions
+                        commentId={comment.id}
+                        commentType="event"
+                        entityId={eventId}
+                        reactions={comment.reactions}
+                        onReactionChange={() => void fetchCommentsDataRef.current()}
+                      />
+                      {session && event?.status === 'published' && (
+                        <button
+                          onClick={() => { setReplyingTo(replyingTo === comment.id ? null : comment.id); setReplyBody(''); }}
+                          className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                        >
+                          {locale === 'vi' ? 'Trả lời' : 'Reply'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Replies */}
+                {comment.replies && comment.replies.length > 0 && (
+                  <div className="ml-12 mt-2 space-y-2 border-l-2 border-gray-200 pl-4">
+                    {comment.replies.map((reply) => (
+                      <div key={reply.id} className="flex gap-2 rounded-xl bg-gray-50 p-3">
+                        {reply.member_avatar_url ? (
+                          <img src={reply.member_avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                        ) : (
+                          <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold text-white ${getAvatarColor(reply.member_name || '?')}`}>
+                            {(reply.member_name || '?')[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-900">{reply.member_name || 'Member'}</span>
+                            <span className="text-xs text-gray-500">{formatRelativeTime(reply.created_at, locale)}</span>
+                          </div>
+                          <p className="mt-0.5 whitespace-pre-wrap text-sm leading-5 text-gray-700">{reply.body}</p>
+                          <div className="mt-1">
+                            <CommentReactions
+                              commentId={reply.id}
+                              commentType="event"
+                              entityId={eventId}
+                              reactions={reply.reactions}
+                              onReactionChange={() => void fetchCommentsDataRef.current()}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900">{comment.member_name || 'Member'}</span>
-                    <span className="text-xs text-gray-500">{formatRelativeTime(comment.created_at, locale)}</span>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">{comment.body}</p>
-                </div>
+
+                {/* Reply form */}
+                {replyingTo === comment.id && (
+                  <form onSubmit={(e) => handleComment(e, comment.id)} className="ml-12 mt-2 pl-4">
+                    <div className="flex gap-2">
+                      <textarea
+                        value={replyBody}
+                        onChange={(e) => setReplyBody(e.target.value)}
+                        placeholder={locale === 'vi' ? 'Viết trả lời...' : 'Write a reply...'}
+                        className="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={2}
+                        maxLength={2000}
+                        autoFocus
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => { setReplyingTo(null); setReplyBody(''); }}
+                        className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1"
+                      >
+                        {locale === 'vi' ? 'Hủy' : 'Cancel'}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!replyBody.trim() || commentLoading}
+                        className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {locale === 'vi' ? 'Gửi' : 'Reply'}
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             ))}
           </div>

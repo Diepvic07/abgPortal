@@ -252,6 +252,27 @@ export type ProposalStatus = 'published' | 'selected' | 'in_progress' | 'complet
 export type CommitmentLevel = 'interested' | 'will_participate' | 'will_lead';
 export type CommentStatus = 'visible' | 'hidden' | 'removed';
 
+// Comment Reactions
+export type ReactionType = 'like' | 'heart' | 'haha' | 'wow' | 'sad';
+export type CommentType = 'event' | 'proposal';
+
+export const REACTION_EMOJI: Record<ReactionType, string> = {
+  like: '👍',
+  heart: '❤️',
+  haha: '😄',
+  wow: '😮',
+  sad: '😢',
+};
+
+export interface ReactionSummary {
+  like: number;
+  heart: number;
+  haha: number;
+  wow: number;
+  sad: number;
+  my_reaction?: ReactionType;
+}
+
 export const COMMITMENT_WEIGHTS: Record<CommitmentLevel, number> = {
   interested: 0,
   will_participate: 3,
@@ -319,11 +340,15 @@ export interface CommunityProposalComment {
   member_id: string;
   body: string;
   status: CommentStatus;
+  parent_comment_id?: string;
   created_at: string;
   updated_at: string;
   // Joined fields
   member_name?: string;
   member_avatar_url?: string;
+  // Enriched fields
+  reactions?: ReactionSummary;
+  replies?: CommunityProposalComment[];
 }
 
 // Community Events
@@ -423,11 +448,15 @@ export interface EventComment {
   member_id: string;
   body: string;
   status: CommentStatus;
+  parent_comment_id?: string;
   created_at: string;
   updated_at: string;
   // Joined fields
   member_name?: string;
   member_avatar_url?: string;
+  // Enriched fields
+  reactions?: ReactionSummary;
+  replies?: EventComment[];
 }
 
 export type GuestRsvpStatus = 'registered' | 'cancelled';
