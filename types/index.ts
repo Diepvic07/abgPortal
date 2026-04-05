@@ -264,7 +264,7 @@ export const REACTION_EMOJI: Record<ReactionType, string> = {
   sad: '😢',
   cold: '🥶',
   fire: '🤯',
-  hug: '🥰',
+  hug: '🫶',
   highfive: '🙏',
 };
 
