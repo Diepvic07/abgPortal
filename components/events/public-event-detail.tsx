@@ -106,192 +106,222 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
   const guestCapacityFull = event.capacity_guest != null && event.capacity_guest > 0 && guestCount >= event.capacity_guest;
   const noGuests = event.capacity_guest === 0;
   const eventStartParts = formatDateParts(event.event_date);
-  const eventEndParts = event.event_end_date ? formatDateParts(event.event_end_date) : null;
 
   return (
-    <div className="mx-auto max-w-6xl px-1 py-4 text-[#222222]">
+    <div className="mx-auto max-w-7xl px-2 py-4 text-[#222222]">
       <nav className="mb-6 text-sm text-[#6a6a6a]">
         <Link href="/events" className="transition-colors hover:text-[#222222]">Events</Link>
         <span className="mx-2">/</span>
         <span className="text-[#222222]">{event.title}</span>
       </nav>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.55fr)_360px]">
-        <div className="space-y-8">
-          <section>
-            <div className="flex flex-wrap items-center gap-2">
-              <SoftBadge tone="stone">{modeLabel}</SoftBadge>
-              <SoftBadge tone="plain">{categoryLabel}</SoftBadge>
-              {event.is_public && <SoftBadge tone="rose">Public event</SoftBadge>}
-            </div>
-
-            <h1 className="mt-5 font-heading text-4xl font-semibold leading-tight tracking-[-0.03em] text-[#222222] md:text-[2.85rem]">
-              {event.title}
-            </h1>
-            <p className="mt-4 max-w-3xl text-[15px] leading-7 text-[#6a6a6a]">
-              Key event details at a glance — register as a guest or log in as an ABG member for the full experience.
-            </p>
-          </section>
-
-          <section className="overflow-hidden rounded-[32px] bg-white" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+      <div className="grid gap-6 lg:[grid-template-columns:minmax(0,25%)_minmax(0,75%)] lg:items-start">
+        <div className="contents lg:col-start-1 lg:block lg:space-y-6">
+          <section className="order-1 overflow-hidden rounded-[28px] bg-white" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
             {event.image_url ? (
-              <div className="aspect-[16/10] bg-[#f7f7f7]">
+              <div className="aspect-[4/5] bg-[#f7f7f7] lg:aspect-[5/6]">
                 <img src={event.image_url} alt="" className="h-full w-full object-cover" />
               </div>
             ) : (
-              <div className="flex aspect-[16/10] items-end bg-[linear-gradient(135deg,#fff8f6_0%,#ffffff_48%,#f7f7f7_100%)] p-8">
-                <div className="max-w-md">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">Public event</p>
+              <div className="flex aspect-[4/5] items-end bg-[linear-gradient(135deg,#fff8f6_0%,#ffffff_55%,#f7f7f7_100%)] p-6 lg:aspect-[5/6]">
+                <div>
+                  <SectionEyebrow>Public event</SectionEyebrow>
                   <p className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
-                    Xem chi tiết sự kiện trước khi đăng ký tham gia.
+                    Event cover
                   </p>
                 </div>
               </div>
             )}
+          </section>
 
-            <div className="grid gap-4 border-t border-black/5 p-5 sm:grid-cols-3 sm:p-6">
-              <HeroFact
-                label="When"
-                value={(
-                  <DateTimeValue date={eventStartParts.date} time={eventStartParts.time} />
-                )}
-              />
-              <HeroFact label="Where" value={event.location || (eventMode === 'online' ? 'Online event' : 'To be announced')} />
-              <HeroFact
-                label="Guest spots"
-                value={
-                  event.capacity_guest != null && event.capacity_guest > 0
-                    ? `${guestCount} / ${event.capacity_guest}`
-                    : (noGuests ? 'Members only' : 'Open guest access')
-                }
-              />
+          <section className="order-7 rounded-[28px] bg-white p-6 lg:order-none" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+            <SectionEyebrow>Hosted by</SectionEyebrow>
+            <p className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[#222222]">
+              {event.author_name || 'ABG Alumni'}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[#6a6a6a]">
+              Public guests can use this page to understand the event first, then register or switch into the member flow for more access.
+            </p>
+            <div className="mt-5 rounded-[20px] bg-[#f7f7f7] p-4">
+              <MetaLine label="Mode" value={modeLabel} />
+              <MetaLine label="Category" value={categoryLabel} />
             </div>
           </section>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <section className="rounded-[28px] bg-white p-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
-              <SectionEyebrow>At a glance</SectionEyebrow>
-              <div className="mt-4 grid gap-3">
-                <InfoBlock
-                  label="Event date"
-                  value={<DateTimeValue date={eventStartParts.date} time={eventStartParts.time} />}
-                />
-                {eventEndParts && (
-                  <InfoBlock
-                    label="Ends"
-                    value={<DateTimeValue date={eventEndParts.date} time={eventEndParts.time} />}
-                  />
-                )}
-                <InfoBlock label="Mode" value={modeLabel} />
-                <InfoBlock label="Guest availability" value={noGuests ? 'Members only' : guestCapacityFull ? 'Guest registration full' : 'Guest registration open'} />
-              </div>
-            </section>
-
-            <section className="rounded-[28px] bg-white p-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
-              <SectionEyebrow>Venue & access</SectionEyebrow>
-              <div className="mt-4 space-y-4">
-                <VenueRow
-                  label={eventMode === 'online' ? 'Join online' : 'Location'}
-                  value={event.location || (eventMode === 'online' ? 'Online event' : 'To be announced')}
-                  href={event.location_url || undefined}
-                  linkLabel={event.location_url ? (eventMode === 'online' ? 'Open join link' : 'View on map') : undefined}
-                />
-                <VenueRow
-                  label="Member access"
-                  value="ABG members can log in for the full RSVP, payment, and discussion experience."
-                  href="/login"
-                  linkLabel="Log in as member"
-                  internal
-                />
-              </div>
-            </section>
-          </div>
-
-          <section className="rounded-[28px] bg-white p-6 md:p-7" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
-            <SectionEyebrow>About this event</SectionEyebrow>
-            <h2 className="mt-3 font-heading text-[1.9rem] font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
-              What to expect before you register.
-            </h2>
-            <div className="prose prose-sm mt-4 max-w-none whitespace-pre-wrap text-[#3f3f3f]">
-              {event.description}
-            </div>
-
-            {hasFees && (
-              <div className="mt-8 border-t border-black/5 pt-6">
-                <SectionEyebrow>Pricing</SectionEyebrow>
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  {event.fee_premium != null && (
-                    <PricingCard title="ABG Premium" value={formatCurrencyVnd(event.fee_premium)} />
-                  )}
-                  {event.fee_basic != null && (
-                    <PricingCard title="ABG Basic" value={formatCurrencyVnd(event.fee_basic)} />
-                  )}
-                  {event.fee_guest != null && (
-                    <PricingCard title="Guest" value={formatCurrencyVnd(event.fee_guest)} featured />
-                  )}
+          {hasFees && (
+            <section className="order-5 rounded-[28px] bg-white p-6 lg:order-none" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+              <SectionEyebrow>Pricing & fees</SectionEyebrow>
+              {event.fee_guest != null && (
+                <div className="mt-4 rounded-[22px] bg-[#f7f7f7] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6a6a6a]">Guest fee</p>
+                  <p className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#222222]">{formatCurrencyVnd(event.fee_guest)}</p>
                 </div>
+              )}
+              <div className="mt-4 space-y-3">
+                {event.fee_premium != null && (
+                  <CompactPriceLine title="ABG Premium" value={formatCurrencyVnd(event.fee_premium)} />
+                )}
+                {event.fee_basic != null && (
+                  <CompactPriceLine title="ABG Basic" value={formatCurrencyVnd(event.fee_basic)} />
+                )}
+                {event.fee_guest != null && (
+                  <CompactPriceLine title="Guest" value={formatCurrencyVnd(event.fee_guest)} />
+                )}
               </div>
-            )}
+            </section>
+          )}
+
+          <section className="order-8 rounded-[28px] bg-white p-6 lg:order-none" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+            <SectionEyebrow>Attendance preview</SectionEyebrow>
+            <div className="mt-4">
+              <p className="text-3xl font-semibold tracking-[-0.03em] text-[#222222]">
+                {event.capacity_guest != null && event.capacity_guest > 0 ? `${guestCount} / ${event.capacity_guest}` : guestCount}
+              </p>
+              <p className="mt-1 text-sm text-[#6a6a6a]">
+                {event.capacity_guest != null && event.capacity_guest > 0 ? 'guest spots used' : 'guest registrations'}
+              </p>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-[#6a6a6a]">
+              {noGuests
+                ? 'Guest attendance is disabled for this event.'
+                : guestCapacityFull
+                  ? 'Guest capacity is currently full.'
+                  : 'Guest attendance is currently open.'}
+            </p>
           </section>
         </div>
 
-        <div className="space-y-5 lg:sticky lg:top-28 lg:self-start">
-          <section className="rounded-[28px] bg-white p-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
-            <SectionEyebrow>Guest registration</SectionEyebrow>
-            <div className="mt-4 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-3xl font-semibold tracking-[-0.03em] text-[#222222]">
-                  {event.capacity_guest != null && event.capacity_guest > 0 ? `${guestCount} / ${event.capacity_guest}` : guestCount}
-                </p>
-                <p className="mt-1 text-sm text-[#6a6a6a]">
-                  {event.capacity_guest != null && event.capacity_guest > 0 ? 'guest spots used' : 'guest registrations'}
-                </p>
-              </div>
-              {event.fee_guest != null && (
-                <div className="text-right">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">Guest fee</p>
-                  <p className="mt-1 text-base font-semibold text-[#222222]">{formatCurrencyVnd(event.fee_guest)}</p>
+        <div className="contents lg:col-start-2 lg:block lg:space-y-6">
+        <section className="order-2 rounded-[28px] bg-white p-6 md:p-7" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+          <div className="flex flex-wrap items-center gap-2">
+            <SoftBadge tone="stone">{modeLabel}</SoftBadge>
+            <SoftBadge tone="plain">{categoryLabel}</SoftBadge>
+            {event.is_public && <SoftBadge tone="rose">Public event</SoftBadge>}
+          </div>
+
+          <div className="mt-5 space-y-6">
+            <div>
+              <h1 className="max-w-4xl font-heading text-[1.9rem] font-semibold leading-[1.1] tracking-[-0.035em] text-[#222222] md:text-[2.35rem] xl:text-[2.55rem]">
+                {event.title}
+              </h1>
+              <p className="mt-4 max-w-3xl text-[15px] leading-7 text-[#6a6a6a]">
+                The event page is structured as a clear vertical sequence, so the title, timing, location, and registration actions read in one logical flow.
+              </p>
+            </div>
+
+            <div className="grid gap-3">
+              <CompactFactRow
+                icon="📅"
+                label="Date and time"
+                primary={<DateTimeValue date={eventStartParts.date} time={eventStartParts.time} compact />}
+              />
+              <CompactFactRow
+                icon="📍"
+                label="Location"
+                primary={event.location || (eventMode === 'online' ? 'Online event' : 'To be announced')}
+                secondary={modeLabel}
+              />
+              <CompactFactRow
+                icon="🎟️"
+                label="Guest access"
+                primary={noGuests ? 'Members only' : guestCapacityFull ? 'Guest registration full' : 'Guest registration open'}
+                secondary={event.capacity_guest != null && event.capacity_guest > 0 ? `${guestCount} / ${event.capacity_guest} guest spots used` : 'No guest capacity limit'}
+              />
+            </div>
+
+            <section className="rounded-[24px] border border-black/8 bg-[#fcfcfc] p-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <SectionEyebrow>Registration</SectionEyebrow>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#222222]">
+                    Guest registration
+                  </h2>
                 </div>
+                {event.fee_guest != null && (
+                  <span className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-[#222222]">
+                    {formatCurrencyVnd(event.fee_guest)}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-5 grid gap-3 rounded-[20px] bg-white p-4 sm:grid-cols-2">
+                <MetricBlock
+                  label="Guest spots"
+                  value={event.capacity_guest != null && event.capacity_guest > 0 ? `${guestCount} / ${event.capacity_guest}` : `${guestCount}`}
+                />
+                <MetricBlock
+                  label="Access"
+                  value={noGuests ? 'Members only' : guestCapacityFull ? 'Full' : 'Open'}
+                />
+              </div>
+
+              {noGuests ? (
+                <NoticeBox>
+                  This event is for ABG members only. <Link href="/login" className="font-medium text-[#ff385c] hover:text-[#e00b41]">Log in</Link> or <Link href="/onboard" className="font-medium text-[#ff385c] hover:text-[#e00b41]">apply for membership</Link>.
+                </NoticeBox>
+              ) : guestCapacityFull ? (
+                <NoticeBox tone="rose">
+                  Guest registration is full. <Link href="/login" className="font-medium text-[#ff385c] hover:text-[#e00b41]">Log in</Link> as an ABG member to check member seats.
+                </NoticeBox>
+              ) : (
+                <>
+                  <p className="mt-5 text-sm leading-6 text-[#6a6a6a]">
+                    Register as a guest to attend this event. ABG members can <Link href="/login" className="font-medium text-[#ff385c] hover:text-[#e00b41]">log in</Link> for the full event experience.
+                  </p>
+                  <button
+                    onClick={() => setShowGuestRsvp(true)}
+                    className="mt-5 w-full rounded-xl bg-[#ff385c] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#e00b41]"
+                  >
+                    Register as guest
+                  </button>
+                </>
               )}
-            </div>
+            </section>
+          </div>
+        </section>
+        <section className="order-3 rounded-[28px] bg-white p-6 lg:order-4" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+          <SectionEyebrow>About event</SectionEyebrow>
+          <h2 className="mt-3 font-heading text-[1.85rem] font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
+            Event overview
+          </h2>
+          <div className="prose prose-sm mt-5 max-w-none whitespace-pre-wrap text-[#3f3f3f]">
+            {event.description}
+          </div>
+        </section>
 
-            {noGuests ? (
-              <NoticeBox>
-                This event is for ABG members only. <Link href="/login" className="font-medium text-[#ff385c] hover:text-[#e00b41]">Log in</Link> or <Link href="/onboard" className="font-medium text-[#ff385c] hover:text-[#e00b41]">apply for membership</Link>.
-              </NoticeBox>
-            ) : guestCapacityFull ? (
-              <NoticeBox tone="rose">
-                Guest registration is full. <Link href="/login" className="font-medium text-[#ff385c] hover:text-[#e00b41]">Log in</Link> as an ABG member to check member seats.
-              </NoticeBox>
-            ) : (
-              <>
-                <p className="mt-5 text-sm leading-6 text-[#6a6a6a]">
-                  Register as a guest to attend this event. ABG members can <Link href="/login" className="font-medium text-[#ff385c] hover:text-[#e00b41]">log in</Link> for the full event experience.
-                </p>
-                <button
-                  onClick={() => setShowGuestRsvp(true)}
-                  className="mt-5 w-full rounded-xl bg-[#ff385c] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#e00b41]"
-                >
-                  Register as guest
-                </button>
-              </>
-            )}
-          </section>
-
-          <section className="rounded-[28px] bg-white p-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
-            <SectionEyebrow>ABG member access</SectionEyebrow>
-            <div className="mt-4 space-y-3 rounded-[24px] bg-[#f7f7f7] p-4">
-              <MetaLine label="Member RSVP" value="Available after login" />
-              <MetaLine label="Payments" value="Handled in member flow" />
-              <MetaLine label="Discussion" value="Visible to members" />
-            </div>
-            <Link
+        <section className="order-4 rounded-[28px] bg-white p-6 lg:order-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+          <SectionEyebrow>Location</SectionEyebrow>
+          <div className="mt-4 space-y-4">
+            <VenueRow
+              label={eventMode === 'online' ? 'Join online' : 'Location'}
+              value={event.location || (eventMode === 'online' ? 'Online event' : 'To be announced')}
+              href={event.location_url || undefined}
+              linkLabel={event.location_url ? (eventMode === 'online' ? 'Open join link' : 'View on map') : undefined}
+            />
+            <VenueRow
+              label="Member access"
+              value="ABG members can log in for the full RSVP, payment, and discussion experience."
               href="/login"
-              className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-medium text-[#222222] transition-colors hover:bg-[#f7f7f7]"
-            >
-              Log in
-            </Link>
-          </section>
+              linkLabel="Log in as member"
+              internal
+            />
+          </div>
+        </section>
+
+        <section className="order-9 rounded-[28px] bg-white p-6 lg:order-8" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+          <SectionEyebrow>Member access</SectionEyebrow>
+          <div className="mt-4 space-y-3 rounded-[24px] bg-[#f7f7f7] p-4">
+            <MetaLine label="Member RSVP" value="Available after login" />
+            <MetaLine label="Payments" value="Handled in member flow" />
+            <MetaLine label="Discussion" value="Visible to members" />
+          </div>
+          <Link
+            href="/login"
+            className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-medium text-[#222222] transition-colors hover:bg-[#f7f7f7]"
+          >
+            Log in
+          </Link>
+        </section>
         </div>
       </div>
 
@@ -334,29 +364,53 @@ function SoftBadge({
   );
 }
 
-function HeroFact({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-[24px] bg-[#fcfcfc] p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{label}</p>
-      <div className="mt-2 text-sm font-medium leading-6 text-[#222222]">{value}</div>
-    </div>
-  );
-}
-
-function InfoBlock({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-[24px] bg-[#f7f7f7] px-4 py-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{label}</p>
-      <div className="mt-2 text-sm font-medium leading-6 text-[#222222]">{value}</div>
-    </div>
-  );
-}
-
-function DateTimeValue({ date, time }: { date: string; time?: string }) {
+function DateTimeValue({
+  date,
+  time,
+  compact = false,
+}: {
+  date: string;
+  time?: string;
+  compact?: boolean;
+}) {
   return (
     <div className="space-y-1.5">
-      <p className="text-[1.05rem] font-semibold leading-7 tracking-[-0.02em] text-[#222222]">{date}</p>
-      {time && <p className="text-sm font-normal leading-5 text-[#6a6a6a]">{time}</p>}
+      <p className={`${compact ? 'text-base leading-6' : 'text-[1.05rem] leading-7'} font-semibold tracking-[-0.02em] text-[#222222]`}>{date}</p>
+      {time && <p className={`${compact ? 'text-[13px]' : 'text-sm'} font-normal leading-5 text-[#6a6a6a]`}>{time}</p>}
+    </div>
+  );
+}
+
+function CompactFactRow({
+  icon,
+  label,
+  primary,
+  secondary,
+}: {
+  icon: string;
+  label: string;
+  primary: React.ReactNode;
+  secondary?: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-4 rounded-[20px] border border-black/8 bg-[#fcfcfc] px-4 py-4">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-lg">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{label}</p>
+        <div className="mt-1 text-sm font-medium leading-6 text-[#222222]">{primary}</div>
+        {secondary && <div className="mt-1 text-sm leading-6 text-[#6a6a6a]">{secondary}</div>}
+      </div>
+    </div>
+  );
+}
+
+function MetricBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[18px] bg-[#f7f7f7] px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{label}</p>
+      <p className="mt-2 text-base font-semibold text-[#222222]">{value}</p>
     </div>
   );
 }
@@ -397,19 +451,11 @@ function VenueRow({
   );
 }
 
-function PricingCard({
-  title,
-  value,
-  featured = false,
-}: {
-  title: string;
-  value: string;
-  featured?: boolean;
-}) {
+function CompactPriceLine({ title, value }: { title: string; value: string }) {
   return (
-    <div className={`rounded-[24px] border p-4 ${featured ? 'border-[#f2d4c9] bg-[#fff8f6]' : 'border-black/8 bg-[#fcfcfc]'}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{title}</p>
-      <p className="mt-3 text-xl font-semibold tracking-[-0.03em] text-[#222222]">{value}</p>
+    <div className="flex items-center justify-between gap-4 rounded-[18px] border border-black/8 bg-[#fcfcfc] px-4 py-3">
+      <span className="text-sm text-[#6a6a6a]">{title}</span>
+      <span className="text-sm font-semibold text-[#222222]">{value}</span>
     </div>
   );
 }

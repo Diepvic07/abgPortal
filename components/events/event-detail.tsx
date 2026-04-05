@@ -459,7 +459,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   })();
 
   return (
-    <div className="mx-auto max-w-6xl px-1 py-4 text-[#222222]">
+    <div className="mx-auto max-w-7xl px-2 py-4 text-[#222222]">
       <nav className="mb-6 text-sm text-[#6a6a6a]">
         <Link href="/events" className="transition-colors hover:text-[#222222]">
           {locale === 'vi' ? 'Sự kiện' : 'Events'}
@@ -468,583 +468,446 @@ export function EventDetail({ eventId }: { eventId: string }) {
         <span className="text-[#222222]">{event.title}</span>
       </nav>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.55fr)_360px]">
-        <div className="space-y-8">
-          <section>
-            <div className="flex flex-wrap items-center gap-2">
-              <SoftBadge tone="stone">{modeLabel}</SoftBadge>
-              <SoftBadge tone="plain">{categoryLabel}</SoftBadge>
-              {eventTimingBadge}
-              {isPremiumExclusive && (
-                <SoftBadge tone="sand">{locale === 'vi' ? 'Chỉ dành cho Premium' : 'Premium only'}</SoftBadge>
-              )}
+      <div className="grid gap-6 lg:[grid-template-columns:minmax(0,25%)_minmax(0,75%)] lg:items-start">
+        <section
+          className="order-1 overflow-hidden rounded-[28px] bg-white lg:col-start-1 lg:row-start-1"
+          style={{ boxShadow: AIRBNB_CARD_SHADOW }}
+        >
+          {event.image_url ? (
+            <div className="aspect-[4/5] bg-[#f7f7f7] lg:aspect-[5/6]">
+              <img src={event.image_url} alt="" className="h-full w-full object-cover" />
             </div>
-
-            <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_240px] xl:items-end">
+          ) : (
+            <div className="flex aspect-[4/5] items-end bg-[linear-gradient(135deg,#fff8f6_0%,#ffffff_55%,#f7f7f7_100%)] p-6 lg:aspect-[5/6]">
               <div>
-                <h1 className="font-heading text-4xl font-semibold leading-tight tracking-[-0.03em] text-[#222222] md:text-[2.85rem]">
-                  {event.title}
-                </h1>
-                <p className="mt-4 max-w-3xl text-[15px] leading-7 text-[#6a6a6a]">
-                  {locale === 'vi'
-                    ? 'Mọi thông tin quan trọng được sắp xếp rõ ràng để bạn dễ dàng quyết định trước khi đăng ký.'
-                    : 'Key details are laid out clearly so you can decide before registering.'}
-                </p>
-              </div>
-
-              <div className="rounded-[28px] border border-black/5 bg-[#fff8f6] p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">
-                  {locale === 'vi' ? 'Hosted by' : 'Hosted by'}
-                </p>
-                <p className="mt-2 text-base font-semibold text-[#222222]">
-                  {event.author_name || 'ABG Alumni'}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[#6a6a6a]">
-                  {locale === 'vi'
-                    ? 'Thời gian, địa điểm và cách tham gia được tóm tắt để bạn nắm rõ trước khi xác nhận.'
-                    : 'Time, venue, and participation details summarised so you know what to expect.'}
+                <SectionEyebrow>{locale === 'vi' ? 'Event cover' : 'Event cover'}</SectionEyebrow>
+                <p className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
+                  {locale === 'vi' ? 'Hình ảnh sự kiện' : 'Event artwork'}
                 </p>
               </div>
             </div>
-          </section>
+          )}
+        </section>
 
-          <section
-            className="overflow-hidden rounded-[32px] bg-white"
-            style={{ boxShadow: AIRBNB_CARD_SHADOW }}
-          >
-            {event.image_url ? (
-              <div className="aspect-[16/10] bg-[#f7f7f7]">
-                <img src={event.image_url} alt="" className="h-full w-full object-cover" />
-              </div>
-            ) : (
-              <div className="flex aspect-[16/10] items-end bg-[linear-gradient(135deg,#fff8f6_0%,#ffffff_48%,#f7f7f7_100%)] p-8">
-                <div className="max-w-md">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">
-                    {locale === 'vi' ? 'Event Story' : 'Event Story'}
-                  </p>
-                  <p className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
-                    {locale === 'vi' ? 'Xem chi tiết sự kiện trước khi đăng ký tham gia.' : 'Review the event details before you register.'}
-                  </p>
-                </div>
-              </div>
+        <section className="order-2 rounded-[28px] bg-white p-6 md:p-7 lg:col-start-2 lg:row-start-1" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+          <div className="flex flex-wrap items-center gap-2">
+            <SoftBadge tone="stone">{modeLabel}</SoftBadge>
+            <SoftBadge tone="plain">{categoryLabel}</SoftBadge>
+            {eventTimingBadge}
+            {isPremiumExclusive && (
+              <SoftBadge tone="sand">{locale === 'vi' ? 'Chỉ dành cho Premium' : 'Premium only'}</SoftBadge>
             )}
-
-            <div className="grid gap-4 border-t border-black/5 p-5 sm:grid-cols-3 sm:p-6">
-              <HeroFact
-                label={locale === 'vi' ? 'When' : 'When'}
-                value={<DateTimeValue date={eventDateParts.date} time={eventDateParts.time} />}
-              />
-              <HeroFact
-                label={locale === 'vi' ? 'Where' : 'Where'}
-                value={
-                  eventMode === 'online'
-                    ? (event.location || (locale === 'vi' ? 'Sự kiện trực tuyến' : 'Online event'))
-                    : (event.location || (locale === 'vi' ? 'Sẽ cập nhật' : 'To be announced'))
-                }
-              />
-              <HeroFact
-                label={locale === 'vi' ? 'Registration' : 'Registration'}
-                value={registrationDeadlineParts
-                  ? <DateTimeValue date={registrationDeadlineParts.date} time={registrationDeadlineParts.time} />
-                  : (locale === 'vi' ? 'Đang mở cho đến khi đầy chỗ' : 'Open until seats fill')}
-              />
-            </div>
-          </section>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <section className="rounded-[28px] bg-white p-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
-              <SectionEyebrow>{locale === 'vi' ? 'At a glance' : 'At a glance'}</SectionEyebrow>
-              <div className="mt-4 grid gap-3">
-                <InfoBlock
-                  label={locale === 'vi' ? 'Ngày sự kiện' : 'Event date'}
-                  value={<DateTimeValue date={eventDateParts.date} time={eventDateParts.time} />}
-                />
-                <InfoBlock
-                  label={locale === 'vi' ? 'Hạn chót đăng ký' : 'Registration deadline'}
-                  value={registrationDeadlineParts
-                    ? <DateTimeValue date={registrationDeadlineParts.date} time={registrationDeadlineParts.time} />
-                    : (locale === 'vi' ? 'Chưa đặt' : 'Not set')}
-                />
-                <InfoBlock
-                  label={locale === 'vi' ? 'Hình thức' : 'Mode'}
-                  value={modeLabel}
-                />
-                <InfoBlock
-                  label={locale === 'vi' ? 'Người tổ chức' : 'Organizer'}
-                  value={event.author_name || 'ABG Alumni'}
-                />
-              </div>
-            </section>
-
-            <section className="rounded-[28px] bg-white p-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
-              <SectionEyebrow>{locale === 'vi' ? 'Venue & access' : 'Venue & access'}</SectionEyebrow>
-              <div className="mt-4 space-y-4">
-                {(eventMode === 'offline' || eventMode === 'hybrid') && (
-                  <VenueRow
-                    label={locale === 'vi' ? 'Địa điểm trực tiếp' : 'In-person venue'}
-                    value={event.location || (locale === 'vi' ? 'Sẽ cập nhật sau' : 'To be announced')}
-                    linkLabel={event.location_url ? (locale === 'vi' ? 'Mở chi tiết địa điểm' : 'Open venue details') : undefined}
-                    href={event.location_url || undefined}
-                  />
-                )}
-
-                {eventMode === 'online' && (
-                  <VenueRow
-                    label={locale === 'vi' ? 'Nền tảng tham gia' : 'Meeting platform'}
-                    value={event.location || (locale === 'vi' ? 'Sự kiện trực tuyến' : 'Online event')}
-                    linkLabel={event.location_url ? (locale === 'vi' ? 'Mở liên kết tham gia' : 'Open join link') : undefined}
-                    href={event.location_url || undefined}
-                    helper={
-                      event.location_url
-                        ? undefined
-                        : (locale === 'vi' ? 'Liên kết tham gia sẽ được gửi sau khi đăng ký.' : 'The join link will be shared after registration.')
-                    }
-                  />
-                )}
-
-                {eventMode === 'hybrid' && event.location_url && (
-                  <VenueRow
-                    label={locale === 'vi' ? 'Tuỳ chọn tham gia trực tuyến' : 'Online attendance option'}
-                    value={locale === 'vi' ? 'Bạn có thể tham gia từ xa qua liên kết sự kiện.' : 'You can join remotely through the event link.'}
-                    linkLabel={locale === 'vi' ? 'Mở liên kết tham gia' : 'Open join link'}
-                    href={event.location_url}
-                  />
-                )}
-              </div>
-            </section>
           </div>
 
-          <section className="rounded-[28px] bg-white p-6 md:p-7" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="max-w-3xl">
-                <SectionEyebrow>{locale === 'vi' ? 'About this event' : 'About this event'}</SectionEyebrow>
-                <h2 className="mt-3 font-heading text-[1.9rem] font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
-                  {locale === 'vi' ? 'Mọi điều bạn cần biết trước khi tham gia.' : 'Everything to know before you join.'}
-                </h2>
-                <div className="prose prose-sm mt-4 max-w-none whitespace-pre-wrap text-[#3f3f3f]">
-                  {event.description}
-                </div>
-              </div>
-
-              <div className="w-full max-w-xs rounded-[24px] bg-[#f7f7f7] p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">
-                  {locale === 'vi' ? 'Registration snapshot' : 'Registration snapshot'}
-                </p>
-                <p className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-[#222222]">
-                  {registeredCount}
-                  {totalCapacity > 0 && <span className="text-xl text-[#6a6a6a]"> / {totalCapacity}</span>}
-                </p>
-                <p className="mt-1 text-sm text-[#6a6a6a]">
-                  {locale === 'vi' ? 'thành viên đã xác nhận tham gia' : 'members confirmed to attend'}
-                </p>
-                {totalCapacity > 0 && (
-                  <>
-                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-black/8">
-                      <div
-                        className="h-full rounded-full bg-[#ff385c] transition-all"
-                        style={{ width: `${Math.min(100, capacityPercent)}%` }}
-                      />
-                    </div>
-                    <p className="mt-2 text-xs leading-5 text-[#6a6a6a]">
-                      {isFull
-                        ? (locale === 'vi' ? 'Hiện tại không còn chỗ trống.' : 'No open seats at the moment.')
-                        : (locale === 'vi' ? 'Số chỗ có thể thay đổi theo loại thành viên.' : 'Availability may vary by membership tier.')}
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {hasFees && isPublished && (
-              <div className="mt-8 border-t border-black/5 pt-6">
-                <SectionEyebrow>{locale === 'vi' ? 'Pricing' : 'Pricing'}</SectionEyebrow>
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  {event.fee_premium != null && (
-                    <PricingCard
-                      title="ABG Premium"
-                      value={formatCurrencyVnd(event.fee_premium, locale)}
-                      featured={isPremium}
-                    />
-                  )}
-                  {event.fee_basic != null && (
-                    <PricingCard
-                      title="ABG Basic"
-                      value={formatCurrencyVnd(event.fee_basic, locale)}
-                      featured={!isPremium}
-                    />
-                  )}
-                  {event.fee_guest != null && (
-                    <PricingCard
-                      title={locale === 'vi' ? 'Khách' : 'Guest'}
-                      value={formatCurrencyVnd(event.fee_guest, locale)}
-                    />
-                  )}
-                </div>
-              </div>
-            )}
-          </section>
-
-          {isPublished && (
-            <section
-              id="event-rsvp-panel"
-              className="rounded-[28px] bg-white p-6 md:p-7"
-              style={{ boxShadow: AIRBNB_CARD_SHADOW }}
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <SectionEyebrow>{locale === 'vi' ? 'Reserve your place' : 'Reserve your place'}</SectionEyebrow>
-                  <h2 className="mt-3 font-heading text-[1.9rem] font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
-                    {locale === 'vi' ? 'Chọn cách bạn muốn tham gia.' : 'Choose how you want to join.'}
-                  </h2>
-                  <p className="mt-2 max-w-2xl text-[15px] leading-7 text-[#6a6a6a]">
-                    {locale === 'vi'
-                      ? 'Chọn vai trò tham gia phù hợp với bạn. Bạn có thể thay đổi bất kỳ lúc nào trước khi sự kiện diễn ra.'
-                      : 'Pick the role that suits you. You can change your mind any time before the event.'}
-                  </p>
-                </div>
-
-                {myRsvp === 'will_participate' && (
-                  <StatusPill tone="plain">
-                    {locale === 'vi' ? 'Bạn đã đăng ký tham gia' : 'You are registered to join'}
-                  </StatusPill>
-                )}
-                {myRsvp === 'will_lead' && (
-                  <StatusPill tone="sand">
-                    {locale === 'vi' ? 'Bạn đang tham gia với vai trò dẫn dắt' : 'You are registered as a lead'}
-                  </StatusPill>
-                )}
-              </div>
-
-              {event.rsvp_score > 0 && (
-                <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#fff1eb] px-4 py-2 text-sm font-semibold text-[#b42318]">
-                  <span>🔥</span>
-                  <span>{locale === 'vi' ? 'Điểm cam kết' : 'Commitment'}: {event.rsvp_score}</span>
-                </div>
-              )}
-
-              {!isPremium && isPremiumExclusive && (
-                <NoticeBox>
-                  {locale === 'vi'
-                    ? 'Sự kiện này chỉ dành cho thành viên Premium. Vui lòng nâng cấp để đăng ký.'
-                    : 'This event is reserved for Premium members. Upgrade before registering.'}
-                </NoticeBox>
-              )}
-
-              {!isPremium && !isPremiumExclusive && (
-                <NoticeBox>
-                  {locale === 'vi'
-                    ? 'Thành viên Basic có thể đăng ký khi còn chỗ. Premium được ưu tiên khi số lượng chỗ có giới hạn.'
-                    : 'Basic members can register while seats remain. Premium members receive priority when seats are limited.'}
-                </NoticeBox>
-              )}
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {RSVP_ACTIONS.map((action) => {
-                  const isSelected = myRsvp === action.level;
-                  const isDisabled =
-                    rsvpLoading ||
-                    (!isPremium && isPremiumExclusive) ||
-                    (isFull && !hasRsvp) ||
-                    (action.level === 'will_lead' && !canUpgradeToLead);
-
-                  return (
-                    <button
-                      key={action.level}
-                      type="button"
-                      disabled={isDisabled}
-                      aria-pressed={isSelected}
-                      onClick={() => openRsvpModal(action.level)}
-                      className={`rounded-[28px] border p-5 text-left transition-all ${
-                        isSelected
-                          ? 'border-[#ff385c] bg-[#fff8f6]'
-                          : 'border-black/8 bg-white hover:border-black/15 hover:bg-[#fcfcfc]'
-                      } ${isDisabled ? 'cursor-not-allowed opacity-55' : ''}`}
-                      style={!isSelected ? { boxShadow: AIRBNB_CARD_SHADOW } : undefined}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f7f7f7] text-xl">
-                          {action.icon}
-                        </div>
-                        <div>
-                          <p className="text-base font-semibold text-[#222222]">
-                            {action.label[locale === 'vi' ? 'vi' : 'en']}
-                          </p>
-                          <p className="mt-1 text-sm leading-6 text-[#6a6a6a]">
-                            {action.helper[locale === 'vi' ? 'vi' : 'en']}
-                          </p>
-                        </div>
-                      </div>
-
-                      {action.level === 'will_lead' && !canUpgradeToLead && (
-                        <p className="mt-4 text-xs font-medium leading-5 text-[#6a6a6a]">
-                          {locale === 'vi'
-                            ? 'Hãy chọn "Tham gia ngay" trước, sau đó bạn có thể nâng cấp lên vai trò tổ chức.'
-                            : 'Choose "Join Now" first, then you can upgrade to an organizer role.'}
-                        </p>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-[#6a6a6a]">
-                {isFull && !hasRsvp && (
-                  <span className="font-medium text-[#b42318]">
-                    {locale === 'vi' ? 'Sự kiện hiện đã đủ số lượng đăng ký.' : 'This event is currently full.'}
-                  </span>
-                )}
-                {myRsvp === 'will_lead' && (
-                  <span>
-                    {locale === 'vi' ? 'Bạn có thể chuyển lại về chế độ tham gia bình thường bất kỳ lúc nào.' : 'You can switch back to a normal attendee role at any time.'}
-                  </span>
-                )}
-                {hasRsvp && event.allow_cancellation !== false && (
-                  <button
-                    type="button"
-                    onClick={() => setConfirmRemove(true)}
-                    className="font-medium text-[#ff385c] transition-colors hover:text-[#e00b41]"
-                  >
-                    {locale === 'vi' ? 'Hủy đăng ký' : 'Cancel RSVP'}
-                  </button>
-                )}
-              </div>
-
-              {hasRsvp && (
-                <p className="mt-3 text-xs leading-6 text-[#6a6a6a]">
-                  {event.allow_cancellation !== false
-                    ? (locale === 'vi'
-                      ? 'Bạn có thể hủy đăng ký bất kỳ lúc nào trước khi sự kiện kết thúc.'
-                      : 'You can cancel your RSVP any time before the event is closed.')
-                    : (locale === 'vi'
-                      ? 'Sau khi đăng ký, bạn không thể tự hủy. Vui lòng liên hệ ban tổ chức nếu cần.'
-                      : 'Cancellation is not available. Please contact the organizer if needed.')}
-                </p>
-              )}
-            </section>
-          )}
-
-          {activeRsvps.length > 0 && (
-            <section className="rounded-[28px] bg-white p-6 md:p-7" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
-              <SectionEyebrow>{locale === 'vi' ? 'Who is going' : 'Who is going'}</SectionEyebrow>
-              <h2 className="mt-3 font-heading text-[1.9rem] font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
-                {locale === 'vi' ? 'Danh sách thành viên đã đăng ký.' : 'Registered members for this event.'}
-              </h2>
-              <div className="mt-5 flex flex-wrap gap-3">
-                {[...activeRsvps]
-                  .sort((a, b) => {
-                    const order: Record<string, number> = { will_lead: 0, will_participate: 1 };
-                    return (order[a.commitment_level] ?? 9) - (order[b.commitment_level] ?? 9);
-                  })
-                  .map((rsvp) => {
-                    const isLead = rsvp.commitment_level === 'will_lead';
-                    return (
-                      <div
-                        key={rsvp.id}
-                        className={`flex items-center gap-3 rounded-full border px-4 py-2.5 ${
-                          isLead ? 'border-[#f2d4c9] bg-[#fff8f6]' : 'border-black/8 bg-[#fcfcfc]'
-                        }`}
-                        title={RSVP_LABELS[rsvp.commitment_level as EventRegistrationLevel]?.[locale === 'vi' ? 'vi' : 'en']}
-                      >
-                        {rsvp.member_avatar_url ? (
-                          <img src={rsvp.member_avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
-                        ) : (
-                          <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white ${getAvatarColor(rsvp.member_name || '?')}`}>
-                            {(rsvp.member_name || '?')[0].toUpperCase()}
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm font-semibold text-[#222222]">
-                            {rsvp.member_name || 'Member'}
-                          </p>
-                          <p className="text-xs text-[#6a6a6a]">
-                            {RSVP_LABELS[rsvp.commitment_level as EventRegistrationLevel]?.[locale === 'vi' ? 'vi' : 'en']}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            </section>
-          )}
-
-          <section className="rounded-[28px] bg-white p-6 md:p-7" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div>
-                <SectionEyebrow>{locale === 'vi' ? 'Discussion' : 'Discussion'}</SectionEyebrow>
-                <h2 className="mt-3 font-heading text-[1.9rem] font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
-                  {locale === 'vi' ? 'Trao đổi trước khi sự kiện bắt đầu.' : 'Talk things through before the event starts.'}
-                </h2>
-              </div>
-              <p className="text-sm text-[#6a6a6a]">
-                {event.comment_count} {locale === 'vi' ? 'bình luận' : 'comments'}
+          <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] xl:items-start">
+            <div>
+              <h1 className="font-heading text-[2.2rem] font-semibold leading-[1.02] tracking-[-0.04em] text-[#222222] md:text-[3.25rem]">
+                {event.title}
+              </h1>
+              <p className="mt-4 max-w-3xl text-[15px] leading-7 text-[#6a6a6a]">
+                {locale === 'vi'
+                  ? 'Thông tin quan trọng được gom lại theo cấu trúc trang sự kiện: thời gian, địa điểm, trạng thái đăng ký và các hành động liên quan nằm gần nhau để bạn quét nhanh và quyết định dễ hơn.'
+                  : 'The event is now structured as a tighter utility page: timing, location, registration state, and actions sit together so the page is faster to scan and use.'}
               </p>
-            </div>
 
-            {session && isPublished && (
-              <form onSubmit={handleComment} className="mt-6 rounded-[24px] bg-[#f7f7f7] p-4 sm:p-5">
-                <label className="mb-2 block text-sm font-medium text-[#222222]">
-                  {locale === 'vi' ? 'Bạn muốn hỏi hoặc chia sẻ gì về sự kiện này?' : 'Questions or notes for the event discussion'}
-                </label>
-                <textarea
-                  value={commentBody}
-                  onChange={(e) => setCommentBody(e.target.value)}
-                  placeholder={locale === 'vi' ? 'Ví dụ: Tôi nên chuẩn bị gì trước khi tham gia?' : 'For example: Is there anything I should prepare before joining?'}
-                  className="w-full resize-none rounded-[22px] border border-black/8 bg-white px-4 py-3 text-sm text-[#222222] focus:border-[#ff385c] focus:outline-none"
-                  rows={3}
-                  maxLength={2000}
+              <div className="mt-6 grid gap-3">
+                <CompactFactRow
+                  icon="📅"
+                  label={locale === 'vi' ? 'Ngày và giờ' : 'Date and time'}
+                  primary={<DateTimeValue date={eventDateParts.date} time={eventDateParts.time} compact />}
                 />
-                <div className="mt-4 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={!commentBody.trim() || commentLoading}
-                    className="rounded-xl bg-[#ff385c] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#e00b41] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {commentLoading
-                      ? (locale === 'vi' ? 'Đang gửi...' : 'Posting...')
-                      : (locale === 'vi' ? 'Gửi bình luận' : 'Post Comment')}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {comments.length === 0 ? (
-              <p className="py-10 text-center text-sm text-[#6a6a6a]">
-                {locale === 'vi' ? 'Chưa có bình luận nào. Hãy bắt đầu cuộc trò chuyện.' : 'No comments yet. Start the conversation.'}
-              </p>
-            ) : (
-              <div className="mt-6 space-y-4" aria-live="polite">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3 rounded-[24px] bg-[#f7f7f7] p-4">
-                    {comment.member_avatar_url ? (
-                      <img src={comment.member_avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#d9d9d9] text-sm font-semibold text-white">
-                        {(comment.member_name || '?')[0]}
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-semibold text-[#222222]">{comment.member_name || 'Member'}</span>
-                        <span className="text-xs text-[#6a6a6a]">{formatRelativeTime(comment.created_at, locale)}</span>
-                      </div>
-                      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-[#3f3f3f]">{comment.body}</p>
-                    </div>
-                  </div>
-                ))}
+                <CompactFactRow
+                  icon="📍"
+                  label={locale === 'vi' ? 'Địa điểm' : 'Location'}
+                  primary={
+                    eventMode === 'online'
+                      ? (event.location || (locale === 'vi' ? 'Sự kiện trực tuyến' : 'Online event'))
+                      : (event.location || (locale === 'vi' ? 'Sẽ cập nhật' : 'To be announced'))
+                  }
+                  secondary={eventMode === 'hybrid' ? (locale === 'vi' ? 'Có cả hình thức trực tuyến.' : 'Online attendance is also available.') : modeLabel}
+                />
+                <CompactFactRow
+                  icon="📝"
+                  label={locale === 'vi' ? 'Đăng ký' : 'Registration'}
+                  primary={registrationDeadlineParts
+                    ? <DateTimeValue date={registrationDeadlineParts.date} time={registrationDeadlineParts.time} compact />
+                    : (locale === 'vi' ? 'Mở cho đến khi đầy chỗ' : 'Open until seats fill')}
+                />
               </div>
-            )}
-          </section>
-        </div>
-
-        <div className="space-y-5 lg:sticky lg:top-28 lg:self-start">
-          <aside className="rounded-[28px] bg-white p-6" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
-            <SectionEyebrow>{locale === 'vi' ? 'Reserve summary' : 'Reserve summary'}</SectionEyebrow>
-            <div className="mt-4 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-3xl font-semibold tracking-[-0.03em] text-[#222222]">
-                  {registeredCount}
-                  {totalCapacity > 0 && <span className="text-xl text-[#6a6a6a]"> / {totalCapacity}</span>}
-                </p>
-                <p className="mt-1 text-sm text-[#6a6a6a]">
-                  {locale === 'vi' ? 'đã xác nhận' : 'confirmed'}
-                </p>
-              </div>
-              {memberFee != null && (
-                <div className="text-right">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">
-                    {locale === 'vi' ? 'Your fee' : 'Your fee'}
-                  </p>
-                  <p className="mt-1 text-base font-semibold text-[#222222]">
-                    {formatCurrencyVnd(memberFee, locale)}
-                  </p>
-                </div>
-              )}
             </div>
 
-            {totalCapacity > 0 && (
-              <>
-                <div className="mt-5 h-2 overflow-hidden rounded-full bg-black/8">
-                  <div
-                    className="h-full rounded-full bg-[#ff385c] transition-all"
-                    style={{ width: `${Math.min(100, capacityPercent)}%` }}
+            {isPublished && (
+              <section
+                id="event-rsvp-panel"
+                className="rounded-[24px] border border-black/8 bg-[#fcfcfc] p-5"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <SectionEyebrow>{locale === 'vi' ? 'Registration' : 'Registration'}</SectionEyebrow>
+                    <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#222222]">
+                      {locale === 'vi' ? 'Đăng ký tham gia' : 'Join this event'}
+                    </h2>
+                  </div>
+                  {(myRsvp === 'will_participate' || myRsvp === 'will_lead') && (
+                    <StatusPill tone={myRsvp === 'will_lead' ? 'sand' : 'plain'}>
+                      {myRsvp === 'will_lead'
+                        ? (locale === 'vi' ? 'Vai trò dẫn dắt' : 'Lead role')
+                        : (locale === 'vi' ? 'Đã đăng ký' : 'Registered')}
+                    </StatusPill>
+                  )}
+                </div>
+
+                <div className="mt-5 grid gap-3 rounded-[20px] bg-white p-4 sm:grid-cols-3">
+                  <MetricBlock
+                    label={locale === 'vi' ? 'Đã xác nhận' : 'Confirmed'}
+                    value={`${registeredCount}${totalCapacity > 0 ? ` / ${totalCapacity}` : ''}`}
+                  />
+                  <MetricBlock
+                    label={locale === 'vi' ? 'Vai trò của bạn' : 'Your role'}
+                    value={myRsvp ? RSVP_LABELS[myRsvp as EventRegistrationLevel][locale === 'vi' ? 'vi' : 'en'] : (locale === 'vi' ? 'Chưa chọn' : 'Not selected')}
+                  />
+                  <MetricBlock
+                    label={locale === 'vi' ? 'Trạng thái phí' : 'Fee status'}
+                    value={
+                      memberFee == null
+                        ? (locale === 'vi' ? 'Chưa áp dụng' : 'Not set')
+                        : memberFee === 0
+                          ? (locale === 'vi' ? 'Miễn phí' : 'Free')
+                          : myPaymentStatus === 'confirmed'
+                            ? (locale === 'vi' ? 'Đã thanh toán' : 'Paid')
+                            : myPaymentStatus === 'pending'
+                              ? (locale === 'vi' ? 'Chờ xác nhận' : 'Pending')
+                              : (locale === 'vi' ? 'Cần thanh toán' : 'Payment needed')
+                    }
                   />
                 </div>
-                <p className="mt-2 text-xs leading-5 text-[#6a6a6a]">
-                  {isFull
-                    ? (locale === 'vi' ? 'Hiện tại không còn chỗ trống.' : 'No open seats at the moment.')
-                    : (locale === 'vi' ? 'Số chỗ hiển thị theo tổng sức chứa của sự kiện.' : 'Seats shown reflect the total event capacity.')}
-                </p>
-              </>
+
+                {event.rsvp_score > 0 && (
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#fff1eb] px-3 py-1.5 text-sm font-semibold text-[#b42318]">
+                    <span>🔥</span>
+                    <span>{locale === 'vi' ? 'Điểm cam kết' : 'Commitment'}: {event.rsvp_score}</span>
+                  </div>
+                )}
+
+                {!isPremium && isPremiumExclusive && (
+                  <NoticeBox>
+                    {locale === 'vi'
+                      ? 'Sự kiện này chỉ dành cho thành viên Premium. Vui lòng nâng cấp để đăng ký.'
+                      : 'This event is reserved for Premium members. Upgrade before registering.'}
+                  </NoticeBox>
+                )}
+
+                {!isPremium && !isPremiumExclusive && (
+                  <NoticeBox>
+                    {locale === 'vi'
+                      ? 'Thành viên Basic có thể đăng ký khi còn chỗ. Premium được ưu tiên khi số lượng chỗ có giới hạn.'
+                      : 'Basic members can register while seats remain. Premium members receive priority when seats are limited.'}
+                  </NoticeBox>
+                )}
+
+                <div className="mt-5 grid gap-3 lg:grid-cols-2">
+                  {RSVP_ACTIONS.map((action) => {
+                    const isSelected = myRsvp === action.level;
+                    const isDisabled =
+                      rsvpLoading ||
+                      (!isPremium && isPremiumExclusive) ||
+                      (isFull && !hasRsvp) ||
+                      (action.level === 'will_lead' && !canUpgradeToLead);
+
+                    return (
+                      <button
+                        key={action.level}
+                        type="button"
+                        disabled={isDisabled}
+                        aria-pressed={isSelected}
+                        onClick={() => openRsvpModal(action.level)}
+                        className={`rounded-[20px] border px-4 py-4 text-left transition-all ${
+                          isSelected
+                            ? 'border-[#ff385c] bg-[#fff8f6]'
+                            : 'border-black/8 bg-white hover:border-black/15 hover:bg-[#fcfcfc]'
+                        } ${isDisabled ? 'cursor-not-allowed opacity-55' : ''}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f7f7f7] text-xl">
+                            {action.icon}
+                          </div>
+                          <div>
+                            <p className="text-base font-semibold text-[#222222]">
+                              {action.label[locale === 'vi' ? 'vi' : 'en']}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-[#6a6a6a]">
+                              {action.helper[locale === 'vi' ? 'vi' : 'en']}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[#6a6a6a]">
+                  {isFull && !hasRsvp && (
+                    <span className="font-medium text-[#b42318]">
+                      {locale === 'vi' ? 'Sự kiện hiện đã đủ số lượng đăng ký.' : 'This event is currently full.'}
+                    </span>
+                  )}
+                  {hasRsvp && event.allow_cancellation !== false && (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmRemove(true)}
+                      className="font-medium text-[#ff385c] transition-colors hover:text-[#e00b41]"
+                    >
+                      {locale === 'vi' ? 'Hủy đăng ký' : 'Cancel RSVP'}
+                    </button>
+                  )}
+                  {(myPaymentStatus !== 'confirmed' && memberFee != null && memberFee > 0 && hasRsvp) && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPaymentFlow(true)}
+                      className="font-medium text-[#222222] underline decoration-black/20 underline-offset-4 hover:decoration-black/50"
+                    >
+                      {locale === 'vi' ? 'Mở thanh toán' : 'Open payment'}
+                    </button>
+                  )}
+                </div>
+
+                {hasRsvp && (
+                  <p className="mt-3 text-xs leading-6 text-[#6a6a6a]">
+                    {event.allow_cancellation !== false
+                      ? (locale === 'vi'
+                        ? 'Bạn có thể hủy đăng ký bất kỳ lúc nào trước khi sự kiện kết thúc.'
+                        : 'You can cancel your RSVP any time before the event is closed.')
+                      : (locale === 'vi'
+                        ? 'Sau khi đăng ký, bạn không thể tự hủy. Vui lòng liên hệ ban tổ chức nếu cần.'
+                        : 'Cancellation is not available. Please contact the organizer if needed.')}
+                  </p>
+                )}
+              </section>
             )}
+          </div>
+        </section>
 
-            <div className="mt-5 space-y-3 rounded-[24px] bg-[#f7f7f7] p-4">
-              <MetaLine
-                label={locale === 'vi' ? 'Date' : 'Date'}
-                value={formatShortDateTime(event.event_date, locale)}
-              />
-              <MetaLine
-                label={locale === 'vi' ? 'Mode' : 'Mode'}
-                value={modeLabel}
-              />
-              <MetaLine
-                label={locale === 'vi' ? 'Host' : 'Host'}
-                value={event.author_name || 'ABG Alumni'}
-              />
-            </div>
+        <section className="order-7 rounded-[28px] bg-white p-6 lg:order-3 lg:col-start-1 lg:row-start-2" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+          <SectionEyebrow>{locale === 'vi' ? 'Hosted by' : 'Hosted by'}</SectionEyebrow>
+          <p className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[#222222]">
+            {event.author_name || 'ABG Alumni'}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[#6a6a6a]">
+            {locale === 'vi'
+              ? 'Ban tổ chức là đầu mối cho lịch trình, địa điểm và những lưu ý trước giờ tham gia.'
+              : 'The host is the point of contact for scheduling, venue details, and any final event updates.'}
+          </p>
+          <div className="mt-5 rounded-[20px] bg-[#f7f7f7] p-4">
+            <MetaLine
+              label={locale === 'vi' ? 'Organizer' : 'Organizer'}
+              value={event.author_name || 'ABG Alumni'}
+            />
+            <MetaLine
+              label={locale === 'vi' ? 'Mode' : 'Mode'}
+              value={modeLabel}
+            />
+          </div>
+        </section>
 
-            {myRsvp === 'will_participate' && (
-              <div className="mt-5 space-y-3">
-                <StatusPill tone="plain">
-                  {locale === 'vi' ? 'Bạn đã đăng ký tham gia' : 'You are registered to join'}
-                </StatusPill>
-                {memberFee != null && memberFee > 0 && myPaymentStatus === 'confirmed' && (
-                  <StatusPill tone="success">{locale === 'vi' ? 'Đã thanh toán' : 'Paid'}</StatusPill>
-                )}
-                {memberFee != null && memberFee > 0 && myPaymentStatus === 'pending' && (
-                  <StatusPill tone="sand">{locale === 'vi' ? 'Chờ xác nhận thanh toán' : 'Payment pending'}</StatusPill>
-                )}
-                {memberFee != null && memberFee > 0 && !myPaymentStatus && (
-                  <button
-                    onClick={() => setShowPaymentFlow(true)}
-                    className="w-full rounded-xl bg-[#ff385c] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-[#e00b41]"
-                  >
-                    {locale === 'vi' ? 'Thanh toán' : 'Pay now'}
-                  </button>
-                )}
-              </div>
-            )}
+        <section className="order-3 rounded-[28px] bg-white p-6 lg:order-4 lg:col-start-2 lg:row-start-2" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+          <SectionEyebrow>{locale === 'vi' ? 'About event' : 'About event'}</SectionEyebrow>
+          <h2 className="mt-3 font-heading text-[1.85rem] font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
+            {locale === 'vi' ? 'Thông tin chi tiết' : 'Event overview'}
+          </h2>
+          <div className="prose prose-sm mt-5 max-w-none whitespace-pre-wrap text-[#3f3f3f]">
+            {event.description}
+          </div>
+        </section>
 
-            {myRsvp === 'will_lead' && (
-              <div className="mt-5 space-y-3">
-                <StatusPill tone="sand">
-                  {locale === 'vi' ? 'Bạn đang tham gia với vai trò dẫn dắt' : 'You are registered as a lead'}
-                </StatusPill>
-                {memberFee != null && memberFee > 0 && myPaymentStatus === 'confirmed' && (
-                  <StatusPill tone="success">{locale === 'vi' ? 'Đã thanh toán' : 'Paid'}</StatusPill>
-                )}
-                {memberFee != null && memberFee > 0 && myPaymentStatus === 'pending' && (
-                  <StatusPill tone="sand">{locale === 'vi' ? 'Chờ xác nhận thanh toán' : 'Payment pending'}</StatusPill>
-                )}
-                {memberFee != null && memberFee > 0 && !myPaymentStatus && (
-                  <button
-                    onClick={() => setShowPaymentFlow(true)}
-                    className="w-full rounded-xl bg-[#ff385c] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-[#e00b41]"
-                  >
-                    {locale === 'vi' ? 'Thanh toán' : 'Pay now'}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {!hasRsvp && isPublished && (
-              <p className="mt-5 text-sm leading-6 text-[#6a6a6a]">
-                {locale === 'vi'
-                  ? 'Kéo xuống phần đăng ký để chọn vai trò tham gia phù hợp.'
-                  : 'Scroll to the RSVP section to choose how you want to join.'}
+        {hasFees && (
+          <section className="order-5 rounded-[28px] bg-white p-6 lg:order-5 lg:col-start-1 lg:row-start-3" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+            <SectionEyebrow>{locale === 'vi' ? 'Pricing & fees' : 'Pricing & fees'}</SectionEyebrow>
+            <div className="mt-4 rounded-[22px] bg-[#f7f7f7] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6a6a6a]">
+                {locale === 'vi' ? 'Phí của bạn' : 'Your fee'}
               </p>
+              <p className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#222222]">
+                {memberFee == null ? (locale === 'vi' ? 'Chưa đặt' : 'Not set') : formatCurrencyVnd(memberFee, locale)}
+              </p>
+              {myPaymentStatus && (
+                <p className="mt-2 text-sm text-[#6a6a6a]">
+                  {myPaymentStatus === 'confirmed'
+                    ? (locale === 'vi' ? 'Trạng thái: đã thanh toán' : 'Status: paid')
+                    : (locale === 'vi' ? 'Trạng thái: chờ xác nhận' : 'Status: pending')}
+                </p>
+              )}
+            </div>
+            <div className="mt-4 space-y-3">
+              {event.fee_premium != null && (
+                <CompactPriceLine title="ABG Premium" value={formatCurrencyVnd(event.fee_premium, locale)} />
+              )}
+              {event.fee_basic != null && (
+                <CompactPriceLine title="ABG Basic" value={formatCurrencyVnd(event.fee_basic, locale)} />
+              )}
+              {event.fee_guest != null && (
+                <CompactPriceLine title={locale === 'vi' ? 'Khách' : 'Guest'} value={formatCurrencyVnd(event.fee_guest, locale)} />
+              )}
+            </div>
+          </section>
+        )}
+
+        <section className="order-4 rounded-[28px] bg-white p-6 lg:order-6 lg:col-start-2 lg:row-start-3" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+          <SectionEyebrow>{locale === 'vi' ? 'Location' : 'Location'}</SectionEyebrow>
+          <div className="mt-4 space-y-4">
+            {(eventMode === 'offline' || eventMode === 'hybrid') && (
+              <VenueRow
+                label={locale === 'vi' ? 'Địa điểm trực tiếp' : 'In-person venue'}
+                value={event.location || (locale === 'vi' ? 'Sẽ cập nhật sau' : 'To be announced')}
+                linkLabel={event.location_url ? (locale === 'vi' ? 'Mở chi tiết địa điểm' : 'Open venue details') : undefined}
+                href={event.location_url || undefined}
+              />
             )}
-          </aside>
-        </div>
+
+            {eventMode === 'online' && (
+              <VenueRow
+                label={locale === 'vi' ? 'Nền tảng tham gia' : 'Meeting platform'}
+                value={event.location || (locale === 'vi' ? 'Sự kiện trực tuyến' : 'Online event')}
+                linkLabel={event.location_url ? (locale === 'vi' ? 'Mở liên kết tham gia' : 'Open join link') : undefined}
+                href={event.location_url || undefined}
+                helper={
+                  event.location_url
+                    ? undefined
+                    : (locale === 'vi' ? 'Liên kết tham gia sẽ được gửi sau khi đăng ký.' : 'The join link will be shared after registration.')
+                }
+              />
+            )}
+
+            {eventMode === 'hybrid' && event.location_url && (
+              <VenueRow
+                label={locale === 'vi' ? 'Tuỳ chọn tham gia trực tuyến' : 'Online attendance option'}
+                value={locale === 'vi' ? 'Bạn có thể tham gia từ xa qua liên kết sự kiện.' : 'You can join remotely through the event link.'}
+                linkLabel={locale === 'vi' ? 'Mở liên kết tham gia' : 'Open join link'}
+                href={event.location_url}
+              />
+            )}
+          </div>
+        </section>
+
+        <section className="order-8 rounded-[28px] bg-white p-6 lg:order-7 lg:col-start-1 lg:row-start-4" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+          <SectionEyebrow>{locale === 'vi' ? 'Attendees' : 'Attendees'}</SectionEyebrow>
+          <div className="mt-4">
+            <p className="text-3xl font-semibold tracking-[-0.03em] text-[#222222]">
+              {registeredCount}
+              {totalCapacity > 0 && <span className="text-xl text-[#6a6a6a]"> / {totalCapacity}</span>}
+            </p>
+            <p className="mt-1 text-sm text-[#6a6a6a]">
+              {locale === 'vi' ? 'đã xác nhận tham gia' : 'confirmed attendees'}
+            </p>
+          </div>
+          {totalCapacity > 0 && (
+            <>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-black/8">
+                <div
+                  className="h-full rounded-full bg-[#ff385c] transition-all"
+                  style={{ width: `${Math.min(100, capacityPercent)}%` }}
+                />
+              </div>
+              <p className="mt-2 text-xs leading-5 text-[#6a6a6a]">
+                {isFull
+                  ? (locale === 'vi' ? 'Hiện tại không còn chỗ trống.' : 'No open seats at the moment.')
+                  : (locale === 'vi' ? 'Số chỗ hiển thị theo tổng sức chứa của sự kiện.' : 'Seats shown reflect the total event capacity.')}
+              </p>
+            </>
+          )}
+          {activeRsvps.length > 0 ? (
+            <div className="mt-5 space-y-3">
+              {activeRsvps.slice(0, 5).map((rsvp) => (
+                <AttendeeRow
+                  key={rsvp.id}
+                  name={rsvp.member_name || 'Member'}
+                  avatarUrl={rsvp.member_avatar_url || undefined}
+                  isLead={rsvp.commitment_level === 'will_lead'}
+                  fallbackClass={getAvatarColor(rsvp.member_name || '?')}
+                  label={RSVP_LABELS[rsvp.commitment_level as EventRegistrationLevel]?.[locale === 'vi' ? 'vi' : 'en']}
+                />
+              ))}
+              {activeRsvps.length > 5 && (
+                <p className="text-sm text-[#6a6a6a]">
+                  {locale === 'vi'
+                    ? `Và còn ${activeRsvps.length - 5} người khác`
+                    : `And ${activeRsvps.length - 5} more`}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-[#6a6a6a]">
+              {locale === 'vi' ? 'Chưa có người tham gia.' : 'No attendees yet.'}
+            </p>
+          )}
+        </section>
+
+        <section className="order-9 rounded-[28px] bg-white p-6 md:p-7 lg:order-8 lg:col-start-2 lg:row-start-4" style={{ boxShadow: AIRBNB_CARD_SHADOW }}>
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <SectionEyebrow>{locale === 'vi' ? 'Discussion' : 'Discussion'}</SectionEyebrow>
+              <h2 className="mt-3 font-heading text-[1.85rem] font-semibold leading-tight tracking-[-0.03em] text-[#222222]">
+                {locale === 'vi' ? 'Thảo luận trước sự kiện' : 'Event discussion'}
+              </h2>
+            </div>
+            <p className="text-sm text-[#6a6a6a]">
+              {event.comment_count} {locale === 'vi' ? 'bình luận' : 'comments'}
+            </p>
+          </div>
+
+          {session && isPublished && (
+            <form onSubmit={handleComment} className="mt-6 rounded-[24px] bg-[#f7f7f7] p-4 sm:p-5">
+              <label className="mb-2 block text-sm font-medium text-[#222222]">
+                {locale === 'vi' ? 'Bạn muốn hỏi hoặc chia sẻ gì về sự kiện này?' : 'Questions or notes for the event discussion'}
+              </label>
+              <textarea
+                value={commentBody}
+                onChange={(e) => setCommentBody(e.target.value)}
+                placeholder={locale === 'vi' ? 'Ví dụ: Tôi nên chuẩn bị gì trước khi tham gia?' : 'For example: Is there anything I should prepare before joining?'}
+                className="w-full resize-none rounded-[22px] border border-black/8 bg-white px-4 py-3 text-sm text-[#222222] focus:border-[#ff385c] focus:outline-none"
+                rows={3}
+                maxLength={2000}
+              />
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={!commentBody.trim() || commentLoading}
+                  className="rounded-xl bg-[#ff385c] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#e00b41] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {commentLoading
+                    ? (locale === 'vi' ? 'Đang gửi...' : 'Posting...')
+                    : (locale === 'vi' ? 'Gửi bình luận' : 'Post Comment')}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {comments.length === 0 ? (
+            <p className="py-10 text-center text-sm text-[#6a6a6a]">
+              {locale === 'vi' ? 'Chưa có bình luận nào. Hãy bắt đầu cuộc trò chuyện.' : 'No comments yet. Start the conversation.'}
+            </p>
+          ) : (
+            <div className="mt-6 space-y-4" aria-live="polite">
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex gap-3 rounded-[24px] bg-[#f7f7f7] p-4">
+                  {comment.member_avatar_url ? (
+                    <img src={comment.member_avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#d9d9d9] text-sm font-semibold text-white">
+                      {(comment.member_name || '?')[0]}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-[#222222]">{comment.member_name || 'Member'}</span>
+                      <span className="text-xs text-[#6a6a6a]">{formatRelativeTime(comment.created_at, locale)}</span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-[#3f3f3f]">{comment.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
 
       {pendingRsvp && (
@@ -1207,29 +1070,53 @@ function StatusPill({
   );
 }
 
-function HeroFact({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-[24px] bg-[#fcfcfc] p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{label}</p>
-      <div className="mt-2 text-sm font-medium leading-6 text-[#222222]">{value}</div>
-    </div>
-  );
-}
-
-function InfoBlock({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-[24px] bg-[#f7f7f7] px-4 py-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{label}</p>
-      <div className="mt-2 text-sm font-medium leading-6 text-[#222222]">{value}</div>
-    </div>
-  );
-}
-
-function DateTimeValue({ date, time }: { date: string; time?: string }) {
+function DateTimeValue({
+  date,
+  time,
+  compact = false,
+}: {
+  date: string;
+  time?: string;
+  compact?: boolean;
+}) {
   return (
     <div className="space-y-1.5">
-      <p className="text-[1.05rem] font-semibold leading-7 tracking-[-0.02em] text-[#222222]">{date}</p>
-      {time && <p className="text-sm font-normal leading-5 text-[#6a6a6a]">{time}</p>}
+      <p className={`${compact ? 'text-base leading-6' : 'text-[1.05rem] leading-7'} font-semibold tracking-[-0.02em] text-[#222222]`}>{date}</p>
+      {time && <p className={`${compact ? 'text-[13px]' : 'text-sm'} font-normal leading-5 text-[#6a6a6a]`}>{time}</p>}
+    </div>
+  );
+}
+
+function CompactFactRow({
+  icon,
+  label,
+  primary,
+  secondary,
+}: {
+  icon: string;
+  label: string;
+  primary: React.ReactNode;
+  secondary?: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-4 rounded-[20px] border border-black/8 bg-[#fcfcfc] px-4 py-4">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-lg">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{label}</p>
+        <div className="mt-1 text-sm font-medium leading-6 text-[#222222]">{primary}</div>
+        {secondary && <div className="mt-1 text-sm leading-6 text-[#6a6a6a]">{secondary}</div>}
+      </div>
+    </div>
+  );
+}
+
+function MetricBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[18px] bg-[#f7f7f7] px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{label}</p>
+      <p className="mt-2 text-base font-semibold text-[#222222]">{value}</p>
     </div>
   );
 }
@@ -1266,19 +1153,41 @@ function VenueRow({
   );
 }
 
-function PricingCard({
-  title,
-  value,
-  featured = false,
+function CompactPriceLine({ title, value }: { title: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-[18px] border border-black/8 bg-[#fcfcfc] px-4 py-3">
+      <span className="text-sm text-[#6a6a6a]">{title}</span>
+      <span className="text-sm font-semibold text-[#222222]">{value}</span>
+    </div>
+  );
+}
+
+function AttendeeRow({
+  name,
+  avatarUrl,
+  isLead,
+  fallbackClass,
+  label,
 }: {
-  title: string;
-  value: string;
-  featured?: boolean;
+  name: string;
+  avatarUrl?: string;
+  isLead: boolean;
+  fallbackClass: string;
+  label: string;
 }) {
   return (
-    <div className={`rounded-[24px] border p-4 ${featured ? 'border-[#f2d4c9] bg-[#fff8f6]' : 'border-black/8 bg-[#fcfcfc]'}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">{title}</p>
-      <p className="mt-3 text-xl font-semibold tracking-[-0.03em] text-[#222222]">{value}</p>
+    <div className="flex items-center gap-3 rounded-[18px] border border-black/8 bg-[#fcfcfc] px-3 py-3">
+      {avatarUrl ? (
+        <img src={avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+      ) : (
+        <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold text-white ${fallbackClass}`}>
+          {name[0]?.toUpperCase() || '?'}
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-[#222222]">{name}</p>
+        <p className="text-xs text-[#6a6a6a]">{isLead ? `👑 ${label}` : label}</p>
+      </div>
     </div>
   );
 }
