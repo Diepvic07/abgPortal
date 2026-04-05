@@ -43,20 +43,29 @@ export function CommentReactions({ commentId, commentType, entityId, reactions, 
     if (loading) return;
     setLoading(true);
     setShowPicker(false);
+    setHoveredReaction(null);
 
     try {
       const url = `/api/community/${commentType === 'event' ? 'events' : 'proposals'}/${entityId}/comments/${commentId}/reactions`;
 
+      let res: Response;
       if (reactions?.my_reaction === type) {
-        await fetch(url, { method: 'DELETE' });
+        res = await fetch(url, { method: 'DELETE' });
       } else {
-        await fetch(url, {
+        res = await fetch(url, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ reaction_type: type }),
         });
       }
+
+      if (!res.ok) {
+        console.error('Reaction failed:', res.status, await res.text());
+      }
+
       onReactionChange();
+    } catch (err) {
+      console.error('Reaction error:', err);
     } finally {
       setLoading(false);
     }
@@ -67,7 +76,6 @@ export function CommentReactions({ commentId, commentType, entityId, reactions, 
 
   return (
     <div className="flex items-center gap-1 relative">
-      {/* Existing reaction badges */}
       {activeReactions.map(type => (
         <button
           key={type}
@@ -85,7 +93,6 @@ export function CommentReactions({ commentId, commentType, entityId, reactions, 
         </button>
       ))}
 
-      {/* Add reaction button */}
       <div ref={pickerRef} className="relative">
         <button
           onClick={() => setShowPicker(!showPicker)}
@@ -104,10 +111,9 @@ export function CommentReactions({ commentId, commentType, entityId, reactions, 
 
         {showPicker && (
           <div className="absolute bottom-full left-0 mb-2 bg-white rounded-2xl shadow-xl border border-gray-200 px-2 py-2 z-10">
-            {/* Label tooltip */}
             {hoveredReaction && (
               <div className="text-center mb-1">
-                <span className="text-[10px] font-medium text-gray-600 bg-gray-800 text-white px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-medium bg-gray-800 text-white px-2 py-0.5 rounded-full">
                   {REACTION_LABELS[hoveredReaction]}
                 </span>
               </div>

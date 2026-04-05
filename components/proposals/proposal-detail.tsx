@@ -88,6 +88,9 @@ export function ProposalDetail({ proposalId }: Props) {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState('');
+  const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
+  const [editingComment, setEditingComment] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState('');
   const [submittingCommitment, setSubmittingCommitment] = useState(false);
 
   useEffect(() => {
@@ -107,6 +110,7 @@ export function ProposalDetail({ proposalId }: Props) {
       setCommitments(data.commitments || []);
       setComments(data.comments || []);
       setMyCommitment(data.proposal?.my_commitment || null);
+      if (data.currentMemberId) setCurrentMemberId(data.currentMemberId);
     } catch {
       router.push('/events?tab=proposals');
     } finally {
@@ -163,6 +167,31 @@ export function ProposalDetail({ proposalId }: Props) {
     } catch {} finally {
       setSubmittingComment(false);
     }
+  }
+
+  async function handleEditComment(commentId: string) {
+    if (!editBody.trim()) return;
+    try {
+      const res = await fetch(`/api/community/proposals/${proposalId}/comments/${commentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: editBody.trim() }),
+      });
+      if (res.ok) {
+        setEditingComment(null);
+        setEditBody('');
+        await fetchProposal();
+      }
+    } catch {}
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    try {
+      const res = await fetch(`/api/community/proposals/${proposalId}/comments/${commentId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) await fetchProposal();
+    } catch {}
   }
 
   if (loading) {
@@ -378,7 +407,32 @@ export function ProposalDetail({ proposalId }: Props) {
                   <span className="font-medium text-sm text-gray-900">{c.member_name || 'Unknown'}</span>
                   <span className="text-xs text-gray-500">{timeAgo(c.created_at, locale || 'vi')}</span>
                 </div>
-                <p className="text-gray-700 text-sm whitespace-pre-wrap">{c.body}</p>
+                {editingComment === c.id ? (
+                  <div className="mt-1">
+                    <textarea
+                      value={editBody}
+                      onChange={(e) => setEditBody(e.target.value)}
+                      className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows={3}
+                      maxLength={2000}
+                      autoFocus
+                    />
+                    <div className="mt-2 flex gap-2 justify-end">
+                      <button onClick={() => setEditingComment(null)} className="text-xs text-gray-500 px-3 py-1">
+                        {locale === 'vi' ? 'Hủy' : 'Cancel'}
+                      </button>
+                      <button
+                        onClick={() => handleEditComment(c.id)}
+                        disabled={!editBody.trim()}
+                        className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {locale === 'vi' ? 'Lưu' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-700 text-sm whitespace-pre-wrap">{c.body}</p>
+                )}
                 <div className="mt-2 flex items-center gap-3">
                   <CommentReactions
                     commentId={c.id}
@@ -394,6 +448,22 @@ export function ProposalDetail({ proposalId }: Props) {
                     >
                       {locale === 'vi' ? 'Trả lời' : 'Reply'}
                     </button>
+                  )}
+                  {currentMemberId === c.member_id && (
+                    <>
+                      <button
+                        onClick={() => { setEditingComment(c.id); setEditBody(c.body); }}
+                        className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
+                      >
+                        {locale === 'vi' ? 'Sửa' : 'Edit'}
+                      </button>
+                      <button
+                        onClick={() => { if (confirm(locale === 'vi' ? 'Xóa bình luận này?' : 'Delete this comment?')) handleDeleteComment(c.id); }}
+                        className="text-xs text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        {locale === 'vi' ? 'Xóa' : 'Delete'}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

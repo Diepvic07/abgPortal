@@ -170,6 +170,9 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [commentLoading, setCommentLoading] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState('');
+  const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
+  const [editingComment, setEditingComment] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState('');
   const [membershipStatus, setMembershipStatus] = useState<MembershipStatus>('basic');
   const [pendingRsvp, setPendingRsvp] = useState<EventRegistrationLevel | null>(null);
   const [rsvpNote, setRsvpNote] = useState('');
@@ -218,6 +221,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
       if (res.ok) {
         const data = await res.json();
         setComments(data.comments || []);
+        if (data.currentMemberId) setCurrentMemberId(data.currentMemberId);
       }
     } catch (error) {
       console.error('Failed to fetch comments:', error);
@@ -330,6 +334,40 @@ export function EventDetail({ eventId }: { eventId: string }) {
       showToast(locale === 'vi' ? 'Không thể gửi bình luận.' : 'Unable to post comment.');
     } finally {
       setCommentLoading(false);
+    }
+  }
+
+  async function handleEditComment(commentId: string) {
+    if (!editBody.trim()) return;
+    try {
+      const res = await fetch(`/api/community/events/${eventId}/comments/${commentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: editBody.trim() }),
+      });
+      if (res.ok) {
+        setEditingComment(null);
+        setEditBody('');
+        void fetchCommentsDataRef.current();
+      }
+    } catch (error) {
+      console.error('Failed to edit comment:', error);
+    }
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    try {
+      const res = await fetch(`/api/community/events/${eventId}/comments/${commentId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        void fetchCommentsDataRef.current();
+        if (event) {
+          setEvent({ ...event, comment_count: Math.max(0, event.comment_count - 1) });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
     }
   }
 
@@ -928,7 +966,32 @@ export function EventDetail({ eventId }: { eventId: string }) {
                       <span className="text-sm font-medium text-gray-900">{comment.member_name || 'Member'}</span>
                       <span className="text-xs text-gray-500">{formatRelativeTime(comment.created_at, locale)}</span>
                     </div>
-                    <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">{comment.body}</p>
+                    {editingComment === comment.id ? (
+                      <div className="mt-1">
+                        <textarea
+                          value={editBody}
+                          onChange={(e) => setEditBody(e.target.value)}
+                          className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          rows={3}
+                          maxLength={2000}
+                          autoFocus
+                        />
+                        <div className="mt-2 flex gap-2 justify-end">
+                          <button onClick={() => setEditingComment(null)} className="text-xs text-gray-500 px-3 py-1">
+                            {locale === 'vi' ? 'Hủy' : 'Cancel'}
+                          </button>
+                          <button
+                            onClick={() => handleEditComment(comment.id)}
+                            disabled={!editBody.trim()}
+                            className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            {locale === 'vi' ? 'Lưu' : 'Save'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">{comment.body}</p>
+                    )}
                     <div className="mt-2 flex items-center gap-3">
                       <CommentReactions
                         commentId={comment.id}
@@ -944,6 +1007,22 @@ export function EventDetail({ eventId }: { eventId: string }) {
                         >
                           {locale === 'vi' ? 'Trả lời' : 'Reply'}
                         </button>
+                      )}
+                      {currentMemberId === comment.member_id && (
+                        <>
+                          <button
+                            onClick={() => { setEditingComment(comment.id); setEditBody(comment.body); }}
+                            className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
+                          >
+                            {locale === 'vi' ? 'Sửa' : 'Edit'}
+                          </button>
+                          <button
+                            onClick={() => { if (confirm(locale === 'vi' ? 'Xóa bình luận này?' : 'Delete this comment?')) handleDeleteComment(comment.id); }}
+                            className="text-xs text-gray-400 hover:text-red-600 transition-colors"
+                          >
+                            {locale === 'vi' ? 'Xóa' : 'Delete'}
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>

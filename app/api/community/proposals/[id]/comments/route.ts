@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const comments = await getCommentsByProposal(id, member.id);
-    return successResponse({ comments });
+    return successResponse({ comments, currentMemberId: member.id });
   } catch (error) {
     return handleApiError(error);
   }

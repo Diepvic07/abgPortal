@@ -15,13 +15,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const commitments = await getCommitmentsByProposal(id);
-    const comments = await getCommentsByProposal(id);
+    const comments = await getCommentsByProposal(id, member?.id);
     const myCommitment = member ? await getMemberCommitment(id, member.id) : null;
 
     return successResponse({
       proposal: { ...proposal, my_commitment: myCommitment?.commitment_level || null },
       commitments,
       comments,
+      currentMemberId: member?.id || null,
     });
   } catch (error) {
     return handleApiError(error);
