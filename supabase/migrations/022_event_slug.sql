@@ -7,8 +7,8 @@ UPDATE community_events
 SET slug = LOWER(
   TRIM(BOTH '-' FROM
     REGEXP_REPLACE(
-      REGEXP_REPLACE(title, '[^a-zA-Z0-9\s-]', '', 'g'),
-      '[\s]+', '-', 'g'
+      REGEXP_REPLACE(title, '[^\w\s-]', '', 'g'),
+      '\s+', '-', 'g'
     )
   )
 );
