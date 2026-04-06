@@ -41,6 +41,7 @@ function mapRowToEvent(row: Record<string, unknown>): CommunityEvent {
     is_public: (row.is_public as boolean) || false,
     payment_qr_url: nullToUndefined(row.payment_qr_url as string | null),
     payment_instructions: nullToUndefined(row.payment_instructions as string | null),
+    payment_code: nullToUndefined(row.payment_code as string | null),
     guest_rsvp_count: (row.guest_rsvp_count as number) || 0,
     outcome_summary: nullToUndefined(row.outcome_summary as string | null),
     registration_deadline: nullToUndefined(row.registration_deadline as string | null),
