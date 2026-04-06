@@ -116,9 +116,13 @@ export function CommentReactions({ commentId, commentType, entityId, reactions: 
         </button>
       ))}
 
-      <div ref={pickerRef} className="relative">
+      <div
+        ref={pickerRef}
+        className="relative"
+        onMouseEnter={() => setShowPicker(true)}
+        onMouseLeave={() => { setShowPicker(false); setHoveredReaction(null); }}
+      >
         <button
-          onClick={() => setShowPicker(!showPicker)}
           className={`inline-flex items-center justify-center w-7 h-7 rounded-full transition-all text-sm ${
             showPicker
               ? 'bg-blue-100 scale-110'
@@ -134,28 +138,29 @@ export function CommentReactions({ commentId, commentType, entityId, reactions: 
 
         {showPicker && (
           <div className="absolute bottom-full left-0 mb-2 bg-white rounded-2xl shadow-xl border border-gray-200 px-2 py-2 z-10">
-            {hoveredReaction && (
-              <div className="text-center mb-1">
-                <span className="text-[10px] font-medium bg-gray-800 text-white px-2 py-0.5 rounded-full">
-                  {REACTION_LABELS[hoveredReaction]}
-                </span>
-              </div>
-            )}
             <div className="flex items-center gap-1">
               {reactionTypes.map(type => (
-                <button
-                  key={type}
-                  onClick={() => handleReaction(type)}
-                  onMouseEnter={() => setHoveredReaction(type)}
-                  onMouseLeave={() => setHoveredReaction(null)}
-                  className={`w-9 h-9 flex items-center justify-center rounded-full transition-all duration-150 text-xl ${
-                    localReactions.my_reaction === type
-                      ? 'bg-blue-50 scale-110'
-                      : 'hover:bg-gray-100'
-                  } ${hoveredReaction === type ? 'scale-[1.4] -translate-y-1' : 'hover:scale-125'}`}
-                >
-                  {REACTION_EMOJI[type]}
-                </button>
+                <div key={type} className="relative">
+                  {hoveredReaction === type && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 whitespace-nowrap">
+                      <span className="text-[10px] font-medium bg-gray-800 text-white px-2 py-0.5 rounded-full">
+                        {REACTION_LABELS[type]}
+                      </span>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => handleReaction(type)}
+                    onMouseEnter={() => setHoveredReaction(type)}
+                    onMouseLeave={() => setHoveredReaction(null)}
+                    className={`w-9 h-9 flex items-center justify-center rounded-full transition-all duration-150 text-xl ${
+                      localReactions.my_reaction === type
+                        ? 'bg-blue-50 scale-110'
+                        : 'hover:bg-gray-100'
+                    } ${hoveredReaction === type ? 'scale-[1.4] -translate-y-1' : 'hover:scale-125'}`}
+                  >
+                    {REACTION_EMOJI[type]}
+                  </button>
+                </div>
               ))}
             </div>
           </div>
