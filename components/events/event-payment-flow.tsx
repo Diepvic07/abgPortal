@@ -12,17 +12,15 @@ const DEFAULT_PAYMENT_CONFIG = {
 };
 
 /**
- * Generate a memorable 4-character event code from event title + date.
- * Format: 2 chars from title initials + 2 chars from date (day + month letter)
- * Examples: "Pool Party 2026-04-12" → "PP2D", "Wine Tasting 2026-07-05" → "WT5G"
+ * Generate a memorable event code from event title + date.
+ * Format: 2-char title initials + DDMM date
+ * Examples: "Pool Party 2026-04-12" → "PP1204", "Wine Tasting 2026-07-05" → "WT0507"
  */
 function generateEventCode(title: string, eventDate: string): string {
-  const monthLetters = 'ABCDEFGHJKLM'; // A=Jan..M=Dec (skip I)
-
   // Strip diacritics and brackets, then extract up to 2 uppercase initials
   const clean = title
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip diacritics
-    .replace(/[\[\](){}]/g, ' ') // brackets → spaces
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\[\](){}]/g, ' ')
     .replace(/[^a-zA-Z0-9\s]/g, '');
   const words = clean.split(/\s+/).filter(w => w.length > 0);
   let initials = '';
@@ -33,14 +31,12 @@ function generateEventCode(title: string, eventDate: string): string {
   }
   while (initials.length < 2) initials += 'X';
 
-  // Extract day and month from date
+  // DDMM format
   const d = new Date(eventDate);
-  const day = d.getDate();
-  const month = d.getMonth(); // 0-based
-  const dayChar = day.toString(36).toUpperCase(); // 1-31 → '1'-'V'
-  const monthChar = monthLetters[month] || 'X';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
 
-  return (initials.slice(0, 2) + dayChar + monthChar).toUpperCase();
+  return initials.slice(0, 2) + dd + mm;
 }
 
 interface EventPaymentFlowProps {
