@@ -137,7 +137,8 @@ export function CommentReactions({ commentId, commentType, entityId, reactions: 
         </button>
 
         {showPicker && (
-          <div className="absolute bottom-full left-0 mb-2 bg-white rounded-2xl shadow-xl border border-gray-200 px-2 py-2 z-10">
+          <div className="absolute bottom-full left-0 pb-2 z-10">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 px-2 py-2">
             <div className="flex items-center gap-1">
               {reactionTypes.map(type => (
                 <div key={type} className="relative">
@@ -163,6 +164,7 @@ export function CommentReactions({ commentId, commentType, entityId, reactions: 
                 </div>
               ))}
             </div>
+          </div>
           </div>
         )}
       </div>
