@@ -105,9 +105,11 @@ export function EventPaymentFlow({ event, payerType, payerName, payerEmail, paye
 
   const feeLabel = payerType === 'premium' ? t.premiumFee : payerType === 'basic' ? t.basicFee : t.guestFee;
 
-  // Use custom payment_code if set, otherwise auto-generate from title+date
+  // Use custom payment_code + DDMM if set, otherwise auto-generate from title+date
+  const d = new Date(event.event_date);
+  const ddmm = String(d.getDate()).padStart(2, '0') + String(d.getMonth() + 1).padStart(2, '0');
   const eventCode = event.payment_code
-    ? event.payment_code.toUpperCase()
+    ? event.payment_code.toUpperCase() + ddmm
     : generateEventCode(event.title, event.event_date);
 
   // Build transfer content: Name Phone EventCode
