@@ -419,6 +419,7 @@ export interface CommunityEvent {
   is_public?: boolean;
   payment_qr_url?: string;
   payment_instructions?: string;
+  payment_code?: string;
   allow_cancellation?: boolean;
   registration_deadline?: string;
   guest_rsvp_count?: number;

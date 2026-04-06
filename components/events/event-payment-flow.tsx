@@ -11,21 +11,33 @@ const DEFAULT_PAYMENT_CONFIG = {
   qrCodeUrl: 'https://img.glotdojo.com/insecure/fit/0/0/sm/1/plain/https://ejoy.sgp1.digitaloceanspaces.com/ghost/QR_TPbank.jpg',
 };
 
+const STOP_WORDS = new Set([
+  'va', 'voi', 'cua', 'cho', 'tai', 'trong', 'ngoai', 'tu', 'den',
+  'di', 'ca', 'nhan', 'cong', 'dong', 'su', 'kien', 'abg', 'ha', 'noi',
+  'hcm', 'sai', 'gon', 'the', 'and', 'with', 'for', 'at', 'in', 'of',
+  'to', 'on', 'by', 'san',
+]);
+
 /**
  * Generate a memorable event code from event title + date.
- * Format: 2-char title initials + DDMM date
- * Examples: "Pool Party 2026-04-12" → "PP1204", "Wine Tasting 2026-07-05" → "WT0507"
+ * Format: up to 4 keyword initials + DDMM (max 8 chars)
+ * Examples: "Việt Phủ Thành Chương 2026-04-12" → "VPTC1204"
  */
 function generateEventCode(title: string, eventDate: string): string {
-  // Strip diacritics and brackets, then extract up to 2 uppercase initials
+  // Strip bracketed prefixes like [ABG Hà Nội]
+  // Replace Vietnamese Đ/đ with D before NFD strip (Đ is not a combining char)
   const clean = title
+    .replace(/\[.*?\]/g, '')
+    .replace(/[Đđ]/g, 'D')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\[\](){}]/g, ' ')
     .replace(/[^a-zA-Z0-9\s]/g, '');
   const words = clean.split(/\s+/).filter(w => w.length > 0);
+
+  // Take initials from significant words (skip stop words), up to 4
   let initials = '';
   for (const w of words) {
-    if (initials.length >= 2) break;
+    if (initials.length >= 4) break;
+    if (STOP_WORDS.has(w.toLowerCase())) continue;
     const ch = w[0]?.toUpperCase();
     if (ch && /[A-Z0-9]/.test(ch)) initials += ch;
   }
@@ -36,7 +48,7 @@ function generateEventCode(title: string, eventDate: string): string {
   const dd = String(d.getDate()).padStart(2, '0');
   const mm = String(d.getMonth() + 1).padStart(2, '0');
 
-  return initials.slice(0, 2) + dd + mm;
+  return initials.slice(0, 4) + dd + mm;
 }
 
 interface EventPaymentFlowProps {
@@ -93,8 +105,10 @@ export function EventPaymentFlow({ event, payerType, payerName, payerEmail, paye
 
   const feeLabel = payerType === 'premium' ? t.premiumFee : payerType === 'basic' ? t.basicFee : t.guestFee;
 
-  // Generate memorable event code: 2 title initials + day + month letter
-  const eventCode = generateEventCode(event.title, event.event_date);
+  // Use custom payment_code if set, otherwise auto-generate from title+date
+  const eventCode = event.payment_code
+    ? event.payment_code.toUpperCase()
+    : generateEventCode(event.title, event.event_date);
 
   // Build transfer content: Name Phone EventCode
   const namePart = payerName.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
