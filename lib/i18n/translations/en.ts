@@ -1175,6 +1175,41 @@ export const en = {
       vnd: 'VND',
     },
 
+    // Event Payment Flow (modal)
+    eventPaymentFlow: {
+      modalTitle: 'Event Payment',
+      paymentRequired: 'Payment Required',
+      premiumFee: 'ABG Premium fee',
+      basicFee: 'ABG Basic fee',
+      guestFee: 'Guest fee',
+      bank: 'Bank',
+      account: 'Account',
+      name: 'Name',
+      transferContent: 'Transfer content',
+      confirmButton: 'I Have Made Payment',
+      confirming: 'Sending...',
+      confirmNote: 'After clicking, admin will verify your transfer and confirm your registration.',
+      successTitle: 'Payment Confirmation Sent!',
+      successMessage: 'Admin will verify your payment shortly. You will receive a confirmation.',
+      done: 'Done',
+      noQr: 'No QR available',
+      // Guest RSVP
+      registerAsGuest: 'Register as Guest',
+      guestName: 'Name',
+      guestEmail: 'Email',
+      guestPhone: 'Phone',
+      guestNamePlaceholder: 'Your full name',
+      guestEmailPlaceholder: 'your@email.com',
+      guestPhonePlaceholder: 'Optional',
+      guestFeeNotice: 'Guest fee: {amount} VND',
+      guestFeeNote: 'Payment details will be shown after registration.',
+      cancel: 'Cancel',
+      register: 'Register',
+      registering: 'Registering...',
+      registrationSuccess: 'Registration Successful!',
+      registrationSuccessMessage: 'You have been registered for this event. We look forward to seeing you!',
+    },
+
     // Finance
     finance: {
       title: 'Financial Dashboard',

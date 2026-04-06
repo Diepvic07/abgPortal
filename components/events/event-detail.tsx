@@ -178,6 +178,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [rsvpNote, setRsvpNote] = useState('');
   const [showPaymentFlow, setShowPaymentFlow] = useState(false);
   const [myPaymentStatus, setMyPaymentStatus] = useState<string | null>(null);
+  const [memberPhone, setMemberPhone] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const fetchEventDataRef = useRef<() => Promise<void>>(async () => {});
   const fetchCommentsDataRef = useRef<() => Promise<void>>(async () => {});
@@ -201,6 +202,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
         setMyRsvp(data.my_rsvp || null);
         setMyPaymentStatus(data.my_payment_status || null);
         if (data.membership_status) setMembershipStatus(data.membership_status);
+        if (data.member_phone) setMemberPhone(data.member_phone);
       } else {
         setEvent(null);
         setRsvps([]);
@@ -1241,6 +1243,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                   payerType={payerType}
                   payerName={session.user.name || session.user.email || ''}
                   payerEmail={session.user.email || ''}
+                  payerPhone={memberPhone || undefined}
                   paymentId=""
                   onComplete={() => {
                     setShowPaymentFlow(false);

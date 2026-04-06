@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
         my_rsvp: myRsvp?.commitment_level === 'interested' ? null : myRsvp?.commitment_level || null,
         membership_status: membershipStatus,
         my_payment_status: myPayment?.status || null,
+        member_phone: member.phone || null,
       });
     }
 
