@@ -186,6 +186,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [myPaymentStatus, setMyPaymentStatus] = useState<string | null>(null);
   const [memberPhone, setMemberPhone] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [tierCounts, setTierCounts] = useState<{ premium: number; basic: number }>({ premium: 0, basic: 0 });
   const fetchEventDataRef = useRef<() => Promise<void>>(async () => {});
   const fetchCommentsDataRef = useRef<() => Promise<void>>(async () => {});
 
@@ -209,6 +210,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
         setMyPaymentStatus(data.my_payment_status || null);
         if (data.membership_status) setMembershipStatus(data.membership_status);
         if (data.member_phone) setMemberPhone(data.member_phone);
+        if (data.tier_counts) setTierCounts(data.tier_counts);
       } else {
         setEvent(null);
         setRsvps([]);
@@ -729,8 +731,39 @@ export function EventDetail({ eventId }: { eventId: string }) {
             <p className="mt-1 text-sm text-stone-600">
               {locale === 'vi' ? 'thành viên đã xác nhận tham gia' : 'members confirmed to attend'}
             </p>
+
+            {/* Per-tier breakdown */}
+            {(event.capacity_premium != null || event.capacity_basic != null) && (
+              <div className="mt-3 space-y-1.5">
+                {event.capacity_premium != null && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-stone-600">Premium</span>
+                    <span className="font-medium text-stone-800">
+                      {tierCounts.premium}{event.capacity_premium > 0 ? ` / ${event.capacity_premium}` : ''}
+                    </span>
+                  </div>
+                )}
+                {event.capacity_basic != null && event.capacity_basic > 0 && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-stone-600">Basic</span>
+                    <span className="font-medium text-stone-800">
+                      {tierCounts.basic} / {event.capacity_basic}
+                    </span>
+                  </div>
+                )}
+                {event.capacity_guest != null && event.capacity_guest > 0 && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-stone-600">{locale === 'vi' ? 'Khách' : 'Guest'}</span>
+                    <span className="font-medium text-stone-800">
+                      {event.guest_rsvp_count || 0} / {event.capacity_guest}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {totalCapacity > 0 && (
-              <div className="mt-4">
+              <div className="mt-3">
                 <div className="h-2 overflow-hidden rounded-full bg-stone-200">
                   <div
                     className={`h-full rounded-full transition-all ${

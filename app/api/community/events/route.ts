@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth-middleware';
 import { getEvents, getEventById, getRsvpsByEvent, getMemberRsvp, getEventPayments } from '@/lib/supabase-events';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { Member, getMembershipStatus as getMemberTier } from '@/types';
 import { z } from 'zod';
 
 const EventCategory = z.enum(['abg_talks', 'fieldtrip', 'networking', 'learning', 'webinar', 'event', 'community_support', 'abg_business_connect', 'other']);
@@ -29,6 +31,26 @@ export async function GET(request: NextRequest) {
       const allPayments = await getEventPayments(eventId);
       const myPayment = allPayments.find(p => p.member_id === member.id);
 
+      // Compute per-tier RSVP counts
+      const activeRsvps = rsvps.filter(r => r.commitment_level === 'will_participate' || r.commitment_level === 'will_lead');
+      let premiumCount = 0;
+      let basicCount = 0;
+      if (activeRsvps.length > 0) {
+        const memberIds = activeRsvps.map(r => r.member_id);
+        const supabase = createServerSupabaseClient();
+        const { data: members } = await supabase
+          .from('members')
+          .select('id, paid, payment_status, membership_expiry')
+          .in('id', memberIds);
+        if (members) {
+          for (const m of members) {
+            const tier = getMemberTier(m as Member);
+            if (tier === 'premium' || tier === 'grace-period') premiumCount++;
+            else basicCount++;
+          }
+        }
+      }
+
       return successResponse({
         event,
         rsvps,
@@ -36,6 +58,7 @@ export async function GET(request: NextRequest) {
         membership_status: membershipStatus,
         my_payment_status: myPayment?.status || null,
         member_phone: member.phone || null,
+        tier_counts: { premium: premiumCount, basic: basicCount },
       });
     }
 
