@@ -1319,20 +1319,20 @@ export function EventDetail({ eventId }: { eventId: string }) {
             </div>
 
             <label className="mt-5 block text-sm font-medium text-gray-700">
-              {event.require_question
+              {event.require_question && !hasRsvp
                 ? (event.question_prompt || (locale === 'vi' ? 'Câu hỏi dành cho diễn giả (bắt buộc)' : 'Question for the speaker (required)'))
                 : (locale === 'vi' ? 'Ghi chú hoặc câu hỏi cho ban tổ chức (không bắt buộc)' : 'Note or question for the organizer (optional)')}
-              {event.require_question && <span className="ml-1 text-red-500">*</span>}
+              {event.require_question && !hasRsvp && <span className="ml-1 text-red-500">*</span>}
             </label>
             <textarea
               value={rsvpNote}
               onChange={(e) => setRsvpNote(e.target.value)}
               rows={3}
               maxLength={500}
-              placeholder={event.require_question
+              placeholder={event.require_question && !hasRsvp
                 ? (locale === 'vi' ? 'Nhập câu hỏi bạn muốn gửi cho diễn giả...' : 'Enter your question for the speaker...')
                 : (locale === 'vi' ? 'Ví dụ: Tôi sẽ đến muộn 10 phút.' : 'For example: I may arrive 10 minutes late.')}
-              className={`mt-2 w-full resize-none rounded-2xl border px-4 py-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 ${event.require_question && !rsvpNote.trim() ? 'border-red-300' : 'border-gray-200'}`}
+              className={`mt-2 w-full resize-none rounded-2xl border px-4 py-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 ${event.require_question && !hasRsvp && !rsvpNote.trim() ? 'border-red-300' : 'border-gray-200'}`}
             />
 
             <div className="mt-6 flex gap-3">
@@ -1347,7 +1347,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
               <button
                 type="button"
                 onClick={() => submitRsvp(pendingRsvp)}
-                disabled={rsvpLoading || (event.require_question && !rsvpNote.trim())}
+                disabled={rsvpLoading || (event.require_question && !hasRsvp && !rsvpNote.trim())}
                 className="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {rsvpLoading
