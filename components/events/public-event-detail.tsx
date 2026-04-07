@@ -84,7 +84,9 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
 
       {event.image_url && (
         <div className="mb-6 overflow-hidden rounded-3xl border border-stone-200 bg-stone-50">
-          <img src={event.image_url} alt="" className="h-72 w-full object-cover" />
+          <div className="aspect-[2/1]">
+            <img src={event.image_url} alt="" className="h-full w-full object-cover" />
+          </div>
         </div>
       )}
 

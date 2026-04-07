@@ -30,7 +30,7 @@ export function AdminImageUpload({ imageUrl, onImageChange, uploadEndpoint = "/a
         const imageCompression = (await import("browser-image-compression")).default;
         fileToUpload = await imageCompression(file, {
           maxSizeMB: 0.5,
-          maxWidthOrHeight: 1200,
+          maxWidthOrHeight: 1400,
           useWebWorker: true,
           fileType: "image/webp",
         });
@@ -74,13 +74,15 @@ export function AdminImageUpload({ imageUrl, onImageChange, uploadEndpoint = "/a
 
       {imageUrl ? (
         <div className="relative rounded-lg overflow-hidden border border-gray-200">
-          <Image
-            src={imageUrl}
-            alt="Cover"
-            width={800}
-            height={400}
-            className="w-full h-48 object-cover"
-          />
+          <div className="aspect-[2/1]">
+            <Image
+              src={imageUrl}
+              alt="Cover"
+              width={1200}
+              height={600}
+              className="w-full h-full object-cover"
+            />
+          </div>
           <button
             onClick={() => onImageChange("")}
             className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-red-700"
@@ -107,6 +109,7 @@ export function AdminImageUpload({ imageUrl, onImageChange, uploadEndpoint = "/a
             <>
               <p className="text-sm text-gray-500">Drag & drop or click to upload</p>
               <p className="text-xs text-gray-400 mt-1">JPEG, PNG, WebP, GIF (max 5MB)</p>
+              <p className="text-xs text-amber-600 mt-1 font-medium">Recommended ratio 2:1 (e.g. 1200 x 600px) for best social media preview</p>
             </>
           )}
         </div>
