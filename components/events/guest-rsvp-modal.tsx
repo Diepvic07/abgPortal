@@ -16,6 +16,7 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rsvpComplete, setRsvpComplete] = useState(false);
@@ -37,6 +38,8 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
     registering: 'Đang đăng ký...',
     registrationSuccess: 'Đăng ký thành công!',
     registrationSuccessMessage: 'Bạn đã đăng ký tham gia sự kiện này. Hẹn gặp bạn tại sự kiện!',
+    questionLabel: 'Câu hỏi dành cho diễn giả',
+    questionPlaceholder: 'Nhập câu hỏi bạn muốn gửi cho diễn giả...',
     done: 'Xong',
   } : {
     paymentRequired: 'Payment Required',
@@ -53,6 +56,8 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
     registering: 'Registering...',
     registrationSuccess: 'Registration Successful!',
     registrationSuccessMessage: 'You have been registered for this event. We look forward to seeing you!',
+    questionLabel: 'Question for the speaker',
+    questionPlaceholder: 'Enter your question for the speaker...',
     done: 'Done',
   };
 
@@ -65,7 +70,7 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
       const res = await fetch(`/api/public/events/${event.id}/guest-rsvp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guest_name: name, guest_email: email, guest_phone: phone || undefined }),
+        body: JSON.stringify({ guest_name: name, guest_email: email, guest_phone: phone || undefined, question: question.trim() || undefined }),
       });
 
       const data = await res.json();
@@ -185,6 +190,23 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
             />
           </div>
 
+          {event.require_question && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {event.question_prompt || t.questionLabel} <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                required
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                rows={3}
+                maxLength={500}
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${event.require_question && !question.trim() ? 'border-red-300' : 'border-gray-300'}`}
+                placeholder={t.questionPlaceholder}
+              />
+            </div>
+          )}
+
           {event.fee_guest != null && event.fee_guest > 0 && (
             <div className="p-3 rounded-lg bg-amber-50 text-amber-800 text-sm">
               {t.guestPhone === 'Số điện thoại' ? 'Phí khách' : 'Guest fee'}: <span className="font-semibold">{new Intl.NumberFormat('vi-VN').format(event.fee_guest)} VND</span>
@@ -203,7 +225,7 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (event.require_question && !question.trim())}
               className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50"
             >
               {loading ? t.registering : t.register}

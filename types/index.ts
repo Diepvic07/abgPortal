@@ -482,6 +482,7 @@ export interface EventGuestRsvp {
   guest_name: string;
   guest_email: string;
   guest_phone?: string;
+  question?: string;
   status: GuestRsvpStatus;
   created_at: string;
   updated_at: string;

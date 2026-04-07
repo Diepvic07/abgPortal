@@ -7,6 +7,7 @@ const GuestRsvpSchema = z.object({
   guest_name: z.string().min(2).max(100),
   guest_email: z.string().email(),
   guest_phone: z.string().optional(),
+  question: z.string().max(500).optional(),
 });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +31,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return errorResponse('You have already registered for this event', 409);
     }
 
+    // Enforce required question for speaker
+    if (event.require_question && (!parsed.data.question || parsed.data.question.trim().length === 0)) {
+      return errorResponse('This event requires you to submit a question for the speaker before registering.', 400);
+    }
+
     // Check guest capacity
     if (event.capacity_guest != null && event.capacity_guest === 0) {
       return errorResponse('This event does not accept guest registrations', 400);
@@ -43,6 +49,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       guest_name: parsed.data.guest_name,
       guest_email: parsed.data.guest_email,
       guest_phone: parsed.data.guest_phone,
+      question: parsed.data.question,
     });
 
     // If event has a guest fee, create a pending payment record

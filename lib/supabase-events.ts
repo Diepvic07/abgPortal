@@ -46,6 +46,8 @@ function mapRowToEvent(row: Record<string, unknown>): CommunityEvent {
     outcome_summary: nullToUndefined(row.outcome_summary as string | null),
     registration_deadline: nullToUndefined(row.registration_deadline as string | null),
     allow_cancellation: (row.allow_cancellation as boolean) ?? true,
+    require_question: (row.require_question as boolean) || false,
+    question_prompt: nullToUndefined(row.question_prompt as string | null),
     author_name: nullToUndefined(row.author_name as string | null),
     author_avatar_url: nullToUndefined(row.author_avatar_url as string | null),
     author_abg_class: nullToUndefined(row.author_abg_class as string | null),
@@ -868,6 +870,7 @@ export async function createGuestRsvp(data: {
   guest_name: string;
   guest_email: string;
   guest_phone?: string;
+  question?: string;
 }): Promise<EventGuestRsvp> {
   const supabase = createServerSupabaseClient();
   const id = generateId();
@@ -881,6 +884,7 @@ export async function createGuestRsvp(data: {
       guest_name: data.guest_name,
       guest_email: data.guest_email,
       guest_phone: data.guest_phone || null,
+      question: data.question || null,
       status: 'registered',
       created_at: now,
       updated_at: now,
