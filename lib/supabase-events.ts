@@ -859,6 +859,7 @@ function mapRowToGuestRsvp(row: Record<string, unknown>): EventGuestRsvp {
     guest_name: row.guest_name as string,
     guest_email: row.guest_email as string,
     guest_phone: nullToUndefined(row.guest_phone as string | null),
+    question: nullToUndefined(row.question as string | null),
     status: (row.status as EventGuestRsvp['status']) || 'registered',
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,

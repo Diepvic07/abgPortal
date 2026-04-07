@@ -131,6 +131,9 @@ export function AdminEventManager() {
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [imageUploading, setImageUploading] = useState(false);
   const [viewingPayments, setViewingPayments] = useState<CommunityEvent | null>(null);
+  const [viewingQuestions, setViewingQuestions] = useState<CommunityEvent | null>(null);
+  const [questions, setQuestions] = useState<Array<{ type: string; name: string; email?: string; question: string; created_at: string }>>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<EventPreset>('custom');
   const [presetMessage, setPresetMessage] = useState(false);
   const { t, locale } = useTranslation();
@@ -206,6 +209,38 @@ export function AdminEventManager() {
     setShowForm(false);
     setEditingEvent(null);
     setForm(emptyForm);
+  }
+
+  async function openQuestions(event: CommunityEvent) {
+    setViewingQuestions(event);
+    setQuestionsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/community/events/${event.id}/questions`);
+      const data = await res.json();
+      setQuestions(data.questions || []);
+    } catch {
+      setQuestions([]);
+    } finally {
+      setQuestionsLoading(false);
+    }
+  }
+
+  function exportQuestionsCsv() {
+    if (!viewingQuestions || questions.length === 0) return;
+    const header = 'Type,Name,Email,Question,Date';
+    const rows = questions.map((q) => {
+      const date = new Date(q.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      const escapeCsv = (s: string) => `"${s.replace(/"/g, '""')}"`;
+      return `${q.type},${escapeCsv(q.name)},${q.email || ''},${escapeCsv(q.question)},${date}`;
+    });
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `questions-${viewingQuestions.slug || viewingQuestions.id}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -421,6 +456,7 @@ export function AdminEventManager() {
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     {event.is_public && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{t.admin.events.publicBadge}</span>}
                     {event.fee_premium != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{t.admin.events.paidBadge}</span>}
+                    {event.require_question && <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">{locale === 'vi' ? 'Yêu cầu câu hỏi' : 'Q&A required'}</span>}
                   </div>
                   <p className="text-sm text-gray-600 mt-2 line-clamp-2">{event.description}</p>
                 </div>
@@ -448,6 +484,14 @@ export function AdminEventManager() {
                   >
                     {t.admin.events.payments}
                   </button>
+                  {event.require_question && (
+                    <button
+                      onClick={() => openQuestions(event)}
+                      className="text-xs px-3 py-1.5 border border-purple-200 text-purple-600 rounded-lg hover:bg-purple-50"
+                    >
+                      {locale === 'vi' ? 'Câu hỏi' : 'Questions'}
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDelete(event.id, event.title)}
                     disabled={actionLoading === event.id}
@@ -814,6 +858,60 @@ export function AdminEventManager() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Questions Modal */}
+      {viewingQuestions && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b flex items-center justify-between shrink-0">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {locale === 'vi' ? 'Câu hỏi cho diễn giả' : 'Questions for Speaker'}
+                </h2>
+                <p className="text-sm text-gray-500">{viewingQuestions.title}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={exportQuestionsCsv}
+                  disabled={questions.length === 0}
+                  className="text-xs px-3 py-1.5 border border-green-200 text-green-700 rounded-lg hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {locale === 'vi' ? 'Xuất CSV' : 'Export CSV'}
+                </button>
+                <button onClick={() => setViewingQuestions(null)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+              </div>
+            </div>
+            <div className="px-6 py-4 overflow-y-auto">
+              {questionsLoading ? (
+                <p className="text-sm text-gray-500 text-center py-8">{locale === 'vi' ? 'Đang tải...' : 'Loading...'}</p>
+              ) : questions.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">{locale === 'vi' ? 'Chưa có câu hỏi nào.' : 'No questions yet.'}</p>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-gray-500">{questions.length} {locale === 'vi' ? 'câu hỏi' : 'question(s)'}</p>
+                  {questions.map((q, i) => (
+                    <div key={i} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm text-gray-900">{q.name}</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded-full ${q.type === 'member' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                            {q.type === 'member' ? (locale === 'vi' ? 'Thành viên' : 'Member') : (locale === 'vi' ? 'Khách' : 'Guest')}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-400">
+                          {new Date(q.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                      {q.email && <p className="text-xs text-gray-400 mb-1">{q.email}</p>}
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{q.question}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
