@@ -37,7 +37,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: proposal.title,
       description,
-      ...(proposal.image_url && { images: [{ url: proposal.image_url }] }),
+      ...(proposal.image_url && {
+        images: [{ url: proposal.image_url, width: 1200, height: 630, alt: proposal.title }],
+      }),
     },
   };
 }

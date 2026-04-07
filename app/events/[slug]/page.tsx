@@ -45,7 +45,9 @@ export async function generateMetadata({ params }: EventPageProps): Promise<Meta
     openGraph: {
       title: event.title,
       description,
-      ...(event.image_url && { images: [{ url: event.image_url }] }),
+      ...(event.image_url && {
+        images: [{ url: event.image_url, width: 1200, height: 630, alt: event.title }],
+      }),
     },
   };
 }

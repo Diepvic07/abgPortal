@@ -40,7 +40,16 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
-    const ext = file.name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "jpg";
+    const MIME_TO_EXT: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif",
+    };
+    const rawExt = file.name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "";
+    const ext = ["jpg", "jpeg", "png", "webp", "gif"].includes(rawExt)
+      ? rawExt
+      : MIME_TO_EXT[file.type] || "jpg";
     const filePath = `${year}/${month}/${crypto.randomUUID()}.${ext}`;
 
     const supabase = createServerSupabaseClient();
