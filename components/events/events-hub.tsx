@@ -37,9 +37,11 @@ function formatEventDate(dateStr: string, locale: string): string {
 
 export function EventsHub() {
   const { t, locale } = useTranslation();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
+  const isAuthenticated = !!session;
   const searchParams = useSearchParams();
-  const initialTab = (['events', 'proposals', 'past'] as TabKey[]).includes(searchParams.get('tab') as TabKey)
+  const validTabs = isAuthenticated ? ['events', 'proposals', 'past'] as TabKey[] : ['events', 'past'] as TabKey[];
+  const initialTab = validTabs.includes(searchParams.get('tab') as TabKey)
     ? (searchParams.get('tab') as TabKey)
     : 'events';
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
@@ -49,15 +51,20 @@ export function EventsHub() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Wait until session status is resolved before fetching
+    if (sessionStatus === 'loading') return;
     if (activeTab === 'events') fetchEvents();
     else if (activeTab === 'proposals') fetchProposals();
     else if (activeTab === 'past') fetchPastEvents();
-  }, [activeTab]);
+  }, [activeTab, sessionStatus]);
 
   async function fetchEvents() {
     setLoading(true);
     try {
-      const res = await fetch('/api/community/events?upcoming=true');
+      const url = isAuthenticated
+        ? '/api/community/events?upcoming=true'
+        : '/api/public/events?upcoming=true';
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setEvents(data.events || []);
@@ -72,7 +79,10 @@ export function EventsHub() {
   async function fetchPastEvents() {
     setLoading(true);
     try {
-      const res = await fetch('/api/community/events?past=true');
+      const url = isAuthenticated
+        ? '/api/community/events?past=true'
+        : '/api/public/events?past=true';
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setPastEvents(data.events || []);
@@ -99,11 +109,12 @@ export function EventsHub() {
     }
   }
 
-  const tabs: { key: TabKey; label: { en: string; vi: string } }[] = [
+  const allTabs: { key: TabKey; label: { en: string; vi: string }; authOnly?: boolean }[] = [
     { key: 'events', label: { en: 'Events', vi: 'Sự kiện' } },
-    { key: 'proposals', label: { en: 'Proposals', vi: 'Đề xuất' } },
+    { key: 'proposals', label: { en: 'Proposals', vi: 'Đề xuất' }, authOnly: true },
     { key: 'past', label: { en: 'Past Events', vi: 'Sự kiện đã qua' } },
   ];
+  const tabs = allTabs.filter(tab => !tab.authOnly || isAuthenticated);
 
   return (
     <div>
@@ -127,7 +138,7 @@ export function EventsHub() {
           ))}
         </nav>
         <Link
-          href={session ? '/proposals/new' : '/login'}
+          href={isAuthenticated ? '/proposals/new' : '/login'}
           className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
         >
           {locale === 'vi' ? '+ Đề xuất ý tưởng' : '+ Propose an Idea'}
@@ -190,6 +201,7 @@ function EventsTabContent({
   locale: string;
   session: ReturnType<typeof useSession>['data'];
 }) {
+  const isAuthenticated = !!session;
   if (loading) return <SkeletonRows />;
 
   if (events.length === 0) {
@@ -197,7 +209,7 @@ function EventsTabContent({
       <EmptyState
         message={locale === 'vi' ? 'Chưa có sự kiện sắp tới. Hãy đề xuất một hoạt động!' : 'No upcoming events. Propose an activity!'}
         cta={locale === 'vi' ? 'Đề xuất ngay' : 'Propose Now'}
-        href={session ? '/proposals/new' : '/login'}
+        href={isAuthenticated ? '/proposals/new' : '/login'}
       />
     );
   }
@@ -209,7 +221,7 @@ function EventsTabContent({
       </h2>
       <div className="divide-y divide-gray-100">
         {events.map((event) => (
-          <EventRow key={event.id} event={event} locale={locale} />
+          <EventRow key={event.id} event={event} locale={locale} isAuthenticated={isAuthenticated} />
         ))}
       </div>
     </div>
@@ -286,9 +298,12 @@ function PastEventsTabContent({
   );
 }
 
-function EventRow({ event, locale }: { event: CommunityEvent; locale: string }) {
+function EventRow({ event, locale, isAuthenticated }: { event: CommunityEvent; locale: string; isAuthenticated?: boolean }) {
   const colors = getCategoryColor(event.category);
   const categoryLabel = EVENT_CATEGORY_LABELS[event.category]?.[locale === 'vi' ? 'vi' : 'en'] || event.category;
+  const totalJoined = event.rsvp_count + (event.guest_rsvp_count || 0);
+  const hasGuestSlots = event.is_public && event.capacity_guest != null && event.capacity_guest > 0;
+  const guestSlotsLeft = hasGuestSlots ? Math.max(0, event.capacity_guest! - (event.guest_rsvp_count || 0)) : 0;
 
   return (
     <Link href={`/events/${event.slug}`} className="block">
@@ -302,12 +317,26 @@ function EventRow({ event, locale }: { event: CommunityEvent; locale: string }) 
         <div className="flex items-center gap-4 ml-4 flex-shrink-0">
           <span className="text-sm text-gray-500 flex items-center gap-1">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-1.053M18 6.75a3 3 0 11-6 0 3 3 0 016 0zM6.75 9.75a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            {event.rsvp_count}
+            {totalJoined}
           </span>
-          <span className="text-sm text-gray-500 flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
-            {event.comment_count}
-          </span>
+          {!isAuthenticated && hasGuestSlots && (
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${guestSlotsLeft > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+              {guestSlotsLeft > 0
+                ? (locale === 'vi' ? `${guestSlotsLeft} chỗ khách` : `${guestSlotsLeft} guest spots`)
+                : (locale === 'vi' ? 'Hết chỗ khách' : 'Guest full')}
+            </span>
+          )}
+          {isAuthenticated && (
+            <span className="text-sm text-gray-500 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
+              {event.comment_count}
+            </span>
+          )}
+          {event.is_public && !isAuthenticated && (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-green-50 text-green-700">
+              {locale === 'vi' ? 'Công khai' : 'Public'}
+            </span>
+          )}
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${colors.bg} ${colors.text}`}>
             {categoryLabel}
           </span>

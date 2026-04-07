@@ -77,6 +77,7 @@ function mapRowToComment(row: Record<string, unknown>): EventComment {
     body: row.body as string,
     status: (row.status as CommentStatus) || 'visible',
     parent_comment_id: nullToUndefined(row.parent_comment_id as string | null),
+    image_url: nullToUndefined(row.image_url as string | null),
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
     member_name: nullToUndefined(row.member_name as string | null),
@@ -442,6 +443,7 @@ export async function createEventComment(data: {
   member_id: string;
   body: string;
   parent_comment_id?: string;
+  image_url?: string;
 }): Promise<EventComment> {
   const supabase = createServerSupabaseClient();
   const now = formatDate();
@@ -454,6 +456,7 @@ export async function createEventComment(data: {
       member_id: data.member_id,
       body: data.body,
       parent_comment_id: data.parent_comment_id || null,
+      image_url: data.image_url || null,
       status: 'visible',
       created_at: now,
       updated_at: now,
@@ -754,6 +757,8 @@ export async function getEventByProposalId(proposalId: string): Promise<Communit
 export async function getPublicEvents(options?: {
   page?: number;
   limit?: number;
+  upcoming?: boolean;
+  past?: boolean;
 }): Promise<{ events: CommunityEvent[]; total: number }> {
   const supabase = createServerSupabaseClient();
   const page = options?.page || 1;
@@ -761,14 +766,19 @@ export async function getPublicEvents(options?: {
   const offset = (page - 1) * limit;
   const now = formatDate();
 
-  const { data: rows, error, count } = await supabase
+  let query = supabase
     .from('community_events')
     .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)', { count: 'exact' })
-    .eq('status', 'published')
-    .eq('is_public', true)
-    .gte('event_date', now)
-    .order('event_date', { ascending: true })
-    .range(offset, offset + limit - 1);
+    .eq('status', 'published');
+
+  if (options?.past) {
+    query = query.lt('event_date', now).order('event_date', { ascending: false });
+  } else {
+    // Default to upcoming
+    query = query.gte('event_date', now).order('event_date', { ascending: true });
+  }
+
+  const { data: rows, error, count } = await query.range(offset, offset + limit - 1);
 
   if (error) {
     console.error('Error fetching public events:', error);
@@ -796,7 +806,6 @@ export async function getPublicEventById(eventId: string): Promise<CommunityEven
     .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)')
     .eq('id', eventId)
     .eq('status', 'published')
-    .eq('is_public', true)
     .maybeSingle();
 
   if (error) {
@@ -822,7 +831,6 @@ export async function getPublicEventBySlug(slug: string): Promise<CommunityEvent
     .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)')
     .eq('slug', slug)
     .eq('status', 'published')
-    .eq('is_public', true)
     .maybeSingle();
 
   if (error) {

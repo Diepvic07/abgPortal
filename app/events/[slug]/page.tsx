@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { EventDetail } from '@/components/events/event-detail';
 import { PublicEventDetail } from '@/components/events/public-event-detail';
-import { getEventById, getEventBySlug, getPublicEventBySlug } from '@/lib/supabase-events';
+import { getEventById, getEventBySlug } from '@/lib/supabase-events';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,20 +62,21 @@ export default async function EventPage({ params }: EventPageProps) {
     return redirect(`/events/${event.slug}`);
   }
 
+  if (!event) {
+    const { redirect } = await import('next/navigation');
+    return redirect('/events');
+  }
+
   if (session) {
-    if (!event) {
-      const { redirect } = await import('next/navigation');
-      return redirect('/events');
-    }
     return <EventDetail eventId={event.id} />;
   }
 
-  // Check if event is public — show guest view
-  if (event?.is_public && event.status === 'published') {
+  // Visitor: show public detail for any published event
+  if (event.status === 'published') {
     return <PublicEventDetail eventId={event.id} />;
   }
 
-  // Not logged in + not a public event → redirect to login
+  // Not logged in + not published → redirect to login
   const { redirect } = await import('next/navigation');
   redirect('/login');
 }

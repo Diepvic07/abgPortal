@@ -7,8 +7,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
+    const upcoming = searchParams.get('upcoming') === 'true' ? true : undefined;
+    const past = searchParams.get('past') === 'true' ? true : undefined;
 
-    const result = await getPublicEvents({ page, limit });
+    const result = await getPublicEvents({ page, limit, upcoming, past });
     return successResponse({ events: result.events, total: result.total, page, limit });
   } catch (error) {
     return handleApiError(error);

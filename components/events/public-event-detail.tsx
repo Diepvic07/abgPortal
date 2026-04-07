@@ -164,36 +164,53 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
         </section>
       )}
 
-      {/* Guest Registration */}
+      {/* Attendance count */}
       <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Join This Event</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Register as a guest to attend this event. ABG members can <Link href="/login" className="text-blue-600 hover:underline">log in</Link> for full access.
-        </p>
-
-        {noGuests ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            This event is for ABG members only. <Link href="/login" className="text-blue-600 hover:underline">Log in</Link> or <Link href="/onboard" className="text-blue-600 hover:underline">apply for membership</Link>.
-          </div>
-        ) : guestCapacityFull ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-            Guest registration is full. <Link href="/login" className="text-blue-600 hover:underline">Log in</Link> as an ABG member to check member seats.
-          </div>
-        ) : (
-          <button
-            onClick={() => setShowGuestRsvp(true)}
-            className="w-full md:w-auto px-8 py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-2xl transition-colors"
-          >
-            Register as Guest
-          </button>
-        )}
-
-        {event.capacity_guest != null && event.capacity_guest > 0 && (
-          <p className="mt-3 text-xs text-gray-500">
-            Guest spots: {guestCount} / {event.capacity_guest}
-          </p>
-        )}
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-1.053M18 6.75a3 3 0 11-6 0 3 3 0 016 0zM6.75 9.75a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          <span className="font-medium">{event.rsvp_count + guestCount}</span> joined
+        </div>
       </section>
+
+      {/* Guest Registration — only for public events with guest slots */}
+      {event.is_public ? (
+        <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Join This Event</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Register as a guest to attend this event. ABG members can <Link href="/login" className="text-blue-600 hover:underline">log in</Link> for full access.
+          </p>
+
+          {noGuests ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              This event is for ABG members only. <Link href="/login" className="text-blue-600 hover:underline">Log in</Link> or <Link href="/onboard" className="text-blue-600 hover:underline">apply for membership</Link>.
+            </div>
+          ) : guestCapacityFull ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+              Guest registration is full. <Link href="/login" className="text-blue-600 hover:underline">Log in</Link> as an ABG member to check member seats.
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowGuestRsvp(true)}
+              className="w-full md:w-auto px-8 py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-2xl transition-colors"
+            >
+              Register as Guest
+            </button>
+          )}
+
+          {event.capacity_guest != null && event.capacity_guest > 0 && (
+            <p className="mt-3 text-xs text-gray-500">
+              Guest spots: {guestCount} / {event.capacity_guest}
+            </p>
+          )}
+        </section>
+      ) : (
+        <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Want to Join?</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            This event is for ABG members. <Link href="/login" className="text-blue-600 hover:underline">Log in</Link> or <Link href="/onboard" className="text-blue-600 hover:underline">apply for membership</Link> to register.
+          </p>
+        </section>
+      )}
 
       {showGuestRsvp && (
         <GuestRsvpModal
