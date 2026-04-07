@@ -33,6 +33,8 @@ const UpdateEventSchema = z.object({
   registration_deadline: z.string().nullable().optional(),
   payment_qr_url: z.string().url().nullable().optional(),
   payment_instructions: z.string().nullable().optional(),
+  require_question: z.boolean().optional(),
+  question_prompt: z.string().max(500).nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

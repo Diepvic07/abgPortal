@@ -349,6 +349,7 @@ export interface CommunityProposalComment {
   body: string;
   status: CommentStatus;
   parent_comment_id?: string;
+  image_url?: string;
   created_at: string;
   updated_at: string;
   // Joined fields
@@ -422,6 +423,8 @@ export interface CommunityEvent {
   payment_code?: string;
   allow_cancellation?: boolean;
   registration_deadline?: string;
+  require_question?: boolean;
+  question_prompt?: string;
   guest_rsvp_count?: number;
   created_at: string;
   updated_at: string;
@@ -458,6 +461,7 @@ export interface EventComment {
   body: string;
   status: CommentStatus;
   parent_comment_id?: string;
+  image_url?: string;
   created_at: string;
   updated_at: string;
   // Joined fields

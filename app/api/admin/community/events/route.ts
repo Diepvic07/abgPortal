@@ -34,6 +34,8 @@ const CreateEventSchema = z.object({
   registration_deadline: z.string().optional(),
   payment_qr_url: z.string().url().optional(),
   payment_instructions: z.string().optional(),
+  require_question: z.boolean().optional(),
+  question_prompt: z.string().max(500).optional(),
 });
 
 export async function GET(request: NextRequest) {

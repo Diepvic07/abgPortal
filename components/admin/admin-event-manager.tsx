@@ -80,6 +80,8 @@ interface EventForm {
   fee_guest: string;
   is_public: boolean;
   allow_cancellation: boolean;
+  require_question: boolean;
+  question_prompt: string;
   registration_deadline: string;
   payment_qr_url: string;
   payment_instructions: string;
@@ -103,6 +105,8 @@ const emptyForm: EventForm = {
   fee_guest: '',
   is_public: false,
   allow_cancellation: true,
+  require_question: false,
+  question_prompt: '',
   registration_deadline: '',
   payment_qr_url: '',
   payment_instructions: '',
@@ -129,7 +133,7 @@ export function AdminEventManager() {
   const [viewingPayments, setViewingPayments] = useState<CommunityEvent | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<EventPreset>('custom');
   const [presetMessage, setPresetMessage] = useState(false);
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   useEffect(() => {
     fetchEvents();
@@ -189,6 +193,8 @@ export function AdminEventManager() {
       fee_guest: event.fee_guest != null ? String(event.fee_guest) : '',
       is_public: event.is_public || false,
       allow_cancellation: event.allow_cancellation !== false,
+      require_question: event.require_question || false,
+      question_prompt: event.question_prompt || '',
       registration_deadline: event.registration_deadline ? utcToLocalInput(event.registration_deadline) : '',
       payment_qr_url: event.payment_qr_url || '',
       payment_instructions: event.payment_instructions || '',
@@ -247,6 +253,10 @@ export function AdminEventManager() {
 
     payload.is_public = form.is_public;
     payload.allow_cancellation = form.allow_cancellation;
+    payload.require_question = form.require_question;
+
+    if (form.question_prompt) payload.question_prompt = form.question_prompt;
+    else if (editingEvent) payload.question_prompt = null;
 
     if (form.registration_deadline) payload.registration_deadline = new Date(form.registration_deadline).toISOString();
     else if (editingEvent) payload.registration_deadline = null;
@@ -676,6 +686,40 @@ export function AdminEventManager() {
                     <p className="text-xs text-gray-500">{t.admin.events.formAllowCancellationHelp}</p>
                   </div>
                 </label>
+
+                {/* Require Question Toggle */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.require_question}
+                    onChange={(e) => setForm((f) => ({ ...f, require_question: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">
+                      {locale === 'vi' ? 'Bắt buộc gửi câu hỏi cho diễn giả' : 'Require question for speaker'}
+                    </span>
+                    <p className="text-xs text-gray-500">
+                      {locale === 'vi' ? 'Người tham gia phải gửi câu hỏi cho diễn giả trước khi đăng ký.' : 'Participants must submit a question for the speaker before joining.'}
+                    </p>
+                  </div>
+                </label>
+
+                {form.require_question && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {locale === 'vi' ? 'Nội dung gợi ý câu hỏi (không bắt buộc)' : 'Custom question prompt (optional)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={form.question_prompt}
+                      onChange={(e) => setForm((f) => ({ ...f, question_prompt: e.target.value }))}
+                      maxLength={500}
+                      placeholder={locale === 'vi' ? 'Ví dụ: Bạn muốn hỏi diễn giả điều gì?' : 'e.g. What would you like to ask the speaker?'}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                )}
 
                 {/* Event Fees */}
                 <div>

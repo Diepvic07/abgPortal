@@ -171,6 +171,12 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState('');
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
+  const [commentImageFile, setCommentImageFile] = useState<File | null>(null);
+  const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
+  const [replyImageFile, setReplyImageFile] = useState<File | null>(null);
+  const [replyImagePreview, setReplyImagePreview] = useState<string | null>(null);
+  const commentImageRef = useRef<HTMLInputElement>(null);
+  const replyImageRef = useRef<HTMLInputElement>(null);
   const [editingComment, setEditingComment] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
   const [membershipStatus, setMembershipStatus] = useState<MembershipStatus>('basic');
@@ -305,17 +311,79 @@ export function EventDetail({ eventId }: { eventId: string }) {
     }
   }
 
+  function handleCommentImageSelect(e: React.ChangeEvent<HTMLInputElement>, isReply?: boolean) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      showToast(locale === 'vi' ? 'Ảnh tối đa 5MB.' : 'Image max 5MB.');
+      return;
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      showToast(locale === 'vi' ? 'Chỉ hỗ trợ JPEG, PNG, WebP, GIF.' : 'Only JPEG, PNG, WebP, GIF allowed.');
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    if (isReply) {
+      setReplyImageFile(file);
+      setReplyImagePreview(url);
+    } else {
+      setCommentImageFile(file);
+      setCommentImagePreview(url);
+    }
+  }
+
+  function clearCommentImage(isReply?: boolean) {
+    if (isReply) {
+      if (replyImagePreview) URL.revokeObjectURL(replyImagePreview);
+      setReplyImageFile(null);
+      setReplyImagePreview(null);
+      if (replyImageRef.current) replyImageRef.current.value = '';
+    } else {
+      if (commentImagePreview) URL.revokeObjectURL(commentImagePreview);
+      setCommentImageFile(null);
+      setCommentImagePreview(null);
+      if (commentImageRef.current) commentImageRef.current.value = '';
+    }
+  }
+
+  async function uploadCommentImage(file: File): Promise<string | null> {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch('/api/community/comments/upload-image', { method: 'POST', body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        return data.url;
+      }
+    } catch (err) {
+      console.error('Image upload failed:', err);
+    }
+    return null;
+  }
+
   async function handleComment(e: React.FormEvent, parentCommentId?: string) {
     e.preventDefault();
     const body = parentCommentId ? replyBody.trim() : commentBody.trim();
-    if (!body || commentLoading) return;
+    const imageFile = parentCommentId ? replyImageFile : commentImageFile;
+    if ((!body && !imageFile) || commentLoading) return;
 
     setCommentLoading(true);
     try {
+      let image_url: string | undefined;
+      if (imageFile) {
+        const url = await uploadCommentImage(imageFile);
+        if (url) image_url = url;
+        else {
+          showToast(locale === 'vi' ? 'Không thể tải ảnh lên.' : 'Failed to upload image.');
+          setCommentLoading(false);
+          return;
+        }
+      }
+
       const res = await fetch(`/api/community/events/${eventId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body, parent_comment_id: parentCommentId }),
+        body: JSON.stringify({ body: body || '', parent_comment_id: parentCommentId, image_url }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -333,6 +401,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
         if (parentCommentId) {
           setReplyBody('');
           setReplyingTo(null);
+          clearCommentImage(true);
           setComments(prev => prev.map(c =>
             c.id === parentCommentId
               ? { ...c, replies: [...(c.replies || []), newComment] }
@@ -340,6 +409,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
           ));
         } else {
           setCommentBody('');
+          clearCommentImage(false);
           setComments(prev => [...prev, newComment]);
         }
         if (event) {
@@ -960,10 +1030,22 @@ export function EventDetail({ eventId }: { eventId: string }) {
               rows={3}
               maxLength={2000}
             />
-            <div className="mt-3 flex justify-end">
+            {commentImagePreview && (
+              <div className="relative mt-2 inline-block">
+                <img src={commentImagePreview} alt="Preview" className="max-h-32 rounded-xl border border-gray-200 object-cover" />
+                <button type="button" onClick={() => clearCommentImage(false)} className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow hover:bg-red-600">&times;</button>
+              </div>
+            )}
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <input ref={commentImageRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => handleCommentImageSelect(e)} />
+                <button type="button" onClick={() => commentImageRef.current?.click()} className="rounded-lg px-2 py-1.5 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700" title={locale === 'vi' ? 'Đính kèm ảnh' : 'Attach image'}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="inline h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Zm16.5-13.5h.008v.008h-.008V7.5Zm0 0a1.125 1.125 0 1 0-2.25 0 1.125 1.125 0 0 0 2.25 0Z" /></svg>
+                </button>
+              </div>
               <button
                 type="submit"
-                disabled={!commentBody.trim() || commentLoading}
+                disabled={(!commentBody.trim() && !commentImageFile) || commentLoading}
                 className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {commentLoading
@@ -1019,7 +1101,14 @@ export function EventDetail({ eventId }: { eventId: string }) {
                         </div>
                       </div>
                     ) : (
-                      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">{comment.body}</p>
+                      <>
+                        <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">{comment.body}</p>
+                        {comment.image_url && (
+                          <a href={comment.image_url} target="_blank" rel="noopener noreferrer" className="mt-2 block">
+                            <img src={comment.image_url} alt="" className="max-h-60 rounded-xl border border-gray-200 object-cover" />
+                          </a>
+                        )}
+                      </>
                     )}
                     <div className="mt-2 flex items-center gap-3">
                       <CommentReactions
@@ -1090,7 +1179,14 @@ export function EventDetail({ eventId }: { eventId: string }) {
                               </div>
                             </div>
                           ) : (
-                            <p className="mt-0.5 whitespace-pre-wrap text-sm leading-5 text-gray-700">{reply.body}</p>
+                            <>
+                              <p className="mt-0.5 whitespace-pre-wrap text-sm leading-5 text-gray-700">{reply.body}</p>
+                              {reply.image_url && (
+                                <a href={reply.image_url} target="_blank" rel="noopener noreferrer" className="mt-1.5 block">
+                                  <img src={reply.image_url} alt="" className="max-h-48 rounded-lg border border-gray-200 object-cover" />
+                                </a>
+                              )}
+                            </>
                           )}
                           <div className="mt-1 flex items-center gap-3">
                             <CommentReactions
@@ -1126,21 +1222,35 @@ export function EventDetail({ eventId }: { eventId: string }) {
                         autoFocus
                       />
                     </div>
-                    <div className="mt-2 flex items-center gap-2 justify-end">
-                      <button
-                        type="button"
-                        onClick={() => { setReplyingTo(null); setReplyBody(''); }}
-                        className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1"
-                      >
-                        {locale === 'vi' ? 'Hủy' : 'Cancel'}
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={!replyBody.trim() || commentLoading}
-                        className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                      >
-                        {locale === 'vi' ? 'Gửi' : 'Reply'}
-                      </button>
+                    {replyImagePreview && (
+                      <div className="relative mt-2 inline-block">
+                        <img src={replyImagePreview} alt="Preview" className="max-h-24 rounded-lg border border-gray-200 object-cover" />
+                        <button type="button" onClick={() => clearCommentImage(true)} className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow hover:bg-red-600">&times;</button>
+                      </div>
+                    )}
+                    <div className="mt-2 flex items-center justify-between">
+                      <div>
+                        <input ref={replyImageRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => handleCommentImageSelect(e, true)} />
+                        <button type="button" onClick={() => replyImageRef.current?.click()} className="rounded-md px-1.5 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700" title={locale === 'vi' ? 'Đính kèm ảnh' : 'Attach image'}>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="inline h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Zm16.5-13.5h.008v.008h-.008V7.5Zm0 0a1.125 1.125 0 1 0-2.25 0 1.125 1.125 0 0 0 2.25 0Z" /></svg>
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => { setReplyingTo(null); setReplyBody(''); clearCommentImage(true); }}
+                          className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1"
+                        >
+                          {locale === 'vi' ? 'Hủy' : 'Cancel'}
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={(!replyBody.trim() && !replyImageFile) || commentLoading}
+                          className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {locale === 'vi' ? 'Gửi' : 'Reply'}
+                        </button>
+                      </div>
                     </div>
                   </form>
                 )}
@@ -1173,15 +1283,20 @@ export function EventDetail({ eventId }: { eventId: string }) {
             </div>
 
             <label className="mt-5 block text-sm font-medium text-gray-700">
-              {locale === 'vi' ? 'Ghi chú hoặc câu hỏi cho ban tổ chức (không bắt buộc)' : 'Note or question for the organizer (optional)'}
+              {event.require_question
+                ? (event.question_prompt || (locale === 'vi' ? 'Câu hỏi dành cho diễn giả (bắt buộc)' : 'Question for the speaker (required)'))
+                : (locale === 'vi' ? 'Ghi chú hoặc câu hỏi cho ban tổ chức (không bắt buộc)' : 'Note or question for the organizer (optional)')}
+              {event.require_question && <span className="ml-1 text-red-500">*</span>}
             </label>
             <textarea
               value={rsvpNote}
               onChange={(e) => setRsvpNote(e.target.value)}
               rows={3}
               maxLength={500}
-              placeholder={locale === 'vi' ? 'Ví dụ: Tôi sẽ đến muộn 10 phút.' : 'For example: I may arrive 10 minutes late.'}
-              className="mt-2 w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder={event.require_question
+                ? (locale === 'vi' ? 'Nhập câu hỏi bạn muốn gửi cho diễn giả...' : 'Enter your question for the speaker...')
+                : (locale === 'vi' ? 'Ví dụ: Tôi sẽ đến muộn 10 phút.' : 'For example: I may arrive 10 minutes late.')}
+              className={`mt-2 w-full resize-none rounded-2xl border px-4 py-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 ${event.require_question && !rsvpNote.trim() ? 'border-red-300' : 'border-gray-200'}`}
             />
 
             <div className="mt-6 flex gap-3">
@@ -1196,7 +1311,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
               <button
                 type="button"
                 onClick={() => submitRsvp(pendingRsvp)}
-                disabled={rsvpLoading}
+                disabled={rsvpLoading || (event.require_question && !rsvpNote.trim())}
                 className="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {rsvpLoading

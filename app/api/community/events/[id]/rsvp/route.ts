@@ -32,6 +32,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return errorResponse(parsed.error.issues.map((issue) => issue.message).join(', '), 400);
     }
 
+    // Enforce required question for speaker
+    if (event.require_question && (!parsed.data.note || parsed.data.note.trim().length === 0)) {
+      return errorResponse('This event requires you to submit a question for the speaker before joining.', 400);
+    }
+
     // Tier gating: enforce per-tier seat limits
     const membership = getMembershipStatus(member);
     const isPremium = membership === 'premium' || membership === 'grace-period';
