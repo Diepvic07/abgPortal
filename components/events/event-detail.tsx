@@ -175,6 +175,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
   const [replyImageFile, setReplyImageFile] = useState<File | null>(null);
   const [replyImagePreview, setReplyImagePreview] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null); // 'main' | 'reply' | null
   const commentImageRef = useRef<HTMLInputElement>(null);
   const replyImageRef = useRef<HTMLInputElement>(null);
   const [editingComment, setEditingComment] = useState<string | null>(null);
@@ -311,6 +312,17 @@ export function EventDetail({ eventId }: { eventId: string }) {
     } finally {
       setRsvpLoading(false);
     }
+  }
+
+  const EMOJI_LIST = ['😀','😂','😍','🥰','😎','🤔','👍','👏','🎉','🔥','❤️','💯','🙏','😢','😮','✅','⭐','💪','🤝','👀'];
+
+  function insertEmoji(emoji: string, isReply?: boolean) {
+    if (isReply) {
+      setReplyBody(prev => prev + emoji);
+    } else {
+      setCommentBody(prev => prev + emoji);
+    }
+    setShowEmojiPicker(null);
   }
 
   function handleCommentImageSelect(e: React.ChangeEvent<HTMLInputElement>, isReply?: boolean) {
@@ -1058,36 +1070,48 @@ export function EventDetail({ eventId }: { eventId: string }) {
             <label className="mb-2 block text-sm font-medium text-gray-700">
               {locale === 'vi' ? 'Bạn muốn hỏi hoặc chia sẻ gì về sự kiện này?' : 'Questions or notes for the event discussion'}
             </label>
-            <textarea
-              value={commentBody}
-              onChange={(e) => setCommentBody(e.target.value)}
-              placeholder={locale === 'vi' ? 'Ví dụ: Tôi nên chuẩn bị gì trước khi tham gia?' : 'For example: Is there anything I should prepare before joining?'}
-              className="w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
-              maxLength={2000}
-            />
-            {commentImagePreview && (
-              <div className="relative mt-2 inline-block">
-                <img src={commentImagePreview} alt="Preview" className="max-h-32 rounded-xl border border-gray-200 object-cover" />
-                <button type="button" onClick={() => clearCommentImage(false)} className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow hover:bg-red-600">&times;</button>
-              </div>
-            )}
-            <div className="mt-3 flex items-center justify-between">
-              <div>
-                <input ref={commentImageRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => handleCommentImageSelect(e)} />
-                <button type="button" onClick={() => commentImageRef.current?.click()} className="rounded-lg px-2 py-1.5 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700" title={locale === 'vi' ? 'Đính kèm ảnh' : 'Attach image'}>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="inline h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Zm16.5-13.5h.008v.008h-.008V7.5Zm0 0a1.125 1.125 0 1 0-2.25 0 1.125 1.125 0 0 0 2.25 0Z" /></svg>
+            <div className="rounded-2xl border border-gray-200 focus-within:border-transparent focus-within:ring-2 focus-within:ring-blue-500">
+              <textarea
+                value={commentBody}
+                onChange={(e) => setCommentBody(e.target.value)}
+                placeholder={locale === 'vi' ? 'Ví dụ: Tôi nên chuẩn bị gì trước khi tham gia?' : 'For example: Is there anything I should prepare before joining?'}
+                className="w-full resize-none rounded-t-2xl border-0 px-4 py-3 text-sm focus:outline-none focus:ring-0"
+                rows={3}
+                maxLength={2000}
+              />
+              {commentImagePreview && (
+                <div className="relative mx-4 mb-2 inline-block">
+                  <img src={commentImagePreview} alt="Preview" className="max-h-32 rounded-xl border border-gray-200 object-cover" />
+                  <button type="button" onClick={() => clearCommentImage(false)} className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow hover:bg-red-600">&times;</button>
+                </div>
+              )}
+              <div className="flex items-center justify-between border-t border-gray-100 px-3 py-1.5">
+                <div className="relative flex items-center gap-0.5">
+                  <input ref={commentImageRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => handleCommentImageSelect(e)} />
+                  <button type="button" onClick={() => commentImageRef.current?.click()} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600" title={locale === 'vi' ? 'Đính kèm ảnh' : 'Attach image'}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Zm16.5-13.5h.008v.008h-.008V7.5Zm0 0a1.125 1.125 0 1 0-2.25 0 1.125 1.125 0 0 0 2.25 0Z" /></svg>
+                  </button>
+                  <button type="button" onClick={() => setShowEmojiPicker(showEmojiPicker === 'main' ? null : 'main')} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600" title="Emoji">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" /></svg>
+                  </button>
+                  {showEmojiPicker === 'main' && (
+                    <div className="absolute bottom-full left-0 z-10 mb-1 grid w-64 grid-cols-10 gap-0.5 rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
+                      {EMOJI_LIST.map((e) => (
+                        <button key={e} type="button" onClick={() => insertEmoji(e)} className="rounded p-1 text-lg hover:bg-gray-100">{e}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  disabled={(!commentBody.trim() && !commentImageFile) || commentLoading}
+                  className="rounded-xl bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {commentLoading
+                    ? (locale === 'vi' ? 'Đang gửi...' : 'Posting...')
+                    : (locale === 'vi' ? 'Gửi bình luận' : 'Post Comment')}
                 </button>
               </div>
-              <button
-                type="submit"
-                disabled={(!commentBody.trim() && !commentImageFile) || commentLoading}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {commentLoading
-                  ? (locale === 'vi' ? 'Đang gửi...' : 'Posting...')
-                  : (locale === 'vi' ? 'Gửi bình luận' : 'Post Comment')}
-              </button>
             </div>
           </form>
         )}
@@ -1247,45 +1271,55 @@ export function EventDetail({ eventId }: { eventId: string }) {
                 {/* Reply form */}
                 {replyingTo === comment.id && (
                   <form onSubmit={(e) => handleComment(e, comment.id)} className="ml-12 mt-2 pl-4">
-                    <div className="flex gap-2">
+                    <div className="rounded-xl border border-gray-200 focus-within:border-transparent focus-within:ring-2 focus-within:ring-blue-500">
                       <textarea
                         value={replyBody}
                         onChange={(e) => setReplyBody(e.target.value)}
                         placeholder={locale === 'vi' ? 'Viết trả lời...' : 'Write a reply...'}
-                        className="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full resize-none rounded-t-xl border-0 px-3 py-2 text-sm focus:outline-none focus:ring-0"
                         rows={2}
                         maxLength={2000}
                         autoFocus
                       />
-                    </div>
-                    {replyImagePreview && (
-                      <div className="relative mt-2 inline-block">
-                        <img src={replyImagePreview} alt="Preview" className="max-h-24 rounded-lg border border-gray-200 object-cover" />
-                        <button type="button" onClick={() => clearCommentImage(true)} className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow hover:bg-red-600">&times;</button>
-                      </div>
-                    )}
-                    <div className="mt-2 flex items-center justify-between">
-                      <div>
-                        <input ref={replyImageRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => handleCommentImageSelect(e, true)} />
-                        <button type="button" onClick={() => replyImageRef.current?.click()} className="rounded-md px-1.5 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700" title={locale === 'vi' ? 'Đính kèm ảnh' : 'Attach image'}>
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="inline h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Zm16.5-13.5h.008v.008h-.008V7.5Zm0 0a1.125 1.125 0 1 0-2.25 0 1.125 1.125 0 0 0 2.25 0Z" /></svg>
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => { setReplyingTo(null); setReplyBody(''); clearCommentImage(true); }}
-                          className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1"
-                        >
-                          {locale === 'vi' ? 'Hủy' : 'Cancel'}
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={(!replyBody.trim() && !replyImageFile) || commentLoading}
-                          className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                        >
-                          {locale === 'vi' ? 'Gửi' : 'Reply'}
-                        </button>
+                      {replyImagePreview && (
+                        <div className="relative mx-3 mb-2 inline-block">
+                          <img src={replyImagePreview} alt="Preview" className="max-h-24 rounded-lg border border-gray-200 object-cover" />
+                          <button type="button" onClick={() => clearCommentImage(true)} className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow hover:bg-red-600">&times;</button>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between border-t border-gray-100 px-2 py-1">
+                        <div className="relative flex items-center gap-0.5">
+                          <input ref={replyImageRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => handleCommentImageSelect(e, true)} />
+                          <button type="button" onClick={() => replyImageRef.current?.click()} className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title={locale === 'vi' ? 'Đính kèm ảnh' : 'Attach image'}>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Zm16.5-13.5h.008v.008h-.008V7.5Zm0 0a1.125 1.125 0 1 0-2.25 0 1.125 1.125 0 0 0 2.25 0Z" /></svg>
+                          </button>
+                          <button type="button" onClick={() => setShowEmojiPicker(showEmojiPicker === 'reply' ? null : 'reply')} className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title="Emoji">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" /></svg>
+                          </button>
+                          {showEmojiPicker === 'reply' && (
+                            <div className="absolute bottom-full left-0 z-10 mb-1 grid w-56 grid-cols-10 gap-0.5 rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
+                              {EMOJI_LIST.map((e) => (
+                                <button key={e} type="button" onClick={() => insertEmoji(e, true)} className="rounded p-0.5 text-base hover:bg-gray-100">{e}</button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => { setReplyingTo(null); setReplyBody(''); clearCommentImage(true); setShowEmojiPicker(null); }}
+                            className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
+                          >
+                            {locale === 'vi' ? 'Hủy' : 'Cancel'}
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={(!replyBody.trim() && !replyImageFile) || commentLoading}
+                            className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            {locale === 'vi' ? 'Gửi' : 'Reply'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </form>

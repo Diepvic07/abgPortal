@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const body = await request.json();
-    const { body: commentBody, parent_comment_id } = body;
+    const { body: commentBody, parent_comment_id, image_url } = body;
 
     if (!commentBody || commentBody.length < 1 || commentBody.length > 2000) {
       return errorResponse('Comment must be between 1 and 2000 characters', 400);
@@ -42,6 +42,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       member_id: member.id,
       body: commentBody,
       parent_comment_id: parent_comment_id || undefined,
+      image_url: image_url || undefined,
     });
 
     return successResponse({ comment }, 201);

@@ -58,6 +58,7 @@ function mapRowToComment(row: Record<string, unknown>): CommunityProposalComment
     body: row.body as string,
     status: (row.status as CommentStatus) || 'visible',
     parent_comment_id: nullToUndefined(row.parent_comment_id as string | null),
+    image_url: nullToUndefined(row.image_url as string | null),
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
     member_name: nullToUndefined(row.member_name as string | null),
@@ -363,6 +364,7 @@ export async function createComment(data: {
   member_id: string;
   body: string;
   parent_comment_id?: string;
+  image_url?: string;
 }): Promise<CommunityProposalComment> {
   const supabase = createServerSupabaseClient();
   const now = formatDate();
@@ -375,6 +377,7 @@ export async function createComment(data: {
       member_id: data.member_id,
       body: data.body,
       parent_comment_id: data.parent_comment_id || null,
+      image_url: data.image_url || null,
       status: 'visible',
       created_at: now,
       updated_at: now,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -92,6 +92,13 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editingComment, setEditingComment] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
   const [submittingCommitment, setSubmittingCommitment] = useState(false);
+  const [commentImageFile, setCommentImageFile] = useState<File | null>(null);
+  const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
+  const [replyImageFile, setReplyImageFile] = useState<File | null>(null);
+  const [replyImagePreview, setReplyImagePreview] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
+  const commentImageRef = useRef<HTMLInputElement>(null);
+  const replyImageRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchProposal();
@@ -144,16 +151,82 @@ export function ProposalDetail({ proposalId }: Props) {
     }
   }
 
+  const EMOJI_LIST = ['😀','😂','😍','🥰','😎','🤔','👍','👏','🎉','🔥','❤️','💯','🙏','😢','😮','✅','⭐','💪','🤝','👀'];
+
+  function insertEmoji(emoji: string, isReply?: boolean) {
+    if (isReply) {
+      setReplyBody(prev => prev + emoji);
+    } else {
+      setCommentText(prev => prev + emoji);
+    }
+    setShowEmojiPicker(null);
+  }
+
+  function handleCommentImageSelect(e: React.ChangeEvent<HTMLInputElement>, isReply?: boolean) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) return;
+    const url = URL.createObjectURL(file);
+    if (isReply) {
+      setReplyImageFile(file);
+      setReplyImagePreview(url);
+    } else {
+      setCommentImageFile(file);
+      setCommentImagePreview(url);
+    }
+  }
+
+  function clearCommentImage(isReply?: boolean) {
+    if (isReply) {
+      if (replyImagePreview) URL.revokeObjectURL(replyImagePreview);
+      setReplyImageFile(null);
+      setReplyImagePreview(null);
+      if (replyImageRef.current) replyImageRef.current.value = '';
+    } else {
+      if (commentImagePreview) URL.revokeObjectURL(commentImagePreview);
+      setCommentImageFile(null);
+      setCommentImagePreview(null);
+      if (commentImageRef.current) commentImageRef.current.value = '';
+    }
+  }
+
+  async function uploadCommentImage(file: File): Promise<string | null> {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch('/api/community/comments/upload-image', { method: 'POST', body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        return data.url;
+      }
+    } catch (err) {
+      console.error('Image upload failed:', err);
+    }
+    return null;
+  }
+
   async function handleComment(e: React.FormEvent, parentCommentId?: string) {
     e.preventDefault();
     const body = parentCommentId ? replyBody.trim() : commentText.trim();
-    if (!body) return;
+    const imageFile = parentCommentId ? replyImageFile : commentImageFile;
+    if (!body && !imageFile) return;
     setSubmittingComment(true);
     try {
+      let image_url: string | undefined;
+      if (imageFile) {
+        const url = await uploadCommentImage(imageFile);
+        if (url) image_url = url;
+        else {
+          setSubmittingComment(false);
+          return;
+        }
+      }
+
       const res = await fetch(`/api/community/proposals/${proposalId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body, parent_comment_id: parentCommentId }),
+        body: JSON.stringify({ body: body || '', parent_comment_id: parentCommentId, image_url }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -171,6 +244,7 @@ export function ProposalDetail({ proposalId }: Props) {
         if (parentCommentId) {
           setReplyBody('');
           setReplyingTo(null);
+          clearCommentImage(true);
           setComments(prev => prev.map(c =>
             c.id === parentCommentId
               ? { ...c, replies: [...(c.replies || []), newComment] }
@@ -178,6 +252,7 @@ export function ProposalDetail({ proposalId }: Props) {
           ));
         } else {
           setCommentText('');
+          clearCommentImage(false);
           setComments(prev => [...prev, newComment]);
         }
       }
@@ -392,22 +467,46 @@ export function ProposalDetail({ proposalId }: Props) {
 
         {session ? (
           <form onSubmit={handleComment} className="mb-6">
-            <textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder={locale === 'vi' ? 'Viết bình luận...' : 'Write a comment...'}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[80px]"
-              maxLength={2000}
-            />
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-xs text-gray-500">{commentText.length}/2000</span>
-              <button
-                type="submit"
-                disabled={!commentText.trim() || submittingComment}
-                className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
-              >
-                {submittingComment ? '...' : (locale === 'vi' ? 'Gửi' : 'Post')}
-              </button>
+            <div className="rounded-lg border border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500">
+              <textarea
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder={locale === 'vi' ? 'Viết bình luận...' : 'Write a comment...'}
+                className="w-full px-4 py-2.5 border-0 rounded-t-lg focus:ring-0 focus:outline-none min-h-[80px]"
+                maxLength={2000}
+              />
+              {commentImagePreview && (
+                <div className="relative mx-4 mb-2 inline-block">
+                  <img src={commentImagePreview} alt="Preview" className="max-h-32 rounded-lg border border-gray-200 object-cover" />
+                  <button type="button" onClick={() => clearCommentImage(false)} className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow hover:bg-red-600">&times;</button>
+                </div>
+              )}
+              <div className="flex justify-between items-center border-t border-gray-100 px-3 py-1.5">
+                <div className="relative flex items-center gap-0.5">
+                  <input ref={commentImageRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => handleCommentImageSelect(e)} />
+                  <button type="button" onClick={() => commentImageRef.current?.click()} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title={locale === 'vi' ? 'Đính kèm ảnh' : 'Attach image'}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Zm16.5-13.5h.008v.008h-.008V7.5Zm0 0a1.125 1.125 0 1 0-2.25 0 1.125 1.125 0 0 0 2.25 0Z" /></svg>
+                  </button>
+                  <button type="button" onClick={() => setShowEmojiPicker(showEmojiPicker === 'main' ? null : 'main')} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title="Emoji">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" /></svg>
+                  </button>
+                  {showEmojiPicker === 'main' && (
+                    <div className="absolute bottom-full left-0 z-10 mb-1 grid w-64 grid-cols-10 gap-0.5 rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
+                      {EMOJI_LIST.map((e) => (
+                        <button key={e} type="button" onClick={() => insertEmoji(e)} className="rounded p-1 text-lg hover:bg-gray-100">{e}</button>
+                      ))}
+                    </div>
+                  )}
+                  <span className="ml-1 text-xs text-gray-400">{commentText.length}/2000</span>
+                </div>
+                <button
+                  type="submit"
+                  disabled={(!commentText.trim() && !commentImageFile) || submittingComment}
+                  className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {submittingComment ? '...' : (locale === 'vi' ? 'Gửi' : 'Post')}
+                </button>
+              </div>
             </div>
           </form>
         ) : (
@@ -458,7 +557,14 @@ export function ProposalDetail({ proposalId }: Props) {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-700 text-sm whitespace-pre-wrap">{c.body}</p>
+                  <>
+                    <p className="text-gray-700 text-sm whitespace-pre-wrap">{c.body}</p>
+                    {c.image_url && (
+                      <a href={c.image_url} target="_blank" rel="noopener noreferrer" className="mt-2 block">
+                        <img src={c.image_url} alt="" className="max-h-60 rounded-lg border border-gray-200 object-cover" />
+                      </a>
+                    )}
+                  </>
                 )}
                 <div className="mt-2 flex items-center gap-3">
                   <CommentReactions
@@ -527,7 +633,14 @@ export function ProposalDetail({ proposalId }: Props) {
                           </div>
                         </div>
                       ) : (
-                        <p className="text-gray-700 text-sm whitespace-pre-wrap">{reply.body}</p>
+                        <>
+                          <p className="text-gray-700 text-sm whitespace-pre-wrap">{reply.body}</p>
+                          {reply.image_url && (
+                            <a href={reply.image_url} target="_blank" rel="noopener noreferrer" className="mt-1.5 block">
+                              <img src={reply.image_url} alt="" className="max-h-48 rounded-lg border border-gray-200 object-cover" />
+                            </a>
+                          )}
+                        </>
                       )}
                       <div className="mt-1 flex items-center gap-3">
                         <CommentReactions
@@ -551,29 +664,55 @@ export function ProposalDetail({ proposalId }: Props) {
               {/* Reply form */}
               {replyingTo === c.id && (
                 <form onSubmit={(e) => handleComment(e, c.id)} className="ml-8 mt-2 pl-4">
-                  <textarea
-                    value={replyBody}
-                    onChange={(e) => setReplyBody(e.target.value)}
-                    placeholder={locale === 'vi' ? 'Viết trả lời...' : 'Write a reply...'}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[60px]"
-                    maxLength={2000}
-                    autoFocus
-                  />
-                  <div className="mt-2 flex items-center gap-2 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => { setReplyingTo(null); setReplyBody(''); }}
-                      className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1"
-                    >
-                      {locale === 'vi' ? 'Hủy' : 'Cancel'}
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!replyBody.trim() || submittingComment}
-                      className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      {locale === 'vi' ? 'Gửi' : 'Reply'}
-                    </button>
+                  <div className="rounded-lg border border-gray-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500">
+                    <textarea
+                      value={replyBody}
+                      onChange={(e) => setReplyBody(e.target.value)}
+                      placeholder={locale === 'vi' ? 'Viết trả lời...' : 'Write a reply...'}
+                      className="w-full px-3 py-2 border-0 rounded-t-lg text-sm focus:ring-0 focus:outline-none min-h-[60px]"
+                      maxLength={2000}
+                      autoFocus
+                    />
+                    {replyImagePreview && (
+                      <div className="relative mx-3 mb-2 inline-block">
+                        <img src={replyImagePreview} alt="Preview" className="max-h-24 rounded-lg border border-gray-200 object-cover" />
+                        <button type="button" onClick={() => clearCommentImage(true)} className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow hover:bg-red-600">&times;</button>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between border-t border-gray-100 px-2 py-1">
+                      <div className="relative flex items-center gap-0.5">
+                        <input ref={replyImageRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => handleCommentImageSelect(e, true)} />
+                        <button type="button" onClick={() => replyImageRef.current?.click()} className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title={locale === 'vi' ? 'Đính kèm ảnh' : 'Attach image'}>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Zm16.5-13.5h.008v.008h-.008V7.5Zm0 0a1.125 1.125 0 1 0-2.25 0 1.125 1.125 0 0 0 2.25 0Z" /></svg>
+                        </button>
+                        <button type="button" onClick={() => setShowEmojiPicker(showEmojiPicker === 'reply' ? null : 'reply')} className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title="Emoji">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" /></svg>
+                        </button>
+                        {showEmojiPicker === 'reply' && (
+                          <div className="absolute bottom-full left-0 z-10 mb-1 grid w-56 grid-cols-10 gap-0.5 rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
+                            {EMOJI_LIST.map((e) => (
+                              <button key={e} type="button" onClick={() => insertEmoji(e, true)} className="rounded p-0.5 text-base hover:bg-gray-100">{e}</button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => { setReplyingTo(null); setReplyBody(''); clearCommentImage(true); setShowEmojiPicker(null); }}
+                          className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
+                        >
+                          {locale === 'vi' ? 'Hủy' : 'Cancel'}
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={(!replyBody.trim() && !replyImageFile) || submittingComment}
+                          className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {locale === 'vi' ? 'Gửi' : 'Reply'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </form>
               )}
