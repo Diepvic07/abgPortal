@@ -20,6 +20,48 @@ const STATUS_COLORS: Record<EventStatus, string> = {
 const ALL_STATUSES: EventStatus[] = ['draft', 'published', 'cancelled', 'completed'];
 const ALL_CATEGORIES: EventCategory[] = ['abg_talks', 'fieldtrip', 'networking', 'learning', 'webinar', 'event', 'community_support', 'abg_business_connect', 'other'];
 
+type EventPreset = 'custom' | 'premium_free' | 'premium_paid' | 'all_members_free' | 'all_members_paid' | 'public_paid';
+
+const EVENT_PRESETS: Record<EventPreset, Partial<EventForm>> = {
+  custom: {},
+  premium_free: {
+    fee_premium: '0',
+    fee_basic: '',
+    fee_guest: '',
+    capacity_basic: '0',
+    capacity_guest: '0',
+    is_public: false,
+  },
+  premium_paid: {
+    fee_premium: '',
+    fee_basic: '',
+    fee_guest: '',
+    capacity_basic: '0',
+    capacity_guest: '0',
+    is_public: false,
+  },
+  all_members_free: {
+    fee_premium: '0',
+    fee_basic: '0',
+    fee_guest: '',
+    capacity_guest: '0',
+    is_public: false,
+  },
+  all_members_paid: {
+    fee_premium: '',
+    fee_basic: '',
+    fee_guest: '',
+    capacity_guest: '0',
+    is_public: false,
+  },
+  public_paid: {
+    fee_premium: '',
+    fee_basic: '',
+    fee_guest: '',
+    is_public: true,
+  },
+};
+
 interface EventForm {
   title: string;
   description: string;
@@ -85,6 +127,8 @@ export function AdminEventManager() {
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [imageUploading, setImageUploading] = useState(false);
   const [viewingPayments, setViewingPayments] = useState<CommunityEvent | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState<EventPreset>('custom');
+  const [presetMessage, setPresetMessage] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -109,7 +153,20 @@ export function AdminEventManager() {
   function openCreateForm() {
     setEditingEvent(null);
     setForm(emptyForm);
+    setSelectedPreset('custom');
+    setPresetMessage(false);
     setShowForm(true);
+  }
+
+  function applyPreset(preset: EventPreset) {
+    setSelectedPreset(preset);
+    if (preset === 'custom') {
+      setPresetMessage(false);
+      return;
+    }
+    const overrides = EVENT_PRESETS[preset];
+    setForm((f) => ({ ...f, ...overrides }));
+    setPresetMessage(true);
   }
 
   function openEditForm(event: CommunityEvent) {
@@ -406,6 +463,39 @@ export function AdminEventManager() {
             </div>
             <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
               <div className="px-6 py-4 space-y-4 overflow-y-auto">
+                {/* Preset Selector (only for new events) */}
+                {!editingEvent && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formPreset}</label>
+                    <div className="flex flex-wrap gap-2">
+                      {([
+                        ['custom', t.admin.events.presetCustom],
+                        ['premium_free', t.admin.events.presetPremiumFree],
+                        ['premium_paid', t.admin.events.presetPremiumPaid],
+                        ['all_members_free', t.admin.events.presetAllMembersFree],
+                        ['all_members_paid', t.admin.events.presetAllMembersPaid],
+                        ['public_paid', t.admin.events.presetPublicPaid],
+                      ] as [EventPreset, string][]).map(([key, label]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => applyPreset(key)}
+                          className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                            selectedPreset === key
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    {presetMessage && (
+                      <p className="text-xs text-green-600 mt-1">{t.admin.events.presetApplied}</p>
+                    )}
+                  </div>
+                )}
+
                 {/* Title */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formTitle}</label>

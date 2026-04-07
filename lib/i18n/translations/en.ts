@@ -1111,6 +1111,16 @@ export const en = {
       eventDeleted: 'Event deleted',
       deleteFailed: 'Failed to delete event',
 
+      // Presets
+      formPreset: 'Quick Setup',
+      presetCustom: 'Custom (manual)',
+      presetPremiumFree: 'Premium only — Free',
+      presetPremiumPaid: 'Premium only — Paid',
+      presetAllMembersFree: 'All members — Free',
+      presetAllMembersPaid: 'All members — Paid',
+      presetPublicPaid: 'Open to public — Paid',
+      presetApplied: 'Preset applied! Review and adjust fields below.',
+
       // Form
       formTitle: 'Title *',
       formCategory: 'Category *',

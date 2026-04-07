@@ -1098,6 +1098,15 @@ export const vi: Translations = {
       eventDeleted: 'Đã xóa sự kiện',
       deleteFailed: 'Xóa sự kiện thất bại',
 
+      formPreset: 'Thiết lập nhanh',
+      presetCustom: 'Tùy chỉnh (thủ công)',
+      presetPremiumFree: 'Chỉ Premium — Miễn phí',
+      presetPremiumPaid: 'Chỉ Premium — Có phí',
+      presetAllMembersFree: 'Tất cả thành viên — Miễn phí',
+      presetAllMembersPaid: 'Tất cả thành viên — Có phí',
+      presetPublicPaid: 'Mở cho công chúng — Có phí',
+      presetApplied: 'Đã áp dụng! Kiểm tra và điều chỉnh bên dưới.',
+
       formTitle: 'Tiêu đề *',
       formCategory: 'Danh mục *',
       formStatus: 'Trạng thái',
