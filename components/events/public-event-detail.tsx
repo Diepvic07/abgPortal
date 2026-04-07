@@ -84,8 +84,11 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
 
       {event.image_url && (
         <div className="mb-6 overflow-hidden rounded-3xl border border-stone-200 bg-stone-50">
-          <div className="aspect-[2/1]">
-            <img src={event.image_url} alt="" className="h-full w-full object-cover" />
+          <div className="aspect-[2/1] relative">
+            {/* Blurred background fill for non-2:1 images */}
+            <img src={event.image_url} alt="" className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-60" />
+            {/* Sharp centered image */}
+            <img src={event.image_url} alt="" className="relative h-full w-full object-contain" />
           </div>
         </div>
       )}

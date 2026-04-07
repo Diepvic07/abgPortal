@@ -74,18 +74,20 @@ export function AdminImageUpload({ imageUrl, onImageChange, uploadEndpoint = "/a
 
       {imageUrl ? (
         <div className="relative rounded-lg overflow-hidden border border-gray-200">
-          <div className="aspect-[2/1]">
+          <div className="aspect-[2/1] relative bg-stone-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-60" />
             <Image
               src={imageUrl}
               alt="Cover"
               width={1200}
               height={600}
-              className="w-full h-full object-cover"
+              className="relative w-full h-full object-contain"
             />
           </div>
           <button
             onClick={() => onImageChange("")}
-            className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-red-700"
+            className="absolute top-2 right-2 z-10 bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-red-700"
           >
             x
           </button>
