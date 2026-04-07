@@ -377,11 +377,11 @@ export async function createComment(data: {
       member_id: data.member_id,
       body: data.body,
       parent_comment_id: data.parent_comment_id || null,
-      image_url: data.image_url || null,
       status: 'visible',
       created_at: now,
       updated_at: now,
-    })
+      ...(data.image_url ? { image_url: data.image_url } : {}),
+    } as never)
     .select()
     .single();
 
