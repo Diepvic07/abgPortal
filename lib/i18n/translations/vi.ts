@@ -1057,6 +1057,10 @@ export const vi: Translations = {
       loadFailed: 'Không thể tải danh sách Premium',
       noMembers: 'Không tìm thấy thành viên Premium',
       expired: 'hết hạn',
+      deletePayment: 'Xóa',
+      deletePaymentConfirm: 'Xóa bản ghi thanh toán này? Không thể hoàn tác.',
+      deletePaymentFailed: 'Xóa thanh toán thất bại',
+      keepOriginal: 'giữ lại',
     },
 
     classes: {

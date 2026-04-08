@@ -85,6 +85,7 @@ export function AdminPremiumManager() {
   const [editingAmount, setEditingAmount] = useState<{ id: string; name: string } | null>(null);
   const [showDuplicates, setShowDuplicates] = useState(false);
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
+  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -163,6 +164,20 @@ export function AdminPremiumManager() {
     } finally {
       setProcessingId(null);
       setEditingAmount(null);
+    }
+  };
+
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!confirm(t.admin.premiumManager.deletePaymentConfirm)) return;
+    setDeletingPaymentId(paymentId);
+    try {
+      const res = await fetch(`/api/admin/payments/${paymentId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed");
+      await fetchData();
+    } catch {
+      alert(t.admin.premiumManager.deletePaymentFailed);
+    } finally {
+      setDeletingPaymentId(null);
     }
   };
 
@@ -281,12 +296,24 @@ export function AdminPremiumManager() {
                       {vndFormatter.format(dup.amount_vnd)} x{dup.payments.length}
                     </span>
                   </div>
-                  <div className="space-y-1">
-                    {dup.payments.map((p) => (
+                  <div className="space-y-1.5">
+                    {dup.payments.map((p, pIdx) => (
                       <div key={p.id} className="text-xs text-gray-600 flex items-center gap-3">
                         <span>{new Date(p.created_at).toLocaleString()}</span>
                         <span className="text-gray-400">{p.admin_id}</span>
                         {p.notes && <span className="italic text-gray-500">{p.notes}</span>}
+                        {pIdx > 0 && (
+                          <button
+                            onClick={() => handleDeletePayment(p.id)}
+                            disabled={deletingPaymentId === p.id}
+                            className="ml-auto px-2 py-0.5 rounded bg-red-100 text-red-700 hover:bg-red-200 font-medium disabled:opacity-50"
+                          >
+                            {deletingPaymentId === p.id ? "..." : t.admin.premiumManager.deletePayment}
+                          </button>
+                        )}
+                        {pIdx === 0 && (
+                          <span className="ml-auto text-xs text-green-600 font-medium">{t.admin.premiumManager.keepOriginal}</span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -402,14 +429,22 @@ export function AdminPremiumManager() {
                           <span className="ml-1">{isExpanded ? "▲" : "▼"}</span>
                         </button>
                         {isExpanded && member.payments.length > 0 && (
-                          <div className="mt-2 space-y-1 border-t pt-2">
+                          <div className="mt-2 space-y-1.5 border-t pt-2">
                             {member.payments.map((p) => (
-                              <div key={p.id} className="text-xs text-gray-500 flex gap-2">
+                              <div key={p.id} className="text-xs text-gray-500 flex items-center gap-2">
                                 <span className="text-green-600 font-medium">
                                   {vndFormatter.format(p.amount_vnd)}
                                 </span>
                                 <span>{formatDate(p.created_at)}</span>
                                 {p.notes && <span className="italic">{p.notes}</span>}
+                                <button
+                                  onClick={() => handleDeletePayment(p.id)}
+                                  disabled={deletingPaymentId === p.id}
+                                  className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                                  title={t.admin.premiumManager.deletePayment}
+                                >
+                                  {deletingPaymentId === p.id ? "..." : "×"}
+                                </button>
                               </div>
                             ))}
                           </div>

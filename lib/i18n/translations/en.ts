@@ -1067,6 +1067,10 @@ export const en = {
       loadFailed: 'Failed to load premium members',
       noMembers: 'No premium members found',
       expired: 'expired',
+      deletePayment: 'Delete',
+      deletePaymentConfirm: 'Delete this payment record? This cannot be undone.',
+      deletePaymentFailed: 'Failed to delete payment record',
+      keepOriginal: 'keep',
     },
 
     // Classes

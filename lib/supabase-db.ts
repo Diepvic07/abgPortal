@@ -877,6 +877,15 @@ export async function getPaymentRecords(): Promise<PaymentRecord[]> {
   return (data || []).map(row => mapRowToPaymentRecord(row as unknown as Record<string, unknown>));
 }
 
+export async function deletePaymentRecord(id: string): Promise<void> {
+  const db = createServerSupabaseClient();
+  const { error } = await db.from('payment_records').delete().eq('id', id);
+  if (error) {
+    console.error('[SupabaseDB] deletePaymentRecord error:', error);
+    throw new Error(`Failed to delete payment record: ${error.message}`);
+  }
+}
+
 // ==================== Member Search Counter ====================
 
 export async function incrementMemberSearchCount(id: string): Promise<void> {
