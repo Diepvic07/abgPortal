@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { linkifyText } from '@/lib/linkify';
 import { CommunityEvent, EVENT_CATEGORY_LABELS, EVENT_MODE_LABELS, EventMode } from '@/types';
 import { GuestRsvpModal } from './guest-rsvp-modal';
 
@@ -135,7 +136,7 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
       {/* Description */}
       <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">About This Event</h2>
-        <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{event.description}</ReactMarkdown></div>
+        <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{linkifyText(event.description)}</ReactMarkdown></div>
       </section>
 
       {/* Fee Pricing */}

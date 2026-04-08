@@ -3,6 +3,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
+import { linkifyText } from '@/lib/linkify';
 import { NewsArticle } from '@/types';
 import { localizeArticle } from '@/lib/news-utils';
 import { useTranslation } from '@/lib/i18n';
@@ -52,7 +53,7 @@ export function ArticleContent({ article }: ArticleContentProps) {
   return (
     <div className="max-w-3xl mx-auto px-4">
       <div className="prose prose-lg max-w-none text-gray-700 prose-p:leading-relaxed">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>{content}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>{linkifyText(content)}</ReactMarkdown>
       </div>
     </div>
   );
