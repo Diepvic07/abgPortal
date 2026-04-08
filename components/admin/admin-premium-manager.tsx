@@ -86,6 +86,8 @@ export function AdminPremiumManager() {
   const [showDuplicates, setShowDuplicates] = useState(false);
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
+  const [editingPayment, setEditingPayment] = useState<{ id: string; amount: string; notes: string } | null>(null);
+  const [savingPaymentId, setSavingPaymentId] = useState<string | null>(null);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -179,6 +181,33 @@ export function AdminPremiumManager() {
     } finally {
       setDeletingPaymentId(null);
     }
+  };
+
+  const handleEditPayment = async () => {
+    if (!editingPayment) return;
+    const numericAmount = parseInt(editingPayment.amount.replace(/\D/g, ""), 10);
+    if (isNaN(numericAmount) || numericAmount <= 0) return;
+    setSavingPaymentId(editingPayment.id);
+    try {
+      const res = await fetch(`/api/admin/payments/${editingPayment.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount_vnd: numericAmount, notes: editingPayment.notes }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setEditingPayment(null);
+      await fetchData();
+    } catch {
+      alert(t.admin.premiumManager.editPaymentFailed);
+    } finally {
+      setSavingPaymentId(null);
+    }
+  };
+
+  const formatAmountInput = (value: string) => {
+    const num = parseInt(value.replace(/\D/g, ""), 10);
+    if (isNaN(num)) return "";
+    return num.toLocaleString("vi-VN");
   };
 
   const filteredMembers = useMemo(() => {
@@ -431,21 +460,60 @@ export function AdminPremiumManager() {
                         {isExpanded && member.payments.length > 0 && (
                           <div className="mt-2 space-y-1.5 border-t pt-2">
                             {member.payments.map((p) => (
-                              <div key={p.id} className="text-xs text-gray-500 flex items-center gap-2">
-                                <span className="text-green-600 font-medium">
-                                  {vndFormatter.format(p.amount_vnd)}
-                                </span>
-                                <span>{formatDate(p.created_at)}</span>
-                                {p.notes && <span className="italic">{p.notes}</span>}
-                                <button
-                                  onClick={() => handleDeletePayment(p.id)}
-                                  disabled={deletingPaymentId === p.id}
-                                  className="text-red-500 hover:text-red-700 disabled:opacity-50"
-                                  title={t.admin.premiumManager.deletePayment}
-                                >
-                                  {deletingPaymentId === p.id ? "..." : "×"}
-                                </button>
-                              </div>
+                              editingPayment?.id === p.id ? (
+                                <div key={p.id} className="text-xs flex items-center gap-1.5 bg-blue-50 rounded p-1.5">
+                                  <div className="relative">
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      value={editingPayment.amount}
+                                      onChange={(e) => {
+                                        const raw = e.target.value.replace(/\D/g, "");
+                                        setEditingPayment({ ...editingPayment, amount: raw ? formatAmountInput(raw) : "" });
+                                      }}
+                                      className="w-24 px-1.5 py-0.5 border rounded text-xs pr-8"
+                                    />
+                                    <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">VND</span>
+                                  </div>
+                                  <button
+                                    onClick={handleEditPayment}
+                                    disabled={savingPaymentId === p.id}
+                                    className="text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
+                                  >
+                                    {savingPaymentId === p.id ? "..." : t.admin.actions.save}
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingPayment(null)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                  >
+                                    {t.admin.actions.cancel}
+                                  </button>
+                                </div>
+                              ) : (
+                                <div key={p.id} className="text-xs text-gray-500 flex items-center gap-2">
+                                  <button
+                                    onClick={() => setEditingPayment({
+                                      id: p.id,
+                                      amount: p.amount_vnd.toLocaleString("vi-VN"),
+                                      notes: p.notes || "",
+                                    })}
+                                    className="text-green-600 font-medium hover:underline"
+                                    title={t.admin.premiumManager.editPayment}
+                                  >
+                                    {vndFormatter.format(p.amount_vnd)}
+                                  </button>
+                                  <span>{formatDate(p.created_at)}</span>
+                                  {p.notes && <span className="italic">{p.notes}</span>}
+                                  <button
+                                    onClick={() => handleDeletePayment(p.id)}
+                                    disabled={deletingPaymentId === p.id}
+                                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                                    title={t.admin.premiumManager.deletePayment}
+                                  >
+                                    {deletingPaymentId === p.id ? "..." : "×"}
+                                  </button>
+                                </div>
+                              )
                             ))}
                           </div>
                         )}

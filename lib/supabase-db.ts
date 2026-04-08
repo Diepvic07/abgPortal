@@ -886,6 +886,15 @@ export async function deletePaymentRecord(id: string): Promise<void> {
   }
 }
 
+export async function updatePaymentRecord(id: string, updates: { amount_vnd?: number; notes?: string }): Promise<void> {
+  const db = createServerSupabaseClient();
+  const { error } = await db.from('payment_records').update(updates).eq('id', id);
+  if (error) {
+    console.error('[SupabaseDB] updatePaymentRecord error:', error);
+    throw new Error(`Failed to update payment record: ${error.message}`);
+  }
+}
+
 // ==================== Member Search Counter ====================
 
 export async function incrementMemberSearchCount(id: string): Promise<void> {

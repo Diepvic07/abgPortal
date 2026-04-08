@@ -1060,6 +1060,8 @@ export const vi: Translations = {
       deletePayment: 'Xóa',
       deletePaymentConfirm: 'Xóa bản ghi thanh toán này? Không thể hoàn tác.',
       deletePaymentFailed: 'Xóa thanh toán thất bại',
+      editPayment: 'Bấm để sửa số tiền',
+      editPaymentFailed: 'Cập nhật thanh toán thất bại',
       keepOriginal: 'giữ lại',
     },
 

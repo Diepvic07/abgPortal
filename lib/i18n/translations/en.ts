@@ -1070,6 +1070,8 @@ export const en = {
       deletePayment: 'Delete',
       deletePaymentConfirm: 'Delete this payment record? This cannot be undone.',
       deletePaymentFailed: 'Failed to delete payment record',
+      editPayment: 'Click to edit amount',
+      editPaymentFailed: 'Failed to update payment record',
       keepOriginal: 'keep',
     },
 
