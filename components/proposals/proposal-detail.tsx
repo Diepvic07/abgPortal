@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS } from '@/types';
 import { CommentReactions } from '@/components/ui/comment-reactions';
@@ -410,7 +411,7 @@ export function ProposalDetail({ proposalId }: Props) {
         <h2 className="text-lg font-semibold text-gray-900 mb-3">
           {locale === 'vi' ? 'Mô tả' : 'Description'}
         </h2>
-        <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown>{proposal.description}</ReactMarkdown></div>
+        <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{proposal.description}</ReactMarkdown></div>
       </div>
 
       {/* Reaction Bar — Facebook-style */}

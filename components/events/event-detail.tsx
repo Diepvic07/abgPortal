@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useTranslation } from '@/lib/i18n';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
 import { ToastNotification, useToasts } from '@/components/ui/toast-notification';
@@ -732,7 +733,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
               {locale === 'vi' ? 'Giới thiệu sự kiện' : 'About This Event'}
             </h2>
             <div className="prose prose-sm mt-3 max-w-none text-gray-700">
-              <ReactMarkdown>{event.description}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{event.description}</ReactMarkdown>
             </div>
           </div>
 
