@@ -239,6 +239,8 @@ function ProposalsTabContent({
   locale: string;
   session: ReturnType<typeof useSession>['data'];
 }) {
+  const [activeGenre, setActiveGenre] = useState<string | null>(null);
+
   if (loading) return <SkeletonRows />;
 
   if (proposals.length === 0) {
@@ -251,20 +253,22 @@ function ProposalsTabContent({
     );
   }
 
-  // Group proposals by genre
-  const grouped = new Map<string, CommunityProposal[]>();
+  // Collect genres that have proposals, sorted by count (other last)
+  const genreCounts = new Map<string, number>();
   for (const p of proposals) {
-    const genre = p.genre || 'other';
-    if (!grouped.has(genre)) grouped.set(genre, []);
-    grouped.get(genre)!.push(p);
+    const g = p.genre || 'other';
+    genreCounts.set(g, (genreCounts.get(g) || 0) + 1);
   }
-
-  // Sort genres: genres with more proposals first, 'other' always last
-  const sortedGenres = Array.from(grouped.keys()).sort((a, b) => {
+  const genres = Array.from(genreCounts.keys()).sort((a, b) => {
     if (a === 'other') return 1;
     if (b === 'other') return -1;
-    return (grouped.get(b)?.length || 0) - (grouped.get(a)?.length || 0);
+    return (genreCounts.get(b) || 0) - (genreCounts.get(a) || 0);
   });
+
+  // Filter and sort: "All" shows newest first, genre tab filters by genre
+  const filtered = activeGenre
+    ? proposals.filter(p => (p.genre || 'other') === activeGenre)
+    : [...proposals].sort((a, b) => (b.published_at || b.created_at).localeCompare(a.published_at || a.created_at));
 
   return (
     <div>
@@ -272,50 +276,44 @@ function ProposalsTabContent({
         {locale === 'vi' ? 'ĐỀ XUẤT CỘNG ĐỒNG' : 'COMMUNITY PROPOSALS'}
       </h2>
 
-      {/* Genre navigation pills — matching news page style */}
-      <div className="relative mb-6">
+      {/* Genre filter tabs */}
+      <div className="relative mb-4">
         <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none md:hidden" />
         <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide snap-x snap-mandatory">
-          {sortedGenres.map((genre) => {
+          <button
+            onClick={() => setActiveGenre(null)}
+            className={`shrink-0 snap-start px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+              activeGenre === null
+                ? 'bg-blue-50 text-blue-700 border-blue-100'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+            }`}
+          >
+            {locale === 'vi' ? 'Tất cả' : 'All'}
+          </button>
+          {genres.map((genre) => {
             const genreInfo = PROPOSAL_GENRE_LABELS[genre as ProposalGenre] || PROPOSAL_GENRE_LABELS.other;
-            const count = grouped.get(genre)?.length || 0;
             return (
               <button
                 key={genre}
-                onClick={() => document.getElementById(`genre-${genre}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                className="shrink-0 snap-start px-4 py-2 rounded-full text-sm font-medium transition-colors border bg-white text-gray-600 border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-100"
+                onClick={() => setActiveGenre(genre)}
+                className={`shrink-0 snap-start px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                  activeGenre === genre
+                    ? 'bg-blue-50 text-blue-700 border-blue-100'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                }`}
               >
-                {genreInfo.icon} {genreInfo[locale === 'vi' ? 'vi' : 'en']} <span className="text-gray-400">{count}</span>
+                {genreInfo.icon} {genreInfo[locale === 'vi' ? 'vi' : 'en']}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Grouped proposals */}
-      <div className="space-y-6">
-        {sortedGenres.map((genre) => {
-          const genreProposals = grouped.get(genre) || [];
-          const genreInfo = PROPOSAL_GENRE_LABELS[genre as ProposalGenre] || PROPOSAL_GENRE_LABELS.other;
-          return (
-            <div key={genre} id={`genre-${genre}`} className="scroll-mt-4">
-              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200">
-                <span className="text-lg">{genreInfo.icon}</span>
-                <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
-                  {genreInfo[locale === 'vi' ? 'vi' : 'en']}
-                </h3>
-                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                  {genreProposals.length}
-                </span>
-              </div>
-              <div className="divide-y divide-gray-100">
-                {genreProposals.map((proposal) => (
-                  <ProposalRow key={proposal.id} proposal={proposal} locale={locale} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+      {/* Filtered proposals list */}
+      <div className="divide-y divide-gray-100">
+        {filtered.map((proposal) => (
+          <ProposalRow key={proposal.id} proposal={proposal} locale={locale} />
+        ))}
       </div>
     </div>
   );
