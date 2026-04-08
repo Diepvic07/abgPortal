@@ -26,7 +26,7 @@ function createOnboardingSchema(t: { onboard: { validation: Record<string, strin
     expertise: z.string().min(10, t.onboard.validation.expertiseMin),
     can_help_with: z.string().min(10, t.onboard.validation.canHelpMin),
     looking_for: z.string().min(10, t.onboard.validation.lookingForMin),
-    abg_class: z.string().optional().refine(v => v !== '__other__', { message: 'Please type your class name' }),
+    abg_class: z.string().min(1, t.onboard.validation.abgClassRequired || 'Please select your ABG class').refine(v => v !== '__other__', { message: 'Please type your class name' }),
     nickname: z.string().max(50).optional(),
     display_nickname_in_search: z.boolean().optional(),
     display_nickname_in_match: z.boolean().optional(),
@@ -361,7 +361,7 @@ export function MemberOnboardingForm() {
 
       <div>
         <label className="block text-sm font-medium text-text-primary mb-1">
-          {t.onboard.form.abgClass}
+          {t.onboard.form.abgClass} <span className="text-red-500">*</span>
         </label>
         {watch('abg_class') === '__other__' ? (
           <div className="flex gap-2">
@@ -393,6 +393,9 @@ export function MemberOnboardingForm() {
         <p className="text-xs text-text-secondary mt-1">
           {t.onboard.form.abgClassHelp}
         </p>
+        {errors.abg_class && (
+          <p className="text-red-500 text-sm mt-1">{errors.abg_class.message}</p>
+        )}
       </div>
 
       <div className="space-y-3">

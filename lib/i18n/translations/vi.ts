@@ -298,6 +298,7 @@ export const vi: Translations = {
       expertiseMin: 'Kể thêm chút về món tủ đi (tối thiểu 10 ký tự)',
       canHelpMin: 'Giúp được gì kể rõ tí nha (tối thiểu 10 ký tự)',
       lookingForMin: 'Tìm gì nói rõ xíu (tối thiểu 10 ký tự)',
+      abgClassRequired: 'Vui lòng chọn lớp ABG của bạn',
     },
   },
 

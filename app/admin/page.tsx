@@ -565,12 +565,15 @@ export default function AdminPage() {
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
                         {t.admin.labels.email}
                       </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                        {t.admin.labels.phone}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {displayMembers.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                        <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                           {activeTab === "pending"
                             ? t.admin.pending.noApps
                             : t.admin.members.noMembers}
@@ -732,6 +735,16 @@ export default function AdminPage() {
                           {/* Email */}
                           <td className="px-4 py-3 text-sm text-gray-600">
                             {member.email}
+                          </td>
+                          {/* Phone */}
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {member.phone ? (
+                              <a href={`tel:${member.phone}`} className="text-blue-600 hover:underline">
+                                {member.phone}
+                              </a>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
                           </td>
                         </tr>
                       ))

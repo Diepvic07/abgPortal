@@ -296,6 +296,7 @@ export const en = {
       expertiseMin: 'Describe your expertise (min 10 chars)',
       canHelpMin: 'What can you help with? (min 10 chars)',
       lookingForMin: 'What are you looking for? (min 10 chars)',
+      abgClassRequired: 'Please select your ABG class',
     },
   },
 
