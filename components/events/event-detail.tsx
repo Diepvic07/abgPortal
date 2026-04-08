@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 import { useTranslation } from '@/lib/i18n';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
 import { ToastNotification, useToasts } from '@/components/ui/toast-notification';
@@ -728,8 +729,8 @@ export function EventDetail({ eventId }: { eventId: string }) {
             <h2 className="text-lg font-semibold text-gray-900">
               {locale === 'vi' ? 'Giới thiệu sự kiện' : 'About This Event'}
             </h2>
-            <div className="prose prose-sm mt-3 max-w-none whitespace-pre-wrap text-gray-700">
-              {event.description}
+            <div className="prose prose-sm mt-3 max-w-none text-gray-700">
+              <ReactMarkdown>{event.description}</ReactMarkdown>
             </div>
           </div>
 

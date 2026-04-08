@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 import { CommunityEvent, EVENT_CATEGORY_LABELS, EVENT_MODE_LABELS, EventMode } from '@/types';
 import { GuestRsvpModal } from './guest-rsvp-modal';
 
@@ -133,7 +134,7 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
       {/* Description */}
       <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">About This Event</h2>
-        <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">{event.description}</div>
+        <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown>{event.description}</ReactMarkdown></div>
       </section>
 
       {/* Fee Pricing */}
