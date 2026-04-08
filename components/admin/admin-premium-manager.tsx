@@ -209,8 +209,8 @@ export function AdminPremiumManager() {
   };
 
   const SortIcon = ({ col }: { col: typeof sortBy }) => {
-    if (sortBy !== col) return <span className="text-gray-300 ml-1">&#8693;</span>;
-    return <span className="ml-1">{sortDir === "asc" ? "&#9650;" : "&#9660;"}</span>;
+    if (sortBy !== col) return <span className="text-gray-300 ml-1">⇅</span>;
+    return <span className="ml-1">{sortDir === "asc" ? "▲" : "▼"}</span>;
   };
 
   if (isLoading) {
@@ -313,31 +313,38 @@ export function AdminPremiumManager() {
         <div className="text-center py-12 text-gray-500">{t.admin.premiumManager.noMembers}</div>
       ) : (
         <div className="overflow-auto rounded-lg border border-gray-200">
-          <table className="w-full min-w-[900px] text-sm">
+          <table className="w-full table-fixed text-sm">
+            <colgroup>
+              <col className="w-[28%]" />
+              <col className="w-[18%]" />
+              <col className="w-[20%]" />
+              <col className="w-[16%]" />
+              <col className="w-[18%]" />
+            </colgroup>
             <thead>
               <tr className="bg-gray-50 border-b">
                 <th
-                  className="px-4 py-3 text-left font-medium text-gray-600 cursor-pointer select-none"
+                  className="px-3 py-3 text-left font-medium text-gray-600 cursor-pointer select-none"
                   onClick={() => handleSort("name")}
                 >
                   {t.admin.labels.name} <SortIcon col="name" />
                 </th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">
+                <th className="px-3 py-3 text-left font-medium text-gray-600">
                   {t.admin.premiumManager.classAndContact}
                 </th>
                 <th
-                  className="px-4 py-3 text-left font-medium text-gray-600 cursor-pointer select-none"
+                  className="px-3 py-3 text-left font-medium text-gray-600 cursor-pointer select-none"
                   onClick={() => handleSort("total_paid")}
                 >
                   {t.admin.premiumManager.contributed} <SortIcon col="total_paid" />
                 </th>
                 <th
-                  className="px-4 py-3 text-left font-medium text-gray-600 cursor-pointer select-none"
+                  className="px-3 py-3 text-left font-medium text-gray-600 cursor-pointer select-none"
                   onClick={() => handleSort("expiry")}
                 >
                   {t.admin.premiumManager.expiryDate} <SortIcon col="expiry" />
                 </th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">
+                <th className="px-3 py-3 text-left font-medium text-gray-600">
                   {t.admin.labels.actions}
                 </th>
               </tr>
@@ -352,23 +359,21 @@ export function AdminPremiumManager() {
                 return (
                   <tr key={member.id} className="hover:bg-gray-50 group">
                     {/* Name */}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div>
-                          <p className="font-medium text-gray-900">{member.name}</p>
-                          <p className="text-xs text-gray-500">{member.email}</p>
-                          {member.role && (
-                            <p className="text-xs text-gray-400">
-                              {member.role}
-                              {member.company && ` @ ${member.company}`}
-                            </p>
-                          )}
-                        </div>
+                    <td className="px-3 py-3">
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 truncate">{member.name}</p>
+                        <p className="text-xs text-gray-500 truncate">{member.email}</p>
+                        {member.role && (
+                          <p className="text-xs text-gray-400 truncate">
+                            {member.role}
+                            {member.company && ` @ ${member.company}`}
+                          </p>
+                        )}
                       </div>
                     </td>
 
                     {/* Class & Contact */}
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       {member.abg_class && (
                         <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 mb-1">
                           {member.abg_class}
@@ -384,7 +389,7 @@ export function AdminPremiumManager() {
                     </td>
 
                     {/* Contributed */}
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <div>
                         <p className="font-medium text-green-700">
                           {vndFormatter.format(member.total_paid)}
@@ -413,7 +418,7 @@ export function AdminPremiumManager() {
                     </td>
 
                     {/* Expiry */}
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       {editingExpiry === member.id ? (
                         <div className="flex items-center gap-1">
                           <input
@@ -467,7 +472,7 @@ export function AdminPremiumManager() {
                     </td>
 
                     {/* Actions */}
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <div className="flex flex-col gap-1">
                         {/* Profile link */}
                         <a
