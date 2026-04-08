@@ -11,9 +11,9 @@ export default async function LoginPage({
   const session = await getServerSession(authOptions);
   const params = await searchParams;
 
-  // If already authenticated, redirect to the intended page or /request
+  // If already authenticated, redirect to the intended page or /events
   if (session?.user) {
-    const target = params.callbackUrl || "/request";
+    const target = params.callbackUrl || "/events";
     redirect(target);
   }
 
