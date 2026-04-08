@@ -90,6 +90,7 @@ export function ProposalDetail({ proposalId }: Props) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState('');
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
+  const [currentMemberAvatarUrl, setCurrentMemberAvatarUrl] = useState<string | null>(null);
   const [editingComment, setEditingComment] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
   const [submittingCommitment, setSubmittingCommitment] = useState(false);
@@ -119,6 +120,7 @@ export function ProposalDetail({ proposalId }: Props) {
       setComments(data.comments || []);
       setMyCommitment(data.proposal?.my_commitment || null);
       if (data.currentMemberId) setCurrentMemberId(data.currentMemberId);
+      if (data.currentMemberAvatarUrl) setCurrentMemberAvatarUrl(data.currentMemberAvatarUrl);
     } catch {
       router.push('/events?tab=proposals');
     } finally {
@@ -234,7 +236,7 @@ export function ProposalDetail({ proposalId }: Props) {
         const newComment: CommunityProposalComment = {
           ...data.comment,
           member_name: session?.user?.name || 'Me',
-          member_avatar_url: session?.user?.image || undefined,
+          member_avatar_url: currentMemberAvatarUrl || session?.user?.image || undefined,
           reactions: { like: 0, heart: 0, haha: 0, wow: 0, sad: 0, cold: 0, fire: 0, hug: 0, highfive: 0 },
           replies: [],
         };
@@ -430,9 +432,13 @@ export function ProposalDetail({ proposalId }: Props) {
           {commitments.map((c) => (
             <div key={c.id} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium text-sm">
-                  {(c.member_name || '?')[0]}
-                </div>
+                {c.member_avatar_url ? (
+                  <img src={c.member_avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white ${getAvatarColor(c.member_name || '?')}`}>
+                    {(c.member_name || '?')[0].toUpperCase()}
+                  </div>
+                )}
                 <div>
                   <span className="font-medium text-gray-900">{c.member_name || 'Unknown'}</span>
                   {c.member_abg_class && <span className="text-sm text-gray-500 ml-2">{c.member_abg_class}</span>}

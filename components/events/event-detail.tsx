@@ -172,6 +172,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState('');
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
+  const [currentMemberAvatarUrl, setCurrentMemberAvatarUrl] = useState<string | null>(null);
   const [commentImageFile, setCommentImageFile] = useState<File | null>(null);
   const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
   const [replyImageFile, setReplyImageFile] = useState<File | null>(null);
@@ -234,6 +235,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
         const data = await res.json();
         setComments(data.comments || []);
         if (data.currentMemberId) setCurrentMemberId(data.currentMemberId);
+        if (data.currentMemberAvatarUrl) setCurrentMemberAvatarUrl(data.currentMemberAvatarUrl);
       }
     } catch (error) {
       console.error('Failed to fetch comments:', error);
@@ -405,7 +407,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
         const newComment: EventComment = {
           ...data.comment,
           member_name: session?.user?.name || 'Me',
-          member_avatar_url: session?.user?.image || undefined,
+          member_avatar_url: currentMemberAvatarUrl || session?.user?.image || undefined,
           reactions: { like: 0, heart: 0, haha: 0, wow: 0, sad: 0, cold: 0, fire: 0, hug: 0, highfive: 0 },
           replies: [],
         };

@@ -23,6 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       commitments,
       comments,
       currentMemberId: member?.id || null,
+      currentMemberAvatarUrl: member?.avatar_url || null,
     });
   } catch (error) {
     return handleApiError(error);

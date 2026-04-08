@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const comments = await getEventComments(id, member.id);
-    return successResponse({ comments, currentMemberId: member.id });
+    return successResponse({ comments, currentMemberId: member.id, currentMemberAvatarUrl: member.avatar_url || null });
   } catch (error) {
     return handleApiError(error);
   }
