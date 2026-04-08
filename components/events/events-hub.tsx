@@ -272,22 +272,24 @@ function ProposalsTabContent({
         {locale === 'vi' ? 'ĐỀ XUẤT CỘNG ĐỒNG' : 'COMMUNITY PROPOSALS'}
       </h2>
 
-      {/* Genre navigation pills */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {sortedGenres.map((genre) => {
-          const genreInfo = PROPOSAL_GENRE_LABELS[genre as ProposalGenre] || PROPOSAL_GENRE_LABELS.other;
-          const count = grouped.get(genre)?.length || 0;
-          return (
-            <button
-              key={genre}
-              onClick={() => document.getElementById(`genre-${genre}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              className="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-1.5"
-            >
-              {genreInfo.icon} {genreInfo[locale === 'vi' ? 'vi' : 'en']}
-              <span className="text-xs text-gray-400">{count}</span>
-            </button>
-          );
-        })}
+      {/* Genre navigation pills — matching news page style */}
+      <div className="relative mb-6">
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none md:hidden" />
+        <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide snap-x snap-mandatory">
+          {sortedGenres.map((genre) => {
+            const genreInfo = PROPOSAL_GENRE_LABELS[genre as ProposalGenre] || PROPOSAL_GENRE_LABELS.other;
+            const count = grouped.get(genre)?.length || 0;
+            return (
+              <button
+                key={genre}
+                onClick={() => document.getElementById(`genre-${genre}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="shrink-0 snap-start px-4 py-2 rounded-full text-sm font-medium transition-colors border bg-white text-gray-600 border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-100"
+              >
+                {genreInfo.icon} {genreInfo[locale === 'vi' ? 'vi' : 'en']} <span className="text-gray-400">{count}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Grouped proposals */}
