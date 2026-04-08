@@ -279,6 +279,7 @@ export interface ReactionSummary {
   hug: number;
   highfive: number;
   my_reaction?: ReactionType;
+  reactors?: Partial<Record<ReactionType, string[]>>;
 }
 
 export const COMMITMENT_WEIGHTS: Record<CommitmentLevel, number> = {
@@ -422,6 +423,7 @@ export interface CommunityEvent {
   payment_instructions?: string;
   payment_code?: string;
   allow_cancellation?: boolean;
+  registration_closed?: boolean;
   registration_deadline?: string;
   require_question?: boolean;
   question_prompt?: string;

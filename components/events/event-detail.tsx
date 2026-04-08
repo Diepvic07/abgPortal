@@ -528,6 +528,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const isPremiumExclusive = event.capacity_basic === 0;
   const hasRsvp = myRsvp === 'will_participate' || myRsvp === 'will_lead';
   const canUpgradeToLead = myRsvp === 'will_participate' || myRsvp === 'will_lead';
+  const isRegistrationClosed = event.registration_closed || (event.registration_deadline ? new Date(event.registration_deadline) < new Date() : false);
 
   function openRsvpModal(level: EventRegistrationLevel) {
     if (rsvpLoading) return;
@@ -925,68 +926,85 @@ export function EventDetail({ eventId }: { eventId: string }) {
             )}
           </div>
 
-          {!isPremium && isPremiumExclusive && (
-            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              {locale === 'vi'
-                ? 'Sự kiện này chỉ dành cho thành viên Premium. Vui lòng nâng cấp để đăng ký.'
-                : 'This event is reserved for Premium members. Upgrade before registering.'}
+          {isRegistrationClosed && !hasRsvp && (
+            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-center">
+              <p className="text-sm font-semibold text-red-800">
+                {locale === 'vi' ? '🚫 Đăng ký đã đóng' : '🚫 Registration is closed'}
+              </p>
+              <p className="mt-1 text-xs text-red-700">
+                {event.registration_closed
+                  ? (locale === 'vi' ? 'Sự kiện này đã ngừng nhận đăng ký mới.' : 'This event is no longer accepting new registrations.')
+                  : (locale === 'vi' ? 'Đã quá hạn chót đăng ký.' : 'The registration deadline has passed.')}
+              </p>
             </div>
           )}
 
-          {!isPremium && !isPremiumExclusive && (
-            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              {locale === 'vi'
-                ? 'Thành viên Basic có thể đăng ký khi còn chỗ. Premium được ưu tiên khi số lượng chỗ có giới hạn.'
-                : 'Basic members can register while seats remain. Premium members receive priority when seats are limited.'}
-            </div>
+          {!isRegistrationClosed && (
+            <>
+              {!isPremium && isPremiumExclusive && (
+                <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  {locale === 'vi'
+                    ? 'Sự kiện này chỉ dành cho thành viên Premium. Vui lòng nâng cấp để đăng ký.'
+                    : 'This event is reserved for Premium members. Upgrade before registering.'}
+                </div>
+              )}
+
+              {!isPremium && !isPremiumExclusive && (
+                <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  {locale === 'vi'
+                    ? 'Thành viên Basic có thể đăng ký khi còn chỗ. Premium được ưu tiên khi số lượng chỗ có giới hạn.'
+                    : 'Basic members can register while seats remain. Premium members receive priority when seats are limited.'}
+                </div>
+              )}
+
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                {RSVP_ACTIONS.map((action) => {
+                  const isSelected = myRsvp === action.level;
+                  const isDisabled =
+                    rsvpLoading ||
+                    (!isPremium && isPremiumExclusive) ||
+                    (isFull && !hasRsvp) ||
+                    (action.level === 'will_lead' && !canUpgradeToLead);
+
+                  return (
+                    <button
+                      key={action.level}
+                      type="button"
+                      disabled={isDisabled}
+                      aria-pressed={isSelected}
+                      onClick={() => openRsvpModal(action.level)}
+                      className={`rounded-2xl border-2 px-5 py-5 text-left transition-all duration-200 ${
+                        isSelected
+                          ? action.level === 'will_lead'
+                            ? 'border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 shadow-md shadow-amber-100'
+                            : 'border-blue-400 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md shadow-blue-100'
+                          : action.level === 'will_lead'
+                            ? 'border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 hover:border-amber-300 hover:shadow-md'
+                            : 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 hover:border-blue-300 hover:shadow-md'
+                      } ${isDisabled ? 'cursor-not-allowed opacity-60' : ''}`}
+                    >
+                      <div className="flex items-center gap-2.5 text-lg font-bold">
+                        <span className="text-xl">{action.icon}</span>
+                        <span className={action.level === 'will_lead' ? 'text-amber-800' : 'text-blue-800'}>
+                          {action.label[locale === 'vi' ? 'vi' : 'en']}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-gray-600">
+                        {action.helper[locale === 'vi' ? 'vi' : 'en']}
+                      </p>
+                      {action.level === 'will_lead' && !canUpgradeToLead && (
+                        <p className="mt-3 text-xs font-medium text-amber-700">
+                          {locale === 'vi'
+                            ? 'Hãy chọn "Tham gia ngay" trước, sau đó bạn có thể nâng cấp lên vai trò tổ chức.'
+                            : 'Choose "Join Now" first, then you can upgrade to an organizer role.'}
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
           )}
-
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {RSVP_ACTIONS.map((action) => {
-              const isSelected = myRsvp === action.level;
-              const isDisabled =
-                rsvpLoading ||
-                (!isPremium && isPremiumExclusive) ||
-                (isFull && !hasRsvp) ||
-                (action.level === 'will_lead' && !canUpgradeToLead);
-
-              return (
-                <button
-                  key={action.level}
-                  type="button"
-                  disabled={isDisabled}
-                  aria-pressed={isSelected}
-                  onClick={() => openRsvpModal(action.level)}
-                  className={`rounded-2xl border-2 px-5 py-5 text-left transition-all duration-200 ${
-                    isSelected
-                      ? action.level === 'will_lead'
-                        ? 'border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 shadow-md shadow-amber-100'
-                        : 'border-blue-400 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md shadow-blue-100'
-                      : action.level === 'will_lead'
-                        ? 'border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 hover:border-amber-300 hover:shadow-md'
-                        : 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 hover:border-blue-300 hover:shadow-md'
-                  } ${isDisabled ? 'cursor-not-allowed opacity-60' : ''}`}
-                >
-                  <div className="flex items-center gap-2.5 text-lg font-bold">
-                    <span className="text-xl">{action.icon}</span>
-                    <span className={action.level === 'will_lead' ? 'text-amber-800' : 'text-blue-800'}>
-                      {action.label[locale === 'vi' ? 'vi' : 'en']}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-gray-600">
-                    {action.helper[locale === 'vi' ? 'vi' : 'en']}
-                  </p>
-                  {action.level === 'will_lead' && !canUpgradeToLead && (
-                    <p className="mt-3 text-xs font-medium text-amber-700">
-                      {locale === 'vi'
-                        ? 'Hãy chọn "Tham gia ngay" trước, sau đó bạn có thể nâng cấp lên vai trò tổ chức.'
-                        : 'Choose "Join Now" first, then you can upgrade to an organizer role.'}
-                    </p>
-                  )}
-                </button>
-              );
-            })}
-          </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-600">
             {isFull && !hasRsvp && (

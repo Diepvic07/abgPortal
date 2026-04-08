@@ -25,6 +25,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return errorResponse(parsed.error.issues.map((e) => e.message).join(', '), 400);
     }
 
+    // Check if registration is closed
+    if (event.registration_closed) {
+      return errorResponse('Registration is closed for this event', 400);
+    }
+    if (event.registration_deadline && new Date(event.registration_deadline) < new Date()) {
+      return errorResponse('Registration deadline has passed', 400);
+    }
+
     // Check duplicate
     const existing = await getGuestRsvpByEmail(id, parsed.data.guest_email);
     if (existing) {

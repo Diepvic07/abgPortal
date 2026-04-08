@@ -30,6 +30,7 @@ const UpdateEventSchema = z.object({
   capacity_guest: z.number().int().min(0).nullable().optional(),
   is_public: z.boolean().optional(),
   allow_cancellation: z.boolean().optional(),
+  registration_closed: z.boolean().optional(),
   registration_deadline: z.string().nullable().optional(),
   payment_qr_url: z.string().url().nullable().optional(),
   payment_instructions: z.string().nullable().optional(),

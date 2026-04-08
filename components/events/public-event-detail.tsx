@@ -185,7 +185,11 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
             Register as a guest to attend this event. ABG members can <Link href="/login" className="text-blue-600 hover:underline">log in</Link> for full access.
           </p>
 
-          {noGuests ? (
+          {event.registration_closed || (event.registration_deadline && new Date(event.registration_deadline) < new Date()) ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              Registration is closed for this event.
+            </div>
+          ) : noGuests ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               This event is for ABG members only. <Link href="/login" className="text-blue-600 hover:underline">Log in</Link> or <Link href="/onboard" className="text-blue-600 hover:underline">apply for membership</Link>.
             </div>

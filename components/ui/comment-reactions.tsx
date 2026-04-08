@@ -15,7 +15,7 @@ const REACTION_LABELS: Record<ReactionType, string> = {
   highfive: 'Yeah',
 };
 
-const EMPTY_REACTIONS: ReactionSummary = { like: 0, heart: 0, haha: 0, wow: 0, sad: 0, cold: 0, fire: 0, hug: 0, highfive: 0 };
+const EMPTY_REACTIONS: ReactionSummary = { like: 0, heart: 0, haha: 0, wow: 0, sad: 0, cold: 0, fire: 0, hug: 0, highfive: 0, reactors: {} };
 
 interface CommentReactionsProps {
   commentId: string;
@@ -30,6 +30,7 @@ export function CommentReactions({ commentId, commentType, entityId, reactions: 
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hoveredReaction, setHoveredReaction] = useState<ReactionType | null>(null);
+  const [hoveredActiveReaction, setHoveredActiveReaction] = useState<ReactionType | null>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   // Sync with props when they change (e.g. after a full refetch)
@@ -99,22 +100,34 @@ export function CommentReactions({ commentId, commentType, entityId, reactions: 
 
   return (
     <div className="flex items-center gap-1 relative">
-      {activeReactions.map(type => (
-        <button
-          key={type}
-          onClick={() => handleReaction(type)}
-          className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-colors ${
-            localReactions.my_reaction === type
-              ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-          disabled={loading}
-          title={REACTION_LABELS[type]}
-        >
-          <span>{REACTION_EMOJI[type]}</span>
-          <span>{localReactions[type]}</span>
-        </button>
-      ))}
+      {activeReactions.map(type => {
+        const names = localReactions.reactors?.[type] || [];
+        return (
+          <div key={type} className="relative">
+            {hoveredActiveReaction === type && names.length > 0 && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 pointer-events-none">
+                <div className="bg-gray-800 text-white text-[10px] leading-relaxed px-2.5 py-1.5 rounded-lg shadow-lg max-w-[200px] whitespace-pre-line text-center">
+                  {names.join('\n')}
+                </div>
+              </div>
+            )}
+            <button
+              onClick={() => handleReaction(type)}
+              onMouseEnter={() => setHoveredActiveReaction(type)}
+              onMouseLeave={() => setHoveredActiveReaction(null)}
+              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-colors ${
+                localReactions.my_reaction === type
+                  ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              disabled={loading}
+            >
+              <span>{REACTION_EMOJI[type]}</span>
+              <span>{localReactions[type]}</span>
+            </button>
+          </div>
+        );
+      })}
 
       <div
         ref={pickerRef}

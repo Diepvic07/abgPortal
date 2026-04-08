@@ -24,6 +24,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (TERMINAL_STATUSES.includes(event.status)) {
       return errorResponse('Cannot RSVP to a closed event', 400);
     }
+    if (event.registration_closed) {
+      return errorResponse('Registration is closed for this event', 400);
+    }
+    if (event.registration_deadline && new Date(event.registration_deadline) < new Date()) {
+      return errorResponse('Registration deadline has passed', 400);
+    }
 
     const body = await request.json();
     const parsed = EventRegistrationSchema.safeParse(body);

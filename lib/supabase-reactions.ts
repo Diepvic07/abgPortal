@@ -93,10 +93,28 @@ export async function getReactionSummaries(
     return {};
   }
 
+  // Collect unique member IDs to fetch names
+  const memberIds = new Set<string>();
+  for (const row of (rows || []) as Array<Record<string, unknown>>) {
+    memberIds.add(row.member_id as string);
+  }
+
+  // Fetch member names in one query
+  const memberNames: Record<string, string> = {};
+  if (memberIds.size > 0) {
+    const { data: members } = await client
+      .from('members')
+      .select('id, full_name')
+      .in('id', Array.from(memberIds));
+    for (const m of (members || []) as Array<{ id: string; full_name: string }>) {
+      memberNames[m.id] = m.full_name;
+    }
+  }
+
   const summaries: Record<string, ReactionSummary> = {};
 
   for (const id of commentIds) {
-    summaries[id] = { like: 0, heart: 0, haha: 0, wow: 0, sad: 0, cold: 0, fire: 0, hug: 0, highfive: 0 };
+    summaries[id] = { like: 0, heart: 0, haha: 0, wow: 0, sad: 0, cold: 0, fire: 0, hug: 0, highfive: 0, reactors: {} };
   }
 
   for (const row of (rows || []) as Array<Record<string, unknown>>) {
@@ -108,6 +126,14 @@ export async function getReactionSummaries(
       summaries[cid][rtype]++;
       if (currentMemberId && mid === currentMemberId) {
         summaries[cid].my_reaction = rtype;
+      }
+      // Track reactor names
+      if (!summaries[cid].reactors![rtype]) {
+        summaries[cid].reactors![rtype] = [];
+      }
+      const name = memberNames[mid];
+      if (name) {
+        summaries[cid].reactors![rtype]!.push(name);
       }
     }
   }

@@ -80,6 +80,7 @@ interface EventForm {
   fee_guest: string;
   is_public: boolean;
   allow_cancellation: boolean;
+  registration_closed: boolean;
   require_question: boolean;
   question_prompt: string;
   registration_deadline: string;
@@ -105,6 +106,7 @@ const emptyForm: EventForm = {
   fee_guest: '',
   is_public: false,
   allow_cancellation: true,
+  registration_closed: false,
   require_question: false,
   question_prompt: '',
   registration_deadline: '',
@@ -196,6 +198,7 @@ export function AdminEventManager() {
       fee_guest: event.fee_guest != null ? String(event.fee_guest) : '',
       is_public: event.is_public || false,
       allow_cancellation: event.allow_cancellation !== false,
+      registration_closed: event.registration_closed || false,
       require_question: event.require_question || false,
       question_prompt: event.question_prompt || '',
       registration_deadline: event.registration_deadline ? utcToLocalInput(event.registration_deadline) : '',
@@ -288,6 +291,7 @@ export function AdminEventManager() {
 
     payload.is_public = form.is_public;
     payload.allow_cancellation = form.allow_cancellation;
+    payload.registration_closed = form.registration_closed;
     payload.require_question = form.require_question;
 
     if (form.question_prompt) payload.question_prompt = form.question_prompt;
@@ -317,6 +321,28 @@ export function AdminEventManager() {
       if (res.ok) {
         setMessage({ text: editingEvent ? t.admin.events.eventUpdated : t.admin.events.eventCreated, type: 'success' });
         closeForm();
+        await fetchEvents();
+      } else {
+        const data = await res.json();
+        setMessage({ text: data.error || t.admin.events.saveFailed, type: 'error' });
+      }
+    } catch {
+      setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleToggleRegistration(eventId: string, currentlyClosed: boolean) {
+    setActionLoading(eventId);
+    try {
+      const res = await fetch(`/api/admin/community/events/${eventId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registration_closed: !currentlyClosed }),
+      });
+      if (res.ok) {
+        setMessage({ text: !currentlyClosed ? (locale === 'vi' ? 'Đã đóng đăng ký' : 'Registration closed') : (locale === 'vi' ? 'Đã mở đăng ký' : 'Registration reopened'), type: 'success' });
         await fetchEvents();
       } else {
         const data = await res.json();
@@ -456,6 +482,7 @@ export function AdminEventManager() {
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     {event.is_public && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{t.admin.events.publicBadge}</span>}
                     {event.fee_premium != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{t.admin.events.paidBadge}</span>}
+                    {event.registration_closed && <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full">{locale === 'vi' ? 'Đóng đăng ký' : 'Registration closed'}</span>}
                     {event.require_question && <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">{locale === 'vi' ? 'Yêu cầu câu hỏi' : 'Q&A required'}</span>}
                   </div>
                   <p className="text-sm text-gray-600 mt-2 line-clamp-2">{event.description}</p>
@@ -478,6 +505,21 @@ export function AdminEventManager() {
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
+                  {event.status === 'published' && (
+                    <button
+                      onClick={() => handleToggleRegistration(event.id, event.registration_closed || false)}
+                      disabled={actionLoading === event.id}
+                      className={`text-xs px-3 py-1.5 border rounded-lg disabled:opacity-50 ${
+                        event.registration_closed
+                          ? 'border-green-200 text-green-600 hover:bg-green-50'
+                          : 'border-orange-200 text-orange-600 hover:bg-orange-50'
+                      }`}
+                    >
+                      {event.registration_closed
+                        ? (locale === 'vi' ? 'Mở đăng ký' : 'Open Registration')
+                        : (locale === 'vi' ? 'Đóng đăng ký' : 'Close Registration')}
+                    </button>
+                  )}
                   <button
                     onClick={() => setViewingPayments(event)}
                     className="text-xs px-3 py-1.5 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50"
@@ -728,6 +770,24 @@ export function AdminEventManager() {
                   <div>
                     <span className="text-sm font-medium text-gray-700">{t.admin.events.formAllowCancellation}</span>
                     <p className="text-xs text-gray-500">{t.admin.events.formAllowCancellationHelp}</p>
+                  </div>
+                </label>
+
+                {/* Close Registration Toggle */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.registration_closed}
+                    onChange={(e) => setForm((f) => ({ ...f, registration_closed: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">
+                      {locale === 'vi' ? 'Đóng đăng ký' : 'Close Registration'}
+                    </span>
+                    <p className="text-xs text-gray-500">
+                      {locale === 'vi' ? 'Ngừng nhận đăng ký mới. Người đã đăng ký vẫn giữ chỗ.' : 'Stop accepting new registrations. Existing RSVPs are preserved.'}
+                    </p>
                   </div>
                 </label>
 
