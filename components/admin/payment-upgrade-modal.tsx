@@ -18,6 +18,7 @@ export function PaymentUpgradeModal({
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -25,6 +26,7 @@ export function PaymentUpgradeModal({
       setAmount("");
       setNotes("");
       setError(null);
+      setIsSubmitting(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
@@ -45,11 +47,13 @@ export function PaymentUpgradeModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const numericAmount = parseInt(amount.replace(/\D/g, ""), 10);
     if (isNaN(numericAmount) || numericAmount <= 0) {
       setError("Please enter a valid amount greater than 0");
       return;
     }
+    setIsSubmitting(true);
     onConfirm(numericAmount, notes.trim());
   };
 
@@ -154,9 +158,10 @@ export function PaymentUpgradeModal({
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 px-4 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+              disabled={isSubmitting}
+              className="flex-1 py-2.5 px-4 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Confirm Upgrade
+              {isSubmitting ? "..." : "Confirm Upgrade"}
             </button>
           </div>
         </form>

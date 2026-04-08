@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getMemberById, updateMember, createPaymentRecord } from "@/lib/supabase-db";
 import { isAdminAsync } from "@/lib/admin-utils-server";
 import { sendPremiumUpgradeEmail } from "@/lib/resend";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,15 +50,31 @@ export async function POST(request: NextRequest) {
     await updateMember(memberId, updates);
 
     // Create payment record when upgrading to premium with amount
+    // Guard: skip if an identical payment (same member + amount) was recorded in the last 5 minutes
     if (tier === "premium" && amount_vnd && amount_vnd > 0) {
-      await createPaymentRecord({
-        id: crypto.randomUUID(),
-        member_id: memberId,
-        amount_vnd,
-        admin_id: session?.user?.email || "unknown",
-        notes: notes || undefined,
-        created_at: new Date().toISOString(),
-      });
+      const db = createServerSupabaseClient();
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data: recentDup } = await db
+        .from("payment_records")
+        .select("id")
+        .eq("member_id", memberId)
+        .eq("amount_vnd", amount_vnd)
+        .gte("created_at", fiveMinutesAgo)
+        .limit(1);
+
+      if (recentDup && recentDup.length > 0) {
+        // Payment already recorded recently — skip duplicate but still succeed
+        console.warn(`[AdminTier] Skipped duplicate payment: member=${memberId} amount=${amount_vnd}`);
+      } else {
+        await createPaymentRecord({
+          id: crypto.randomUUID(),
+          member_id: memberId,
+          amount_vnd,
+          admin_id: session?.user?.email || "unknown",
+          notes: notes || undefined,
+          created_at: new Date().toISOString(),
+        });
+      }
     }
 
     // Send premium upgrade notification email
