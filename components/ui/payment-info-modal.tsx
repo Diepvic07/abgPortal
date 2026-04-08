@@ -164,20 +164,10 @@ export function PaymentInfoModal({ memberId, memberName: memberNameProp, isOpen,
                     </div>
                   ))}
 
-                  {/* Amount – Early Bird pricing */}
-                  <div className="px-4 py-3 bg-emerald-50">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-text-secondary">{t.payment.amount}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400 line-through">999.000 VND</span>
-                        <span className="text-sm font-bold text-emerald-700 bg-emerald-100 px-3 py-0.5 rounded-full">
-                          599.000 VND
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-gray-500 leading-snug">
-                      Ưu đãi Early Bird đến hết 03/04/2026. Sau thời gian này, mức phí sẽ là 999.000 VND. Hạn sử dụng đến ngày 31/12/2026
-                    </p>
+                  {/* Amount */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span className="text-xs text-text-secondary">{t.payment.amount}</span>
+                    <span className="text-sm font-semibold text-brand">999.000 VND</span>
                   </div>
 
                   {/* Reference – copyable */}

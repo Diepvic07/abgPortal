@@ -7,10 +7,9 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import Link from 'next/link';
 
 const PAYMENT_CONFIG = {
-  originalPrice: '999.000 VND',
-  discountPrice: '599.000 VND',
+  price: '999.000 VND',
   priceDescription: { vi: 'Phí thành viên / năm', en: 'Annual membership fee' },
-  earlyBirdNote: 'Ưu đãi Early Bird đến hết 03/04/2026. Sau thời gian này, mức phí sẽ là 999.000 VND. Hạn sử dụng đến ngày 31/12/2026',
+  validityNote: 'Hạn sử dụng đến ngày 31/12/2026',
   bank: 'TPBank',
   accountNumber: '158 8888 6666',
   accountName: 'VU DINH HIEU',
@@ -132,15 +131,14 @@ export function UpgradePremiumPrompt() {
 
         {/* Price */}
         <div className="bg-gradient-to-br from-brand/5 to-brand/10 border-2 border-brand/20 rounded-xl p-6 mb-6 text-center">
-          <div className="flex items-center justify-center gap-3 mb-1">
-            <span className="text-lg text-gray-400 line-through">{PAYMENT_CONFIG.originalPrice}</span>
-            <span className="text-4xl font-bold text-brand">{PAYMENT_CONFIG.discountPrice}</span>
+          <div className="mb-1">
+            <span className="text-4xl font-bold text-brand">{PAYMENT_CONFIG.price}</span>
           </div>
           <p className="text-gray-600">
             {PAYMENT_CONFIG.priceDescription[locale as 'vi' | 'en'] || PAYMENT_CONFIG.priceDescription.en}
           </p>
           <p className="text-xs text-gray-500 mt-2">
-            {PAYMENT_CONFIG.earlyBirdNote}
+            {PAYMENT_CONFIG.validityNote}
           </p>
         </div>
 
