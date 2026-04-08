@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityProposal, ProposalCategory, PROPOSAL_CATEGORY_LABELS, COMMITMENT_LABELS } from '@/types';
+import { CommunityProposal, ProposalCategory, ProposalGenre, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, COMMITMENT_LABELS } from '@/types';
 
 const CATEGORIES: ProposalCategory[] = ['charity', 'event', 'learning', 'community_support', 'other'];
 

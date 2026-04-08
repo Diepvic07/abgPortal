@@ -248,6 +248,7 @@ export interface BugReport {
 
 // Community Proposals
 export type ProposalCategory = 'charity' | 'event' | 'learning' | 'community_support' | 'other';
+export type ProposalGenre = 'education' | 'health' | 'finance' | 'technology' | 'business' | 'culture' | 'environment' | 'other';
 export type ProposalStatus = 'published' | 'selected' | 'in_progress' | 'completed' | 'archived' | 'removed';
 export type CommitmentLevel = 'interested' | 'will_participate' | 'will_lead';
 export type CommentStatus = 'visible' | 'hidden' | 'removed';
@@ -302,6 +303,19 @@ export const PROPOSAL_CATEGORY_LABELS: Record<ProposalCategory, { en: string; vi
   other: { en: 'Other', vi: 'Khác' },
 };
 
+export const PROPOSAL_GENRE_LABELS: Record<ProposalGenre, { en: string; vi: string; icon: string }> = {
+  education: { en: 'Education', vi: 'Giáo dục', icon: '📚' },
+  health: { en: 'Health', vi: 'Sức khoẻ', icon: '🏥' },
+  finance: { en: 'Finance', vi: 'Tài chính', icon: '💰' },
+  technology: { en: 'Technology', vi: 'Công nghệ', icon: '💻' },
+  business: { en: 'Business', vi: 'Kinh doanh', icon: '💼' },
+  culture: { en: 'Culture', vi: 'Văn hoá', icon: '🎭' },
+  environment: { en: 'Environment', vi: 'Môi trường', icon: '🌿' },
+  other: { en: 'Other', vi: 'Khác', icon: '💡' },
+};
+
+export const PROPOSAL_GENRES: ProposalGenre[] = ['education', 'health', 'finance', 'technology', 'business', 'culture', 'environment', 'other'];
+
 export interface CommunityProposal {
   id: string;
   slug: string;
@@ -309,6 +323,7 @@ export interface CommunityProposal {
   title: string;
   description: string;
   category: ProposalCategory;
+  genre: ProposalGenre;
   status: ProposalStatus;
   is_pinned: boolean;
   commitment_score: number;

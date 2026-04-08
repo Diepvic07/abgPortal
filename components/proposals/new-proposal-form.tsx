@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
-import { ProposalCategory, CommitmentLevel, PROPOSAL_CATEGORY_LABELS } from '@/types';
+import { ProposalCategory, ProposalGenre, CommitmentLevel, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PROPOSAL_GENRES } from '@/types';
 
 const CATEGORIES: ProposalCategory[] = ['charity', 'event', 'learning', 'community_support', 'other'];
 
@@ -18,6 +18,7 @@ export function NewProposalForm() {
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<ProposalCategory>('event');
+  const [genre, setGenre] = useState<ProposalGenre>('other');
   const [what, setWhat] = useState('');
   const [why, setWhy] = useState('');
   const [who, setWho] = useState('');
@@ -130,7 +131,7 @@ export function NewProposalForm() {
       const res = await fetch('/api/community/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, category, target_date: targetDate || undefined, commitment_level: commitmentLevel, image_url: imageUrl || undefined }),
+        body: JSON.stringify({ title, description, category, genre, target_date: targetDate || undefined, commitment_level: commitmentLevel, image_url: imageUrl || undefined }),
       });
 
       const data = await res.json();
@@ -181,10 +182,33 @@ export function NewProposalForm() {
           </div>
         </div>
 
-        {/* Step 2: Title */}
+        {/* Step 2: Genre / Topic */}
+        <div className="bg-gray-50 rounded-xl p-5">
+          <label className="block text-base font-semibold text-gray-900 mb-3">
+            2. {vi ? 'Chủ đề' : 'Topic'}
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {PROPOSAL_GENRES.map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setGenre(g)}
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all border ${
+                  genre === g
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
+                }`}
+              >
+                {PROPOSAL_GENRE_LABELS[g].icon} {PROPOSAL_GENRE_LABELS[g][vi ? 'vi' : 'en']}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Step 3: Title */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="title" className="block text-base font-semibold text-gray-900 mb-1">
-            2. {vi ? 'Tên hoạt động' : 'Activity name'} *
+            3. {vi ? 'Tên hoạt động' : 'Activity name'} *
           </label>
           <p className="text-sm text-gray-500 mb-2">{vi ? 'Đặt tên ngắn gọn, dễ hiểu' : 'Short, clear name'}</p>
           <input
@@ -199,10 +223,10 @@ export function NewProposalForm() {
           />
         </div>
 
-        {/* Step 3: What — the main description */}
+        {/* Step 4: What — the main description */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="what" className="block text-base font-semibold text-gray-900 mb-1">
-            3. {vi ? 'Bạn muốn làm gì?' : 'What do you want to do?'} *
+            4. {vi ? 'Bạn muốn làm gì?' : 'What do you want to do?'} *
           </label>
           <p className="text-sm text-gray-500 mb-2">{vi ? 'Mô tả ngắn gọn ý tưởng (2-3 câu là đủ)' : 'Brief description (2-3 sentences is enough)'}</p>
           <textarea
@@ -220,7 +244,7 @@ export function NewProposalForm() {
         {/* Step 4: Why */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="why" className="block text-base font-semibold text-gray-900 mb-1">
-            4. {vi ? 'Tại sao hoạt động này quan trọng?' : 'Why does this matter?'}
+            5. {vi ? 'Tại sao hoạt động này quan trọng?' : 'Why does this matter?'}
           </label>
           <p className="text-sm text-gray-500 mb-2">{vi ? 'Giúp mọi người hiểu giá trị của hoạt động' : 'Help people understand the value'}</p>
           <input
@@ -239,7 +263,7 @@ export function NewProposalForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 rounded-xl p-5">
             <label htmlFor="who" className="block text-base font-semibold text-gray-900 mb-1">
-              5. {vi ? 'Ai nên tham gia?' : 'Who should join?'}
+              6. {vi ? 'Ai nên tham gia?' : 'Who should join?'}
             </label>
             <input
               id="who"
@@ -269,7 +293,7 @@ export function NewProposalForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 rounded-xl p-5">
             <label htmlFor="resources" className="block text-base font-semibold text-gray-900 mb-1">
-              6. {vi ? 'Cần hỗ trợ gì?' : 'What support is needed?'}
+              7. {vi ? 'Cần hỗ trợ gì?' : 'What support is needed?'}
             </label>
             <input
               id="resources"
@@ -297,7 +321,7 @@ export function NewProposalForm() {
         {/* Step 7: Extra / paste anything */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="extra" className="block text-base font-semibold text-gray-900 mb-1">
-            7. {vi ? 'Thông tin thêm (tùy chọn)' : 'Additional info (optional)'}
+            8. {vi ? 'Thông tin thêm (tùy chọn)' : 'Additional info (optional)'}
           </label>
           <p className="text-sm text-gray-500 mb-2">
             {vi ? 'Paste nội dung có sẵn, thêm chi tiết, link tham khảo, hoặc bất cứ gì bạn muốn chia sẻ' : 'Paste existing content, add details, reference links, or anything else you want to share'}
@@ -316,7 +340,7 @@ export function NewProposalForm() {
         {/* Step 8: Image upload */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label className="block text-base font-semibold text-gray-900 mb-1">
-            8. {vi ? 'Ảnh minh họa (tùy chọn)' : 'Cover image (optional)'}
+            9. {vi ? 'Ảnh minh họa (tùy chọn)' : 'Cover image (optional)'}
           </label>
           <p className="text-xs text-gray-500 mb-3">{vi ? 'Thêm ảnh để đề xuất hấp dẫn hơn. Tối đa 5MB.' : 'Add an image to make your proposal more engaging. Max 5MB.'}</p>
           {imageUrl ? (
@@ -360,7 +384,7 @@ export function NewProposalForm() {
         {/* Step 9: Commitment level */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label className="block text-base font-semibold text-gray-900 mb-3">
-            9. {vi ? 'Bạn sẽ tham gia ở mức nào?' : 'How will you participate?'} *
+            10. {vi ? 'Bạn sẽ tham gia ở mức nào?' : 'How will you participate?'} *
           </label>
           <div className="grid grid-cols-3 gap-3">
             {([

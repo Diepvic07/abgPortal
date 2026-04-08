@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS } from '@/types';
+import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS } from '@/types';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 
 const AVATAR_COLORS = [
@@ -103,6 +103,7 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editCategory, setEditCategory] = useState('');
+  const [editGenre, setEditGenre] = useState('');
   const [editTargetDate, setEditTargetDate] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -370,6 +371,7 @@ export function ProposalDetail({ proposalId }: Props) {
     setEditTitle(proposal.title);
     setEditDescription(proposal.description);
     setEditCategory(proposal.category);
+    setEditGenre(proposal.genre || 'other');
     setEditTargetDate(proposal.target_date || '');
     setEditError(null);
     setIsEditing(true);
@@ -387,6 +389,7 @@ export function ProposalDetail({ proposalId }: Props) {
           title: editTitle.trim(),
           description: editDescription.trim(),
           category: editCategory,
+          genre: editGenre,
           target_date: editTargetDate || null,
         }),
       });
@@ -485,6 +488,18 @@ export function ProposalDetail({ proposalId }: Props) {
                 >
                   {Object.entries(PROPOSAL_CATEGORY_LABELS).map(([key, labels]) => (
                     <option key={key} value={key}>{labels[locale === 'vi' ? 'vi' : 'en']}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-sm text-gray-600">
+                {locale === 'vi' ? 'Chủ đề' : 'Topic'}:
+                <select
+                  value={editGenre}
+                  onChange={e => setEditGenre(e.target.value)}
+                  className="ml-2 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {Object.entries(PROPOSAL_GENRE_LABELS).map(([key, labels]) => (
+                    <option key={key} value={key}>{labels.icon} {labels[locale === 'vi' ? 'vi' : 'en']}</option>
                   ))}
                 </select>
               </label>

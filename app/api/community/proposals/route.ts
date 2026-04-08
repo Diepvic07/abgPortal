@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth-middleware';
 import { createProposal, getProposals, upsertCommitment } from '@/lib/supabase-community';
-import { ProposalCategory, CommitmentLevel } from '@/types';
+import { ProposalCategory, ProposalGenre, CommitmentLevel, PROPOSAL_GENRES } from '@/types';
 
 const VALID_CATEGORIES: ProposalCategory[] = ['charity', 'event', 'learning', 'community_support', 'other'];
 const VALID_COMMITMENTS: CommitmentLevel[] = ['interested', 'will_participate', 'will_lead'];
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const member = await requireAuth(request);
 
     const body = await request.json();
-    const { title, description, category, target_date, commitment_level, image_url } = body;
+    const { title, description, category, genre, target_date, commitment_level, image_url } = body;
 
     if (!title || title.length < 5 || title.length > 200) {
       return errorResponse('Title must be between 5 and 200 characters', 400);
@@ -47,12 +47,15 @@ export async function POST(request: NextRequest) {
 
     const proposerCommitment: CommitmentLevel = commitment_level && VALID_COMMITMENTS.includes(commitment_level) ? commitment_level : 'will_lead';
 
+    const validGenre: ProposalGenre = genre && PROPOSAL_GENRES.includes(genre) ? genre : 'other';
+
     // Create the proposal
     const proposal = await createProposal({
       created_by_member_id: member.id,
       title,
       description,
       category,
+      genre: validGenre,
       target_date: target_date || undefined,
       image_url: image_url || undefined,
     });

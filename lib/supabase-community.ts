@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from './supabase/server';
-import { CommunityProposal, CommunityCommitment, CommunityProposalComment, ProposalCategory, ProposalStatus, CommitmentLevel, CommentStatus, COMMITMENT_WEIGHTS } from '@/types';
+import { CommunityProposal, CommunityCommitment, CommunityProposalComment, ProposalCategory, ProposalGenre, ProposalStatus, CommitmentLevel, CommentStatus, COMMITMENT_WEIGHTS } from '@/types';
 import { generateId, formatDate, generateSlug } from '@/lib/utils';
 
 function nullToUndefined<T>(val: T | null): T | undefined {
@@ -16,6 +16,7 @@ function mapRowToProposal(row: Record<string, unknown>): CommunityProposal {
     title: row.title as string,
     description: row.description as string,
     category: (row.category as ProposalCategory) || 'other',
+    genre: (row.genre as ProposalGenre) || 'other',
     status: (row.status as ProposalStatus) || 'published',
     is_pinned: (row.is_pinned as boolean) || false,
     commitment_score: (row.commitment_score as number) || 0,
@@ -73,6 +74,7 @@ export async function createProposal(data: {
   title: string;
   description: string;
   category: ProposalCategory;
+  genre?: string;
   target_date?: string;
   image_url?: string;
 }): Promise<CommunityProposal> {
@@ -91,6 +93,7 @@ export async function createProposal(data: {
       title: data.title,
       description: data.description,
       category: data.category,
+      genre: data.genre || 'other',
       target_date: data.target_date || null,
       ...(data.image_url ? { image_url: data.image_url } : {}),
       status: 'published',

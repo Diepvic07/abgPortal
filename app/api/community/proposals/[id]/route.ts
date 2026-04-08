@@ -51,7 +51,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const body = await request.json();
-    const { title, description, category, target_date } = body;
+    const { title, description, category, genre, target_date } = body;
 
     const updates: Record<string, unknown> = {};
     if (title !== undefined) {
@@ -63,6 +63,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       updates.description = description;
     }
     if (category !== undefined) updates.category = category;
+    if (genre !== undefined) updates.genre = genre;
     if (target_date !== undefined) updates.target_date = target_date || null;
 
     const updated = await updateProposal(id, updates);

@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityEvent, CommunityProposal, EventCategory, EVENT_CATEGORY_LABELS, PROPOSAL_CATEGORY_LABELS, ProposalCategory } from '@/types';
+import { CommunityEvent, CommunityProposal, EventCategory, EVENT_CATEGORY_LABELS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, ProposalCategory, ProposalGenre } from '@/types';
 
 type TabKey = 'events' | 'proposals' | 'past';
 
@@ -251,15 +251,49 @@ function ProposalsTabContent({
     );
   }
 
+  // Group proposals by genre
+  const grouped = new Map<string, CommunityProposal[]>();
+  for (const p of proposals) {
+    const genre = p.genre || 'other';
+    if (!grouped.has(genre)) grouped.set(genre, []);
+    grouped.get(genre)!.push(p);
+  }
+
+  // Sort genres: genres with more proposals first, 'other' always last
+  const sortedGenres = Array.from(grouped.keys()).sort((a, b) => {
+    if (a === 'other') return 1;
+    if (b === 'other') return -1;
+    return (grouped.get(b)?.length || 0) - (grouped.get(a)?.length || 0);
+  });
+
   return (
     <div>
       <h2 className="text-lg font-semibold text-gray-900 mb-4">
         {locale === 'vi' ? 'ĐỀ XUẤT CỘNG ĐỒNG' : 'COMMUNITY PROPOSALS'}
       </h2>
-      <div className="divide-y divide-gray-100">
-        {proposals.map((proposal) => (
-          <ProposalRow key={proposal.id} proposal={proposal} locale={locale} />
-        ))}
+      <div className="space-y-6">
+        {sortedGenres.map((genre) => {
+          const genreProposals = grouped.get(genre) || [];
+          const genreInfo = PROPOSAL_GENRE_LABELS[genre as ProposalGenre] || PROPOSAL_GENRE_LABELS.other;
+          return (
+            <div key={genre}>
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200">
+                <span className="text-lg">{genreInfo.icon}</span>
+                <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
+                  {genreInfo[locale === 'vi' ? 'vi' : 'en']}
+                </h3>
+                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                  {genreProposals.length}
+                </span>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {genreProposals.map((proposal) => (
+                  <ProposalRow key={proposal.id} proposal={proposal} locale={locale} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
