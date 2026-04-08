@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
@@ -734,7 +735,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
               {locale === 'vi' ? 'Giới thiệu sự kiện' : 'About This Event'}
             </h2>
             <div className="prose prose-sm mt-3 max-w-none text-gray-700">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{linkifyText(event.description)}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={{ a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{linkifyText(event.description)}</ReactMarkdown>
             </div>
           </div>
 
