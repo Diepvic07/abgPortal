@@ -24,6 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       comments,
       currentMemberId: member?.id || null,
       currentMemberAvatarUrl: member?.avatar_url || null,
+      currentMemberIsAdmin: member?.is_admin === true,
     });
   } catch (error) {
     return handleApiError(error);
@@ -40,11 +41,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return errorResponse('Proposal not found', 404);
     }
 
-    // Only author can edit, and only when no commitments (except their own auto-commit)
-    if (proposal.created_by_member_id !== member.id) {
+    // Only author or admin can edit; authors can only edit when no other commitments
+    const isAdmin = member.is_admin === true;
+    if (proposal.created_by_member_id !== member.id && !isAdmin) {
       return errorResponse('Not authorized', 403);
     }
-    if (proposal.commitment_count > 1) {
+    if (!isAdmin && proposal.commitment_count > 1) {
       return errorResponse('Cannot edit proposal after others have committed', 400);
     }
 

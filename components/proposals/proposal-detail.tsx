@@ -93,11 +93,19 @@ export function ProposalDetail({ proposalId }: Props) {
   const [replyBody, setReplyBody] = useState('');
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
   const [currentMemberAvatarUrl, setCurrentMemberAvatarUrl] = useState<string | null>(null);
+  const [currentMemberIsAdmin, setCurrentMemberIsAdmin] = useState(false);
   const [editingComment, setEditingComment] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
   const [submittingCommitment, setSubmittingCommitment] = useState(false);
   const [commentImageFile, setCommentImageFile] = useState<File | null>(null);
   const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editTargetDate, setEditTargetDate] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const [replyImageFile, setReplyImageFile] = useState<File | null>(null);
   const [replyImagePreview, setReplyImagePreview] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
@@ -123,6 +131,7 @@ export function ProposalDetail({ proposalId }: Props) {
       setMyCommitment(data.proposal?.my_commitment || null);
       if (data.currentMemberId) setCurrentMemberId(data.currentMemberId);
       if (data.currentMemberAvatarUrl) setCurrentMemberAvatarUrl(data.currentMemberAvatarUrl);
+      if (data.currentMemberIsAdmin) setCurrentMemberIsAdmin(true);
     } catch {
       router.push('/events?tab=proposals');
     } finally {
@@ -356,6 +365,46 @@ export function ProposalDetail({ proposalId }: Props) {
     } catch {}
   }
 
+  function startEditing() {
+    if (!proposal) return;
+    setEditTitle(proposal.title);
+    setEditDescription(proposal.description);
+    setEditCategory(proposal.category);
+    setEditTargetDate(proposal.target_date || '');
+    setEditError(null);
+    setIsEditing(true);
+  }
+
+  async function handleSaveEdit() {
+    if (!proposal) return;
+    setSavingEdit(true);
+    setEditError(null);
+    try {
+      const res = await fetch(`/api/community/proposals/${proposalId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          description: editDescription.trim(),
+          category: editCategory,
+          target_date: editTargetDate || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setEditError(data.error || 'Failed to save');
+        return;
+      }
+      const data = await res.json();
+      setProposal({ ...proposal, ...data.proposal });
+      setIsEditing(false);
+    } catch {
+      setEditError('Failed to save changes');
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
   if (loading) {
     return <div className="animate-pulse space-y-4"><div className="h-8 bg-gray-200 rounded w-2/3" /><div className="h-4 bg-gray-200 rounded w-1/2" /><div className="h-32 bg-gray-200 rounded" /></div>;
   }
@@ -363,6 +412,8 @@ export function ProposalDetail({ proposalId }: Props) {
   if (!proposal) return null;
 
   const isTerminal = ['completed', 'archived', 'removed'].includes(proposal.status);
+  const isAuthor = currentMemberId === proposal.created_by_member_id;
+  const canEdit = (isAuthor && (proposal.commitment_count || 0) <= 1 && !isTerminal) || currentMemberIsAdmin;
 
   return (
     <div className="space-y-8">
@@ -377,18 +428,87 @@ export function ProposalDetail({ proposalId }: Props) {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-2xl">{CATEGORY_ICONS[proposal.category]}</span>
+          <span className="text-2xl">{CATEGORY_ICONS[isEditing ? editCategory : proposal.category]}</span>
           <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${STATUS_COLORS[proposal.status]}`}>
             {(STATUS_LABELS[proposal.status] || { en: proposal.status, vi: proposal.status })[locale === 'vi' ? 'vi' : 'en']}
           </span>
           {proposal.is_pinned && <span className="text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">📌 Pinned</span>}
+          {canEdit && !isEditing && (
+            <button
+              onClick={startEditing}
+              className="ml-auto text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              {locale === 'vi' ? 'Chỉnh sửa' : 'Edit'}
+            </button>
+          )}
+          {isEditing && (
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={() => setIsEditing(false)}
+                disabled={savingEdit}
+                className="text-sm text-gray-500 hover:text-gray-700 font-medium px-3 py-1 rounded-lg border border-gray-300"
+              >
+                {locale === 'vi' ? 'Hủy' : 'Cancel'}
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={savingEdit}
+                className="text-sm text-white bg-blue-600 hover:bg-blue-700 font-medium px-3 py-1 rounded-lg disabled:opacity-50"
+              >
+                {savingEdit ? (locale === 'vi' ? 'Đang lưu...' : 'Saving...') : (locale === 'vi' ? 'Lưu' : 'Save')}
+              </button>
+            </div>
+          )}
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{proposal.title}</h1>
-        <p className="text-gray-600">
-          {locale === 'vi' ? 'bởi' : 'by'} {proposal.author_name || 'Unknown'}
-          {proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
-          {proposal.target_date ? ` · ${locale === 'vi' ? 'Mục tiêu' : 'Target'}: ${proposal.target_date}` : ''}
-        </p>
+        {editError && (
+          <div className="mb-3 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{editError}</div>
+        )}
+        {isEditing ? (
+          <>
+            <input
+              type="text"
+              value={editTitle}
+              onChange={e => setEditTitle(e.target.value)}
+              className="text-3xl font-bold text-gray-900 mb-2 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder={locale === 'vi' ? 'Tên hoạt động' : 'Proposal title'}
+            />
+            <div className="flex items-center gap-4 mt-2">
+              <label className="text-sm text-gray-600">
+                {locale === 'vi' ? 'Danh mục' : 'Category'}:
+                <select
+                  value={editCategory}
+                  onChange={e => setEditCategory(e.target.value)}
+                  className="ml-2 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {Object.entries(PROPOSAL_CATEGORY_LABELS).map(([key, labels]) => (
+                    <option key={key} value={key}>{labels[locale === 'vi' ? 'vi' : 'en']}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-sm text-gray-600">
+                {locale === 'vi' ? 'Ngày mục tiêu' : 'Target date'}:
+                <input
+                  type="date"
+                  value={editTargetDate}
+                  onChange={e => setEditTargetDate(e.target.value)}
+                  className="ml-2 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{proposal.title}</h1>
+            <p className="text-gray-600">
+              {locale === 'vi' ? 'bởi' : 'by'} {proposal.author_name || 'Unknown'}
+              {proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
+              {proposal.target_date ? ` · ${locale === 'vi' ? 'Mục tiêu' : 'Target'}: ${proposal.target_date}` : ''}
+            </p>
+          </>
+        )}
       </div>
 
       {/* Score bar */}
@@ -412,7 +532,17 @@ export function ProposalDetail({ proposalId }: Props) {
         <h2 className="text-lg font-semibold text-gray-900 mb-3">
           {locale === 'vi' ? 'Mô tả' : 'Description'}
         </h2>
-        <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{linkifyText(proposal.description)}</ReactMarkdown></div>
+        {isEditing ? (
+          <textarea
+            value={editDescription}
+            onChange={e => setEditDescription(e.target.value)}
+            rows={12}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            placeholder={locale === 'vi' ? 'Mô tả hoạt động (hỗ trợ Markdown)' : 'Proposal description (Markdown supported)'}
+          />
+        ) : (
+          <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{linkifyText(proposal.description)}</ReactMarkdown></div>
+        )}
       </div>
 
       {/* Reaction Bar — Facebook-style */}
