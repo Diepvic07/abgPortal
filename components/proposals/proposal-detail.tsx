@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, COMMITMENT_LABELS, PROPOSAL_CATEGORY_LABELS } from '@/types';
 import { CommentReactions } from '@/components/ui/comment-reactions';
@@ -352,7 +353,7 @@ export function ProposalDetail({ proposalId }: Props) {
         <h2 className="text-lg font-semibold text-gray-900 mb-3">
           {locale === 'vi' ? 'Mô tả' : 'Description'}
         </h2>
-        <div className="whitespace-pre-wrap text-gray-700">{proposal.description}</div>
+        <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown>{proposal.description}</ReactMarkdown></div>
       </div>
 
       {/* Reaction Bar — Facebook-style */}
