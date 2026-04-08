@@ -7,7 +7,7 @@ const GuestRsvpSchema = z.object({
   guest_name: z.string().min(2).max(100),
   guest_email: z.string().email(),
   guest_phone: z.string().optional(),
-  question: z.string().max(500).optional(),
+  question: z.string().max(2000).optional(),
 });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

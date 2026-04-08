@@ -1385,7 +1385,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
               value={rsvpNote}
               onChange={(e) => setRsvpNote(e.target.value)}
               rows={3}
-              maxLength={500}
+              maxLength={2000}
               placeholder={event.require_question && !hasRsvp
                 ? (locale === 'vi' ? 'Nhập câu hỏi bạn muốn gửi cho diễn giả...' : 'Enter your question for the speaker...')
                 : (locale === 'vi' ? 'Ví dụ: Tôi sẽ đến muộn 10 phút.' : 'For example: I may arrive 10 minutes late.')}

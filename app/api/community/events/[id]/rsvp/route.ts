@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 const EventRegistrationSchema = z.object({
   commitment_level: z.enum(['will_participate', 'will_lead']),
-  note: z.string().trim().max(500).optional(),
+  note: z.string().trim().max(2000).optional(),
 });
 
 const TERMINAL_STATUSES = ['cancelled', 'completed'];
