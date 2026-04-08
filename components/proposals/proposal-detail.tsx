@@ -478,38 +478,38 @@ export function ProposalDetail({ proposalId }: Props) {
               className="text-3xl font-bold text-gray-900 mb-2 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder={locale === 'vi' ? 'Tên hoạt động' : 'Proposal title'}
             />
-            <div className="flex items-center gap-4 mt-2">
-              <label className="text-sm text-gray-600">
+            <div className="flex flex-wrap items-center gap-4 mt-2">
+              <label className="text-sm text-gray-600 flex items-center gap-1">
                 {locale === 'vi' ? 'Danh mục' : 'Category'}:
                 <select
                   value={editCategory}
                   onChange={e => setEditCategory(e.target.value)}
-                  className="ml-2 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {Object.entries(PROPOSAL_CATEGORY_LABELS).map(([key, labels]) => (
                     <option key={key} value={key}>{labels[locale === 'vi' ? 'vi' : 'en']}</option>
                   ))}
                 </select>
               </label>
-              <label className="text-sm text-gray-600">
+              <label className="text-sm text-gray-600 flex items-center gap-1">
                 {locale === 'vi' ? 'Chủ đề' : 'Topic'}:
                 <select
                   value={editGenre}
                   onChange={e => setEditGenre(e.target.value)}
-                  className="ml-2 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {Object.entries(PROPOSAL_GENRE_LABELS).map(([key, labels]) => (
                     <option key={key} value={key}>{labels.icon} {labels[locale === 'vi' ? 'vi' : 'en']}</option>
                   ))}
                 </select>
               </label>
-              <label className="text-sm text-gray-600">
+              <label className="text-sm text-gray-600 flex items-center gap-1">
                 {locale === 'vi' ? 'Ngày mục tiêu' : 'Target date'}:
                 <input
                   type="date"
                   value={editTargetDate}
                   onChange={e => setEditTargetDate(e.target.value)}
-                  className="ml-2 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </label>
             </div>
@@ -517,11 +517,18 @@ export function ProposalDetail({ proposalId }: Props) {
         ) : (
           <>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{proposal.title}</h1>
-            <p className="text-gray-600">
-              {locale === 'vi' ? 'bởi' : 'by'} {proposal.author_name || 'Unknown'}
-              {proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
-              {proposal.target_date ? ` · ${locale === 'vi' ? 'Mục tiêu' : 'Target'}: ${proposal.target_date}` : ''}
-            </p>
+            <div className="flex flex-wrap items-center gap-2 text-gray-600">
+              <span>
+                {locale === 'vi' ? 'bởi' : 'by'} {proposal.author_name || 'Unknown'}
+                {proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
+                {proposal.target_date ? ` · ${locale === 'vi' ? 'Mục tiêu' : 'Target'}: ${proposal.target_date}` : ''}
+              </span>
+              {proposal.genre && proposal.genre !== 'other' && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                  {PROPOSAL_GENRE_LABELS[proposal.genre]?.icon} {PROPOSAL_GENRE_LABELS[proposal.genre]?.[locale === 'vi' ? 'vi' : 'en']}
+                </span>
+              )}
+            </div>
           </>
         )}
       </div>
