@@ -268,15 +268,35 @@ function ProposalsTabContent({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <h2 className="text-lg font-semibold text-gray-900 mb-3">
         {locale === 'vi' ? 'ĐỀ XUẤT CỘNG ĐỒNG' : 'COMMUNITY PROPOSALS'}
       </h2>
+
+      {/* Genre navigation pills */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {sortedGenres.map((genre) => {
+          const genreInfo = PROPOSAL_GENRE_LABELS[genre as ProposalGenre] || PROPOSAL_GENRE_LABELS.other;
+          const count = grouped.get(genre)?.length || 0;
+          return (
+            <button
+              key={genre}
+              onClick={() => document.getElementById(`genre-${genre}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-1.5"
+            >
+              {genreInfo.icon} {genreInfo[locale === 'vi' ? 'vi' : 'en']}
+              <span className="text-xs text-gray-400">{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Grouped proposals */}
       <div className="space-y-6">
         {sortedGenres.map((genre) => {
           const genreProposals = grouped.get(genre) || [];
           const genreInfo = PROPOSAL_GENRE_LABELS[genre as ProposalGenre] || PROPOSAL_GENRE_LABELS.other;
           return (
-            <div key={genre}>
+            <div key={genre} id={`genre-${genre}`} className="scroll-mt-4">
               <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200">
                 <span className="text-lg">{genreInfo.icon}</span>
                 <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
