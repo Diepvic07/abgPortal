@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, COMMITMENT_LABELS, PROPOSAL_CATEGORY_LABELS } from '@/types';
+import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS } from '@/types';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 
 const AVATAR_COLORS = [
@@ -106,8 +106,8 @@ export function ProposalDetail({ proposalId }: Props) {
     fetchProposal();
   }, [proposalId]);
 
-  async function fetchProposal() {
-    setLoading(true);
+  async function fetchProposal(silent = false) {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch(`/api/community/proposals/${proposalId}`);
       if (!res.ok) {
@@ -130,26 +130,81 @@ export function ProposalDetail({ proposalId }: Props) {
 
   async function handleCommit(level: CommitmentLevel) {
     setSubmittingCommitment(true);
+    const prevCommitments = commitments;
+    const prevProposal = proposal;
+    const prevMyCommitment = myCommitment;
+
+    // Optimistic update
+    const existingIdx = commitments.findIndex(c => c.member_id === currentMemberId);
+    const now = new Date().toISOString();
+    const newEntry: CommunityCommitment = {
+      id: existingIdx >= 0 ? commitments[existingIdx].id : 'temp-' + Date.now(),
+      proposal_id: proposalId,
+      member_id: currentMemberId || '',
+      commitment_level: level,
+      created_at: existingIdx >= 0 ? commitments[existingIdx].created_at : now,
+      updated_at: now,
+      member_name: session?.user?.name || 'Me',
+      member_avatar_url: currentMemberAvatarUrl || session?.user?.image || undefined,
+      member_abg_class: existingIdx >= 0 ? commitments[existingIdx].member_abg_class : undefined,
+    };
+    const newCommitments = existingIdx >= 0
+      ? commitments.map((c, i) => i === existingIdx ? newEntry : c)
+      : [...commitments, newEntry];
+    setCommitments(newCommitments);
+    setMyCommitment(level);
+    if (proposal) {
+      const newScore = newCommitments.reduce((s, c) => s + (COMMITMENT_WEIGHTS[c.commitment_level] || 0), 0);
+      setProposal({ ...proposal, commitment_count: newCommitments.length, commitment_score: newScore });
+    }
+
     try {
       const res = await fetch(`/api/community/proposals/${proposalId}/commit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ commitment_level: level }),
       });
-      if (res.ok) {
-        await fetchProposal();
+      if (!res.ok) {
+        setCommitments(prevCommitments);
+        setProposal(prevProposal);
+        setMyCommitment(prevMyCommitment);
       }
-    } catch {} finally {
+    } catch {
+      setCommitments(prevCommitments);
+      setProposal(prevProposal);
+      setMyCommitment(prevMyCommitment);
+    } finally {
       setSubmittingCommitment(false);
     }
   }
 
   async function handleUncommit() {
     setSubmittingCommitment(true);
+    const prevCommitments = commitments;
+    const prevProposal = proposal;
+    const prevMyCommitment = myCommitment;
+
+    // Optimistic update
+    const newCommitments = commitments.filter(c => c.member_id !== currentMemberId);
+    setCommitments(newCommitments);
+    setMyCommitment(null);
+    if (proposal) {
+      const newScore = newCommitments.reduce((s, c) => s + (COMMITMENT_WEIGHTS[c.commitment_level] || 0), 0);
+      setProposal({ ...proposal, commitment_count: newCommitments.length, commitment_score: newScore });
+    }
+
     try {
-      await fetch(`/api/community/proposals/${proposalId}/commit`, { method: 'DELETE' });
-      await fetchProposal();
-    } catch {} finally {
+      const res = await fetch(`/api/community/proposals/${proposalId}/commit`, { method: 'DELETE' });
+      if (!res.ok) {
+        setCommitments(prevCommitments);
+        setProposal(prevProposal);
+        setMyCommitment(prevMyCommitment);
+      }
+    } catch {
+      setCommitments(prevCommitments);
+      setProposal(prevProposal);
+      setMyCommitment(prevMyCommitment);
+    } finally {
       setSubmittingCommitment(false);
     }
   }
@@ -579,7 +634,7 @@ export function ProposalDetail({ proposalId }: Props) {
                     commentType="proposal"
                     entityId={proposalId}
                     reactions={c.reactions}
-                    onReactionChange={() => void fetchProposal()}
+                    onReactionChange={() => void fetchProposal(true)}
                   />
                   {session && (
                     <button
