@@ -876,6 +876,7 @@ export const en = {
       references: 'References',
       events: 'Events',
       finance: 'Finance',
+      premium: 'Premium',
       classes: 'Classes',
     },
 
@@ -1041,6 +1042,31 @@ export const en = {
       member: 'Member',
       class: 'Class',
       amountVnd: 'Amount (VND)',
+    },
+
+    // Premium Manager
+    premiumManager: {
+      title: 'Premium Members',
+      totalPremium: 'Total Premium',
+      totalRevenue: 'Total Revenue',
+      expiringSoon: 'Expiring in 30 days',
+      duplicateTransactions: 'Duplicate Transactions',
+      duplicateAlert: 'Potential duplicate transactions detected',
+      searchPlaceholder: 'Search by name, email, class, phone...',
+      classAndContact: 'Class & Contact',
+      contributed: 'Contributed',
+      expiryDate: 'Expiry',
+      payments: 'payments',
+      viewProfile: 'View Profile',
+      addPayment: 'Add Payment',
+      downgradeToBasic: 'Downgrade to Basic',
+      downgradeConfirm: 'Downgrade {name} to Basic? They will lose premium features.',
+      downgradeFailed: 'Failed to downgrade member',
+      expiryUpdateFailed: 'Failed to update expiry date',
+      addPaymentFailed: 'Failed to add payment record',
+      loadFailed: 'Failed to load premium members',
+      noMembers: 'No premium members found',
+      expired: 'expired',
     },
 
     // Classes

@@ -877,6 +877,7 @@ export const vi: Translations = {
       references: 'Giới thiệu',
       events: 'Sự kiện',
       finance: 'Tài chính',
+      premium: 'Premium',
       classes: 'Lớp',
     },
 
@@ -1032,6 +1033,30 @@ export const vi: Translations = {
       member: 'Thành viên',
       class: 'Lớp',
       amountVnd: 'Số tiền (VND)',
+    },
+
+    premiumManager: {
+      title: 'Thành viên Premium',
+      totalPremium: 'Tổng Premium',
+      totalRevenue: 'Tổng doanh thu',
+      expiringSoon: 'Hết hạn trong 30 ngày',
+      duplicateTransactions: 'Giao dịch trùng',
+      duplicateAlert: 'Phát hiện giao dịch có thể trùng lặp',
+      searchPlaceholder: 'Tìm theo tên, email, lớp, SĐT...',
+      classAndContact: 'Lớp & Liên hệ',
+      contributed: 'Đã đóng góp',
+      expiryDate: 'Hết hạn',
+      payments: 'giao dịch',
+      viewProfile: 'Xem hồ sơ',
+      addPayment: 'Thêm thanh toán',
+      downgradeToBasic: 'Hạ xuống Basic',
+      downgradeConfirm: 'Hạ {name} xuống Basic? Họ sẽ mất quyền Premium.',
+      downgradeFailed: 'Hạ cấp thành viên thất bại',
+      expiryUpdateFailed: 'Cập nhật ngày hết hạn thất bại',
+      addPaymentFailed: 'Thêm thanh toán thất bại',
+      loadFailed: 'Không thể tải danh sách Premium',
+      noMembers: 'Không tìm thấy thành viên Premium',
+      expired: 'hết hạn',
     },
 
     classes: {
