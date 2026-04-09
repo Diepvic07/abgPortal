@@ -530,7 +530,7 @@ export function AdminEventManager() {
                       onClick={() => openQuestions(event)}
                       className="text-xs px-3 py-1.5 border border-purple-200 text-purple-600 rounded-lg hover:bg-purple-50"
                     >
-                      {locale === 'vi' ? 'Câu hỏi' : 'Questions'}
+                      {locale === 'vi' ? 'Xuất danh sách' : 'Export List'}
                     </button>
                   )}
                   <button
