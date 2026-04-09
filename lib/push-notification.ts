@@ -69,43 +69,45 @@ export async function sendPushToMember(
   try {
     const supabase = createServerSupabaseClient();
 
-    // Single JOIN query: subscriptions + preferences + member locale
+    // Fetch subscriptions for this member
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: rows, error } = await (supabase.from('push_subscriptions') as any)
-      .select(`
-        id,
-        member_id,
-        endpoint,
-        p256dh,
-        auth,
-        notification_preferences!left(connection_request, new_event, new_proposal),
-        members!inner(locale)
-      `)
+    const { data: subs, error: subErr } = await (supabase.from('push_subscriptions') as any)
+      .select('id, member_id, endpoint, p256dh, auth')
       .eq('member_id', memberId);
 
-    if (error || !rows || rows.length === 0) {
-      if (error) console.error('[push] Error fetching subscriptions:', error.message);
+    if (subErr || !subs || subs.length === 0) {
+      if (subErr) console.error('[push] Error fetching subscriptions:', subErr.message);
       return;
     }
 
-    // Flatten the joined data
-    const subscriptions: SubscriptionWithPrefs[] = rows.map((row: Record<string, unknown>) => {
-      const prefs = row.notification_preferences as Record<string, unknown> | null;
-      const member = row.members as Record<string, unknown> | null;
-      return {
-        id: row.id as string,
-        member_id: row.member_id as string,
-        endpoint: row.endpoint as string,
-        p256dh: row.p256dh as string,
-        auth: row.auth as string,
-        connection_request: prefs?.connection_request as boolean | null ?? null,
-        new_event: prefs?.new_event as boolean | null ?? null,
-        new_proposal: prefs?.new_proposal as boolean | null ?? null,
-        locale: member?.locale as string | null ?? null,
-      };
-    });
+    // Fetch preferences (separate query — no FK between these tables)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: prefs } = await (supabase.from('notification_preferences') as any)
+      .select('connection_request, new_event, new_proposal')
+      .eq('member_id', memberId)
+      .single();
 
-    // Check preferences (first row has the same prefs for all devices)
+    // Fetch member locale
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: member } = await (supabase.from('members') as any)
+      .select('locale')
+      .eq('id', memberId)
+      .single();
+
+    // Build subscription objects with prefs
+    const subscriptions: SubscriptionWithPrefs[] = subs.map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      member_id: row.member_id as string,
+      endpoint: row.endpoint as string,
+      p256dh: row.p256dh as string,
+      auth: row.auth as string,
+      connection_request: prefs?.connection_request ?? null,
+      new_event: prefs?.new_event ?? null,
+      new_proposal: prefs?.new_proposal ?? null,
+      locale: member?.locale ?? null,
+    }));
+
+    // Check preferences (same for all devices of this member)
     if (!isNotificationEnabled(subscriptions[0], type)) {
       return;
     }
@@ -136,35 +138,45 @@ export async function sendPushToAllMembers(
   try {
     const supabase = createServerSupabaseClient();
 
-    // Single JOIN query: all subscriptions + preferences + member locale
+    // Fetch all subscriptions
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query = (supabase.from('push_subscriptions') as any)
-      .select(`
-        id,
-        member_id,
-        endpoint,
-        p256dh,
-        auth,
-        notification_preferences!left(connection_request, new_event, new_proposal),
-        members!inner(locale)
-      `);
+      .select('id, member_id, endpoint, p256dh, auth');
 
     if (excludeMemberId) {
       query = query.neq('member_id', excludeMemberId);
     }
 
-    const { data: rows, error } = await query;
+    const { data: subs, error: subErr } = await query;
 
-    if (error || !rows || rows.length === 0) {
-      if (error) console.error('[push] Error fetching subscriptions for broadcast:', error.message);
+    if (subErr || !subs || subs.length === 0) {
+      if (subErr) console.error('[push] Error fetching subscriptions for broadcast:', subErr.message);
       return;
     }
 
-    // Flatten and filter by preferences
-    const subscriptions: SubscriptionWithPrefs[] = rows
+    // Get unique member IDs from subscriptions
+    const memberIds = [...new Set(subs.map((s: Record<string, unknown>) => s.member_id as string))];
+
+    // Fetch all preferences for these members in one query
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: allPrefs } = await (supabase.from('notification_preferences') as any)
+      .select('member_id, connection_request, new_event, new_proposal')
+      .in('member_id', memberIds);
+
+    // Fetch member locales
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: members } = await (supabase.from('members') as any)
+      .select('id, locale')
+      .in('id', memberIds);
+
+    // Build lookup maps
+    const prefsMap = new Map((allPrefs || []).map((p: Record<string, unknown>) => [p.member_id, p]));
+    const localeMap = new Map((members || []).map((m: Record<string, unknown>) => [m.id, m.locale]));
+
+    // Build subscription objects and filter by preferences
+    const subscriptions: SubscriptionWithPrefs[] = subs
       .map((row: Record<string, unknown>) => {
-        const prefs = row.notification_preferences as Record<string, unknown> | null;
-        const member = row.members as Record<string, unknown> | null;
+        const prefs = prefsMap.get(row.member_id as string) as Record<string, unknown> | undefined;
         return {
           id: row.id as string,
           member_id: row.member_id as string,
@@ -174,7 +186,7 @@ export async function sendPushToAllMembers(
           connection_request: prefs?.connection_request as boolean | null ?? null,
           new_event: prefs?.new_event as boolean | null ?? null,
           new_proposal: prefs?.new_proposal as boolean | null ?? null,
-          locale: member?.locale as string | null ?? null,
+          locale: (localeMap.get(row.member_id as string) as string) ?? null,
         };
       })
       .filter((sub: SubscriptionWithPrefs) => isNotificationEnabled(sub, type));
@@ -183,7 +195,6 @@ export async function sendPushToAllMembers(
 
     // Send to all in parallel
     const sendPromises = subscriptions.map((sub) => {
-      // Generate locale-aware payload for each member
       const localizedPayload = sub.locale
         ? { ...payload, ...getPushMessage(type, extractMessageData(payload), sub.locale as Locale) }
         : payload;

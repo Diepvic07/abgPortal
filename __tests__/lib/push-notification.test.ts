@@ -9,45 +9,50 @@ vi.mock('web-push', () => ({
   },
 }));
 
-// Mock Supabase
-const mockSelect = vi.fn();
-const mockUpdate = vi.fn();
-const mockDelete = vi.fn();
-const mockEq = vi.fn();
-const mockNeq = vi.fn();
-const mockSingle = vi.fn();
-const mockFrom = vi.fn();
+// Mock data holders
+let mockSubsData: unknown[] | null = null;
+let mockPrefsData: unknown | null = null;
+let mockMemberData: unknown | null = null;
+let mockDeleteCalled = false;
 
 vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: () => ({
     from: (table: string) => {
-      mockFrom(table);
-      return {
-        select: (...args: unknown[]) => {
-          mockSelect(...args);
-          return {
-            eq: (...eqArgs: unknown[]) => {
-              mockEq(...eqArgs);
-              return { data: mockSelectData, error: null };
-            },
-            neq: (...neqArgs: unknown[]) => {
-              mockNeq(...neqArgs);
-              return { data: mockSelectData, error: null };
-            },
-          };
-        },
-        update: (...args: unknown[]) => {
-          mockUpdate(...args);
-          return { eq: () => ({ error: null }) };
-        },
-        delete: () => {
-          mockDelete();
-          return { eq: (...eqArgs: unknown[]) => {
-            mockEq(...eqArgs);
-            return { error: null };
-          }};
-        },
-      };
+      if (table === 'push_subscriptions') {
+        return {
+          select: () => ({
+            eq: () => ({ data: mockSubsData, error: null }),
+            neq: () => ({ data: mockSubsData, error: null }),
+          }),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          update: () => ({ eq: () => ({ error: null }) }),
+          delete: () => {
+            mockDeleteCalled = true;
+            return { eq: () => ({ error: null }) };
+          },
+        };
+      }
+      if (table === 'notification_preferences') {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: () => ({ data: mockPrefsData, error: mockPrefsData ? null : { code: 'PGRST116' } }),
+            }),
+            in: () => ({ data: mockPrefsData ? [mockPrefsData] : [], error: null }),
+          }),
+        };
+      }
+      if (table === 'members') {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: () => ({ data: mockMemberData, error: null }),
+            }),
+            in: () => ({ data: mockMemberData ? [mockMemberData] : [], error: null }),
+          }),
+        };
+      }
+      return { select: () => ({ eq: () => ({ data: null, error: null }) }) };
     },
   }),
 }));
@@ -69,26 +74,20 @@ vi.mock('@/lib/i18n/utils', () => ({
   },
 }));
 
-let mockSelectData: unknown[] | null = null;
-
 // Set VAPID env vars for tests
 beforeEach(() => {
   vi.stubEnv('NEXT_PUBLIC_VAPID_PUBLIC_KEY', 'test-public-key');
   vi.stubEnv('VAPID_PRIVATE_KEY', 'test-private-key');
   vi.stubEnv('VAPID_SUBJECT', 'mailto:test@test.com');
   mockSendNotification.mockReset();
-  mockFrom.mockReset();
-  mockSelect.mockReset();
-  mockUpdate.mockReset();
-  mockDelete.mockReset();
-  mockEq.mockReset();
-  mockNeq.mockReset();
-  mockSelectData = null;
+  mockSubsData = null;
+  mockPrefsData = null;
+  mockMemberData = null;
+  mockDeleteCalled = false;
 });
 
 describe('getPushMessage', () => {
   it('generates connection_request message in English', async () => {
-    // Need to import after mocks are set up
     const { getPushMessage } = await import('@/lib/push-notification');
     const msg = getPushMessage('connection_request', { requesterName: 'John' }, 'en');
     expect(msg.title).toBe('New connection request');
@@ -117,131 +116,85 @@ describe('getPushMessage', () => {
   });
 });
 
-describe('isNotificationEnabled (via sendPushToMember behavior)', () => {
+describe('sendPushToMember', () => {
   it('sends push when preferences are all enabled', async () => {
-    mockSelectData = [{
-      id: 'sub-1',
-      member_id: 'member-1',
-      endpoint: 'https://push.example.com/1',
-      p256dh: 'key1',
-      auth: 'auth1',
-      notification_preferences: { connection_request: true, new_event: true, new_proposal: true },
-      members: { locale: 'en' },
-    }];
-
+    mockSubsData = [
+      { id: 'sub-1', member_id: 'member-1', endpoint: 'https://push.example.com/1', p256dh: 'key1', auth: 'auth1' },
+    ];
+    mockPrefsData = { member_id: 'member-1', connection_request: true, new_event: true, new_proposal: true };
+    mockMemberData = { id: 'member-1', locale: 'en' };
     mockSendNotification.mockResolvedValue({});
 
     const { sendPushToMember } = await import('@/lib/push-notification');
-    await sendPushToMember('member-1', 'connection_request', {
-      title: 'Test',
-      body: 'Test body',
-    });
+    await sendPushToMember('member-1', 'connection_request', { title: 'Test', body: 'Test body' });
 
     expect(mockSendNotification).toHaveBeenCalledTimes(1);
   });
 
   it('skips push when preference is disabled', async () => {
-    mockSelectData = [{
-      id: 'sub-1',
-      member_id: 'member-1',
-      endpoint: 'https://push.example.com/1',
-      p256dh: 'key1',
-      auth: 'auth1',
-      notification_preferences: { connection_request: false, new_event: true, new_proposal: true },
-      members: { locale: 'en' },
-    }];
+    mockSubsData = [
+      { id: 'sub-1', member_id: 'member-1', endpoint: 'https://push.example.com/1', p256dh: 'key1', auth: 'auth1' },
+    ];
+    mockPrefsData = { member_id: 'member-1', connection_request: false, new_event: true, new_proposal: true };
+    mockMemberData = { id: 'member-1', locale: 'en' };
 
     const { sendPushToMember } = await import('@/lib/push-notification');
-    await sendPushToMember('member-1', 'connection_request', {
-      title: 'Test',
-      body: 'Test body',
-    });
+    await sendPushToMember('member-1', 'connection_request', { title: 'Test', body: 'Test body' });
 
     expect(mockSendNotification).not.toHaveBeenCalled();
   });
 
   it('treats missing preferences row as all enabled', async () => {
-    mockSelectData = [{
-      id: 'sub-1',
-      member_id: 'member-1',
-      endpoint: 'https://push.example.com/1',
-      p256dh: 'key1',
-      auth: 'auth1',
-      notification_preferences: null,
-      members: { locale: 'en' },
-    }];
-
+    mockSubsData = [
+      { id: 'sub-1', member_id: 'member-1', endpoint: 'https://push.example.com/1', p256dh: 'key1', auth: 'auth1' },
+    ];
+    mockPrefsData = null; // No preferences row
+    mockMemberData = { id: 'member-1', locale: 'en' };
     mockSendNotification.mockResolvedValue({});
 
     const { sendPushToMember } = await import('@/lib/push-notification');
-    await sendPushToMember('member-1', 'new_event', {
-      title: 'Test',
-      body: 'Test body',
-    });
+    await sendPushToMember('member-1', 'new_event', { title: 'Test', body: 'Test body' });
 
     expect(mockSendNotification).toHaveBeenCalledTimes(1);
   });
-});
 
-describe('stale subscription cleanup', () => {
-  it('deletes subscription on 410 Gone', async () => {
-    mockSelectData = [{
-      id: 'sub-1',
-      member_id: 'member-1',
-      endpoint: 'https://push.example.com/expired',
-      p256dh: 'key1',
-      auth: 'auth1',
-      notification_preferences: null,
-      members: { locale: 'en' },
-    }];
-
-    mockSendNotification.mockRejectedValue({ statusCode: 410 });
-
-    const { sendPushToMember } = await import('@/lib/push-notification');
-    await sendPushToMember('member-1', 'connection_request', {
-      title: 'Test',
-      body: 'Test body',
-    });
-
-    expect(mockDelete).toHaveBeenCalled();
-  });
-});
-
-describe('sendPushToMember', () => {
   it('returns silently when no subscriptions exist', async () => {
-    mockSelectData = [];
+    mockSubsData = [];
 
     const { sendPushToMember } = await import('@/lib/push-notification');
-    await sendPushToMember('member-1', 'connection_request', {
-      title: 'Test',
-      body: 'Test body',
-    });
+    await sendPushToMember('member-1', 'connection_request', { title: 'Test', body: 'Test body' });
 
     expect(mockSendNotification).not.toHaveBeenCalled();
   });
 
   it('sends to multiple devices', async () => {
-    mockSelectData = [
-      {
-        id: 'sub-1', member_id: 'member-1', endpoint: 'https://push.example.com/1',
-        p256dh: 'key1', auth: 'auth1',
-        notification_preferences: null, members: { locale: 'en' },
-      },
-      {
-        id: 'sub-2', member_id: 'member-1', endpoint: 'https://push.example.com/2',
-        p256dh: 'key2', auth: 'auth2',
-        notification_preferences: null, members: { locale: 'en' },
-      },
+    mockSubsData = [
+      { id: 'sub-1', member_id: 'member-1', endpoint: 'https://push.example.com/1', p256dh: 'key1', auth: 'auth1' },
+      { id: 'sub-2', member_id: 'member-1', endpoint: 'https://push.example.com/2', p256dh: 'key2', auth: 'auth2' },
     ];
-
+    mockPrefsData = null;
+    mockMemberData = { id: 'member-1', locale: 'en' };
     mockSendNotification.mockResolvedValue({});
 
     const { sendPushToMember } = await import('@/lib/push-notification');
-    await sendPushToMember('member-1', 'connection_request', {
-      title: 'Test',
-      body: 'Test body',
-    });
+    await sendPushToMember('member-1', 'connection_request', { title: 'Test', body: 'Test body' });
 
     expect(mockSendNotification).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('stale subscription cleanup', () => {
+  it('deletes subscription on 410 Gone', async () => {
+    mockSubsData = [
+      { id: 'sub-1', member_id: 'member-1', endpoint: 'https://push.example.com/expired', p256dh: 'key1', auth: 'auth1' },
+    ];
+    mockPrefsData = null;
+    mockMemberData = { id: 'member-1', locale: 'en' };
+    mockSendNotification.mockRejectedValue({ statusCode: 410 });
+
+    const { sendPushToMember } = await import('@/lib/push-notification');
+    await sendPushToMember('member-1', 'connection_request', { title: 'Test', body: 'Test body' });
+
+    expect(mockDeleteCalled).toBe(true);
   });
 });
