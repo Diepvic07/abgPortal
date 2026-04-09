@@ -202,7 +202,7 @@ export async function getEvents(options: {
     query = query.gte('event_date', now).eq('status', 'published');
     query = query.order('event_date', { ascending: true });
   } else if (options.past) {
-    query = query.eq('status', 'completed');
+    query = query.or(`status.eq.completed,and(status.eq.published,event_date.lt.${now})`);
     query = query.order('event_date', { ascending: false });
   } else {
     query = query.order('event_date', { ascending: true });
