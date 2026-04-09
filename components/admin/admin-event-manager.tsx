@@ -134,7 +134,7 @@ export function AdminEventManager() {
   const [imageUploading, setImageUploading] = useState(false);
   const [viewingPayments, setViewingPayments] = useState<CommunityEvent | null>(null);
   const [viewingQuestions, setViewingQuestions] = useState<CommunityEvent | null>(null);
-  const [questions, setQuestions] = useState<Array<{ type: string; name: string; email?: string; question: string; created_at: string }>>([]);
+  const [questions, setQuestions] = useState<Array<{ type: string; tier?: string; name: string; email?: string; phone?: string; question: string; created_at: string }>>([]);
   const [questionsLoading, setQuestionsLoading] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<EventPreset>('custom');
   const [presetMessage, setPresetMessage] = useState(false);
@@ -230,11 +230,10 @@ export function AdminEventManager() {
 
   function exportQuestionsCsv() {
     if (!viewingQuestions || questions.length === 0) return;
-    const header = 'Type,Name,Email,Question,Date';
+    const header = 'Type,Tier,Name,Email,Phone,Question';
     const rows = questions.map((q) => {
-      const date = new Date(q.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
       const escapeCsv = (s: string) => `"${s.replace(/"/g, '""')}"`;
-      return `${q.type},${escapeCsv(q.name)},${q.email || ''},${escapeCsv(q.question)},${date}`;
+      return `${q.type},${q.tier || ''},${escapeCsv(q.name)},${q.email || ''},${q.phone || ''},${escapeCsv(q.question)}`;
     });
     const csv = [header, ...rows].join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -957,15 +956,13 @@ export function AdminEventManager() {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-sm text-gray-900">{q.name}</span>
-                          <span className={`text-xs px-1.5 py-0.5 rounded-full ${q.type === 'member' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
-                            {q.type === 'member' ? (locale === 'vi' ? 'Thành viên' : 'Member') : (locale === 'vi' ? 'Khách' : 'Guest')}
+                          <span className={`text-xs px-1.5 py-0.5 rounded-full ${q.tier === 'Premium' ? 'bg-amber-50 text-amber-700' : q.type === 'member' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                            {q.tier || (q.type === 'member' ? 'Basic' : 'Guest')}
                           </span>
                         </div>
-                        <span className="text-xs text-gray-400">
-                          {new Date(q.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
                       </div>
-                      {q.email && <p className="text-xs text-gray-400 mb-1">{q.email}</p>}
+                      {q.email && <p className="text-xs text-gray-400 mb-0.5">{q.email}</p>}
+                      {q.phone && <p className="text-xs text-gray-400 mb-1">{q.phone}</p>}
                       <p className="text-sm text-gray-700 whitespace-pre-wrap">{q.question}</p>
                     </div>
                   ))}
