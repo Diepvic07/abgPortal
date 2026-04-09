@@ -5,6 +5,7 @@ import { CommunityEvent, EventStatus, EventCategory, EVENT_CATEGORY_LABELS, EVEN
 import { AdminImageUpload } from './admin-article-image-upload';
 import { AdminEventPayments } from './admin-event-payments';
 import { useTranslation } from '@/lib/i18n';
+import * as XLSX from 'xlsx';
 
 const CATEGORY_ICONS: Record<string, string> = {
   charity: '❤️', event: '🎉', learning: '📚', community_support: '🤝', networking: '🌐', other: '💡',
@@ -228,21 +229,26 @@ export function AdminEventManager() {
     }
   }
 
-  function exportQuestionsCsv() {
+  function exportQuestionsExcel() {
     if (!viewingQuestions || questions.length === 0) return;
-    const header = 'Type,Tier,Name,Email,Phone,Question';
-    const rows = questions.map((q) => {
-      const escapeCsv = (s: string) => `"${s.replace(/"/g, '""')}"`;
-      return `${q.type},${q.tier || ''},${escapeCsv(q.name)},${q.email || ''},${q.phone || ''},${escapeCsv(q.question)}`;
+    const data = questions.map((q) => ({
+      'Type': q.type === 'member' ? 'Thành viên' : 'Khách',
+      'Tier': q.tier || '',
+      'Name': q.name,
+      'Email': q.email || '',
+      'Phone': q.phone || '',
+      'Question': q.question,
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    // Auto-size columns
+    const colWidths = Object.keys(data[0]).map((key) => {
+      const maxLen = Math.max(key.length, ...data.map((r) => String((r as Record<string, string>)[key] || '').length));
+      return { wch: Math.min(maxLen + 2, 60) };
     });
-    const csv = [header, ...rows].join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `questions-${viewingQuestions.slug || viewingQuestions.id}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    ws['!cols'] = colWidths;
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Questions');
+    XLSX.writeFile(wb, `questions-${viewingQuestions.slug || viewingQuestions.id}.xlsx`);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -934,11 +940,11 @@ export function AdminEventManager() {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={exportQuestionsCsv}
+                  onClick={exportQuestionsExcel}
                   disabled={questions.length === 0}
                   className="text-xs px-3 py-1.5 border border-green-200 text-green-700 rounded-lg hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {locale === 'vi' ? 'Xuất CSV' : 'Export CSV'}
+                  {locale === 'vi' ? 'Xuất Excel' : 'Export Excel'}
                 </button>
                 <button onClick={() => setViewingQuestions(null)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
               </div>
