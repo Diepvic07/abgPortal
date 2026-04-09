@@ -1,10 +1,11 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, after } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { isAdminAsync } from '@/lib/admin-utils-server';
 import { getEventById, updateEvent, deleteEvent } from '@/lib/supabase-events';
 import { z } from 'zod';
+import { sendPushToAllMembers, getPushMessage } from '@/lib/push-notification';
 
 const EventCategory = z.enum(['abg_talks', 'fieldtrip', 'networking', 'learning', 'webinar', 'event', 'community_support', 'abg_business_connect', 'other']);
 const EventStatus = z.enum(['draft', 'published', 'cancelled', 'completed']);
@@ -64,6 +65,22 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const updated = await updateEvent(id, parsed.data);
+
+    // Send push notification when event transitions to published
+    if (event.status !== 'published' && parsed.data.status === 'published') {
+      after(async () => {
+        try {
+          const message = getPushMessage('new_event', { eventTitle: updated.title || parsed.data.title || '' }, 'vi');
+          await sendPushToAllMembers('new_event', {
+            ...message,
+            url: `/events/${id}`,
+          });
+        } catch (pushError) {
+          console.error('[push] Event publish notification failed:', pushError);
+        }
+      });
+    }
+
     return successResponse({ event: updated });
   } catch (error) {
     return handleApiError(error);

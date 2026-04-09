@@ -1275,4 +1275,31 @@ export const vi: Translations = {
       catOther: 'Khác',
     },
   },
+
+  // Push notifications
+  push: {
+    connectionRequestTitle: 'Yêu cầu kết nối mới',
+    connectionRequestBody: '{requesterName} muốn kết nối với bạn',
+    newEventTitle: 'Sự kiện mới: {eventTitle}',
+    newEventBody: 'Một sự kiện mới đã được đăng trên ABG Alumni Connect',
+    newProposalTitle: 'Đề xuất mới: {proposalTitle}',
+    newProposalBody: '{proposerName} đã tạo một đề xuất mới',
+  },
+
+  // Notification settings
+  notifications: {
+    title: 'Cài đặt thông báo',
+    pushEnabled: 'Thông báo đẩy',
+    pushDescription: 'Nhận thông báo trên trình duyệt',
+    pushDenied: 'Thông báo bị chặn bởi trình duyệt. Vui lòng bật trong cài đặt trình duyệt.',
+    pushUnsupported: 'Trình duyệt không hỗ trợ thông báo đẩy.',
+    connectionRequest: 'Yêu cầu kết nối',
+    connectionDescription: 'Khi ai đó gửi yêu cầu kết nối cho bạn',
+    newEvent: 'Sự kiện mới',
+    eventDescription: 'Khi có sự kiện mới được đăng',
+    newProposal: 'Đề xuất mới',
+    proposalDescription: 'Khi có đề xuất mới được tạo',
+    saved: 'Đã lưu cài đặt',
+    enableFirst: 'Bật thông báo đẩy trước để cấu hình tùy chọn',
+  },
 } as const;

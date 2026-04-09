@@ -1,8 +1,9 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, after } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth-middleware';
 import { createProposal, getProposals, upsertCommitment } from '@/lib/supabase-community';
 import { ProposalCategory, ProposalGenre, CommitmentLevel, PROPOSAL_GENRES } from '@/types';
+import { sendPushToAllMembers, getPushMessage } from '@/lib/push-notification';
 
 const VALID_CATEGORIES: ProposalCategory[] = ['charity', 'event', 'learning', 'community_support', 'other'];
 const VALID_COMMITMENTS: CommitmentLevel[] = ['interested', 'will_participate', 'will_lead'];
@@ -65,6 +66,19 @@ export async function POST(request: NextRequest) {
       proposal_id: proposal.id,
       member_id: member.id,
       commitment_level: proposerCommitment,
+    });
+
+    // Send push notification to all members (exclude proposer, runs after response)
+    after(async () => {
+      try {
+        const message = getPushMessage('new_proposal', { proposalTitle: title, proposerName: member.name }, 'vi');
+        await sendPushToAllMembers('new_proposal', {
+          ...message,
+          url: `/proposals/${proposal.id}`,
+        }, member.id);
+      } catch (pushError) {
+        console.error('[push] Proposal notification failed:', pushError);
+      }
     });
 
     return successResponse({ proposal }, 201);

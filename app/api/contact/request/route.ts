@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { requireAuth } from "@/lib/auth-middleware";
 import { getMemberTier } from "@/lib/tier-utils";
 import { getMemberById, createContactRequest, getContactRequestsByRequesterAndTarget, countTodayContactRequests } from "@/lib/supabase-db";
 import { sendContactRequestEmail } from "@/lib/resend";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { sendPushToMember, getPushMessage } from "@/lib/push-notification";
+import type { Locale } from "@/lib/i18n/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Daily limit: 10 contact requests/day (unlimited for test mode emails)
-    const TEST_MODE_EMAILS = ['diep@ejoylearning.com', 'ttvietduc@gmail.com', 'quephc@gmail.com', 'diu.tran@abg.edu.vn'];
+    const TEST_MODE_EMAILS = ['ttvietduc@gmail.com', 'quephc@gmail.com', 'diu.tran@abg.edu.vn'];
     const isTestUser = TEST_MODE_EMAILS.includes(member.email);
     if (!isTestUser) {
       const todayCount = await countTodayContactRequests(member.id);
@@ -92,6 +94,20 @@ export async function POST(request: NextRequest) {
 
     // Track contact request sent
     captureServerEvent(member.id, 'contact_request_sent', { target_id: target.id });
+
+    // Send push notification (non-blocking, runs after response)
+    after(async () => {
+      try {
+        const locale = (target.locale || 'vi') as Locale;
+        const message = getPushMessage('connection_request', { requesterName: member.name }, locale);
+        await sendPushToMember(target.id, 'connection_request', {
+          ...message,
+          url: '/profile',
+        });
+      } catch (pushError) {
+        console.error("Push notification failed (request still created):", pushError);
+      }
+    });
 
     return NextResponse.json({ success: true, requestId: id });
   } catch (error) {

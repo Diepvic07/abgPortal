@@ -1297,6 +1297,32 @@ export const en = {
       catOther: 'Other',
     },
   },
+  // Push notifications
+  push: {
+    connectionRequestTitle: 'New connection request',
+    connectionRequestBody: '{requesterName} wants to connect with you',
+    newEventTitle: 'New event: {eventTitle}',
+    newEventBody: 'A new event has been published on ABG Alumni Connect',
+    newProposalTitle: 'New proposal: {proposalTitle}',
+    newProposalBody: '{proposerName} created a new proposal',
+  },
+
+  // Notification settings
+  notifications: {
+    title: 'Notification Settings',
+    pushEnabled: 'Push Notifications',
+    pushDescription: 'Receive notifications in your browser',
+    pushDenied: 'Notifications are blocked by your browser. Please enable them in your browser settings.',
+    pushUnsupported: 'Push notifications are not supported in this browser.',
+    connectionRequest: 'Connection Requests',
+    connectionDescription: 'When someone sends you a connection request',
+    newEvent: 'New Events',
+    eventDescription: 'When a new event is published',
+    newProposal: 'New Proposals',
+    proposalDescription: 'When a new proposal is created',
+    saved: 'Preferences saved',
+    enableFirst: 'Enable push notifications first to configure preferences',
+  },
 } as const;
 
 // Deep type that converts literal strings to string type

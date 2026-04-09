@@ -23,6 +23,24 @@
 - **Priority:** P3
 - **Depends on:** v1 proposals + completed proposals existing
 
+## Push Notifications — Deferred from Phase 2
+
+### @Mention Notifications with Autocomplete
+- **What:** Add @mention notifications in event/proposal comments. Requires autocomplete dropdown in comment textarea that inserts member IDs (not fuzzy name matching) for accurate resolution.
+- **Why:** Fuzzy name-based matching has false positives with common Vietnamese names. ID-based resolution via autocomplete is the correct approach.
+- **Effort:** M (human ~3 days / CC ~20 min)
+- **Priority:** P2
+- **Depends on:** Push notification infrastructure (shipped), comment UI component
+
+### Unified Notification Preferences (Email + Push)
+- **What:** Single settings page where members control both email and push toggles per notification type. Currently email and push have independent preference systems.
+- **Why:** When email digest lands, members need one place to manage all notification channels to avoid fragmented UX.
+- **Effort:** S (human ~1 day / CC ~15 min)
+- **Priority:** P3
+- **Depends on:** Push notification infrastructure (shipped) + email digest feature
+
+## Design System
+
 ### Create DESIGN.md (Design System)
 - **What:** Run /design-consultation to formalize the design system: colors, typography, spacing scale, component patterns, category color palette.
 - **Why:** The proposals UI established a de facto design system (blue CTAs, category pill colors, gray typography). As the platform grows (events, notifications, discussions), having a single source of truth prevents drift and inconsistency.
