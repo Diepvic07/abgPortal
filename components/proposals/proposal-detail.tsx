@@ -111,6 +111,7 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editTags, setEditTags] = useState<string[]>([]);
   const [editTagInput, setEditTagInput] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [rerunningAI, setRerunningAI] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [replyImageFile, setReplyImageFile] = useState<File | null>(null);
   const [replyImagePreview, setReplyImagePreview] = useState<string | null>(null);
@@ -427,6 +428,42 @@ export function ProposalDetail({ proposalId }: Props) {
     }
   }
 
+  async function handleRerunAI() {
+    if (!editTitle || !editDescription) return;
+    setRerunningAI(true);
+    setEditError(null);
+    try {
+      const res = await fetch('/api/community/proposals/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editTitle, category: editCategory, what: editDescription }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.description) setEditDescription(data.description);
+        if (data.category && ['talk', 'learning', 'fieldtrip', 'meeting', 'sports', 'community_support'].includes(data.category)) setEditCategory(data.category);
+        if (data.genre && ['education', 'health', 'finance', 'technology', 'business', 'culture', 'environment', 'other'].includes(data.genre)) setEditGenre(data.genre);
+        if (data.location) {
+          if (data.location === 'Hà Nội' || data.location === 'HCM') {
+            setEditLocation(data.location);
+            setEditCustomLocation('');
+          } else {
+            setEditLocation('__custom__');
+            setEditCustomLocation(data.location);
+          }
+        }
+        if (data.participation_format && ['online', 'offline', 'hybrid'].includes(data.participation_format)) setEditParticipationFormat(data.participation_format);
+        if (Array.isArray(data.tags)) setEditTags(data.tags);
+      } else {
+        setEditError(data.error || 'AI generation failed');
+      }
+    } catch {
+      setEditError('Failed to rerun AI');
+    } finally {
+      setRerunningAI(false);
+    }
+  }
+
   if (loading) {
     return <div className="animate-pulse space-y-4"><div className="h-8 bg-gray-200 rounded w-2/3" /><div className="h-4 bg-gray-200 rounded w-1/2" /><div className="h-32 bg-gray-200 rounded" /></div>;
   }
@@ -469,15 +506,29 @@ export function ProposalDetail({ proposalId }: Props) {
           {isEditing && (
             <div className="ml-auto flex items-center gap-2">
               <button
+                onClick={handleRerunAI}
+                disabled={rerunningAI || savingEdit}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium px-3 py-1 rounded-lg border border-blue-300 bg-blue-50 disabled:opacity-50 flex items-center gap-1"
+              >
+                {rerunningAI ? (
+                  <>
+                    <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    {locale === 'vi' ? 'AI đang xử lý...' : 'AI processing...'}
+                  </>
+                ) : (
+                  <>{locale === 'vi' ? '✨ Rerun AI' : '✨ Rerun AI'}</>
+                )}
+              </button>
+              <button
                 onClick={() => setIsEditing(false)}
-                disabled={savingEdit}
+                disabled={savingEdit || rerunningAI}
                 className="text-sm text-gray-500 hover:text-gray-700 font-medium px-3 py-1 rounded-lg border border-gray-300"
               >
                 {locale === 'vi' ? 'Hủy' : 'Cancel'}
               </button>
               <button
                 onClick={handleSaveEdit}
-                disabled={savingEdit}
+                disabled={savingEdit || rerunningAI}
                 className="text-sm text-white bg-blue-600 hover:bg-blue-700 font-medium px-3 py-1 rounded-lg disabled:opacity-50"
               >
                 {savingEdit ? (locale === 'vi' ? 'Đang lưu...' : 'Saving...') : (locale === 'vi' ? 'Lưu' : 'Save')}
