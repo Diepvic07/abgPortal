@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
-type NotificationType = 'new_proposal' | 'new_event' | 'connection_request';
+type NotificationType = 'new_proposal' | 'new_event' | 'connection_request' | 'proposal_comment';
 
 interface CreateNotificationParams {
   type: NotificationType;

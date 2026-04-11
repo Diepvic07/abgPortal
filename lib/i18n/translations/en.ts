@@ -1305,6 +1305,8 @@ export const en = {
     newEventBody: 'A new event has been published on ABG Alumni Connect',
     newProposalTitle: 'New proposal: {proposalTitle}',
     newProposalBody: '{proposerName} created a new proposal',
+    proposalCommentTitle: '{commenterName} commented',
+    proposalCommentBody: '{commentPreview}',
   },
 
   // Notification settings
@@ -1320,6 +1322,8 @@ export const en = {
     eventDescription: 'When a new event is published',
     newProposal: 'New Proposals',
     proposalDescription: 'When a new proposal is created',
+    proposalComment: 'Proposal Comments',
+    commentDescription: 'When someone comments on your proposal or replies to your comment',
     saved: 'Preferences saved',
     enableFirst: 'Enable push notifications first to configure preferences',
     markAllRead: 'Mark all as read',

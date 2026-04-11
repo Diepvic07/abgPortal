@@ -8,12 +8,14 @@ interface NotificationPreferences {
   connection_request: boolean;
   new_event: boolean;
   new_proposal: boolean;
+  proposal_comment: boolean;
 }
 
 const DEFAULT_PREFS: NotificationPreferences = {
   connection_request: true,
   new_event: true,
   new_proposal: true,
+  proposal_comment: true,
 };
 
 export function NotificationSettings() {
@@ -150,6 +152,13 @@ export function NotificationSettings() {
           description={t.notifications.proposalDescription}
           checked={preferences.new_proposal}
           onChange={() => handlePrefToggle('new_proposal')}
+          disabled={!isSubscribed || saving || isLoading}
+        />
+        <ToggleRow
+          label={t.notifications.proposalComment}
+          description={t.notifications.commentDescription}
+          checked={preferences.proposal_comment}
+          onChange={() => handlePrefToggle('proposal_comment')}
           disabled={!isSubscribed || saving || isLoading}
         />
       </div>

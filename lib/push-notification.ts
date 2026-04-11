@@ -4,7 +4,7 @@ import { getTranslations, interpolate, type Locale } from '@/lib/i18n/utils';
 
 // --- Types ---
 
-export type NotificationType = 'connection_request' | 'new_event' | 'new_proposal';
+export type NotificationType = 'connection_request' | 'new_event' | 'new_proposal' | 'proposal_comment';
 
 export interface PushPayload {
   title: string;
@@ -24,6 +24,7 @@ interface SubscriptionWithPrefs {
   connection_request: boolean | null;
   new_event: boolean | null;
   new_proposal: boolean | null;
+  proposal_comment: boolean | null;
   locale: string | null;
 }
 
@@ -85,7 +86,7 @@ export async function sendPushToMember(
     // Fetch preferences (separate query — no FK between these tables)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: prefs } = await (supabase.from('notification_preferences') as any)
-      .select('connection_request, new_event, new_proposal')
+      .select('connection_request, new_event, new_proposal, proposal_comment')
       .eq('member_id', memberId)
       .single();
 
@@ -106,6 +107,7 @@ export async function sendPushToMember(
       connection_request: prefs?.connection_request ?? null,
       new_event: prefs?.new_event ?? null,
       new_proposal: prefs?.new_proposal ?? null,
+      proposal_comment: prefs?.proposal_comment ?? null,
       locale: member?.locale ?? null,
     }));
 
@@ -165,7 +167,7 @@ export async function sendPushToAllMembers(
     // Fetch all preferences for these members in one query
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: allPrefs } = await (supabase.from('notification_preferences') as any)
-      .select('member_id, connection_request, new_event, new_proposal')
+      .select('member_id, connection_request, new_event, new_proposal, proposal_comment')
       .in('member_id', memberIds);
 
     // Fetch member locales
@@ -191,6 +193,7 @@ export async function sendPushToAllMembers(
           connection_request: prefs?.connection_request as boolean | null ?? null,
           new_event: prefs?.new_event as boolean | null ?? null,
           new_proposal: prefs?.new_proposal as boolean | null ?? null,
+          proposal_comment: prefs?.proposal_comment as boolean | null ?? null,
           locale: (localeMap.get(row.member_id as string) as string) ?? null,
         };
       })
@@ -284,6 +287,12 @@ export function getPushMessage(
       return {
         title: interpolate(t.push.newProposalTitle, data),
         body: interpolate(t.push.newProposalBody, data),
+        _data: data,
+      };
+    case 'proposal_comment':
+      return {
+        title: interpolate(t.push.proposalCommentTitle, data),
+        body: interpolate(t.push.proposalCommentBody, data),
         _data: data,
       };
     default:

@@ -1284,6 +1284,8 @@ export const vi: Translations = {
     newEventBody: 'Một sự kiện mới đã được đăng trên ABG Alumni Connect',
     newProposalTitle: 'Đề xuất mới: {proposalTitle}',
     newProposalBody: '{proposerName} đã tạo một đề xuất mới',
+    proposalCommentTitle: '{commenterName} đã bình luận',
+    proposalCommentBody: '{commentPreview}',
   },
 
   // Notification settings
@@ -1299,6 +1301,8 @@ export const vi: Translations = {
     eventDescription: 'Khi có sự kiện mới được đăng',
     newProposal: 'Đề xuất mới',
     proposalDescription: 'Khi có đề xuất mới được tạo',
+    proposalComment: 'Bình luận đề xuất',
+    commentDescription: 'Khi có bình luận mới trên đề xuất của bạn hoặc trả lời bình luận của bạn',
     saved: 'Đã lưu cài đặt',
     enableFirst: 'Bật thông báo đẩy trước để cấu hình tùy chọn',
     markAllRead: 'Đánh dấu đã đọc',
