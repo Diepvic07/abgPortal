@@ -42,11 +42,18 @@ Yêu cầu:
 - KHÔNG viết quá dài, giữ ngắn gọn
 
 QUAN TRỌNG: Sau nội dung bài viết, thêm một dòng mới với format JSON:
-META: {"tags": ["thẻ1", "thẻ2", "thẻ3"], "genre": "...", "location": "...", "participation_format": "..."}
+META: {"category": "...", "tags": ["thẻ1", "thẻ2", "thẻ3"], "genre": "...", "location": "...", "participation_format": "..."}
 
 Quy tắc cho META:
+- category: chọn MỘT loại hoạt động PHÙ HỢP NHẤT dựa trên NỘI DUNG THỰC TẾ (KHÔNG dùng giá trị người dùng đã chọn, hãy tự đánh giá lại):
+  * "talk" = buổi nói chuyện, chia sẻ, workshop, webinar, thuyết trình (KHÔNG có di chuyển/du lịch)
+  * "learning" = khóa học, lớp học, đào tạo, mentoring
+  * "fieldtrip" = dã ngoại, du lịch, tham quan, đi chơi, khám phá địa điểm, camping, team building ngoài trời
+  * "meeting" = gặp gỡ, networking, họp mặt, giao lưu, coffee chat
+  * "sports" = thể thao, chạy bộ, marathon, đạp xe, bơi lội, gym
+  * "community_support" = từ thiện, tình nguyện, hỗ trợ cộng đồng, quyên góp
 - tags: 3-5 thẻ ngắn gọn bằng tiếng Việt (1-3 từ, viết thường), liên quan trực tiếp đến nội dung
-- genre: chọn MỘT trong các giá trị sau dựa trên chủ đề: education, health, finance, technology, business, culture, environment, other
+- genre: chọn MỘT chủ đề: education, health, finance, technology, business, culture, environment, other
 - location: nếu nội dung đề cập rõ địa điểm cụ thể, ghi "Hà Nội" hoặc "HCM" hoặc tên địa điểm khác. Nếu không rõ, để ""
 - participation_format: chọn MỘT trong: online, offline, hybrid — dựa trên hình thức hoạt động được mô tả`;
 
@@ -56,6 +63,7 @@ Quy tắc cho META:
     // Extract metadata from the response
     let description = text;
     let tags: string[] = [];
+    let aiCategory = '';
     let genre = '';
     let location = '';
     let participation_format = '';
@@ -70,13 +78,14 @@ Quy tắc cho META:
             .map((t: string) => t.trim().toLowerCase())
             .slice(0, 5);
         }
+        if (typeof meta.category === 'string') aiCategory = meta.category;
         if (typeof meta.genre === 'string') genre = meta.genre;
         if (typeof meta.location === 'string') location = meta.location;
         if (typeof meta.participation_format === 'string') participation_format = meta.participation_format;
       } catch {}
     }
 
-    return successResponse({ description, tags, genre, location, participation_format });
+    return successResponse({ description, tags, category: aiCategory, genre, location, participation_format });
   } catch (error) {
     return handleApiError(error);
   }

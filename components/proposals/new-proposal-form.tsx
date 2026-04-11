@@ -108,6 +108,7 @@ export function NewProposalForm() {
       if (res.ok && data.description) {
         setPreview(data.description);
         if (Array.isArray(data.tags)) setTags(data.tags);
+        if (data.category && ['talk', 'learning', 'fieldtrip', 'meeting', 'sports', 'community_support'].includes(data.category)) setCategory(data.category);
         if (data.genre && ['education', 'health', 'finance', 'technology', 'business', 'culture', 'environment', 'other'].includes(data.genre)) setGenre(data.genre);
         if (data.location) {
           if (data.location === 'Hà Nội' || data.location === 'HCM') {
@@ -516,6 +517,42 @@ export function NewProposalForm() {
                 : <>{vi ? '📝 Xem trước bài viết' : '📝 Preview'}</>
               }
               </h3>
+            </div>
+
+            {/* AI-filled metadata summary */}
+            {previewIsAI && (
+              <div className="bg-blue-50 rounded-lg p-3 space-y-2">
+                <p className="text-xs font-medium text-blue-700 mb-2">{vi ? 'AI đã tự động chọn:' : 'AI auto-selected:'}</p>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="px-2 py-1 rounded-full bg-white text-gray-700 font-medium">
+                    {PROPOSAL_CATEGORY_LABELS[category]?.icon} {PROPOSAL_CATEGORY_LABELS[category]?.[vi ? 'vi' : 'en']}
+                  </span>
+                  <span className="px-2 py-1 rounded-full bg-white text-gray-700 font-medium">
+                    {PROPOSAL_GENRE_LABELS[genre]?.icon} {PROPOSAL_GENRE_LABELS[genre]?.[vi ? 'vi' : 'en']}
+                  </span>
+                  {(location || customLocation) && (
+                    <span className="px-2 py-1 rounded-full bg-white text-gray-700 font-medium">
+                      📍 {location === '__custom__' ? customLocation : location}
+                    </span>
+                  )}
+                  <span className="px-2 py-1 rounded-full bg-white text-gray-700 font-medium">
+                    {PARTICIPATION_FORMAT_LABELS[participationFormat]?.icon} {PARTICIPATION_FORMAT_LABELS[participationFormat]?.[vi ? 'vi' : 'en']}
+                  </span>
+                </div>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {tags.map((tag) => (
+                      <span key={tag} className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">#{tag}</span>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-blue-600 mt-1">
+                  {vi ? 'Bạn có thể chỉnh sửa ở các mục phía trên nếu cần.' : 'You can adjust these in the fields above if needed.'}
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end">
               <div className="flex gap-2">
                 {!previewIsAI && (
                   <button
