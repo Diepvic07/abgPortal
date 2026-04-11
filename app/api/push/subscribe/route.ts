@@ -3,6 +3,39 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api-respon
 import { requireAuth } from '@/lib/auth-middleware';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
+/**
+ * Check if the current member has a push subscription matching the given endpoint.
+ * Used by the client to verify browser-server subscription sync.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const member = await requireAuth(request);
+    const endpoint = request.nextUrl.searchParams.get('endpoint');
+
+    if (!endpoint) {
+      return errorResponse('Missing endpoint parameter', 400);
+    }
+
+    const supabase = createServerSupabaseClient();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.from('push_subscriptions') as any)
+      .select('id')
+      .eq('member_id', member.id)
+      .eq('endpoint', endpoint)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[push] Verify subscription error:', error.message);
+      return errorResponse('Failed to verify subscription', 500);
+    }
+
+    return successResponse({ exists: !!data });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const member = await requireAuth(request);

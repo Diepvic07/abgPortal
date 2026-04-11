@@ -151,8 +151,11 @@ export async function sendPushToAllMembers(
 
     if (subErr || !subs || subs.length === 0) {
       if (subErr) console.error('[push] Error fetching subscriptions for broadcast:', subErr.message);
+      else console.log(`[push] No subscriptions found for broadcast type=${type} (excludeMemberId=${excludeMemberId || 'none'})`);
       return;
     }
+
+    console.log(`[push] Broadcast type=${type}: found ${subs.length} subscription(s) for ${[...new Set(subs.map((s: Record<string, unknown>) => s.member_id))].length} member(s)`);
 
     // Get unique member IDs from subscriptions
     const memberIds = [...new Set(subs.map((s: Record<string, unknown>) => s.member_id as string))];
@@ -191,7 +194,12 @@ export async function sendPushToAllMembers(
       })
       .filter((sub: SubscriptionWithPrefs) => isNotificationEnabled(sub, type));
 
-    if (subscriptions.length === 0) return;
+    if (subscriptions.length === 0) {
+      console.log(`[push] Broadcast type=${type}: all ${subs.length} subscription(s) filtered out by preferences`);
+      return;
+    }
+
+    console.log(`[push] Broadcast type=${type}: sending to ${subscriptions.length} subscription(s) after preference filter`);
 
     // Send to all in parallel
     const sendPromises = subscriptions.map((sub) => {

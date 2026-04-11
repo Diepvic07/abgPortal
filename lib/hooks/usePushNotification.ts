@@ -20,7 +20,7 @@ export function usePushNotification() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Check current state on mount
+  // Check current state on mount — verify with server to catch stale subscriptions
   useEffect(() => {
     async function checkState() {
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -35,7 +35,33 @@ export function usePushNotification() {
         const registration = await navigator.serviceWorker.getRegistration('/sw.js');
         if (registration) {
           const subscription = await registration.pushManager.getSubscription();
-          setIsSubscribed(!!subscription);
+          if (subscription) {
+            // Browser has a subscription — verify it exists server-side
+            const res = await fetch(`/api/push/subscribe?endpoint=${encodeURIComponent(subscription.endpoint)}`);
+            if (res.ok) {
+              const { exists } = await res.json();
+              if (exists) {
+                setIsSubscribed(true);
+              } else {
+                // Server lost the subscription (cleaned up after 410) — re-register it
+                console.log('[push] Server subscription missing, re-registering...');
+                const keys = subscription.toJSON().keys;
+                const resubRes = await fetch('/api/push/subscribe', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    endpoint: subscription.endpoint,
+                    p256dh: keys?.p256dh,
+                    auth: keys?.auth,
+                  }),
+                });
+                setIsSubscribed(resubRes.ok);
+              }
+            } else {
+              // Can't verify — trust the browser state
+              setIsSubscribed(true);
+            }
+          }
         }
       } catch {
         // Service worker not registered yet
