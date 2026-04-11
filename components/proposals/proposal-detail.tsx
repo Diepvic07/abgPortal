@@ -697,7 +697,7 @@ export function ProposalDetail({ proposalId }: Props) {
                     key={tag}
                     className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 text-xs font-medium"
                   >
-                    #{tag}
+                    {tag}
                   </span>
                 ))}
               </div>

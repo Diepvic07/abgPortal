@@ -42,7 +42,7 @@ Yêu cầu:
 - KHÔNG viết quá dài, giữ ngắn gọn
 
 QUAN TRỌNG: Sau nội dung bài viết, thêm một dòng mới với format JSON:
-META: {"category": "...", "tags": ["thẻ1", "thẻ2", "thẻ3"], "genre": "...", "location": "...", "participation_format": "..."}
+META: {"category": "...", "tags": ["thẻ1", "thẻ2", "thẻ3"], "genre": "...", "location": "...", "participation_format": "...", "why": "...", "who": "...", "how_many": "...", "resources": "...", "target_date": "..."}
 
 Quy tắc cho META:
 - category: chọn MỘT loại hoạt động PHÙ HỢP NHẤT dựa trên NỘI DUNG THỰC TẾ (KHÔNG dùng giá trị người dùng đã chọn, hãy tự đánh giá lại):
@@ -55,7 +55,12 @@ Quy tắc cho META:
 - tags: 3-5 thẻ ngắn gọn bằng tiếng Việt (1-3 từ, viết thường), liên quan trực tiếp đến nội dung
 - genre: chọn MỘT chủ đề: education, health, finance, technology, business, culture, environment, other
 - location: nếu nội dung đề cập rõ địa điểm cụ thể, ghi "Hà Nội" hoặc "HCM" hoặc tên địa điểm khác. Nếu không rõ, để ""
-- participation_format: chọn MỘT trong: online, offline, hybrid — dựa trên hình thức hoạt động được mô tả`;
+- participation_format: chọn MỘT trong: online, offline, hybrid — dựa trên hình thức hoạt động được mô tả
+- why: 1-2 câu giải thích tại sao hoạt động này quan trọng/có giá trị. Viết bằng tiếng Việt.
+- who: đối tượng nên tham gia (VD: "Tất cả thành viên ABG", "Thành viên yêu thiên nhiên"). Viết bằng tiếng Việt.
+- how_many: số lượng người dự kiến (VD: "20-30 người", "không giới hạn"). Nếu không rõ, để ""
+- resources: cần hỗ trợ gì (VD: "Xe đưa đón, chi phí tham quan"). Nếu không rõ, để ""
+- target_date: nếu nội dung đề cập thời gian cụ thể, ghi ngày (YYYY-MM-DD). Nếu không rõ, để ""`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
@@ -67,6 +72,11 @@ Quy tắc cho META:
     let genre = '';
     let location = '';
     let participation_format = '';
+    let aiWhy = '';
+    let aiWho = '';
+    let aiHowMany = '';
+    let aiResources = '';
+    let aiTargetDate = '';
     const metaMatch = text.match(/META:\s*(\{[\s\S]*?\})/);
     if (metaMatch) {
       description = text.substring(0, metaMatch.index).trim();
@@ -82,10 +92,15 @@ Quy tắc cho META:
         if (typeof meta.genre === 'string') genre = meta.genre;
         if (typeof meta.location === 'string') location = meta.location;
         if (typeof meta.participation_format === 'string') participation_format = meta.participation_format;
+        if (typeof meta.why === 'string') aiWhy = meta.why;
+        if (typeof meta.who === 'string') aiWho = meta.who;
+        if (typeof meta.how_many === 'string') aiHowMany = meta.how_many;
+        if (typeof meta.resources === 'string') aiResources = meta.resources;
+        if (typeof meta.target_date === 'string') aiTargetDate = meta.target_date;
       } catch {}
     }
 
-    return successResponse({ description, tags, category: aiCategory, genre, location, participation_format });
+    return successResponse({ description, tags, category: aiCategory, genre, location, participation_format, why: aiWhy, who: aiWho, how_many: aiHowMany, resources: aiResources, target_date: aiTargetDate });
   } catch (error) {
     return handleApiError(error);
   }

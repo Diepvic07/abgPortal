@@ -172,7 +172,7 @@ export function ProposalsList() {
                           key={tag}
                           className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium"
                         >
-                          #{tag}
+                          {tag}
                         </span>
                       ))}
                     </div>

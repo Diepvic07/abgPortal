@@ -120,6 +120,11 @@ export function NewProposalForm() {
           }
         }
         if (data.participation_format && ['online', 'offline', 'hybrid'].includes(data.participation_format)) setParticipationFormat(data.participation_format);
+        if (data.why && !why) setWhy(data.why);
+        if (data.who && !who) setWho(data.who);
+        if (data.how_many && !howMany) setHowMany(data.how_many);
+        if (data.resources && !resources) setResources(data.resources);
+        if (data.target_date && !targetDate) setTargetDate(data.target_date);
         setPreviewIsAI(true);
         setShowPreview(true);
       } else {
@@ -542,7 +547,7 @@ export function NewProposalForm() {
                 {tags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     {tags.map((tag) => (
-                      <span key={tag} className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">#{tag}</span>
+                      <span key={tag} className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">{tag}</span>
                     ))}
                   </div>
                 )}
