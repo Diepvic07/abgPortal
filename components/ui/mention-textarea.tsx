@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import Image from 'next/image';
 
 interface MentionMember {
   id: string;
@@ -186,11 +185,9 @@ export function MentionTextarea({
                   onMouseEnter={() => setSelectedIndex(i)}
                 >
                   {member.avatar_url ? (
-                    <Image
+                    <img
                       src={member.avatar_url}
                       alt=""
-                      width={28}
-                      height={28}
                       className="w-7 h-7 rounded-full object-cover flex-shrink-0"
                     />
                   ) : (
