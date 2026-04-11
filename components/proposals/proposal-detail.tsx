@@ -10,7 +10,7 @@ import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, ParticipationFormat, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS } from '@/types';
 import { CommentReactions } from '@/components/ui/comment-reactions';
-import { MentionTextarea, renderMentions } from '@/components/ui/mention-textarea';
+import { MentionTextarea, renderMentions, encodementions } from '@/components/ui/mention-textarea';
 
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
@@ -119,6 +119,8 @@ export function ProposalDetail({ proposalId }: Props) {
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
   const commentImageRef = useRef<HTMLInputElement>(null);
   const replyImageRef = useRef<HTMLInputElement>(null);
+  const commentMentionsRef = useRef<{ name: string; id: string }[]>([]);
+  const replyMentionsRef = useRef<{ name: string; id: string }[]>([]);
 
   useEffect(() => {
     fetchProposal();
@@ -285,7 +287,9 @@ export function ProposalDetail({ proposalId }: Props) {
 
   async function handleComment(e: React.FormEvent, parentCommentId?: string) {
     e.preventDefault();
-    const body = parentCommentId ? replyBody.trim() : commentText.trim();
+    const rawBody = parentCommentId ? replyBody.trim() : commentText.trim();
+    const mentions = parentCommentId ? replyMentionsRef.current : commentMentionsRef.current;
+    const body = mentions.length > 0 ? encodementions(rawBody, mentions) : rawBody;
     const imageFile = parentCommentId ? replyImageFile : commentImageFile;
     if (!body && !imageFile) return;
     setSubmittingComment(true);
@@ -322,6 +326,7 @@ export function ProposalDetail({ proposalId }: Props) {
           setReplyBody('');
           setReplyingTo(null);
           clearCommentImage(true);
+          replyMentionsRef.current = [];
           setComments(prev => prev.map(c =>
             c.id === parentCommentId
               ? { ...c, replies: [...(c.replies || []), newComment] }
@@ -330,6 +335,7 @@ export function ProposalDetail({ proposalId }: Props) {
         } else {
           setCommentText('');
           clearCommentImage(false);
+          commentMentionsRef.current = [];
           setComments(prev => [...prev, newComment]);
         }
       }
@@ -864,6 +870,7 @@ export function ProposalDetail({ proposalId }: Props) {
                 placeholder={locale === 'vi' ? 'Viết bình luận... (gõ @ để tag thành viên)' : 'Write a comment... (type @ to mention)'}
                 className="w-full px-4 py-2.5 border-0 rounded-t-lg focus:ring-0 focus:outline-none min-h-[80px]"
                 maxLength={2000}
+                mentionsRef={commentMentionsRef}
               />
               {commentImagePreview && (
                 <div className="relative mx-4 mb-2 inline-block">
@@ -1061,6 +1068,7 @@ export function ProposalDetail({ proposalId }: Props) {
                       placeholder={locale === 'vi' ? 'Viết trả lời... (gõ @ để tag)' : 'Write a reply... (type @ to mention)'}
                       className="w-full px-3 py-2 border-0 rounded-t-lg text-sm focus:ring-0 focus:outline-none min-h-[60px]"
                       maxLength={2000}
+                      mentionsRef={replyMentionsRef}
                     />
                     {replyImagePreview && (
                       <div className="relative mx-3 mb-2 inline-block">

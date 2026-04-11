@@ -9,13 +9,36 @@ interface MentionMember {
   abg_class: string | null;
 }
 
+interface MentionEntry {
+  name: string;
+  id: string;
+}
+
 interface MentionTextareaProps {
+  /** Display text shown in textarea (with @Name, not @[Name](id)) */
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   maxLength?: number;
   className?: string;
   disabled?: boolean;
+  /** Ref to get the mentions map for encoding on submit */
+  mentionsRef?: React.MutableRefObject<MentionEntry[]>;
+}
+
+/**
+ * Convert display text + mentions list into the encoded format for storage.
+ * Replaces each `@Name` with `@[Name](member_id)`.
+ */
+export function encodementions(displayText: string, mentions: MentionEntry[]): string {
+  let result = displayText;
+  // Sort by name length descending to avoid partial replacements
+  const sorted = [...mentions].sort((a, b) => b.name.length - a.name.length);
+  for (const m of sorted) {
+    // Replace all occurrences of @Name with @[Name](id)
+    result = result.replaceAll(`@${m.name}`, `@[${m.name}](${m.id})`);
+  }
+  return result;
 }
 
 export function MentionTextarea({
@@ -25,16 +48,24 @@ export function MentionTextarea({
   maxLength = 2000,
   className = '',
   disabled = false,
+  mentionsRef,
 }: MentionTextareaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [query, setQuery] = useState('');
   const [members, setMembers] = useState<MentionMember[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mentionStart, setMentionStart] = useState(-1);
   const [loading, setLoading] = useState(false);
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mentionsListRef = useRef<MentionEntry[]>([]);
+
+  // Keep external ref in sync
+  useEffect(() => {
+    if (mentionsRef) {
+      mentionsRef.current = mentionsListRef.current;
+    }
+  });
 
   // Debounced member search
   const searchMembers = useCallback((q: string) => {
@@ -69,18 +100,14 @@ export function MentionTextarea({
     const cursorPos = e.target.selectionStart;
     const textBeforeCursor = newValue.slice(0, cursorPos);
 
-    // Find the last @ that starts a mention (not inside an existing mention)
     const lastAtIndex = textBeforeCursor.lastIndexOf('@');
 
     if (lastAtIndex >= 0) {
-      // Check it's at start or preceded by whitespace
       const charBefore = lastAtIndex > 0 ? textBeforeCursor[lastAtIndex - 1] : ' ';
       if (charBefore === ' ' || charBefore === '\n' || lastAtIndex === 0) {
         const mentionQuery = textBeforeCursor.slice(lastAtIndex + 1);
-        // Only show dropdown if no space/newline after @, and not too long
         if (mentionQuery.length <= 30 && !/[\n]/.test(mentionQuery)) {
           setMentionStart(lastAtIndex);
-          setQuery(mentionQuery);
           setShowDropdown(true);
           setSelectedIndex(0);
           searchMembers(mentionQuery);
@@ -92,7 +119,7 @@ export function MentionTextarea({
     setShowDropdown(false);
   };
 
-  // Insert mention
+  // Insert mention as display text only
   const insertMention = useCallback((member: MentionMember) => {
     const textarea = textareaRef.current;
     if (!textarea || mentionStart < 0) return;
@@ -100,20 +127,24 @@ export function MentionTextarea({
     const before = value.slice(0, mentionStart);
     const cursorPos = textarea.selectionStart;
     const after = value.slice(cursorPos);
-    const mentionText = `@[${member.name}](${member.id}) `;
-    const newValue = before + mentionText + after;
+    const displayText = `@${member.name} `;
+    const newValue = before + displayText + after;
+
+    // Track this mention
+    if (!mentionsListRef.current.find(m => m.id === member.id)) {
+      mentionsListRef.current = [...mentionsListRef.current, { name: member.name, id: member.id }];
+      if (mentionsRef) mentionsRef.current = mentionsListRef.current;
+    }
 
     onChange(newValue);
     setShowDropdown(false);
-    setQuery('');
 
-    // Restore cursor position after the mention
     requestAnimationFrame(() => {
-      const newCursorPos = before.length + mentionText.length;
+      const newCursorPos = before.length + displayText.length;
       textarea.focus();
       textarea.setSelectionRange(newCursorPos, newCursorPos);
     });
-  }, [value, mentionStart, onChange]);
+  }, [value, mentionStart, onChange, mentionsRef]);
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -179,7 +210,7 @@ export function MentionTextarea({
                     i === selectedIndex ? 'bg-blue-50 text-blue-900' : 'hover:bg-gray-50 text-gray-700'
                   }`}
                   onMouseDown={(e) => {
-                    e.preventDefault(); // Prevent textarea blur
+                    e.preventDefault();
                     insertMention(member);
                   }}
                   onMouseEnter={() => setSelectedIndex(i)}
@@ -222,11 +253,9 @@ export function renderMentions(text: string): React.ReactNode[] {
   let match;
 
   while ((match = mentionRegex.exec(text)) !== null) {
-    // Text before mention
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index));
     }
-    // Mention span
     const name = match[1];
     parts.push(
       <span key={match.index} className="text-blue-600 font-medium">
@@ -236,7 +265,6 @@ export function renderMentions(text: string): React.ReactNode[] {
     lastIndex = match.index + match[0].length;
   }
 
-  // Remaining text
   if (lastIndex < text.length) {
     parts.push(text.slice(lastIndex));
   }
@@ -245,7 +273,7 @@ export function renderMentions(text: string): React.ReactNode[] {
 }
 
 /**
- * Extract mentioned member IDs from comment text.
+ * Extract mentioned member IDs from encoded comment text.
  */
 export function extractMentionedIds(text: string): string[] {
   const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
