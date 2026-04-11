@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityEvent, CommunityProposal, EventCategory, EVENT_CATEGORY_LABELS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, ProposalCategory, ProposalGenre } from '@/types';
+import { CommunityEvent, CommunityProposal, EventCategory, EVENT_CATEGORY_LABELS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS, ParticipationFormat, ProposalCategory, ProposalGenre } from '@/types';
 
 type TabKey = 'events' | 'proposals' | 'past';
 
@@ -418,6 +418,10 @@ function ProposalRow({ proposal, locale }: { proposal: CommunityProposal; locale
           <h3 className="font-semibold text-gray-900 text-base truncate">{proposal.title}</h3>
           <p className="text-sm text-gray-500 mt-0.5">
             {proposal.author_name || 'Unknown'}{proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
+            {proposal.location && <span> · 📍 {proposal.location}</span>}
+            {proposal.participation_format && (
+              <span> · {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.icon} {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.participation_format}</span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-4 ml-4 flex-shrink-0">
