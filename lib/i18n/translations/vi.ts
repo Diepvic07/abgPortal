@@ -1307,6 +1307,7 @@ export const vi: Translations = {
     enableFirst: 'Bật thông báo đẩy trước để cấu hình tùy chọn',
     markAllRead: 'Đánh dấu đã đọc',
     empty: 'Chưa có thông báo',
-    viewSettings: 'Cài đặt thông báo',
+    viewAll: 'Xem tất cả',
+    viewSettings: 'Cài đặt',
   },
 } as const;

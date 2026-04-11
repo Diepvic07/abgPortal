@@ -256,17 +256,22 @@ export function NotificationBell() {
           </div>
 
           {/* Footer */}
-          {notifications.length > 0 && (
-            <div className="border-t border-gray-100">
-              <Link
-                href="/profile/notifications"
-                className="block px-4 py-2.5 text-xs text-center text-blue-600 hover:bg-gray-50 font-medium"
-                onClick={() => setIsOpen(false)}
-              >
-                {t.notifications?.viewSettings || 'Cài đặt thông báo'}
-              </Link>
-            </div>
-          )}
+          <div className="border-t border-gray-100 flex divide-x divide-gray-100">
+            <Link
+              href="/notifications"
+              className="flex-1 block px-4 py-2.5 text-xs text-center text-blue-600 hover:bg-gray-50 font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              {t.notifications?.viewAll || 'Xem tất cả'}
+            </Link>
+            <Link
+              href="/profile/notifications"
+              className="flex-1 block px-4 py-2.5 text-xs text-center text-gray-500 hover:bg-gray-50 font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              {t.notifications?.viewSettings || 'Cài đặt'}
+            </Link>
+          </div>
         </div>
       )}
     </div>

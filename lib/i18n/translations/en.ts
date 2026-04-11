@@ -1328,7 +1328,8 @@ export const en = {
     enableFirst: 'Enable push notifications first to configure preferences',
     markAllRead: 'Mark all as read',
     empty: 'No notifications yet',
-    viewSettings: 'Notification settings',
+    viewAll: 'View all',
+    viewSettings: 'Settings',
   },
 } as const;
 
