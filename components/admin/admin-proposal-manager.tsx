@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, ProposalStatus, PROPOSAL_CATEGORY_LABELS } from '@/types';
 
@@ -132,6 +133,14 @@ export function AdminProposalManager() {
                 </div>
 
                 <div className="flex flex-col gap-2 shrink-0">
+                  {/* Edit */}
+                  <Link
+                    href={`/proposals/${proposal.slug || proposal.id}`}
+                    className="text-xs px-3 py-1.5 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 text-center"
+                  >
+                    ✏️ {t.admin.actions.edit || 'Edit'}
+                  </Link>
+
                   {/* Pin/Unpin */}
                   <button
                     onClick={() => handleAction(proposal.id, 'pin')}
