@@ -3,7 +3,7 @@
   "short_name": "ABG Connect",
   "description": "Connect with fellow ABG Alumni members",
   "start_url": "/",
-  "display": "browser",
+  "display": "standalone",
   "background_color": "#f4f4f7",
   "theme_color": "#16a34a",
   "icons": [
