@@ -11,6 +11,8 @@ export interface PushPayload {
   body: string;
   url?: string;
   icon?: string;
+  /** Original interpolation data for locale-aware re-generation */
+  _data?: Record<string, string>;
 }
 
 interface SubscriptionWithPrefs {
@@ -228,7 +230,9 @@ async function sendToEndpoint(
   };
 
   try {
-    await webPush.sendNotification(pushSubscription, JSON.stringify(payload));
+    // Strip internal _data before sending to browser
+    const { _data: _, ...sendPayload } = payload;
+    await webPush.sendNotification(pushSubscription, JSON.stringify(sendPayload));
 
     // Update last_used_at on success
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -252,14 +256,15 @@ async function sendToEndpoint(
 // --- Locale-aware message generation ---
 
 function extractMessageData(payload: PushPayload): Record<string, string> {
-  return { title: payload.title, body: payload.body };
+  // Use original interpolation data if available, fall back to title/body
+  return payload._data || { title: payload.title, body: payload.body };
 }
 
 export function getPushMessage(
   type: NotificationType,
   data: Record<string, string>,
   locale: Locale
-): Pick<PushPayload, 'title' | 'body'> {
+): Pick<PushPayload, 'title' | 'body'> & { _data: Record<string, string> } {
   const t = getTranslations(locale);
 
   switch (type) {
@@ -267,18 +272,21 @@ export function getPushMessage(
       return {
         title: t.push.connectionRequestTitle,
         body: interpolate(t.push.connectionRequestBody, data),
+        _data: data,
       };
     case 'new_event':
       return {
         title: interpolate(t.push.newEventTitle, data),
         body: t.push.newEventBody,
+        _data: data,
       };
     case 'new_proposal':
       return {
         title: interpolate(t.push.newProposalTitle, data),
         body: interpolate(t.push.newProposalBody, data),
+        _data: data,
       };
     default:
-      return { title: data.title || 'ABG Alumni Connect', body: data.body || '' };
+      return { title: data.title || 'ABG Alumni Connect', body: data.body || '', _data: data };
   }
 }
