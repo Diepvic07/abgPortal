@@ -187,10 +187,46 @@ export function NewProposalForm() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* Step 1: Category */}
+        {/* Step 1: Title */}
+        <div className="bg-gray-50 rounded-xl p-5">
+          <label htmlFor="title" className="block text-base font-semibold text-gray-900 mb-1">
+            1. {vi ? 'Tên hoạt động' : 'Activity name'} *
+          </label>
+          <p className="text-sm text-gray-500 mb-2">{vi ? 'Đặt tên ngắn gọn, dễ hiểu' : 'Short, clear name'}</p>
+          <input
+            id="title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={vi ? 'VD: Gây quỹ từ thiện Tết 2026' : 'e.g. Charity Fund for Tet 2026'}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            maxLength={200}
+            required
+          />
+        </div>
+
+        {/* Step 2: What — the main description */}
+        <div className="bg-gray-50 rounded-xl p-5">
+          <label htmlFor="what" className="block text-base font-semibold text-gray-900 mb-1">
+            2. {vi ? 'Bạn muốn làm gì?' : 'What do you want to do?'} *
+          </label>
+          <p className="text-sm text-gray-500 mb-2">{vi ? 'Mô tả ngắn gọn ý tưởng (2-3 câu là đủ)' : 'Brief description (2-3 sentences is enough)'}</p>
+          <textarea
+            id="what"
+            value={what}
+            onChange={(e) => setWhat(e.target.value)}
+            placeholder={vi
+              ? 'VD: Tổ chức buổi gây quỹ để tặng quà Tết cho 100 em nhỏ vùng cao Sapa. Dự kiến gây quỹ 50 triệu VNĐ qua đóng góp của thành viên ABG.'
+              : 'e.g. Organize a fundraiser to gift Tet presents to 100 children in Sapa highlands.'}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-h-[80px]"
+            required
+          />
+        </div>
+
+        {/* Step 3: Category */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label className="block text-base font-semibold text-gray-900 mb-3">
-            1. {vi ? 'Loại hoạt động' : 'Activity type'}
+            3. {vi ? 'Loại hoạt động' : 'Activity type'}
           </label>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
@@ -210,10 +246,10 @@ export function NewProposalForm() {
           </div>
         </div>
 
-        {/* Step 2: Genre / Topic */}
+        {/* Step 4: Genre / Topic */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label className="block text-base font-semibold text-gray-900 mb-3">
-            2. {vi ? 'Chủ đề' : 'Topic'}
+            4. {vi ? 'Chủ đề' : 'Topic'}
           </label>
           <div className="flex flex-wrap gap-2">
             {PROPOSAL_GENRES.map((g) => (
@@ -233,11 +269,11 @@ export function NewProposalForm() {
           </div>
         </div>
 
-        {/* Step 3: Location + Participation Format */}
+        {/* Step 5: Location + Participation Format */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 rounded-xl p-5">
             <label className="block text-base font-semibold text-gray-900 mb-3">
-              3. {vi ? 'Địa điểm' : 'Location'}
+              5. {vi ? 'Địa điểm' : 'Location'}
             </label>
             <div className="flex flex-wrap gap-2 mb-2">
               {LOCATION_PRESETS.map((loc) => (
@@ -299,42 +335,6 @@ export function NewProposalForm() {
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Step 4: Title */}
-        <div className="bg-gray-50 rounded-xl p-5">
-          <label htmlFor="title" className="block text-base font-semibold text-gray-900 mb-1">
-            4. {vi ? 'Tên hoạt động' : 'Activity name'} *
-          </label>
-          <p className="text-sm text-gray-500 mb-2">{vi ? 'Đặt tên ngắn gọn, dễ hiểu' : 'Short, clear name'}</p>
-          <input
-            id="title"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder={vi ? 'VD: Gây quỹ từ thiện Tết 2026' : 'e.g. Charity Fund for Tet 2026'}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-            maxLength={200}
-            required
-          />
-        </div>
-
-        {/* Step 5: What — the main description */}
-        <div className="bg-gray-50 rounded-xl p-5">
-          <label htmlFor="what" className="block text-base font-semibold text-gray-900 mb-1">
-            5. {vi ? 'Bạn muốn làm gì?' : 'What do you want to do?'} *
-          </label>
-          <p className="text-sm text-gray-500 mb-2">{vi ? 'Mô tả ngắn gọn ý tưởng (2-3 câu là đủ)' : 'Brief description (2-3 sentences is enough)'}</p>
-          <textarea
-            id="what"
-            value={what}
-            onChange={(e) => setWhat(e.target.value)}
-            placeholder={vi
-              ? 'VD: Tổ chức buổi gây quỹ để tặng quà Tết cho 100 em nhỏ vùng cao Sapa. Dự kiến gây quỹ 50 triệu VNĐ qua đóng góp của thành viên ABG.'
-              : 'e.g. Organize a fundraiser to gift Tet presents to 100 children in Sapa highlands.'}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-h-[80px]"
-            required
-          />
         </div>
 
         {/* Step 6: Why */}
