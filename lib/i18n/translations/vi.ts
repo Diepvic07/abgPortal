@@ -1301,5 +1301,8 @@ export const vi: Translations = {
     proposalDescription: 'Khi có đề xuất mới được tạo',
     saved: 'Đã lưu cài đặt',
     enableFirst: 'Bật thông báo đẩy trước để cấu hình tùy chọn',
+    markAllRead: 'Đánh dấu đã đọc',
+    empty: 'Chưa có thông báo',
+    viewSettings: 'Cài đặt thông báo',
   },
 } as const;

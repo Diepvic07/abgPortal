@@ -1322,6 +1322,9 @@ export const en = {
     proposalDescription: 'When a new proposal is created',
     saved: 'Preferences saved',
     enableFirst: 'Enable push notifications first to configure preferences',
+    markAllRead: 'Mark all as read',
+    empty: 'No notifications yet',
+    viewSettings: 'Notification settings',
   },
 } as const;
 

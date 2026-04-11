@@ -13,6 +13,7 @@ import { MemberAvatar } from '@/components/ui/member-avatar';
 import { MembershipBadge } from '@/components/ui/membership-badge';
 import { isAdmin } from '@/lib/admin-utils';
 import { PaymentInfoModal } from '@/components/ui/payment-info-modal';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 
 export function HeaderNavigation() {
   const { t } = useTranslation();
@@ -148,6 +149,7 @@ export function HeaderNavigation() {
               {t.nav.faq}
             </Link>
             <LanguageSwitcherDropdown />
+            {status === 'authenticated' && <NotificationBell />}
             <div className="h-6 w-px bg-white/20 mx-2" />
             {status === 'authenticated' ? (
               member && !isLoadingMember ? (

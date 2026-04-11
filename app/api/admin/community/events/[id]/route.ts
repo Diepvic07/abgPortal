@@ -6,6 +6,7 @@ import { isAdminAsync } from '@/lib/admin-utils-server';
 import { getEventById, updateEvent, deleteEvent } from '@/lib/supabase-events';
 import { z } from 'zod';
 import { sendPushToAllMembers, getPushMessage } from '@/lib/push-notification';
+import { createInAppNotifications } from '@/lib/in-app-notifications';
 
 const EventCategory = z.enum(['abg_talks', 'fieldtrip', 'networking', 'learning', 'webinar', 'event', 'community_support', 'abg_business_connect', 'other']);
 const EventStatus = z.enum(['draft', 'published', 'cancelled', 'completed']);
@@ -66,15 +67,25 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const updated = await updateEvent(id, parsed.data);
 
-    // Send push notification when event transitions to published
+    // Send notifications when event transitions to published
     if (event.status !== 'published' && parsed.data.status === 'published') {
       after(async () => {
+        const message = getPushMessage('new_event', { eventTitle: updated.title || parsed.data.title || '' }, 'vi');
+        const url = `/events/${id}`;
+
         try {
-          const message = getPushMessage('new_event', { eventTitle: updated.title || parsed.data.title || '' }, 'vi');
-          await sendPushToAllMembers('new_event', {
-            ...message,
-            url: `/events/${id}`,
+          await createInAppNotifications({
+            type: 'new_event',
+            title: message.title,
+            body: message.body,
+            url,
           });
+        } catch (err) {
+          console.error('[in-app-notif] Event notification failed:', err);
+        }
+
+        try {
+          await sendPushToAllMembers('new_event', { ...message, url });
         } catch (pushError) {
           console.error('[push] Event publish notification failed:', pushError);
         }

@@ -5,6 +5,7 @@ import { createProposal, getProposals, upsertCommitment } from '@/lib/supabase-c
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { ProposalCategory, ProposalGenre, CommitmentLevel, ParticipationFormat, PROPOSAL_GENRES } from '@/types';
 import { sendPushToAllMembers, getPushMessage } from '@/lib/push-notification';
+import { createInAppNotifications } from '@/lib/in-app-notifications';
 
 const PROPOSAL_RATE_LIMIT_MINUTES = 1;
 
@@ -88,13 +89,29 @@ export async function POST(request: NextRequest) {
       commitment_level: proposerCommitment,
     });
 
-    // Send push notification to all members (exclude proposer, runs after response)
+    // Send notifications to all members (exclude proposer, runs after response)
     after(async () => {
+      const message = getPushMessage('new_proposal', { proposalTitle: title, proposerName: member.name }, 'vi');
+      const url = `/proposals/${proposal.id}`;
+
+      // In-app notifications (bell icon)
       try {
-        const message = getPushMessage('new_proposal', { proposalTitle: title, proposerName: member.name }, 'vi');
+        await createInAppNotifications({
+          type: 'new_proposal',
+          title: message.title,
+          body: message.body,
+          url,
+          excludeMemberId: member.id,
+        });
+      } catch (err) {
+        console.error('[in-app-notif] Proposal notification failed:', err);
+      }
+
+      // Browser push notifications
+      try {
         await sendPushToAllMembers('new_proposal', {
           ...message,
-          url: `/proposals/${proposal.id}`,
+          url,
         }, member.id);
       } catch (pushError) {
         console.error('[push] Proposal notification failed:', pushError);

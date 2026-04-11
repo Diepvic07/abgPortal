@@ -5,6 +5,7 @@ import { getMemberById, createContactRequest, getContactRequestsByRequesterAndTa
 import { sendContactRequestEmail } from "@/lib/resend";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { sendPushToMember, getPushMessage } from "@/lib/push-notification";
+import { createInAppNotifications } from "@/lib/in-app-notifications";
 import type { Locale } from "@/lib/i18n/utils";
 
 export async function POST(request: NextRequest) {
@@ -95,11 +96,24 @@ export async function POST(request: NextRequest) {
     // Track contact request sent
     captureServerEvent(member.id, 'contact_request_sent', { target_id: target.id });
 
-    // Send push notification (non-blocking, runs after response)
+    // Send notifications (non-blocking, runs after response)
     after(async () => {
+      const locale = (target.locale || 'vi') as Locale;
+      const message = getPushMessage('connection_request', { requesterName: member.name }, locale);
+
       try {
-        const locale = (target.locale || 'vi') as Locale;
-        const message = getPushMessage('connection_request', { requesterName: member.name }, locale);
+        await createInAppNotifications({
+          type: 'connection_request',
+          title: message.title,
+          body: message.body,
+          url: '/profile',
+          targetMemberId: target.id,
+        });
+      } catch (err) {
+        console.error("[in-app-notif] Connection request notification failed:", err);
+      }
+
+      try {
         await sendPushToMember(target.id, 'connection_request', {
           ...message,
           url: '/profile',
