@@ -229,6 +229,7 @@ export async function updateProposal(id: string, data: Partial<{
   title: string;
   description: string;
   category: ProposalCategory;
+  genre: string;
   target_date: string | null;
   status: ProposalStatus;
   is_pinned: boolean;
@@ -236,6 +237,9 @@ export async function updateProposal(id: string, data: Partial<{
   selected_by_member_id: string | null;
   completed_at: string | null;
   admin_note: string | null;
+  location: string | null;
+  participation_format: string;
+  tags: string[];
 }>): Promise<CommunityProposal> {
   const supabase = createServerSupabaseClient();
 
