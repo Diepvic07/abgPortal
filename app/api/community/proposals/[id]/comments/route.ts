@@ -132,6 +132,51 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           }
         }
       }
+
+      // 3. Notify @mentioned members (skip those already notified)
+      const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+      const mentionedIds: string[] = [];
+      let mentionMatch;
+      while ((mentionMatch = mentionRegex.exec(text)) !== null) {
+        const mentionedId = mentionMatch[2];
+        if (mentionedId !== member.id && !notifiedMemberIds.has(mentionedId)) {
+          mentionedIds.push(mentionedId);
+          notifiedMemberIds.add(mentionedId);
+        }
+      }
+
+      if (mentionedIds.length > 0) {
+        // Fetch locales for mentioned members
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: mentionedMembers } = await (supabase.from('members') as any)
+          .select('id, locale')
+          .in('id', mentionedIds);
+
+        const localeMap = new Map((mentionedMembers || []).map((m: { id: string; locale: string | null }) => [m.id, m.locale]));
+
+        for (const mentionedId of mentionedIds) {
+          const locale = ((localeMap.get(mentionedId)) || 'vi') as Locale;
+          const message = getPushMessage('proposal_comment', { commenterName: member.name, commentPreview }, locale);
+
+          try {
+            await createInAppNotifications({
+              type: 'proposal_comment',
+              title: message.title,
+              body: message.body,
+              url,
+              targetMemberId: mentionedId,
+            });
+          } catch (err) {
+            console.error('[in-app-notif] Mention notification failed:', err);
+          }
+
+          try {
+            await sendPushToMember(mentionedId, 'proposal_comment', { ...message, url });
+          } catch (err) {
+            console.error('[push] Mention notification failed:', err);
+          }
+        }
+      }
     });
 
     return successResponse({ comment }, 201);

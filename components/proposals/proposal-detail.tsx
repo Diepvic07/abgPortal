@@ -10,6 +10,7 @@ import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, ParticipationFormat, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS } from '@/types';
 import { CommentReactions } from '@/components/ui/comment-reactions';
+import { MentionTextarea, renderMentions } from '@/components/ui/mention-textarea';
 
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
@@ -857,10 +858,10 @@ export function ProposalDetail({ proposalId }: Props) {
         {session ? (
           <form onSubmit={handleComment} className="mb-6">
             <div className="rounded-lg border border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500">
-              <textarea
+              <MentionTextarea
                 value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder={locale === 'vi' ? 'Viết bình luận...' : 'Write a comment...'}
+                onChange={setCommentText}
+                placeholder={locale === 'vi' ? 'Viết bình luận... (gõ @ để tag thành viên)' : 'Write a comment... (type @ to mention)'}
                 className="w-full px-4 py-2.5 border-0 rounded-t-lg focus:ring-0 focus:outline-none min-h-[80px]"
                 maxLength={2000}
               />
@@ -947,7 +948,7 @@ export function ProposalDetail({ proposalId }: Props) {
                   </div>
                 ) : (
                   <>
-                    <p className="text-gray-700 text-sm whitespace-pre-wrap">{c.body}</p>
+                    <p className="text-gray-700 text-sm whitespace-pre-wrap">{renderMentions(c.body)}</p>
                     {c.image_url && (
                       <a href={c.image_url} target="_blank" rel="noopener noreferrer" className="mt-2 block">
                         <img src={c.image_url} alt="" className="max-h-60 rounded-lg border border-gray-200 object-cover" />
@@ -1023,7 +1024,7 @@ export function ProposalDetail({ proposalId }: Props) {
                         </div>
                       ) : (
                         <>
-                          <p className="text-gray-700 text-sm whitespace-pre-wrap">{reply.body}</p>
+                          <p className="text-gray-700 text-sm whitespace-pre-wrap">{renderMentions(reply.body)}</p>
                           {reply.image_url && (
                             <a href={reply.image_url} target="_blank" rel="noopener noreferrer" className="mt-1.5 block">
                               <img src={reply.image_url} alt="" className="max-h-48 rounded-lg border border-gray-200 object-cover" />
@@ -1054,13 +1055,12 @@ export function ProposalDetail({ proposalId }: Props) {
               {replyingTo === c.id && (
                 <form onSubmit={(e) => handleComment(e, c.id)} className="ml-8 mt-2 pl-4">
                   <div className="rounded-lg border border-gray-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500">
-                    <textarea
+                    <MentionTextarea
                       value={replyBody}
-                      onChange={(e) => setReplyBody(e.target.value)}
-                      placeholder={locale === 'vi' ? 'Viết trả lời...' : 'Write a reply...'}
+                      onChange={setReplyBody}
+                      placeholder={locale === 'vi' ? 'Viết trả lời... (gõ @ để tag)' : 'Write a reply... (type @ to mention)'}
                       className="w-full px-3 py-2 border-0 rounded-t-lg text-sm focus:ring-0 focus:outline-none min-h-[60px]"
                       maxLength={2000}
-                      autoFocus
                     />
                     {replyImagePreview && (
                       <div className="relative mx-3 mb-2 inline-block">
