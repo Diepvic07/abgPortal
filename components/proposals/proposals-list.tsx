@@ -124,80 +124,45 @@ export function ProposalsList() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="divide-y divide-gray-100">
           {proposals.map((proposal) => {
-            const colors = CATEGORY_COLORS[proposal.category] || CATEGORY_COLORS.other;
+            const catLabel = PROPOSAL_CATEGORY_LABELS[proposal.category]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.category;
+            const fmtLabel = proposal.participation_format
+              ? PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.participation_format
+              : '';
             return (
               <Link key={proposal.id} href={`/proposals/${proposal.slug}`}>
-                <div className={`rounded-xl border border-l-4 overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${
-                  proposal.is_pinned ? 'border-yellow-300 bg-yellow-50/20 border-l-yellow-400' : `border-gray-200 ${colors.border}`
-                }`}>
-                  {/* Card header with category accent */}
-                  <div className={`px-5 pt-5 pb-3 ${proposal.is_pinned ? '' : colors.bg}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {proposal.is_pinned && (
-                          <span className="text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">
-                            📌 {locale === 'vi' ? 'Ghim' : 'Pinned'}
-                          </span>
-                        )}
-                        <span className="text-xs text-gray-500">
-                          {proposal.location && `${proposal.location} · `}
-                          {PROPOSAL_CATEGORY_LABELS[proposal.category]?.icon} {PROPOSAL_CATEGORY_LABELS[proposal.category]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.category}
-                        </span>
-                      </div>
-                      {proposal.participation_format && (
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          proposal.participation_format === 'online' ? 'bg-green-100 text-green-700' :
-                          proposal.participation_format === 'hybrid' ? 'bg-purple-100 text-purple-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                          {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.participation_format}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="font-semibold text-gray-900 text-lg leading-tight line-clamp-2">
+                <div className="flex items-start justify-between py-5 px-2 hover:bg-gray-50 transition-colors rounded-lg">
+                  {/* Left side */}
+                  <div className="flex-1 min-w-0">
+                    {proposal.is_pinned && (
+                      <span className="text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full mr-2">
+                        📌 {locale === 'vi' ? 'Ghim' : 'Pinned'}
+                      </span>
+                    )}
+                    <p className="text-sm text-gray-500 mb-1">
+                      {proposal.location ? `${proposal.location} - ` : ''}{catLabel}
+                    </p>
+                    <h3 className="text-xl font-bold text-gray-900 leading-tight line-clamp-2">
                       {proposal.title}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {proposal.author_name || 'Unknown'}{proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
+                    <p className="text-sm text-blue-600 mt-1">
+                      {proposal.author_name || 'Unknown'}{proposal.author_abg_class ? ` - ${proposal.author_abg_class}` : ''}
                     </p>
                   </div>
 
-                  {/* Tags */}
-                  {proposal.tags && proposal.tags.length > 0 && (
-                    <div className="px-5 pb-2 flex flex-wrap gap-1.5">
-                      {proposal.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Description */}
-                  <div className="px-5 pb-3">
-                    <p className="text-gray-600 text-sm line-clamp-2">{proposal.description}</p>
-                  </div>
-
-                  {/* Inline reactions footer — Facebook style */}
-                  <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <span className="flex -space-x-1 text-sm">
-                        <span>❤️</span><span>🙌</span><span>🚀</span>
+                  {/* Right side */}
+                  <div className="flex flex-col items-end gap-1 ml-4 shrink-0 text-right">
+                    {fmtLabel && (
+                      <span className="text-sm font-medium text-gray-700">{fmtLabel}</span>
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        {proposal.commitment_count}
                       </span>
-                      <span className="text-sm font-semibold text-gray-700 ml-1">{proposal.commitment_score}</span>
-                      <span className="text-xs text-gray-500">· {proposal.commitment_count} {locale === 'vi' ? 'tham gia' : 'joined'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
                       {proposal.comment_count > 0 && (
-                        <span>💬 {proposal.comment_count}</span>
-                      )}
-                      {proposal.target_date && (
-                        <span>📅 {proposal.target_date}</span>
+                        <span className="text-xl">💬</span>
                       )}
                     </div>
                   </div>
