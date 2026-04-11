@@ -55,8 +55,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Send notifications after response
     after(async () => {
-      const commentPreview = text
-        ? text.length > 80 ? text.slice(0, 80) + '...' : text
+      // Strip mention markup @[Name](id) → @Name for notification preview
+      const cleanText = text.replace(/@\[([^\]]+)\]\([^)]+\)/g, '@$1');
+      const commentPreview = cleanText
+        ? cleanText.length > 80 ? cleanText.slice(0, 80) + '...' : cleanText
         : '(image)';
       const url = `/proposals/${id}`;
       const notifiedMemberIds = new Set<string>();

@@ -14,6 +14,11 @@ interface Notification {
   created_at: string;
 }
 
+/** Strip @[Name](id) → @Name for display */
+function stripMentionMarkup(text: string): string {
+  return text.replace(/@\[([^\]]+)\]\([^)]+\)/g, '@$1');
+}
+
 export function NotificationList() {
   const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -188,7 +193,7 @@ export function NotificationList() {
                   <p className={`text-sm ${!n.is_read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
                     {n.title}
                   </p>
-                  <p className="text-sm text-gray-500 mt-0.5">{n.body}</p>
+                  <p className="text-sm text-gray-500 mt-0.5">{stripMentionMarkup(n.body)}</p>
                   <p className="text-xs text-gray-400 mt-1">{timeAgo(n.created_at)}</p>
                 </div>
                 <div className="flex items-start gap-2 flex-shrink-0">

@@ -230,7 +230,7 @@ export function NotificationBell() {
                       <p className={`text-sm leading-tight ${!n.is_read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
                         {n.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">{n.body}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 truncate">{n.body.replace(/@\[([^\]]+)\]\([^)]+\)/g, '@$1')}</p>
                       <p className="text-[10px] text-gray-400 mt-1">{timeAgo(n.created_at)}</p>
                     </div>
                     {!n.is_read && (
