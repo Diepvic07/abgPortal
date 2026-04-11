@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS } from '@/types';
+import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, ParticipationFormat, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS } from '@/types';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 
 const AVATAR_COLORS = [
@@ -105,6 +105,12 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editCategory, setEditCategory] = useState('');
   const [editGenre, setEditGenre] = useState('');
   const [editTargetDate, setEditTargetDate] = useState('');
+  const [editLocation, setEditLocation] = useState('');
+  const [editCustomLocation, setEditCustomLocation] = useState('');
+  const [editParticipationFormat, setEditParticipationFormat] = useState<ParticipationFormat>('offline');
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [editTagInput, setEditTagInput] = useState('');
+  const [editGeneratingTags, setEditGeneratingTags] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [replyImageFile, setReplyImageFile] = useState<File | null>(null);
@@ -373,6 +379,17 @@ export function ProposalDetail({ proposalId }: Props) {
     setEditCategory(proposal.category);
     setEditGenre(proposal.genre || 'other');
     setEditTargetDate(proposal.target_date || '');
+    const loc = proposal.location || '';
+    if (loc === 'Hà Nội' || loc === 'HCM' || loc === '') {
+      setEditLocation(loc);
+      setEditCustomLocation('');
+    } else {
+      setEditLocation('__custom__');
+      setEditCustomLocation(loc);
+    }
+    setEditParticipationFormat((proposal.participation_format as ParticipationFormat) || 'offline');
+    setEditTags(proposal.tags || []);
+    setEditTagInput('');
     setEditError(null);
     setIsEditing(true);
   }
@@ -391,6 +408,9 @@ export function ProposalDetail({ proposalId }: Props) {
           category: editCategory,
           genre: editGenre,
           target_date: editTargetDate || null,
+          location: editLocation === '__custom__' ? editCustomLocation.trim() : editLocation || null,
+          participation_format: editParticipationFormat,
+          tags: editTags,
         }),
       });
       if (!res.ok) {
@@ -513,6 +533,105 @@ export function ProposalDetail({ proposalId }: Props) {
                 />
               </label>
             </div>
+
+            {/* Location + Format row */}
+            <div className="flex flex-wrap items-center gap-4 mt-3">
+              <label className="text-sm text-gray-600 flex items-center gap-1">
+                {locale === 'vi' ? 'Địa điểm' : 'Location'}:
+                <select
+                  value={editLocation}
+                  onChange={e => { setEditLocation(e.target.value); if (e.target.value !== '__custom__') setEditCustomLocation(''); }}
+                  className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">{locale === 'vi' ? '-- Chọn --' : '-- Select --'}</option>
+                  <option value="Hà Nội">Hà Nội</option>
+                  <option value="HCM">HCM</option>
+                  <option value="__custom__">{locale === 'vi' ? 'Khác...' : 'Other...'}</option>
+                </select>
+              </label>
+              {editLocation === '__custom__' && (
+                <input
+                  type="text"
+                  value={editCustomLocation}
+                  onChange={e => setEditCustomLocation(e.target.value)}
+                  placeholder={locale === 'vi' ? 'Nhập địa điểm...' : 'Enter location...'}
+                  className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  maxLength={100}
+                />
+              )}
+              <label className="text-sm text-gray-600 flex items-center gap-1">
+                {locale === 'vi' ? 'Hình thức' : 'Format'}:
+                <select
+                  value={editParticipationFormat}
+                  onChange={e => setEditParticipationFormat(e.target.value as ParticipationFormat)}
+                  className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {(['offline', 'online', 'hybrid'] as ParticipationFormat[]).map(fmt => (
+                    <option key={fmt} value={fmt}>{PARTICIPATION_FORMAT_LABELS[fmt].icon} {PARTICIPATION_FORMAT_LABELS[fmt][locale === 'vi' ? 'vi' : 'en']}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {/* Tags editor */}
+            <div className="mt-3">
+              <p className="text-sm text-gray-600 mb-2">{locale === 'vi' ? 'Thẻ (Tags)' : 'Tags'}:</p>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {editTags.map(tag => (
+                  <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+                    {tag}
+                    <button type="button" onClick={() => setEditTags(editTags.filter(t => t !== tag))} className="text-blue-500 hover:text-blue-800">×</button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={editTagInput}
+                  onChange={e => setEditTagInput(e.target.value)}
+                  onKeyDown={e => {
+                    if ((e.key === 'Enter' || e.key === ',') && editTagInput.trim()) {
+                      e.preventDefault();
+                      const cleaned = editTagInput.trim().toLowerCase();
+                      if (!editTags.includes(cleaned) && editTags.length < 10) setEditTags([...editTags, cleaned]);
+                      setEditTagInput('');
+                    } else if (e.key === 'Backspace' && !editTagInput && editTags.length > 0) {
+                      setEditTags(editTags.slice(0, -1));
+                    }
+                  }}
+                  onBlur={() => {
+                    if (editTagInput.trim()) {
+                      const cleaned = editTagInput.trim().toLowerCase();
+                      if (!editTags.includes(cleaned) && editTags.length < 10) setEditTags([...editTags, cleaned]);
+                      setEditTagInput('');
+                    }
+                  }}
+                  placeholder={locale === 'vi' ? 'Nhập thẻ + Enter...' : 'Type tag + Enter...'}
+                  className="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  maxLength={50}
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!editTitle) return;
+                    setEditGeneratingTags(true);
+                    try {
+                      const res = await fetch('/api/community/proposals/generate-tags', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: editTitle, category: editCategory, description: editDescription }),
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.tags) setEditTags(data.tags);
+                    } catch {} finally { setEditGeneratingTags(false); }
+                  }}
+                  disabled={editGeneratingTags || !editTitle}
+                  className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
+                >
+                  {editGeneratingTags ? '⏳...' : (locale === 'vi' ? '✨ AI tạo thẻ' : '✨ AI Generate')}
+                </button>
+              </div>
+            </div>
           </>
         ) : (
           <>
@@ -523,6 +642,20 @@ export function ProposalDetail({ proposalId }: Props) {
                 {proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
                 {proposal.target_date ? ` · ${locale === 'vi' ? 'Mục tiêu' : 'Target'}: ${proposal.target_date}` : ''}
               </span>
+              {proposal.location && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                  📍 {proposal.location}
+                </span>
+              )}
+              {proposal.participation_format && (
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                  proposal.participation_format === 'online' ? 'bg-green-100 text-green-700' :
+                  proposal.participation_format === 'hybrid' ? 'bg-purple-100 text-purple-700' :
+                  'bg-gray-100 text-gray-700'
+                }`}>
+                  {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.participation_format}
+                </span>
+              )}
               {proposal.genre && proposal.genre !== 'other' && (
                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
                   {PROPOSAL_GENRE_LABELS[proposal.genre]?.icon} {PROPOSAL_GENRE_LABELS[proposal.genre]?.[locale === 'vi' ? 'vi' : 'en']}

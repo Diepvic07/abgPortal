@@ -51,7 +51,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const body = await request.json();
-    const { title, description, category, genre, target_date } = body;
+    const { title, description, category, genre, target_date, location, participation_format, tags } = body;
 
     const updates: Record<string, unknown> = {};
     if (title !== undefined) {
@@ -65,6 +65,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (category !== undefined) updates.category = category;
     if (genre !== undefined) updates.genre = genre;
     if (target_date !== undefined) updates.target_date = target_date || null;
+    if (location !== undefined) updates.location = location || null;
+    if (participation_format !== undefined) updates.participation_format = participation_format;
+    if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags.filter((t: string) => typeof t === 'string' && t.trim()).map((t: string) => t.trim()).slice(0, 10) : [];
 
     const updated = await updateProposal(id, updates);
     return successResponse({ proposal: updated });
