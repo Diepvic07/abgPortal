@@ -247,7 +247,8 @@ export interface BugReport {
 }
 
 // Community Proposals
-export type ProposalCategory = 'charity' | 'event' | 'learning' | 'community_support' | 'other';
+export type ProposalCategory = 'talk' | 'learning' | 'fieldtrip' | 'meeting' | 'sports' | 'community_support' | 'charity' | 'event' | 'other';
+export type ParticipationFormat = 'online' | 'offline' | 'hybrid';
 export type ProposalGenre = 'education' | 'health' | 'finance' | 'technology' | 'business' | 'culture' | 'environment' | 'other';
 export type ProposalStatus = 'published' | 'selected' | 'in_progress' | 'completed' | 'archived' | 'removed';
 export type CommitmentLevel = 'interested' | 'will_participate' | 'will_lead';
@@ -295,12 +296,22 @@ export const COMMITMENT_LABELS: Record<CommitmentLevel, { en: string; vi: string
   will_lead: { en: 'Will Lead', vi: 'Sẽ dẫn dắt' },
 };
 
-export const PROPOSAL_CATEGORY_LABELS: Record<ProposalCategory, { en: string; vi: string }> = {
-  charity: { en: 'Charity', vi: 'Từ thiện' },
-  event: { en: 'Event', vi: 'Sự kiện' },
-  learning: { en: 'Learning', vi: 'Học tập' },
-  community_support: { en: 'Community Support', vi: 'Hỗ trợ cộng đồng' },
-  other: { en: 'Other', vi: 'Khác' },
+export const PROPOSAL_CATEGORY_LABELS: Record<ProposalCategory, { en: string; vi: string; icon: string }> = {
+  talk: { en: 'Talk', vi: 'Talk', icon: '🎤' },
+  learning: { en: 'Learning', vi: 'Học tập', icon: '📚' },
+  fieldtrip: { en: 'Fieldtrip', vi: 'Fieldtrip', icon: '🚌' },
+  meeting: { en: 'Meetup', vi: 'Gặp gỡ', icon: '🤝' },
+  sports: { en: 'Sports', vi: 'Thể thao', icon: '⚽' },
+  community_support: { en: 'Community Support', vi: 'Hỗ trợ cộng đồng', icon: '💛' },
+  charity: { en: 'Charity', vi: 'Từ thiện', icon: '❤️' },
+  event: { en: 'Event', vi: 'Sự kiện', icon: '🎉' },
+  other: { en: 'Other', vi: 'Khác', icon: '💡' },
+};
+
+export const PARTICIPATION_FORMAT_LABELS: Record<ParticipationFormat, { en: string; vi: string; icon: string }> = {
+  online: { en: 'Online', vi: 'Online', icon: '💻' },
+  offline: { en: 'Offline', vi: 'Offline', icon: '📍' },
+  hybrid: { en: 'Hybrid', vi: 'Hybrid', icon: '🔄' },
 };
 
 export const PROPOSAL_GENRE_LABELS: Record<ProposalGenre, { en: string; vi: string; icon: string }> = {
@@ -338,6 +349,9 @@ export interface CommunityProposal {
   completed_at?: string;
   admin_note?: string;
   image_url?: string;
+  tags?: string[];
+  location?: string;
+  participation_format?: ParticipationFormat;
   // Joined fields
   author_name?: string;
   author_avatar_url?: string;

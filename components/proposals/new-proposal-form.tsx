@@ -3,13 +3,16 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
-import { ProposalCategory, ProposalGenre, CommitmentLevel, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PROPOSAL_GENRES } from '@/types';
+import { ProposalCategory, ProposalGenre, CommitmentLevel, ParticipationFormat, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PROPOSAL_GENRES, PARTICIPATION_FORMAT_LABELS } from '@/types';
 
-const CATEGORIES: ProposalCategory[] = ['charity', 'event', 'learning', 'community_support', 'other'];
+const CATEGORIES: ProposalCategory[] = ['talk', 'learning', 'fieldtrip', 'meeting', 'sports', 'community_support'];
 
-const CATEGORY_ICONS: Record<ProposalCategory, string> = {
-  charity: '❤️', event: '🎉', learning: '📚', community_support: '🤝', other: '💡',
-};
+const LOCATION_PRESETS = [
+  { value: 'Hà Nội', label: 'Hà Nội' },
+  { value: 'HCM', label: 'HCM' },
+];
+
+const FORMATS: ParticipationFormat[] = ['offline', 'online', 'hybrid'];
 
 export function NewProposalForm() {
   const router = useRouter();
@@ -17,8 +20,11 @@ export function NewProposalForm() {
   const vi = locale === 'vi';
 
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<ProposalCategory>('event');
+  const [category, setCategory] = useState<ProposalCategory>('talk');
   const [genre, setGenre] = useState<ProposalGenre>('other');
+  const [location, setLocation] = useState('');
+  const [customLocation, setCustomLocation] = useState('');
+  const [participationFormat, setParticipationFormat] = useState<ParticipationFormat>('offline');
   const [what, setWhat] = useState('');
   const [why, setWhy] = useState('');
   const [who, setWho] = useState('');
@@ -27,6 +33,9 @@ export function NewProposalForm() {
   const [extra, setExtra] = useState('');
   const [targetDate, setTargetDate] = useState('');
   const [commitmentLevel, setCommitmentLevel] = useState<CommitmentLevel>('will_lead');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [generatingTags, setGeneratingTags] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [preview, setPreview] = useState('');
@@ -35,6 +44,51 @@ export function NewProposalForm() {
   const [imageUrl, setImageUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+
+  function addTag(tag: string) {
+    const cleaned = tag.trim().toLowerCase();
+    if (cleaned && !tags.includes(cleaned) && tags.length < 10) {
+      setTags([...tags, cleaned]);
+    }
+    setTagInput('');
+  }
+
+  function removeTag(tag: string) {
+    setTags(tags.filter((t) => t !== tag));
+  }
+
+  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      if (tagInput.trim()) addTag(tagInput);
+    } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
+      setTags(tags.slice(0, -1));
+    }
+  }
+
+  async function handleGenerateTags() {
+    if (!title) {
+      setError(vi ? 'Vui lòng điền tên hoạt động trước' : 'Please fill in the activity name first');
+      return;
+    }
+    setError('');
+    setGeneratingTags(true);
+    try {
+      const res = await fetch('/api/community/proposals/generate-tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, category, description: what }),
+      });
+      const data = await res.json();
+      if (res.ok && data.tags) {
+        setTags(data.tags);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setGeneratingTags(false);
+    }
+  }
 
   function buildDescription(): string {
     const parts: string[] = [];
@@ -131,12 +185,20 @@ export function NewProposalForm() {
       const res = await fetch('/api/community/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, category, genre, target_date: targetDate || undefined, commitment_level: commitmentLevel, image_url: imageUrl || undefined }),
+        body: JSON.stringify({
+          title, description, category, genre,
+          target_date: targetDate || undefined,
+          commitment_level: commitmentLevel,
+          image_url: imageUrl || undefined,
+          tags,
+          location: location === '__custom__' ? customLocation.trim() : location || undefined,
+          participation_format: participationFormat,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Failed to create proposal');
+        setError(data.error || (vi ? 'Không thể tạo đề xuất' : 'Failed to create proposal'));
         return;
       }
 
@@ -176,7 +238,7 @@ export function NewProposalForm() {
                     : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
                 }`}
               >
-                {CATEGORY_ICONS[cat]} {PROPOSAL_CATEGORY_LABELS[cat][vi ? 'vi' : 'en']}
+                {PROPOSAL_CATEGORY_LABELS[cat].icon} {PROPOSAL_CATEGORY_LABELS[cat][vi ? 'vi' : 'en']}
               </button>
             ))}
           </div>
@@ -205,10 +267,135 @@ export function NewProposalForm() {
           </div>
         </div>
 
-        {/* Step 3: Title */}
+        {/* Step 3: Location + Participation Format */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-gray-50 rounded-xl p-5">
+            <label className="block text-base font-semibold text-gray-900 mb-3">
+              3. {vi ? 'Địa điểm' : 'Location'}
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {LOCATION_PRESETS.map((loc) => (
+                <button
+                  key={loc.value}
+                  type="button"
+                  onClick={() => { setLocation(loc.value); setCustomLocation(''); }}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all border ${
+                    location === loc.value
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                      : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
+                  }`}
+                >
+                  {loc.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setLocation('__custom__')}
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all border ${
+                  location === '__custom__'
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
+                }`}
+              >
+                ✏️ {vi ? 'Khác' : 'Other'}
+              </button>
+            </div>
+            {location === '__custom__' && (
+              <input
+                type="text"
+                value={customLocation}
+                onChange={(e) => setCustomLocation(e.target.value)}
+                placeholder={vi ? 'Nhập địa điểm...' : 'Enter location...'}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm mt-2"
+                maxLength={100}
+              />
+            )}
+          </div>
+
+          <div className="bg-gray-50 rounded-xl p-5">
+            <label className="block text-base font-semibold text-gray-900 mb-3">
+              {vi ? 'Hình thức tham gia' : 'Participation format'}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {FORMATS.map((fmt) => (
+                <button
+                  key={fmt}
+                  type="button"
+                  onClick={() => setParticipationFormat(fmt)}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all border ${
+                    participationFormat === fmt
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                      : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
+                  }`}
+                >
+                  {PARTICIPATION_FORMAT_LABELS[fmt].icon} {PARTICIPATION_FORMAT_LABELS[fmt][vi ? 'vi' : 'en']}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Step 4: Tags */}
+        <div className="bg-gray-50 rounded-xl p-5">
+          <label className="block text-base font-semibold text-gray-900 mb-1">
+            4. {vi ? 'Thẻ (Tags)' : 'Tags'}
+          </label>
+          <p className="text-sm text-gray-500 mb-3">
+            {vi ? 'Thêm thẻ để giúp mọi người tìm đề xuất dễ hơn. Nhập và nhấn Enter, hoặc dùng AI tự động tạo.' : 'Add tags to help others find your proposal. Type and press Enter, or use AI to auto-generate.'}
+          </p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium"
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => removeTag(tag)}
+                  className="text-blue-500 hover:text-blue-800 ml-0.5"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={handleTagKeyDown}
+              onBlur={() => { if (tagInput.trim()) addTag(tagInput); }}
+              placeholder={vi ? 'Nhập thẻ và nhấn Enter...' : 'Type a tag and press Enter...'}
+              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+              maxLength={50}
+            />
+            <button
+              type="button"
+              onClick={handleGenerateTags}
+              disabled={generatingTags || !title}
+              className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 whitespace-nowrap flex items-center gap-1.5"
+            >
+              {generatingTags ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  {vi ? 'Đang tạo...' : 'Generating...'}
+                </>
+              ) : (
+                <>{vi ? '✨ AI tạo thẻ' : '✨ AI Generate'}</>
+              )}
+            </button>
+          </div>
+          {tags.length >= 10 && (
+            <p className="text-xs text-amber-600 mt-2">{vi ? 'Tối đa 10 thẻ' : 'Maximum 10 tags'}</p>
+          )}
+        </div>
+
+        {/* Step 5: Title */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="title" className="block text-base font-semibold text-gray-900 mb-1">
-            3. {vi ? 'Tên hoạt động' : 'Activity name'} *
+            5. {vi ? 'Tên hoạt động' : 'Activity name'} *
           </label>
           <p className="text-sm text-gray-500 mb-2">{vi ? 'Đặt tên ngắn gọn, dễ hiểu' : 'Short, clear name'}</p>
           <input
@@ -223,10 +410,10 @@ export function NewProposalForm() {
           />
         </div>
 
-        {/* Step 4: What — the main description */}
+        {/* Step 6: What — the main description */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="what" className="block text-base font-semibold text-gray-900 mb-1">
-            4. {vi ? 'Bạn muốn làm gì?' : 'What do you want to do?'} *
+            6. {vi ? 'Bạn muốn làm gì?' : 'What do you want to do?'} *
           </label>
           <p className="text-sm text-gray-500 mb-2">{vi ? 'Mô tả ngắn gọn ý tưởng (2-3 câu là đủ)' : 'Brief description (2-3 sentences is enough)'}</p>
           <textarea
@@ -241,10 +428,10 @@ export function NewProposalForm() {
           />
         </div>
 
-        {/* Step 4: Why */}
+        {/* Step 7: Why */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="why" className="block text-base font-semibold text-gray-900 mb-1">
-            5. {vi ? 'Tại sao hoạt động này quan trọng?' : 'Why does this matter?'}
+            7. {vi ? 'Tại sao hoạt động này quan trọng?' : 'Why does this matter?'}
           </label>
           <p className="text-sm text-gray-500 mb-2">{vi ? 'Giúp mọi người hiểu giá trị của hoạt động' : 'Help people understand the value'}</p>
           <input
@@ -259,11 +446,11 @@ export function NewProposalForm() {
           />
         </div>
 
-        {/* Step 5: Who + How many */}
+        {/* Step 8: Who + How many */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 rounded-xl p-5">
             <label htmlFor="who" className="block text-base font-semibold text-gray-900 mb-1">
-              6. {vi ? 'Ai nên tham gia?' : 'Who should join?'}
+              8. {vi ? 'Ai nên tham gia?' : 'Who should join?'}
             </label>
             <input
               id="who"
@@ -289,11 +476,11 @@ export function NewProposalForm() {
           </div>
         </div>
 
-        {/* Step 6: Resources + Date */}
+        {/* Step 9: Resources + Date */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 rounded-xl p-5">
             <label htmlFor="resources" className="block text-base font-semibold text-gray-900 mb-1">
-              7. {vi ? 'Cần hỗ trợ gì?' : 'What support is needed?'}
+              9. {vi ? 'Cần hỗ trợ gì?' : 'What support is needed?'}
             </label>
             <input
               id="resources"
@@ -318,10 +505,10 @@ export function NewProposalForm() {
           </div>
         </div>
 
-        {/* Step 7: Extra / paste anything */}
+        {/* Step 10: Extra / paste anything */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="extra" className="block text-base font-semibold text-gray-900 mb-1">
-            8. {vi ? 'Thông tin thêm (tùy chọn)' : 'Additional info (optional)'}
+            10. {vi ? 'Thông tin thêm (tùy chọn)' : 'Additional info (optional)'}
           </label>
           <p className="text-sm text-gray-500 mb-2">
             {vi ? 'Paste nội dung có sẵn, thêm chi tiết, link tham khảo, hoặc bất cứ gì bạn muốn chia sẻ' : 'Paste existing content, add details, reference links, or anything else you want to share'}
@@ -337,10 +524,10 @@ export function NewProposalForm() {
           />
         </div>
 
-        {/* Step 8: Image upload */}
+        {/* Step 11: Image upload */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label className="block text-base font-semibold text-gray-900 mb-1">
-            9. {vi ? 'Ảnh minh họa (tùy chọn)' : 'Cover image (optional)'}
+            11. {vi ? 'Ảnh minh họa (tùy chọn)' : 'Cover image (optional)'}
           </label>
           <p className="text-xs text-gray-500 mb-3">{vi ? 'Thêm ảnh để đề xuất hấp dẫn hơn. Tối đa 5MB.' : 'Add an image to make your proposal more engaging. Max 5MB.'}</p>
           {imageUrl ? (
@@ -384,7 +571,7 @@ export function NewProposalForm() {
         {/* Step 9: Commitment level */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label className="block text-base font-semibold text-gray-900 mb-3">
-            10. {vi ? 'Bạn sẽ tham gia ở mức nào?' : 'How will you participate?'} *
+            12. {vi ? 'Bạn sẽ tham gia ở mức nào?' : 'How will you participate?'} *
           </label>
           <div className="grid grid-cols-3 gap-3">
             {([

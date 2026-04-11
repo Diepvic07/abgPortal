@@ -529,6 +529,18 @@ export function ProposalDetail({ proposalId }: Props) {
                 </span>
               )}
             </div>
+            {proposal.tags && proposal.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {proposal.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 text-xs font-medium"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>

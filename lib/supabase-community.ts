@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from './supabase/server';
-import { CommunityProposal, CommunityCommitment, CommunityProposalComment, ProposalCategory, ProposalGenre, ProposalStatus, CommitmentLevel, CommentStatus, COMMITMENT_WEIGHTS } from '@/types';
+import { CommunityProposal, CommunityCommitment, CommunityProposalComment, ProposalCategory, ProposalGenre, ProposalStatus, CommitmentLevel, CommentStatus, ParticipationFormat, COMMITMENT_WEIGHTS } from '@/types';
 import { generateId, formatDate, generateSlug } from '@/lib/utils';
 
 function nullToUndefined<T>(val: T | null): T | undefined {
@@ -31,6 +31,9 @@ function mapRowToProposal(row: Record<string, unknown>): CommunityProposal {
     completed_at: nullToUndefined(row.completed_at as string | null),
     admin_note: nullToUndefined(row.admin_note as string | null),
     image_url: nullToUndefined((row.image_url as string | null) ?? null),
+    tags: (row.tags as string[] | null) || [],
+    location: nullToUndefined(row.location as string | null),
+    participation_format: (row.participation_format as ParticipationFormat) || undefined,
     author_name: nullToUndefined(row.author_name as string | null),
     author_avatar_url: nullToUndefined(row.author_avatar_url as string | null),
     author_abg_class: nullToUndefined(row.author_abg_class as string | null),
@@ -77,6 +80,9 @@ export async function createProposal(data: {
   genre?: string;
   target_date?: string;
   image_url?: string;
+  tags?: string[];
+  location?: string;
+  participation_format?: string;
 }): Promise<CommunityProposal> {
   const supabase = createServerSupabaseClient();
   const id = generateId();
@@ -96,6 +102,9 @@ export async function createProposal(data: {
       genre: data.genre || 'other',
       target_date: data.target_date || null,
       ...(data.image_url ? { image_url: data.image_url } : {}),
+      tags: data.tags || [],
+      location: data.location || null,
+      participation_format: data.participation_format || 'offline',
       status: 'published',
       is_pinned: false,
       commitment_score: 0,
@@ -110,7 +119,7 @@ export async function createProposal(data: {
 
   if (error) {
     console.error('Error creating proposal:', error);
-    throw new Error('Failed to create proposal');
+    throw new Error('Không thể tạo đề xuất. Vui lòng thử lại.');
   }
 
   return mapRowToProposal(row as Record<string, unknown>);
