@@ -110,7 +110,6 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editParticipationFormat, setEditParticipationFormat] = useState<ParticipationFormat>('offline');
   const [editTags, setEditTags] = useState<string[]>([]);
   const [editTagInput, setEditTagInput] = useState('');
-  const [editGeneratingTags, setEditGeneratingTags] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [replyImageFile, setReplyImageFile] = useState<File | null>(null);
@@ -584,53 +583,31 @@ export function ProposalDetail({ proposalId }: Props) {
                   </span>
                 ))}
               </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={editTagInput}
-                  onChange={e => setEditTagInput(e.target.value)}
-                  onKeyDown={e => {
-                    if ((e.key === 'Enter' || e.key === ',') && editTagInput.trim()) {
-                      e.preventDefault();
-                      const cleaned = editTagInput.trim().toLowerCase();
-                      if (!editTags.includes(cleaned) && editTags.length < 10) setEditTags([...editTags, cleaned]);
-                      setEditTagInput('');
-                    } else if (e.key === 'Backspace' && !editTagInput && editTags.length > 0) {
-                      setEditTags(editTags.slice(0, -1));
-                    }
-                  }}
-                  onBlur={() => {
-                    if (editTagInput.trim()) {
-                      const cleaned = editTagInput.trim().toLowerCase();
-                      if (!editTags.includes(cleaned) && editTags.length < 10) setEditTags([...editTags, cleaned]);
-                      setEditTagInput('');
-                    }
-                  }}
-                  placeholder={locale === 'vi' ? 'Nhập thẻ + Enter...' : 'Type tag + Enter...'}
-                  className="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  maxLength={50}
-                />
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!editTitle) return;
-                    setEditGeneratingTags(true);
-                    try {
-                      const res = await fetch('/api/community/proposals/generate-tags', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title: editTitle, category: editCategory, description: editDescription }),
-                      });
-                      const data = await res.json();
-                      if (res.ok && data.tags) setEditTags(data.tags);
-                    } catch {} finally { setEditGeneratingTags(false); }
-                  }}
-                  disabled={editGeneratingTags || !editTitle}
-                  className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
-                >
-                  {editGeneratingTags ? '⏳...' : (locale === 'vi' ? '✨ AI tạo thẻ' : '✨ AI Generate')}
-                </button>
-              </div>
+              <input
+                type="text"
+                value={editTagInput}
+                onChange={e => setEditTagInput(e.target.value)}
+                onKeyDown={e => {
+                  if ((e.key === 'Enter' || e.key === ',') && editTagInput.trim()) {
+                    e.preventDefault();
+                    const cleaned = editTagInput.trim().toLowerCase();
+                    if (!editTags.includes(cleaned) && editTags.length < 10) setEditTags([...editTags, cleaned]);
+                    setEditTagInput('');
+                  } else if (e.key === 'Backspace' && !editTagInput && editTags.length > 0) {
+                    setEditTags(editTags.slice(0, -1));
+                  }
+                }}
+                onBlur={() => {
+                  if (editTagInput.trim()) {
+                    const cleaned = editTagInput.trim().toLowerCase();
+                    if (!editTags.includes(cleaned) && editTags.length < 10) setEditTags([...editTags, cleaned]);
+                    setEditTagInput('');
+                  }
+                }}
+                placeholder={locale === 'vi' ? 'Nhập thẻ + Enter...' : 'Type tag + Enter...'}
+                className="w-full border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                maxLength={50}
+              />
             </div>
           </>
         ) : (

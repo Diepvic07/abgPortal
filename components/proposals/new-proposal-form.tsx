@@ -35,7 +35,6 @@ export function NewProposalForm() {
   const [commitmentLevel, setCommitmentLevel] = useState<CommitmentLevel>('will_lead');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
-  const [generatingTags, setGeneratingTags] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [preview, setPreview] = useState('');
@@ -63,30 +62,6 @@ export function NewProposalForm() {
       if (tagInput.trim()) addTag(tagInput);
     } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
       setTags(tags.slice(0, -1));
-    }
-  }
-
-  async function handleGenerateTags() {
-    if (!title) {
-      setError(vi ? 'Vui lòng điền tên hoạt động trước' : 'Please fill in the activity name first');
-      return;
-    }
-    setError('');
-    setGeneratingTags(true);
-    try {
-      const res = await fetch('/api/community/proposals/generate-tags', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, category, description: what }),
-      });
-      const data = await res.json();
-      if (res.ok && data.tags) {
-        setTags(data.tags);
-      }
-    } catch {
-      // silently fail
-    } finally {
-      setGeneratingTags(false);
     }
   }
 
@@ -154,6 +129,7 @@ export function NewProposalForm() {
       const data = await res.json();
       if (res.ok && data.description) {
         setPreview(data.description);
+        if (data.tags && Array.isArray(data.tags)) setTags(data.tags);
         setPreviewIsAI(true);
         setShowPreview(true);
       } else {
@@ -341,7 +317,7 @@ export function NewProposalForm() {
             4. {vi ? 'Thẻ (Tags)' : 'Tags'}
           </label>
           <p className="text-sm text-gray-500 mb-3">
-            {vi ? 'Thêm thẻ để giúp mọi người tìm đề xuất dễ hơn. Nhập và nhấn Enter, hoặc dùng AI tự động tạo.' : 'Add tags to help others find your proposal. Type and press Enter, or use AI to auto-generate.'}
+            {vi ? 'Thêm thẻ để giúp mọi người tìm đề xuất dễ hơn. Nhập và nhấn Enter. AI sẽ tự tạo thẻ khi bạn dùng "Xem trước với AI".' : 'Add tags to help others find your proposal. Type and press Enter. AI will auto-generate tags when you use "Preview with AI".'}
           </p>
           <div className="flex flex-wrap gap-2 mb-3">
             {tags.map((tag) => (
@@ -360,33 +336,16 @@ export function NewProposalForm() {
               </span>
             ))}
           </div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleTagKeyDown}
-              onBlur={() => { if (tagInput.trim()) addTag(tagInput); }}
-              placeholder={vi ? 'Nhập thẻ và nhấn Enter...' : 'Type a tag and press Enter...'}
-              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
-              maxLength={50}
-            />
-            <button
-              type="button"
-              onClick={handleGenerateTags}
-              disabled={generatingTags || !title}
-              className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 whitespace-nowrap flex items-center gap-1.5"
-            >
-              {generatingTags ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                  {vi ? 'Đang tạo...' : 'Generating...'}
-                </>
-              ) : (
-                <>{vi ? '✨ AI tạo thẻ' : '✨ AI Generate'}</>
-              )}
-            </button>
-          </div>
+          <input
+            type="text"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleTagKeyDown}
+            onBlur={() => { if (tagInput.trim()) addTag(tagInput); }}
+            placeholder={vi ? 'Nhập thẻ và nhấn Enter...' : 'Type a tag and press Enter...'}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+            maxLength={50}
+          />
           {tags.length >= 10 && (
             <p className="text-xs text-amber-600 mt-2">{vi ? 'Tối đa 10 thẻ' : 'Maximum 10 tags'}</p>
           )}

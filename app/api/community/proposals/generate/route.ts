@@ -39,12 +39,31 @@ Yêu cầu:
 - Nêu rõ mục đích và lợi ích khi tham gia
 - Kết thúc bằng lời kêu gọi hành động
 - KHÔNG thêm tiêu đề, chỉ viết nội dung
-- KHÔNG viết quá dài, giữ ngắn gọn`;
+- KHÔNG viết quá dài, giữ ngắn gọn
+
+QUAN TRỌNG: Sau nội dung bài viết, thêm một dòng mới với format:
+TAGS: ["thẻ1", "thẻ2", "thẻ3"]
+Tạo 3-5 thẻ ngắn gọn bằng tiếng Việt (1-3 từ mỗi thẻ, viết thường) để phân loại đề xuất này. Thẻ phải liên quan trực tiếp đến nội dung hoạt động.`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
-    return successResponse({ description: text });
+    // Extract tags from the response
+    let description = text;
+    let tags: string[] = [];
+    const tagsMatch = text.match(/TAGS:\s*(\[[\s\S]*?\])/);
+    if (tagsMatch) {
+      description = text.substring(0, tagsMatch.index).trim();
+      try {
+        const parsed = JSON.parse(tagsMatch[1]);
+        tags = parsed
+          .filter((t: unknown) => typeof t === 'string' && (t as string).trim())
+          .map((t: string) => t.trim().toLowerCase())
+          .slice(0, 5);
+      } catch {}
+    }
+
+    return successResponse({ description, tags });
   } catch (error) {
     return handleApiError(error);
   }
