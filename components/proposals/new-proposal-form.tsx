@@ -34,7 +34,6 @@ export function NewProposalForm() {
   const [targetDate, setTargetDate] = useState('');
   const [commitmentLevel, setCommitmentLevel] = useState<CommitmentLevel>('will_lead');
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [preview, setPreview] = useState('');
@@ -43,27 +42,6 @@ export function NewProposalForm() {
   const [imageUrl, setImageUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
-
-  function addTag(tag: string) {
-    const cleaned = tag.trim().toLowerCase();
-    if (cleaned && !tags.includes(cleaned) && tags.length < 10) {
-      setTags([...tags, cleaned]);
-    }
-    setTagInput('');
-  }
-
-  function removeTag(tag: string) {
-    setTags(tags.filter((t) => t !== tag));
-  }
-
-  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      if (tagInput.trim()) addTag(tagInput);
-    } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
-      setTags(tags.slice(0, -1));
-    }
-  }
 
   function buildDescription(): string {
     const parts: string[] = [];
@@ -129,7 +107,18 @@ export function NewProposalForm() {
       const data = await res.json();
       if (res.ok && data.description) {
         setPreview(data.description);
-        if (data.tags && Array.isArray(data.tags)) setTags(data.tags);
+        if (Array.isArray(data.tags)) setTags(data.tags);
+        if (data.genre && ['education', 'health', 'finance', 'technology', 'business', 'culture', 'environment', 'other'].includes(data.genre)) setGenre(data.genre);
+        if (data.location) {
+          if (data.location === 'Hà Nội' || data.location === 'HCM') {
+            setLocation(data.location);
+            setCustomLocation('');
+          } else {
+            setLocation('__custom__');
+            setCustomLocation(data.location);
+          }
+        }
+        if (data.participation_format && ['online', 'offline', 'hybrid'].includes(data.participation_format)) setParticipationFormat(data.participation_format);
         setPreviewIsAI(true);
         setShowPreview(true);
       } else {
@@ -311,50 +300,10 @@ export function NewProposalForm() {
           </div>
         </div>
 
-        {/* Step 4: Tags */}
-        <div className="bg-gray-50 rounded-xl p-5">
-          <label className="block text-base font-semibold text-gray-900 mb-1">
-            4. {vi ? 'Thẻ (Tags)' : 'Tags'}
-          </label>
-          <p className="text-sm text-gray-500 mb-3">
-            {vi ? 'Thêm thẻ để giúp mọi người tìm đề xuất dễ hơn. Nhập và nhấn Enter. AI sẽ tự tạo thẻ khi bạn dùng "Xem trước với AI".' : 'Add tags to help others find your proposal. Type and press Enter. AI will auto-generate tags when you use "Preview with AI".'}
-          </p>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium"
-              >
-                {tag}
-                <button
-                  type="button"
-                  onClick={() => removeTag(tag)}
-                  className="text-blue-500 hover:text-blue-800 ml-0.5"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <input
-            type="text"
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={handleTagKeyDown}
-            onBlur={() => { if (tagInput.trim()) addTag(tagInput); }}
-            placeholder={vi ? 'Nhập thẻ và nhấn Enter...' : 'Type a tag and press Enter...'}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
-            maxLength={50}
-          />
-          {tags.length >= 10 && (
-            <p className="text-xs text-amber-600 mt-2">{vi ? 'Tối đa 10 thẻ' : 'Maximum 10 tags'}</p>
-          )}
-        </div>
-
-        {/* Step 5: Title */}
+        {/* Step 4: Title */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="title" className="block text-base font-semibold text-gray-900 mb-1">
-            5. {vi ? 'Tên hoạt động' : 'Activity name'} *
+            4. {vi ? 'Tên hoạt động' : 'Activity name'} *
           </label>
           <p className="text-sm text-gray-500 mb-2">{vi ? 'Đặt tên ngắn gọn, dễ hiểu' : 'Short, clear name'}</p>
           <input
@@ -369,10 +318,10 @@ export function NewProposalForm() {
           />
         </div>
 
-        {/* Step 6: What — the main description */}
+        {/* Step 5: What — the main description */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="what" className="block text-base font-semibold text-gray-900 mb-1">
-            6. {vi ? 'Bạn muốn làm gì?' : 'What do you want to do?'} *
+            5. {vi ? 'Bạn muốn làm gì?' : 'What do you want to do?'} *
           </label>
           <p className="text-sm text-gray-500 mb-2">{vi ? 'Mô tả ngắn gọn ý tưởng (2-3 câu là đủ)' : 'Brief description (2-3 sentences is enough)'}</p>
           <textarea
@@ -387,10 +336,10 @@ export function NewProposalForm() {
           />
         </div>
 
-        {/* Step 7: Why */}
+        {/* Step 6: Why */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="why" className="block text-base font-semibold text-gray-900 mb-1">
-            7. {vi ? 'Tại sao hoạt động này quan trọng?' : 'Why does this matter?'}
+            6. {vi ? 'Tại sao hoạt động này quan trọng?' : 'Why does this matter?'}
           </label>
           <p className="text-sm text-gray-500 mb-2">{vi ? 'Giúp mọi người hiểu giá trị của hoạt động' : 'Help people understand the value'}</p>
           <input
@@ -405,11 +354,11 @@ export function NewProposalForm() {
           />
         </div>
 
-        {/* Step 8: Who + How many */}
+        {/* Step 7: Who + How many */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 rounded-xl p-5">
             <label htmlFor="who" className="block text-base font-semibold text-gray-900 mb-1">
-              8. {vi ? 'Ai nên tham gia?' : 'Who should join?'}
+              7. {vi ? 'Ai nên tham gia?' : 'Who should join?'}
             </label>
             <input
               id="who"
@@ -435,11 +384,11 @@ export function NewProposalForm() {
           </div>
         </div>
 
-        {/* Step 9: Resources + Date */}
+        {/* Step 8: Resources + Date */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 rounded-xl p-5">
             <label htmlFor="resources" className="block text-base font-semibold text-gray-900 mb-1">
-              9. {vi ? 'Cần hỗ trợ gì?' : 'What support is needed?'}
+              8. {vi ? 'Cần hỗ trợ gì?' : 'What support is needed?'}
             </label>
             <input
               id="resources"
@@ -464,10 +413,10 @@ export function NewProposalForm() {
           </div>
         </div>
 
-        {/* Step 10: Extra / paste anything */}
+        {/* Step 9: Extra / paste anything */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label htmlFor="extra" className="block text-base font-semibold text-gray-900 mb-1">
-            10. {vi ? 'Thông tin thêm (tùy chọn)' : 'Additional info (optional)'}
+            9. {vi ? 'Thông tin thêm (tùy chọn)' : 'Additional info (optional)'}
           </label>
           <p className="text-sm text-gray-500 mb-2">
             {vi ? 'Paste nội dung có sẵn, thêm chi tiết, link tham khảo, hoặc bất cứ gì bạn muốn chia sẻ' : 'Paste existing content, add details, reference links, or anything else you want to share'}
@@ -483,10 +432,10 @@ export function NewProposalForm() {
           />
         </div>
 
-        {/* Step 11: Image upload */}
+        {/* Step 10: Image upload */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label className="block text-base font-semibold text-gray-900 mb-1">
-            11. {vi ? 'Ảnh minh họa (tùy chọn)' : 'Cover image (optional)'}
+            10. {vi ? 'Ảnh minh họa (tùy chọn)' : 'Cover image (optional)'}
           </label>
           <p className="text-xs text-gray-500 mb-3">{vi ? 'Thêm ảnh để đề xuất hấp dẫn hơn. Tối đa 5MB.' : 'Add an image to make your proposal more engaging. Max 5MB.'}</p>
           {imageUrl ? (
@@ -530,7 +479,7 @@ export function NewProposalForm() {
         {/* Step 9: Commitment level */}
         <div className="bg-gray-50 rounded-xl p-5">
           <label className="block text-base font-semibold text-gray-900 mb-3">
-            12. {vi ? 'Bạn sẽ tham gia ở mức nào?' : 'How will you participate?'} *
+            11. {vi ? 'Bạn sẽ tham gia ở mức nào?' : 'How will you participate?'} *
           </label>
           <div className="grid grid-cols-3 gap-3">
             {([

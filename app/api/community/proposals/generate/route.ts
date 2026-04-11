@@ -41,29 +41,42 @@ Yêu cầu:
 - KHÔNG thêm tiêu đề, chỉ viết nội dung
 - KHÔNG viết quá dài, giữ ngắn gọn
 
-QUAN TRỌNG: Sau nội dung bài viết, thêm một dòng mới với format:
-TAGS: ["thẻ1", "thẻ2", "thẻ3"]
-Tạo 3-5 thẻ ngắn gọn bằng tiếng Việt (1-3 từ mỗi thẻ, viết thường) để phân loại đề xuất này. Thẻ phải liên quan trực tiếp đến nội dung hoạt động.`;
+QUAN TRỌNG: Sau nội dung bài viết, thêm một dòng mới với format JSON:
+META: {"tags": ["thẻ1", "thẻ2", "thẻ3"], "genre": "...", "location": "...", "participation_format": "..."}
+
+Quy tắc cho META:
+- tags: 3-5 thẻ ngắn gọn bằng tiếng Việt (1-3 từ, viết thường), liên quan trực tiếp đến nội dung
+- genre: chọn MỘT trong các giá trị sau dựa trên chủ đề: education, health, finance, technology, business, culture, environment, other
+- location: nếu nội dung đề cập rõ địa điểm cụ thể, ghi "Hà Nội" hoặc "HCM" hoặc tên địa điểm khác. Nếu không rõ, để ""
+- participation_format: chọn MỘT trong: online, offline, hybrid — dựa trên hình thức hoạt động được mô tả`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
-    // Extract tags from the response
+    // Extract metadata from the response
     let description = text;
     let tags: string[] = [];
-    const tagsMatch = text.match(/TAGS:\s*(\[[\s\S]*?\])/);
-    if (tagsMatch) {
-      description = text.substring(0, tagsMatch.index).trim();
+    let genre = '';
+    let location = '';
+    let participation_format = '';
+    const metaMatch = text.match(/META:\s*(\{[\s\S]*?\})/);
+    if (metaMatch) {
+      description = text.substring(0, metaMatch.index).trim();
       try {
-        const parsed = JSON.parse(tagsMatch[1]);
-        tags = parsed
-          .filter((t: unknown) => typeof t === 'string' && (t as string).trim())
-          .map((t: string) => t.trim().toLowerCase())
-          .slice(0, 5);
+        const meta = JSON.parse(metaMatch[1]);
+        if (Array.isArray(meta.tags)) {
+          tags = meta.tags
+            .filter((t: unknown) => typeof t === 'string' && (t as string).trim())
+            .map((t: string) => t.trim().toLowerCase())
+            .slice(0, 5);
+        }
+        if (typeof meta.genre === 'string') genre = meta.genre;
+        if (typeof meta.location === 'string') location = meta.location;
+        if (typeof meta.participation_format === 'string') participation_format = meta.participation_format;
       } catch {}
     }
 
-    return successResponse({ description, tags });
+    return successResponse({ description, tags, genre, location, participation_format });
   } catch (error) {
     return handleApiError(error);
   }
