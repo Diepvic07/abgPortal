@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '*.supabase.co' },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/event",
+        destination: "/events",
+        permanent: true,
+      },
+    ];
+  },
   // Reverse proxy for PostHog — reduces tracking blocker interference
   async rewrites() {
     return [
