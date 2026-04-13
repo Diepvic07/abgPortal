@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ProposalDiscussion, DiscussionResponse } from '@/types';
-import { generateProfileSlug } from '@/lib/profile-url';
 
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
@@ -18,9 +17,9 @@ function getAvatarColor(name: string): string {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-function getVoterProfileUrl(resp: DiscussionResponse): string {
-  const slug = resp.member_public_profile_slug || generateProfileSlug(resp.member_name, resp.member_id);
-  return `/profile/public/${slug}`;
+function getVoterProfileUrl(resp: DiscussionResponse): string | null {
+  if (!resp.member_public_profile_slug) return null;
+  return `/profile/public/${resp.member_public_profile_slug}`;
 }
 
 interface Props {
@@ -156,15 +155,23 @@ export function ProposalDiscussionSection({
       </div>
     );
 
+    if (profileUrl) {
+      return (
+        <Link
+          key={resp.id}
+          href={profileUrl}
+          title={name}
+          className="hover:opacity-80 transition-opacity -ml-1.5 first:ml-0"
+        >
+          {avatar}
+        </Link>
+      );
+    }
+
     return (
-      <Link
-        key={resp.id}
-        href={profileUrl}
-        title={name}
-        className="hover:opacity-80 transition-opacity -ml-1.5 first:ml-0"
-      >
+      <span key={resp.id} title={name} className="-ml-1.5 first:ml-0">
         {avatar}
-      </Link>
+      </span>
     );
   }
 
