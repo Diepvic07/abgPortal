@@ -112,6 +112,8 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editParticipationFormat, setEditParticipationFormat] = useState<ParticipationFormat>('offline');
   const [editTags, setEditTags] = useState<string[]>([]);
   const [editTagInput, setEditTagInput] = useState('');
+  const [editHasDiscussion, setEditHasDiscussion] = useState(false);
+  const [editDiscussionDates, setEditDiscussionDates] = useState<string[]>(['', '']);
   const [savingEdit, setSavingEdit] = useState(false);
   const [rerunningAI, setRerunningAI] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -413,6 +415,8 @@ export function ProposalDetail({ proposalId }: Props) {
     setEditParticipationFormat((proposal.participation_format as ParticipationFormat) || 'offline');
     setEditTags(proposal.tags || []);
     setEditTagInput('');
+    setEditHasDiscussion(!!proposal.has_discussion);
+    setEditDiscussionDates(['', '']);
     setEditError(null);
     setIsEditing(true);
   }
@@ -434,6 +438,8 @@ export function ProposalDetail({ proposalId }: Props) {
           location: editLocation === '__custom__' ? editCustomLocation.trim() : editLocation || null,
           participation_format: editParticipationFormat,
           tags: editTags,
+          has_discussion: editHasDiscussion,
+          discussion_date_options: editHasDiscussion ? editDiscussionDates.filter(d => d) : undefined,
         }),
       });
       if (!res.ok) {
@@ -644,6 +650,67 @@ export function ProposalDetail({ proposalId }: Props) {
                   ))}
                 </select>
               </label>
+            </div>
+
+            {/* Discussion toggle */}
+            <div className="mt-4 border border-gray-200 rounded-lg p-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editHasDiscussion}
+                  onChange={e => setEditHasDiscussion(e.target.checked)}
+                  disabled={!!proposal.has_discussion}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">
+                    {locale === 'vi' ? '📅 Thảo luận trực tuyến (Poll ngày)' : '📅 Online Discussion (Date Poll)'}
+                  </span>
+                  {proposal.has_discussion && (
+                    <span className="ml-2 text-xs text-green-600 font-medium">
+                      {locale === 'vi' ? '✓ Đã bật' : '✓ Enabled'}
+                    </span>
+                  )}
+                </div>
+              </label>
+              {editHasDiscussion && !proposal.has_discussion && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-gray-500">
+                    {locale === 'vi' ? 'Đề xuất 2-5 ngày để mọi người bình chọn:' : 'Propose 2-5 dates for members to vote:'}
+                  </p>
+                  {editDiscussionDates.map((date, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        value={date}
+                        min={new Date().toISOString().split('T')[0]}
+                        onChange={e => {
+                          const newDates = [...editDiscussionDates];
+                          newDates[i] = e.target.value;
+                          setEditDiscussionDates(newDates);
+                        }}
+                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {editDiscussionDates.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => setEditDiscussionDates(editDiscussionDates.filter((_, j) => j !== i))}
+                          className="text-red-400 hover:text-red-600 text-sm"
+                        >✕</button>
+                      )}
+                    </div>
+                  ))}
+                  {editDiscussionDates.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setEditDiscussionDates([...editDiscussionDates, ''])}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      + {locale === 'vi' ? 'Thêm ngày' : 'Add date'}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
           </>

@@ -95,6 +95,26 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags.filter((t: string) => typeof t === 'string' && t.trim()).map((t: string) => t.trim()).slice(0, 10) : [];
     if (body.has_discussion !== undefined) updates.has_discussion = !!body.has_discussion;
 
+    // If enabling discussion, create the discussion record with date options
+    if (body.has_discussion === true && !proposal.has_discussion) {
+      const { discussion_date_options } = body;
+      if (Array.isArray(discussion_date_options) && discussion_date_options.length >= 2) {
+        const { generateId, formatDate } = await import('@/lib/utils');
+        const supabase = createServerSupabaseClient();
+        const now = formatDate();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('proposal_discussions') as any)
+          .insert({
+            id: generateId(),
+            proposal_id: id,
+            status: 'open',
+            date_options: discussion_date_options.slice(0, 5),
+            created_at: now,
+            updated_at: now,
+          });
+      }
+    }
+
     const updated = await updateProposal(id, updates);
     return successResponse({ proposal: updated });
   } catch (error) {
