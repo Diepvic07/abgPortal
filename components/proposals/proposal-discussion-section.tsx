@@ -53,7 +53,117 @@ export function ProposalDiscussionSection({
     }
   });
 
-  if (!discussion) return null;
+  // State for creating a new discussion
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newDateOptions, setNewDateOptions] = useState<string[]>(['', '']);
+  const [creating, setCreating] = useState(false);
+
+  async function handleCreateDiscussion() {
+    const validDates = newDateOptions.filter(d => d);
+    if (validDates.length < 2) {
+      setError(vi ? 'Vui lòng chọn ít nhất 2 ngày' : 'Please select at least 2 dates');
+      return;
+    }
+    setCreating(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/community/proposals/${proposalId}/discussion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date_options: validDates }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || (vi ? 'Lỗi tạo thảo luận' : 'Failed to create discussion'));
+        return;
+      }
+      setShowCreateForm(false);
+      onRefresh();
+    } catch {
+      setError(vi ? 'Có lỗi xảy ra' : 'Something went wrong');
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  // No discussion yet — show create button for creator, nothing for others
+  if (!discussion) {
+    if (!isCreator) return null;
+    return (
+      <div className="mt-8">
+        <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+          💬 {vi ? 'Thảo luận trực tuyến' : 'Online Discussion'}
+        </h3>
+        {!showCreateForm ? (
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+          >
+            {vi ? 'Tạo buổi thảo luận trực tuyến' : 'Create Online Discussion'}
+          </button>
+        ) : (
+          <div className="bg-gray-50 rounded-xl p-5 space-y-3">
+            <p className="text-sm font-medium text-gray-700">
+              {vi ? 'Đề xuất 2-5 ngày để thành viên bỏ phiếu:' : 'Propose 2-5 dates for members to vote:'}
+            </p>
+            {newDateOptions.map((date, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => {
+                    const updated = [...newDateOptions];
+                    updated[idx] = e.target.value;
+                    setNewDateOptions(updated);
+                  }}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                />
+                {newDateOptions.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => setNewDateOptions(newDateOptions.filter((_, i) => i !== idx))}
+                    className="text-red-500 hover:text-red-700 text-sm font-medium px-2"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            {newDateOptions.length < 5 && (
+              <button
+                type="button"
+                onClick={() => setNewDateOptions([...newDateOptions, ''])}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                + {vi ? 'Thêm ngày' : 'Add date'}
+              </button>
+            )}
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={handleCreateDiscussion}
+                disabled={creating}
+                className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50"
+              >
+                {creating ? (vi ? 'Đang tạo...' : 'Creating...') : (vi ? 'Tạo thảo luận' : 'Create Discussion')}
+              </button>
+              <button
+                onClick={() => setShowCreateForm(false)}
+                className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm"
+              >
+                {vi ? 'Hủy' : 'Cancel'}
+              </button>
+            </div>
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const dateVoteCounts = useMemo(() => {
     const counts: Record<string, { count: number; voters: string[] }> = {};
