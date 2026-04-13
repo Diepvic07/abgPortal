@@ -42,6 +42,8 @@ export function NewProposalForm() {
   const [imageUrl, setImageUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [hasDiscussion, setHasDiscussion] = useState(false);
+  const [discussionDates, setDiscussionDates] = useState<string[]>(['', '']);
 
   function buildDescription(): string {
     const parts: string[] = [];
@@ -164,6 +166,8 @@ export function NewProposalForm() {
           tags,
           location: location === '__custom__' ? customLocation.trim() : location || undefined,
           participation_format: participationFormat,
+          has_discussion: hasDiscussion,
+          discussion_date_options: hasDiscussion ? discussionDates.filter(d => d) : undefined,
         }),
       });
 
@@ -510,6 +514,80 @@ export function NewProposalForm() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Step 12: Online Discussion */}
+        <div className="bg-gray-50 rounded-xl p-5">
+          <label className="block text-base font-semibold text-gray-900 mb-3">
+            12. {vi ? 'Thảo luận trực tuyến (tùy chọn)' : 'Online Discussion (optional)'}
+          </label>
+          <p className="text-sm text-gray-500 mb-3">
+            {vi
+              ? 'Bật tính năng này để tổ chức buổi thảo luận trực tuyến. Thành viên có thể bỏ phiếu ngày tham gia và đặt câu hỏi trước.'
+              : 'Enable this to host an online discussion. Members can vote on dates and submit questions beforehand.'}
+          </p>
+
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              type="button"
+              onClick={() => setHasDiscussion(!hasDiscussion)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                hasDiscussion ? 'bg-blue-600' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  hasDiscussion ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className="text-sm font-medium text-gray-700">
+              {hasDiscussion
+                ? (vi ? 'Có thảo luận trực tuyến' : 'Online discussion enabled')
+                : (vi ? 'Không có thảo luận' : 'No discussion')}
+            </span>
+          </div>
+
+          {hasDiscussion && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-gray-700">
+                {vi ? 'Đề xuất 2-5 ngày để thành viên bỏ phiếu:' : 'Propose 2-5 dates for members to vote:'}
+              </p>
+              {discussionDates.map((date, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => {
+                      const updated = [...discussionDates];
+                      updated[idx] = e.target.value;
+                      setDiscussionDates(updated);
+                    }}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                  />
+                  {discussionDates.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => setDiscussionDates(discussionDates.filter((_, i) => i !== idx))}
+                      className="text-red-500 hover:text-red-700 text-sm font-medium px-2"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+              {discussionDates.length < 5 && (
+                <button
+                  type="button"
+                  onClick={() => setDiscussionDates([...discussionDates, ''])}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  + {vi ? 'Thêm ngày' : 'Add date'}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* AI Preview Panel */}

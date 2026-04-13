@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const member = await requireAuth(request);
 
     const body = await request.json();
-    const { title, description, category, genre, target_date, commitment_level, image_url, tags, location, participation_format } = body;
+    const { title, description, category, genre, target_date, commitment_level, image_url, tags, location, participation_format, has_discussion, discussion_date_options } = body;
 
     if (!title || title.length < 5 || title.length > 200) {
       return errorResponse('Title must be between 5 and 200 characters', 400);
@@ -81,6 +81,27 @@ export async function POST(request: NextRequest) {
       location: typeof location === 'string' ? location.trim().slice(0, 100) : undefined,
       participation_format: participation_format && VALID_FORMATS.includes(participation_format) ? participation_format : 'offline',
     });
+
+    // Create discussion if enabled
+    if (has_discussion && Array.isArray(discussion_date_options) && discussion_date_options.length >= 2) {
+      const { generateId: genId, formatDate: fmtDate } = await import('@/lib/utils');
+      const discNow = fmtDate();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('proposal_discussions') as any)
+        .insert({
+          id: genId(),
+          proposal_id: proposal.id,
+          status: 'open',
+          date_options: discussion_date_options.slice(0, 5),
+          created_at: discNow,
+          updated_at: discNow,
+        });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('community_proposals') as any)
+        .update({ has_discussion: true, updated_at: discNow })
+        .eq('id', proposal.id);
+    }
 
     // Commit proposer at their chosen level
     await upsertCommitment({

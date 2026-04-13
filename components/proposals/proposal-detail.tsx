@@ -8,7 +8,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, ParticipationFormat, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS } from '@/types';
+import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, ParticipationFormat, ProposalDiscussion, DiscussionResponse, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS } from '@/types';
+import { ProposalDiscussionSection } from '@/components/proposals/proposal-discussion-section';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 import { MentionTextarea, renderMentions, encodementions } from '@/components/ui/mention-textarea';
 
@@ -117,6 +118,8 @@ export function ProposalDetail({ proposalId }: Props) {
   const [replyImageFile, setReplyImageFile] = useState<File | null>(null);
   const [replyImagePreview, setReplyImagePreview] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
+  const [discussion, setDiscussion] = useState<ProposalDiscussion | null>(null);
+  const [discussionResponses, setDiscussionResponses] = useState<DiscussionResponse[]>([]);
   const commentImageRef = useRef<HTMLInputElement>(null);
   const replyImageRef = useRef<HTMLInputElement>(null);
   const commentMentionsRef = useRef<{ name: string; id: string }[]>([]);
@@ -142,6 +145,19 @@ export function ProposalDetail({ proposalId }: Props) {
       if (data.currentMemberId) setCurrentMemberId(data.currentMemberId);
       if (data.currentMemberAvatarUrl) setCurrentMemberAvatarUrl(data.currentMemberAvatarUrl);
       if (data.currentMemberIsAdmin) setCurrentMemberIsAdmin(true);
+      // Discussion data
+      if (data.discussion) {
+        setDiscussion(data.discussion);
+        setDiscussionResponses((data.discussionResponses || []).map((r: Record<string, unknown>) => {
+          const member = r.members as Record<string, unknown> | null;
+          return {
+            ...r,
+            member_name: member?.name || r.member_name,
+            member_email: member?.email || r.member_email,
+            member_avatar_url: member?.avatar_url || r.member_avatar_url,
+          };
+        }));
+      }
     } catch {
       router.push('/events?tab=proposals');
     } finally {
@@ -854,6 +870,20 @@ export function ProposalDetail({ proposalId }: Props) {
           )}
         </div>
       </div>
+
+      {/* Online Discussion */}
+      {proposal.has_discussion && discussion && (
+        <ProposalDiscussionSection
+          proposalId={proposalId}
+          proposalSlug={proposal.slug}
+          discussion={discussion}
+          responses={discussionResponses}
+          currentMemberId={currentMemberId}
+          isCreator={currentMemberId === proposal.created_by_member_id}
+          locale={locale}
+          onRefresh={() => fetchProposal(true)}
+        />
+      )}
 
       {/* Comments */}
       <div>

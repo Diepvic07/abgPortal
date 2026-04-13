@@ -34,6 +34,7 @@ function mapRowToProposal(row: Record<string, unknown>): CommunityProposal {
     tags: (row.tags as string[] | null) || [],
     location: nullToUndefined(row.location as string | null),
     participation_format: (row.participation_format as ParticipationFormat) || undefined,
+    has_discussion: (row.has_discussion as boolean) || false,
     author_name: nullToUndefined(row.author_name as string | null),
     author_avatar_url: nullToUndefined(row.author_avatar_url as string | null),
     author_abg_class: nullToUndefined(row.author_abg_class as string | null),

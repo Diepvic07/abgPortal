@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth, getAuthenticatedMember } from '@/lib/auth-middleware';
 import { getProposalById, updateProposal, getCommitmentsByProposal, getCommentsByProposal, getMemberCommitment } from '@/lib/supabase-community';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -18,10 +19,34 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const comments = await getCommentsByProposal(id, member?.id);
     const myCommitment = member ? await getMemberCommitment(id, member.id) : null;
 
+    // Fetch discussion data if proposal has discussion enabled
+    let discussion = null;
+    let discussionResponses: unknown[] = [];
+    if (proposal.has_discussion) {
+      const supabase = createServerSupabaseClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: disc } = await (supabase.from('proposal_discussions') as any)
+        .select('*')
+        .eq('proposal_id', id)
+        .single();
+
+      if (disc) {
+        discussion = disc;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: respRows } = await (supabase.from('proposal_discussion_responses') as any)
+          .select('*, members:member_id(name, email, avatar_url)')
+          .eq('discussion_id', disc.id)
+          .order('created_at', { ascending: true });
+        discussionResponses = respRows || [];
+      }
+    }
+
     return successResponse({
       proposal: { ...proposal, my_commitment: myCommitment?.commitment_level || null },
       commitments,
       comments,
+      discussion,
+      discussionResponses,
       currentMemberId: member?.id || null,
       currentMemberAvatarUrl: member?.avatar_url || null,
       currentMemberIsAdmin: member?.is_admin === true,
@@ -68,6 +93,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (location !== undefined) updates.location = location || null;
     if (participation_format !== undefined) updates.participation_format = participation_format;
     if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags.filter((t: string) => typeof t === 'string' && t.trim()).map((t: string) => t.trim()).slice(0, 10) : [];
+    if (body.has_discussion !== undefined) updates.has_discussion = !!body.has_discussion;
 
     const updated = await updateProposal(id, updates);
     return successResponse({ proposal: updated });

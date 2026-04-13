@@ -18,6 +18,10 @@
     {
       "path": "/api/cron/duplicate-reminder",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/discussion-reminder",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

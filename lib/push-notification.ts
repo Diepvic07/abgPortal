@@ -4,7 +4,7 @@ import { getTranslations, interpolate, type Locale } from '@/lib/i18n/utils';
 
 // --- Types ---
 
-export type NotificationType = 'connection_request' | 'new_event' | 'new_proposal' | 'proposal_comment';
+export type NotificationType = 'connection_request' | 'new_event' | 'new_proposal' | 'proposal_comment' | 'discussion_meeting';
 
 export interface PushPayload {
   title: string;
@@ -25,6 +25,7 @@ interface SubscriptionWithPrefs {
   new_event: boolean | null;
   new_proposal: boolean | null;
   proposal_comment: boolean | null;
+  discussion_meeting: boolean | null;
   locale: string | null;
 }
 
@@ -86,7 +87,7 @@ export async function sendPushToMember(
     // Fetch preferences (separate query — no FK between these tables)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: prefs } = await (supabase.from('notification_preferences') as any)
-      .select('connection_request, new_event, new_proposal, proposal_comment')
+      .select('connection_request, new_event, new_proposal, proposal_comment, discussion_meeting')
       .eq('member_id', memberId)
       .single();
 
@@ -108,6 +109,7 @@ export async function sendPushToMember(
       new_event: prefs?.new_event ?? null,
       new_proposal: prefs?.new_proposal ?? null,
       proposal_comment: prefs?.proposal_comment ?? null,
+      discussion_meeting: prefs?.discussion_meeting ?? null,
       locale: member?.locale ?? null,
     }));
 
@@ -167,7 +169,7 @@ export async function sendPushToAllMembers(
     // Fetch all preferences for these members in one query
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: allPrefs } = await (supabase.from('notification_preferences') as any)
-      .select('member_id, connection_request, new_event, new_proposal, proposal_comment')
+      .select('member_id, connection_request, new_event, new_proposal, proposal_comment, discussion_meeting')
       .in('member_id', memberIds);
 
     // Fetch member locales
@@ -194,6 +196,7 @@ export async function sendPushToAllMembers(
           new_event: prefs?.new_event as boolean | null ?? null,
           new_proposal: prefs?.new_proposal as boolean | null ?? null,
           proposal_comment: prefs?.proposal_comment as boolean | null ?? null,
+          discussion_meeting: prefs?.discussion_meeting as boolean | null ?? null,
           locale: (localeMap.get(row.member_id as string) as string) ?? null,
         };
       })
@@ -295,6 +298,25 @@ export function getPushMessage(
         body: interpolate(t.push.proposalCommentBody, data),
         _data: data,
       };
+    case 'discussion_meeting': {
+      const isReminder = data.isReminder === 'true';
+      if (isReminder) {
+        return {
+          title: locale === 'vi' ? 'Nhắc nhở thảo luận' : 'Discussion Reminder',
+          body: locale === 'vi'
+            ? `Buổi thảo luận "${data.proposalTitle}" sẽ bắt đầu trong 10 phút!`
+            : `Discussion "${data.proposalTitle}" starts in 10 minutes!`,
+          _data: data,
+        };
+      }
+      return {
+        title: locale === 'vi' ? 'Lời mời thảo luận' : 'Discussion Invitation',
+        body: locale === 'vi'
+          ? `Bạn được mời tham gia thảo luận cho "${data.proposalTitle}"`
+          : `You're invited to discuss "${data.proposalTitle}"`,
+        _data: data,
+      };
+    }
     default:
       return { title: data.title || 'ABG Alumni Connect', body: data.body || '', _data: data };
   }

@@ -1430,3 +1430,152 @@ export async function sendEventPaymentNotificationEmail(data: {
     console.error('Failed to send event payment notification email:', error);
   }
 }
+
+/**
+ * Send discussion meeting invitation email
+ */
+export async function sendDiscussionInvitationEmail(
+  to: string,
+  name: string,
+  proposalTitle: string,
+  meetingDate: string,
+  meetingLink: string,
+  proposalUrl: string,
+  locale: Locale = 'vi',
+): Promise<void> {
+  const resend = getResendClient();
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
+  const formattedDate = new Date(meetingDate).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Ho_Chi_Minh',
+  });
+
+  const isVi = locale === 'vi';
+  const subject = isVi
+    ? `Lời mời thảo luận: ${proposalTitle}`
+    : `Discussion Invitation: ${proposalTitle}`;
+
+  const emailHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#16a34a;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1f2937;">${isVi ? `Xin chào ${escapeHtml(name)}!` : `Hello ${escapeHtml(name)}!`}</p>
+
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${isVi
+    ? `Bạn được mời tham gia buổi thảo luận trực tuyến cho đề xuất:`
+    : `You are invited to join an online discussion for the proposal:`}</p>
+
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#166534;">${escapeHtml(proposalTitle)}</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#1f2937;">
+              <tr><td style="padding:4px 0;font-weight:600;width:100px;">${isVi ? 'Thời gian:' : 'Date/Time:'}</td><td style="padding:4px 0;">${escapeHtml(formattedDate)}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">${isVi ? 'Nền tảng:' : 'Platform:'}</td><td style="padding:4px 0;">Google Meet</td></tr>
+            </table>
+          </div>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;"><tr><td>
+            <a href="${escapeHtml(meetingLink)}" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${isVi ? 'Tham gia Google Meet' : 'Join Google Meet'}</a>
+          </td></tr></table>
+
+          <p style="margin:0 0 12px;font-size:14px;color:#6b7280;">${isVi
+    ? 'Hoặc xem chi tiết đề xuất:'
+    : 'Or view the proposal details:'} <a href="${appUrl}${proposalUrl}" style="color:#2563eb;text-decoration:underline;">${isVi ? 'Xem đề xuất' : 'View proposal'}</a></p>
+
+          <p style="margin:0;font-size:15px;color:#374151;">${isVi ? 'Trân trọng,' : 'Best regards,'}<br><strong>ABG Alumni Connect</strong></p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Connect &mdash; ${isVi ? 'Kết nối cựu học viên ABG' : 'Connecting ABG Alumni'}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to, subject, html: emailHtml });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      if (TEST_MODE_EMAILS.includes(to)) {
+        await resend.emails.send({ from: FROM_EMAIL, to, subject: `[TEST] ${subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+      }
+      return;
+    }
+    console.error('Failed to send discussion invitation email:', error);
+  }
+}
+
+/**
+ * Send discussion meeting reminder email (10 minutes before)
+ */
+export async function sendDiscussionReminderEmail(
+  to: string,
+  name: string,
+  proposalTitle: string,
+  meetingDate: string,
+  meetingLink: string,
+  proposalUrl: string,
+  locale: Locale = 'vi',
+): Promise<void> {
+  const resend = getResendClient();
+
+  const isVi = locale === 'vi';
+  const subject = isVi
+    ? `Nhắc nhở: Buổi thảo luận sắp bắt đầu - ${proposalTitle}`
+    : `Reminder: Discussion starting soon - ${proposalTitle}`;
+
+  const emailHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#dc2626;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">${isVi ? 'Sắp bắt đầu!' : 'Starting Soon!'}</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1f2937;">${isVi ? `Xin chào ${escapeHtml(name)}!` : `Hello ${escapeHtml(name)}!`}</p>
+
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <p style="margin:0;font-size:15px;color:#991b1b;font-weight:600;">${isVi
+    ? `Buổi thảo luận "${escapeHtml(proposalTitle)}" sẽ bắt đầu trong 10 phút nữa!`
+    : `The discussion "${escapeHtml(proposalTitle)}" starts in 10 minutes!`}</p>
+          </div>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr><td>
+            <a href="${escapeHtml(meetingLink)}" style="display:inline-block;padding:14px 36px;background:#dc2626;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${isVi ? 'Tham gia ngay' : 'Join Now'}</a>
+          </td></tr></table>
+
+          <p style="margin:0;font-size:15px;color:#374151;">${isVi ? 'Trân trọng,' : 'Best regards,'}<br><strong>ABG Alumni Connect</strong></p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Connect &mdash; ${isVi ? 'Kết nối cựu học viên ABG' : 'Connecting ABG Alumni'}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to, subject, html: emailHtml });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      if (TEST_MODE_EMAILS.includes(to)) {
+        await resend.emails.send({ from: FROM_EMAIL, to, subject: `[TEST] ${subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+      }
+      return;
+    }
+    console.error('Failed to send discussion reminder email:', error);
+  }
+}

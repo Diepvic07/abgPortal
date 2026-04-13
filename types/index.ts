@@ -352,6 +352,7 @@ export interface CommunityProposal {
   tags?: string[];
   location?: string;
   participation_format?: ParticipationFormat;
+  has_discussion?: boolean;
   // Joined fields
   author_name?: string;
   author_avatar_url?: string;
@@ -388,6 +389,38 @@ export interface CommunityProposalComment {
   // Enriched fields
   reactions?: ReactionSummary;
   replies?: CommunityProposalComment[];
+}
+
+// Online Discussion
+export type DiscussionStatus = 'open' | 'scheduled' | 'completed' | 'cancelled';
+export type DiscussionRsvpStatus = 'pending' | 'accepted' | 'declined';
+
+export interface ProposalDiscussion {
+  id: string;
+  proposal_id: string;
+  status: DiscussionStatus;
+  date_options: string[];
+  meeting_date?: string;
+  meeting_link?: string;
+  invited_emails?: string[];
+  reminder_sent: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DiscussionResponse {
+  id: string;
+  discussion_id: string;
+  member_id: string;
+  available_dates: string[];
+  question?: string;
+  rsvp_status: DiscussionRsvpStatus;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  member_name?: string;
+  member_email?: string;
+  member_avatar_url?: string;
 }
 
 // Community Events
