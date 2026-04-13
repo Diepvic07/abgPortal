@@ -67,23 +67,37 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
       if (proposal) {
         const creatorId = proposal.created_by_member_id as string;
+        const allDates = (discussion.date_options as string[]) || [];
         const { data: creatorResp } = await (supabase.from('proposal_discussion_responses') as any)
-          .select('id')
+          .select('id, available_dates')
           .eq('discussion_id', discussion.id)
           .eq('member_id', creatorId)
           .single();
 
+        const now = formatDate();
         if (!creatorResp) {
-          const now = formatDate();
+          // No response at all — create one with all options
           await (supabase.from('proposal_discussion_responses') as any)
             .insert({
               id: generateId(),
               discussion_id: discussion.id,
               member_id: creatorId,
-              available_dates: discussion.date_options,
+              available_dates: allDates,
               created_at: now,
               updated_at: now,
             });
+        } else {
+          // Response exists — ensure all date options are included
+          const existing = (creatorResp.available_dates as string[]) || [];
+          const missingDates = allDates.filter((d: string) => !existing.includes(d));
+          if (missingDates.length > 0) {
+            await (supabase.from('proposal_discussion_responses') as any)
+              .update({
+                available_dates: allDates,
+                updated_at: now,
+              })
+              .eq('id', creatorResp.id);
+          }
         }
       }
     }

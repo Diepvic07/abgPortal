@@ -51,6 +51,7 @@ export function ProposalDiscussionSection({
 
   // For member voting
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   // For creator scheduling
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
@@ -352,25 +353,38 @@ export function ProposalDiscussionSection({
         </span>
       </h3>
 
-      {/* Date voting */}
+      {/* Date voting / results */}
       <div className="bg-gray-50 rounded-xl p-5 mb-4">
-        <p className="text-sm font-semibold text-gray-800 mb-3">
-          {vi ? 'Bỏ phiếu ngày bạn có thể tham gia:' : 'Vote for dates you can join:'}
-        </p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-semibold text-gray-800">
+            {vi ? 'Bỏ phiếu ngày bạn có thể tham gia:' : 'Vote for dates you can join:'}
+          </p>
+          {currentMemberId && !isCreator && !isEditing && myResponse && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              {vi ? 'Chỉnh sửa' : 'Edit'}
+            </button>
+          )}
+        </div>
         <div className="space-y-2">
           {discussion.date_options.map((dateOpt) => {
             const voteInfo = dateVoteData[dateOpt] || { count: 0, voters: [] };
             const isSelected = selectedDates.includes(dateOpt);
+            const canEdit = currentMemberId && !isCreator && (isEditing || !myResponse);
             return (
               <div
                 key={dateOpt}
-                className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                  isSelected
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  canEdit ? 'cursor-pointer' : ''
+                } ${
+                  canEdit && isSelected
                     ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-blue-300'
-                }`}
+                    : 'border-gray-200 bg-white'
+                } ${canEdit && !isSelected ? 'hover:border-blue-300' : ''}`}
                 onClick={() => {
-                  if (!currentMemberId || isCreator) return;
+                  if (!canEdit) return;
                   setSelectedDates(prev =>
                     prev.includes(dateOpt)
                       ? prev.filter(d => d !== dateOpt)
@@ -380,7 +394,7 @@ export function ProposalDiscussionSection({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {currentMemberId && !isCreator && (
+                    {canEdit && (
                       <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                         isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
                       }`}>
@@ -395,7 +409,7 @@ export function ProposalDiscussionSection({
                 </div>
                 {/* Voter avatars */}
                 {voteInfo.voters.length > 0 && (
-                  <div className="flex items-center mt-2 ml-8 pl-0.5" onClick={(e) => e.stopPropagation()}>
+                  <div className={`flex items-center mt-2 ${canEdit ? 'ml-8' : 'ml-0'} pl-0.5`} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center">
                       {voteInfo.voters.map((voter) => renderVoterAvatar(voter))}
                     </div>
@@ -412,11 +426,14 @@ export function ProposalDiscussionSection({
         </div>
       </div>
 
-      {/* Submit vote (for non-creators) */}
-      {currentMemberId && !isCreator && (
-        <div className="mb-4">
+      {/* Submit vote (for non-creators, only when editing or first vote) */}
+      {currentMemberId && !isCreator && (isEditing || !myResponse) && (
+        <div className="mb-4 flex gap-2">
           <button
-            onClick={handleSubmitResponse}
+            onClick={async () => {
+              await handleSubmitResponse();
+              setIsEditing(false);
+            }}
             disabled={submitting || selectedDates.length === 0}
             className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 text-sm"
           >
@@ -426,6 +443,17 @@ export function ProposalDiscussionSection({
                 ? (vi ? 'Cập nhật phản hồi' : 'Update Response')
                 : (vi ? 'Gửi phản hồi' : 'Submit Response')}
           </button>
+          {isEditing && (
+            <button
+              onClick={() => {
+                setSelectedDates(myResponse?.available_dates || []);
+                setIsEditing(false);
+              }}
+              className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm"
+            >
+              {vi ? 'Hủy' : 'Cancel'}
+            </button>
+          )}
         </div>
       )}
 
