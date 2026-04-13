@@ -646,43 +646,6 @@ export function ProposalDetail({ proposalId }: Props) {
               </label>
             </div>
 
-            {/* Tags editor */}
-            <div className="mt-3">
-              <p className="text-sm text-gray-600 mb-2">{locale === 'vi' ? 'Thẻ (Tags)' : 'Tags'}:</p>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {editTags.map(tag => (
-                  <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
-                    {tag}
-                    <button type="button" onClick={() => setEditTags(editTags.filter(t => t !== tag))} className="text-blue-500 hover:text-blue-800">×</button>
-                  </span>
-                ))}
-              </div>
-              <input
-                type="text"
-                value={editTagInput}
-                onChange={e => setEditTagInput(e.target.value)}
-                onKeyDown={e => {
-                  if ((e.key === 'Enter' || e.key === ',') && editTagInput.trim()) {
-                    e.preventDefault();
-                    const cleaned = editTagInput.trim().toLowerCase();
-                    if (!editTags.includes(cleaned) && editTags.length < 10) setEditTags([...editTags, cleaned]);
-                    setEditTagInput('');
-                  } else if (e.key === 'Backspace' && !editTagInput && editTags.length > 0) {
-                    setEditTags(editTags.slice(0, -1));
-                  }
-                }}
-                onBlur={() => {
-                  if (editTagInput.trim()) {
-                    const cleaned = editTagInput.trim().toLowerCase();
-                    if (!editTags.includes(cleaned) && editTags.length < 10) setEditTags([...editTags, cleaned]);
-                    setEditTagInput('');
-                  }
-                }}
-                placeholder={locale === 'vi' ? 'Nhập thẻ + Enter...' : 'Type tag + Enter...'}
-                className="w-full border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                maxLength={50}
-              />
-            </div>
           </>
         ) : (
           <>
@@ -713,18 +676,6 @@ export function ProposalDetail({ proposalId }: Props) {
                 </span>
               )}
             </div>
-            {proposal.tags && proposal.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {proposal.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 text-xs font-medium"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
           </>
         )}
       </div>

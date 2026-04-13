@@ -622,13 +622,6 @@ export function NewProposalForm() {
                     {PARTICIPATION_FORMAT_LABELS[participationFormat]?.icon} {PARTICIPATION_FORMAT_LABELS[participationFormat]?.[vi ? 'vi' : 'en']}
                   </span>
                 </div>
-                {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {tags.map((tag) => (
-                      <span key={tag} className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">{tag}</span>
-                    ))}
-                  </div>
-                )}
                 <p className="text-xs text-blue-600 mt-1">
                   {vi ? 'Bạn có thể chỉnh sửa ở các mục phía trên nếu cần.' : 'You can adjust these in the fields above if needed.'}
                 </p>
