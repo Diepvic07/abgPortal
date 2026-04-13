@@ -125,6 +125,7 @@ export function ProposalDetail({ proposalId }: Props) {
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
   const [discussion, setDiscussion] = useState<ProposalDiscussion | null>(null);
   const [discussionResponses, setDiscussionResponses] = useState<DiscussionResponse[]>([]);
+  const [deleting, setDeleting] = useState(false);
   const commentImageRef = useRef<HTMLInputElement>(null);
   const replyImageRef = useRef<HTMLInputElement>(null);
   const commentMentionsRef = useRef<{ name: string; id: string }[]>([]);
@@ -514,6 +515,28 @@ export function ProposalDetail({ proposalId }: Props) {
       setEditError('Failed to rerun AI');
     } finally {
       setRerunningAI(false);
+    }
+  }
+
+  async function handleDeleteProposal() {
+    const msg = locale === 'vi'
+      ? 'Bạn có chắc muốn xóa đề xuất này? Hành động này không thể hoàn tác.'
+      : 'Are you sure you want to delete this proposal? This action cannot be undone.';
+    if (!confirm(msg)) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/community/proposals/${proposalId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || (locale === 'vi' ? 'Không thể xóa đề xuất' : 'Failed to delete proposal'));
+        return;
+      }
+      router.push('/events?tab=proposals');
+    } catch {
+      alert(locale === 'vi' ? 'Có lỗi xảy ra' : 'Something went wrong');
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -1221,6 +1244,21 @@ export function ProposalDetail({ proposalId }: Props) {
           )}
         </div>
       </div>
+
+      {/* Delete proposal (creator or admin) */}
+      {(isAuthor || currentMemberIsAdmin) && !isTerminal && (
+        <div className="border-t border-gray-200 pt-6">
+          <button
+            onClick={handleDeleteProposal}
+            disabled={deleting}
+            className="text-sm text-red-500 hover:text-red-700 font-medium disabled:opacity-50"
+          >
+            {deleting
+              ? (locale === 'vi' ? 'Đang xóa...' : 'Deleting...')
+              : (locale === 'vi' ? 'Xóa đề xuất' : 'Delete Proposal')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

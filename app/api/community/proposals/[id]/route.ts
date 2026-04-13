@@ -198,3 +198,49 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return handleApiError(error);
   }
 }
+
+// DELETE: Remove a proposal (creator or admin only)
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const member = await requireAuth(request);
+    const { id } = await params;
+
+    const proposal = await getProposalById(id);
+    if (!proposal) return errorResponse('Proposal not found', 404);
+
+    // Only the creator or an admin can delete
+    const isAuthor = proposal.created_by_member_id === member.id;
+    if (!isAuthor && !member.is_admin) {
+      return errorResponse('Only the proposal creator or an admin can delete this proposal', 403);
+    }
+
+    const supabase = createServerSupabaseClient();
+
+    // Delete related data (cascading from foreign keys handles discussion responses)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('proposal_discussions') as any)
+      .delete()
+      .eq('proposal_id', id);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('community_proposal_comments') as any)
+      .delete()
+      .eq('proposal_id', id);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('community_commitments') as any)
+      .delete()
+      .eq('proposal_id', id);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from('community_proposals') as any)
+      .delete()
+      .eq('id', id);
+
+    if (error) throw new Error(`Failed to delete proposal: ${error.message}`);
+
+    return successResponse({ message: 'Proposal deleted successfully' });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
