@@ -459,7 +459,14 @@ export function ProposalDiscussionSection({
             <button
               onClick={() => {
                 setShowSchedulePanel(true);
-                setMeetingDate(mostVotedDate);
+                // Parse most voted date option (format: YYYY-MM-DDThh:mm-hh:mm or YYYY-MM-DD)
+                const timeMatch = mostVotedDate.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+                if (timeMatch) {
+                  setMeetingDate(timeMatch[1]);
+                  setMeetingTime(timeMatch[2]);
+                } else {
+                  setMeetingDate(mostVotedDate);
+                }
                 // Pre-select all respondent emails
                 const emails = responses
                   .filter(r => r.member_email)
@@ -510,13 +517,23 @@ export function ProposalDiscussionSection({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Google Meet Link *
                 </label>
-                <input
-                  type="url"
-                  value={meetingLink}
-                  onChange={(e) => setMeetingLink(e.target.value)}
-                  placeholder="https://meet.google.com/xxx-xxxx-xxx"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={meetingLink}
+                    onChange={(e) => setMeetingLink(e.target.value)}
+                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+                  />
+                  <a
+                    href="https://meet.google.com/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium whitespace-nowrap border border-gray-300"
+                  >
+                    {vi ? 'Tạo Meet' : 'Create Meet'}
+                  </a>
+                </div>
               </div>
 
               {/* Invite list */}
