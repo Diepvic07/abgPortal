@@ -1,7 +1,27 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { ProposalDiscussion, DiscussionResponse } from '@/types';
+import { generateProfileSlug } from '@/lib/profile-url';
+
+const AVATAR_COLORS = [
+  'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
+  'bg-indigo-500', 'bg-yellow-500', 'bg-teal-500', 'bg-orange-500', 'bg-cyan-500',
+];
+
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function getVoterProfileUrl(resp: DiscussionResponse): string {
+  const slug = resp.member_public_profile_slug || generateProfileSlug(resp.member_name, resp.member_id);
+  return `/profile/public/${slug}`;
+}
 
 interface Props {
   proposalId: string;
@@ -56,20 +76,21 @@ export function ProposalDiscussionSection({
 
   if (!discussion) return null;
 
-  const dateVoteCounts = useMemo(() => {
-    const counts: Record<string, { count: number; voters: string[] }> = {};
+  // Build voter info per date option, including full response data for avatars
+  const dateVoteData = useMemo(() => {
+    const data: Record<string, { count: number; voters: DiscussionResponse[] }> = {};
     for (const dateOpt of discussion.date_options) {
-      counts[dateOpt] = { count: 0, voters: [] };
+      data[dateOpt] = { count: 0, voters: [] };
     }
     for (const resp of responses) {
       for (const d of resp.available_dates) {
-        if (counts[d]) {
-          counts[d].count++;
-          if (resp.member_name) counts[d].voters.push(resp.member_name);
+        if (data[d]) {
+          data[d].count++;
+          data[d].voters.push(resp);
         }
       }
     }
-    return counts;
+    return data;
   }, [discussion.date_options, responses]);
 
   const questionsFromMembers = useMemo(
@@ -80,18 +101,17 @@ export function ProposalDiscussionSection({
   const mostVotedDate = useMemo(() => {
     let maxDate = discussion.date_options[0];
     let maxCount = 0;
-    for (const [date, info] of Object.entries(dateVoteCounts)) {
+    for (const [date, info] of Object.entries(dateVoteData)) {
       if (info.count > maxCount) {
         maxCount = info.count;
         maxDate = date;
       }
     }
     return maxDate;
-  }, [dateVoteCounts, discussion.date_options]);
+  }, [dateVoteData, discussion.date_options]);
 
   function formatDateDisplay(dateStr: string) {
     try {
-      // Handle format "YYYY-MM-DDThh:mm-hh:mm" (date with time range)
       const timeMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})-(\d{2}:\d{2})$/);
       if (timeMatch) {
         const [, datePart, startTime, endTime] = timeMatch;
@@ -103,7 +123,6 @@ export function ProposalDiscussionSection({
         });
         return `${dateFormatted}, ${startTime} - ${endTime}`;
       }
-      // Plain date format "YYYY-MM-DD"
       return new Date(dateStr + 'T00:00:00').toLocaleDateString(vi ? 'vi-VN' : 'en-US', {
         weekday: 'short',
         day: 'numeric',
@@ -129,6 +148,30 @@ export function ProposalDiscussionSection({
     } catch {
       return dateStr;
     }
+  }
+
+  function renderVoterAvatar(resp: DiscussionResponse) {
+    const name = resp.member_name || '?';
+    const profileUrl = getVoterProfileUrl(resp);
+
+    const avatar = resp.member_avatar_url ? (
+      <img src={resp.member_avatar_url} alt={name} className="w-7 h-7 rounded-full object-cover ring-2 ring-white" />
+    ) : (
+      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white ring-2 ring-white ${getAvatarColor(name)}`}>
+        {name[0].toUpperCase()}
+      </div>
+    );
+
+    return (
+      <Link
+        key={resp.id}
+        href={profileUrl}
+        title={name}
+        className="hover:opacity-80 transition-opacity -ml-1.5 first:ml-0"
+      >
+        {avatar}
+      </Link>
+    );
   }
 
   async function handleSubmitResponse() {
@@ -340,12 +383,12 @@ export function ProposalDiscussionSection({
         </p>
         <div className="space-y-2">
           {discussion.date_options.map((dateOpt) => {
-            const voteInfo = dateVoteCounts[dateOpt] || { count: 0, voters: [] };
+            const voteInfo = dateVoteData[dateOpt] || { count: 0, voters: [] };
             const isSelected = selectedDates.includes(dateOpt);
             return (
               <div
                 key={dateOpt}
-                className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
                   isSelected
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 bg-white hover:border-blue-300'
@@ -359,26 +402,34 @@ export function ProposalDiscussionSection({
                   );
                 }}
               >
-                <div className="flex items-center gap-3">
-                  {currentMemberId && !isCreator && (
-                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                      isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
-                    }`}>
-                      {isSelected && <span className="text-white text-xs">✓</span>}
-                    </div>
-                  )}
-                  <span className="font-medium text-gray-900">{formatDateDisplay(dateOpt)}</span>
-                </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {currentMemberId && !isCreator && (
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                        isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                      }`}>
+                        {isSelected && <span className="text-white text-xs">✓</span>}
+                      </div>
+                    )}
+                    <span className="font-medium text-gray-900">{formatDateDisplay(dateOpt)}</span>
+                  </div>
                   <span className={`text-sm font-semibold ${voteInfo.count > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
                     {voteInfo.count} {vi ? 'phiếu' : 'votes'}
                   </span>
-                  {isCreator && voteInfo.voters.length > 0 && (
-                    <span className="text-xs text-gray-500">
-                      ({voteInfo.voters.join(', ')})
-                    </span>
-                  )}
                 </div>
+                {/* Voter avatars */}
+                {voteInfo.voters.length > 0 && (
+                  <div className="flex items-center mt-2 ml-8 pl-0.5" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center">
+                      {voteInfo.voters.map((voter) => renderVoterAvatar(voter))}
+                    </div>
+                    {voteInfo.voters.length <= 3 && (
+                      <span className="ml-2 text-xs text-gray-500">
+                        {voteInfo.voters.map(v => v.member_name).join(', ')}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

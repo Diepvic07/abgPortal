@@ -37,6 +37,7 @@ function mapRowToResponse(row: Record<string, unknown>): DiscussionResponse {
     member_name: (row.member_name as string) || undefined,
     member_email: (row.member_email as string) || undefined,
     member_avatar_url: (row.member_avatar_url as string) || undefined,
+    member_public_profile_slug: (row.member_public_profile_slug as string) || undefined,
   };
 }
 
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const { data: responseRows } = await (supabase.from('proposal_discussion_responses') as any)
-      .select('*, members:member_id(name, email, avatar_url)')
+      .select('*, members:member_id(name, email, avatar_url, public_profile_slug)')
       .eq('discussion_id', discussion.id)
       .order('created_at', { ascending: true });
 
@@ -69,6 +70,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         member_name: member?.name,
         member_email: member?.email,
         member_avatar_url: member?.avatar_url,
+        member_public_profile_slug: member?.public_profile_slug,
       });
     });
 
@@ -124,6 +126,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (error) throw new Error('Failed to create discussion');
+
+    // Auto-create creator's vote for all date options
+    await (supabase.from('proposal_discussion_responses') as any)
+      .insert({
+        id: generateId(),
+        discussion_id: discussionId,
+        member_id: member.id,
+        available_dates: date_options,
+        created_at: now,
+        updated_at: now,
+      });
 
     // Mark proposal as having discussion
     await (supabase.from('community_proposals') as any)

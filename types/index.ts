@@ -421,6 +421,7 @@ export interface DiscussionResponse {
   member_name?: string;
   member_email?: string;
   member_avatar_url?: string;
+  member_public_profile_slug?: string;
 }
 
 // Community Events
