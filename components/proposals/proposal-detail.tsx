@@ -419,10 +419,19 @@ export function ProposalDetail({ proposalId }: Props) {
     setEditTags(proposal.tags || []);
     setEditTagInput('');
     setEditHasDiscussion(!!proposal.has_discussion);
-    setEditDiscussionOptions([
-      { date: '', startTime: '', endTime: '' },
-      { date: '', startTime: '', endTime: '' },
-    ]);
+    // Pre-populate from existing discussion options if available
+    if (discussion && discussion.date_options.length > 0) {
+      setEditDiscussionOptions(discussion.date_options.map(opt => {
+        const timeMatch = opt.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+        if (timeMatch) return { date: timeMatch[1], startTime: timeMatch[2], endTime: timeMatch[3] };
+        return { date: opt, startTime: '', endTime: '' };
+      }));
+    } else {
+      setEditDiscussionOptions([
+        { date: '', startTime: '', endTime: '' },
+        { date: '', startTime: '', endTime: '' },
+      ]);
+    }
     setEditError(null);
     setIsEditing(true);
   }
@@ -668,7 +677,6 @@ export function ProposalDetail({ proposalId }: Props) {
                   type="checkbox"
                   checked={editHasDiscussion}
                   onChange={e => setEditHasDiscussion(e.target.checked)}
-                  disabled={!!proposal.has_discussion}
                   className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <div>
@@ -682,8 +690,15 @@ export function ProposalDetail({ proposalId }: Props) {
                   )}
                 </div>
               </label>
-              {editHasDiscussion && !proposal.has_discussion && (
+              {editHasDiscussion && (
                 <div className="mt-3 space-y-2">
+                  {proposal.has_discussion && discussionResponses.length > 0 && (
+                    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      {locale === 'vi'
+                        ? `⚠️ Đã có ${discussionResponses.length} phản hồi. Thay đổi lựa chọn sẽ xóa tất cả phiếu bầu hiện tại.`
+                        : `⚠️ ${discussionResponses.length} response(s) exist. Changing options will erase all current votes.`}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500">
                     {locale === 'vi' ? 'Đề xuất 2-10 lựa chọn ngày/giờ để mọi người bình chọn:' : 'Propose 2-10 date/time options for members to vote:'}
                   </p>

@@ -97,15 +97,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Update proposal fields first (without has_discussion to avoid schema cache issues)
     const updated = await updateProposal(id, updates);
 
-    // If enabling discussion, create the discussion record and flag separately
-    if (body.has_discussion === true && !proposal.has_discussion) {
+    // Handle discussion: create new or update existing
+    if (body.has_discussion === true) {
       const { discussion_date_options } = body;
       if (Array.isArray(discussion_date_options) && discussion_date_options.length >= 2) {
         const { generateId, formatDate } = await import('@/lib/utils');
         const supabase = createServerSupabaseClient();
         const now = formatDate();
 
-        // Check if discussion already exists (from a previous partial attempt)
+        // Check if discussion already exists
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: existing, error: checkErr } = await (supabase.from('proposal_discussions') as any)
           .select('id')
@@ -116,7 +116,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           return errorResponse(`Failed to create discussion: ${checkErr.message || checkErr.code}`, 500);
         }
 
-        if (!existing) {
+        if (existing) {
+          // Update existing discussion options
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from('proposal_discussions') as any)
+            .update({ date_options: discussion_date_options.slice(0, 10), updated_at: now })
+            .eq('id', existing.id);
+
+          // Clear all existing votes since options changed
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from('proposal_discussion_responses') as any)
+            .delete()
+            .eq('discussion_id', existing.id);
+        } else {
+          // Create new discussion record
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { error: insertErr } = await (supabase.from('proposal_discussions') as any)
             .insert({
@@ -131,13 +144,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             console.error('Error creating discussion record:', insertErr);
             return errorResponse(`Failed to create discussion: ${insertErr.message || insertErr.code || JSON.stringify(insertErr)}`, 500);
           }
-        }
 
-        // Update has_discussion flag separately (matches POST route pattern)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('community_proposals') as any)
-          .update({ has_discussion: true, updated_at: now })
-          .eq('id', id);
+          // Set has_discussion flag
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from('community_proposals') as any)
+            .update({ has_discussion: true, updated_at: now })
+            .eq('id', id);
+        }
       }
     }
 
