@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
           id: genId(),
           proposal_id: proposal.id,
           status: 'open',
-          date_options: discussion_date_options.slice(0, 5),
+          date_options: discussion_date_options.slice(0, 10),
           created_at: discNow,
           updated_at: discNow,
         });

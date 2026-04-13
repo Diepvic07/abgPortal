@@ -123,7 +123,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               id: generateId(),
               proposal_id: id,
               status: 'open',
-              date_options: discussion_date_options.slice(0, 5),
+              date_options: discussion_date_options.slice(0, 10),
               created_at: now,
               updated_at: now,
             });

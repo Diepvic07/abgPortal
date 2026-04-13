@@ -43,7 +43,10 @@ export function NewProposalForm() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [hasDiscussion, setHasDiscussion] = useState(false);
-  const [discussionDates, setDiscussionDates] = useState<string[]>(['', '']);
+  const [discussionOptions, setDiscussionOptions] = useState<{date: string; startTime: string; endTime: string}[]>([
+    { date: '', startTime: '', endTime: '' },
+    { date: '', startTime: '', endTime: '' },
+  ]);
 
   function buildDescription(): string {
     const parts: string[] = [];
@@ -167,7 +170,10 @@ export function NewProposalForm() {
           location: location === '__custom__' ? customLocation.trim() : location || undefined,
           participation_format: participationFormat,
           has_discussion: hasDiscussion,
-          discussion_date_options: hasDiscussion ? discussionDates.filter(d => d) : undefined,
+          discussion_date_options: hasDiscussion ? discussionOptions
+            .filter(o => o.date)
+            .map(o => o.startTime && o.endTime ? `${o.date}T${o.startTime}-${o.endTime}` : o.date)
+            : undefined,
         }),
       });
 
@@ -551,25 +557,48 @@ export function NewProposalForm() {
           {hasDiscussion && (
             <div className="space-y-3">
               <p className="text-sm font-medium text-gray-700">
-                {vi ? 'Đề xuất 2-5 ngày để thành viên bỏ phiếu:' : 'Propose 2-5 dates for members to vote:'}
+                {vi ? 'Đề xuất 2-10 lựa chọn ngày/giờ để thành viên bỏ phiếu:' : 'Propose 2-10 date/time options for members to vote:'}
               </p>
-              {discussionDates.map((date, idx) => (
-                <div key={idx} className="flex items-center gap-2">
+              {discussionOptions.map((opt, idx) => (
+                <div key={idx} className="flex items-center gap-2 flex-wrap">
                   <input
                     type="date"
-                    value={date}
+                    value={opt.date}
                     onChange={(e) => {
-                      const updated = [...discussionDates];
-                      updated[idx] = e.target.value;
-                      setDiscussionDates(updated);
+                      const updated = [...discussionOptions];
+                      updated[idx] = { ...updated[idx], date: e.target.value };
+                      setDiscussionOptions(updated);
                     }}
                     min={new Date().toISOString().split('T')[0]}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
                   />
-                  {discussionDates.length > 2 && (
+                  <input
+                    type="time"
+                    value={opt.startTime}
+                    onChange={(e) => {
+                      const updated = [...discussionOptions];
+                      updated[idx] = { ...updated[idx], startTime: e.target.value };
+                      setDiscussionOptions(updated);
+                    }}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                    placeholder="Từ"
+                  />
+                  <span className="text-gray-400 text-sm">-</span>
+                  <input
+                    type="time"
+                    value={opt.endTime}
+                    onChange={(e) => {
+                      const updated = [...discussionOptions];
+                      updated[idx] = { ...updated[idx], endTime: e.target.value };
+                      setDiscussionOptions(updated);
+                    }}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                    placeholder="Đến"
+                  />
+                  {discussionOptions.length > 2 && (
                     <button
                       type="button"
-                      onClick={() => setDiscussionDates(discussionDates.filter((_, i) => i !== idx))}
+                      onClick={() => setDiscussionOptions(discussionOptions.filter((_, i) => i !== idx))}
                       className="text-red-500 hover:text-red-700 text-sm font-medium px-2"
                     >
                       ✕
@@ -577,13 +606,13 @@ export function NewProposalForm() {
                   )}
                 </div>
               ))}
-              {discussionDates.length < 5 && (
+              {discussionOptions.length < 10 && (
                 <button
                   type="button"
-                  onClick={() => setDiscussionDates([...discussionDates, ''])}
+                  onClick={() => setDiscussionOptions([...discussionOptions, { date: '', startTime: '', endTime: '' }])}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
-                  + {vi ? 'Thêm ngày' : 'Add date'}
+                  + {vi ? 'Thêm lựa chọn' : 'Add option'}
                 </button>
               )}
             </div>

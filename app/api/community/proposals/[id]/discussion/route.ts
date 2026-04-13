@@ -104,8 +104,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const body = await request.json();
     const { date_options } = body;
 
-    if (!Array.isArray(date_options) || date_options.length < 2 || date_options.length > 5) {
-      return errorResponse('Please provide 2-5 date options', 400);
+    if (!Array.isArray(date_options) || date_options.length < 2 || date_options.length > 10) {
+      return errorResponse('Please provide 2-10 date options', 400);
     }
 
     const now = formatDate();

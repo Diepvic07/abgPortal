@@ -90,6 +90,19 @@ export function ProposalDiscussionSection({
 
   function formatDateDisplay(dateStr: string) {
     try {
+      // Handle format "YYYY-MM-DDThh:mm-hh:mm" (date with time range)
+      const timeMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+      if (timeMatch) {
+        const [, datePart, startTime, endTime] = timeMatch;
+        const dateFormatted = new Date(datePart + 'T00:00:00').toLocaleDateString(vi ? 'vi-VN' : 'en-US', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        });
+        return `${dateFormatted}, ${startTime} - ${endTime}`;
+      }
+      // Plain date format "YYYY-MM-DD"
       return new Date(dateStr + 'T00:00:00').toLocaleDateString(vi ? 'vi-VN' : 'en-US', {
         weekday: 'short',
         day: 'numeric',

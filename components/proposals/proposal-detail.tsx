@@ -113,7 +113,10 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editTags, setEditTags] = useState<string[]>([]);
   const [editTagInput, setEditTagInput] = useState('');
   const [editHasDiscussion, setEditHasDiscussion] = useState(false);
-  const [editDiscussionDates, setEditDiscussionDates] = useState<string[]>(['', '']);
+  const [editDiscussionOptions, setEditDiscussionOptions] = useState<{date: string; startTime: string; endTime: string}[]>([
+    { date: '', startTime: '', endTime: '' },
+    { date: '', startTime: '', endTime: '' },
+  ]);
   const [savingEdit, setSavingEdit] = useState(false);
   const [rerunningAI, setRerunningAI] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -416,7 +419,10 @@ export function ProposalDetail({ proposalId }: Props) {
     setEditTags(proposal.tags || []);
     setEditTagInput('');
     setEditHasDiscussion(!!proposal.has_discussion);
-    setEditDiscussionDates(['', '']);
+    setEditDiscussionOptions([
+      { date: '', startTime: '', endTime: '' },
+      { date: '', startTime: '', endTime: '' },
+    ]);
     setEditError(null);
     setIsEditing(true);
   }
@@ -439,7 +445,10 @@ export function ProposalDetail({ proposalId }: Props) {
           participation_format: editParticipationFormat,
           tags: editTags,
           has_discussion: editHasDiscussion,
-          discussion_date_options: editHasDiscussion ? editDiscussionDates.filter(d => d) : undefined,
+          discussion_date_options: editHasDiscussion ? editDiscussionOptions
+            .filter(o => o.date)
+            .map(o => o.startTime && o.endTime ? `${o.date}T${o.startTime}-${o.endTime}` : o.date)
+            : undefined,
         }),
       });
       if (!res.ok) {
@@ -676,37 +685,58 @@ export function ProposalDetail({ proposalId }: Props) {
               {editHasDiscussion && !proposal.has_discussion && (
                 <div className="mt-3 space-y-2">
                   <p className="text-xs text-gray-500">
-                    {locale === 'vi' ? 'Đề xuất 2-5 ngày để mọi người bình chọn:' : 'Propose 2-5 dates for members to vote:'}
+                    {locale === 'vi' ? 'Đề xuất 2-10 lựa chọn ngày/giờ để mọi người bình chọn:' : 'Propose 2-10 date/time options for members to vote:'}
                   </p>
-                  {editDiscussionDates.map((date, i) => (
-                    <div key={i} className="flex items-center gap-2">
+                  {editDiscussionOptions.map((opt, i) => (
+                    <div key={i} className="flex items-center gap-2 flex-wrap">
                       <input
                         type="date"
-                        value={date}
+                        value={opt.date}
                         min={new Date().toISOString().split('T')[0]}
                         onChange={e => {
-                          const newDates = [...editDiscussionDates];
-                          newDates[i] = e.target.value;
-                          setEditDiscussionDates(newDates);
+                          const updated = [...editDiscussionOptions];
+                          updated[i] = { ...updated[i], date: e.target.value };
+                          setEditDiscussionOptions(updated);
                         }}
                         className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
-                      {editDiscussionDates.length > 2 && (
+                      <input
+                        type="time"
+                        value={opt.startTime}
+                        onChange={e => {
+                          const updated = [...editDiscussionOptions];
+                          updated[i] = { ...updated[i], startTime: e.target.value };
+                          setEditDiscussionOptions(updated);
+                        }}
+                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-28"
+                      />
+                      <span className="text-gray-400 text-xs">-</span>
+                      <input
+                        type="time"
+                        value={opt.endTime}
+                        onChange={e => {
+                          const updated = [...editDiscussionOptions];
+                          updated[i] = { ...updated[i], endTime: e.target.value };
+                          setEditDiscussionOptions(updated);
+                        }}
+                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-28"
+                      />
+                      {editDiscussionOptions.length > 2 && (
                         <button
                           type="button"
-                          onClick={() => setEditDiscussionDates(editDiscussionDates.filter((_, j) => j !== i))}
+                          onClick={() => setEditDiscussionOptions(editDiscussionOptions.filter((_, j) => j !== i))}
                           className="text-red-400 hover:text-red-600 text-sm"
                         >✕</button>
                       )}
                     </div>
                   ))}
-                  {editDiscussionDates.length < 5 && (
+                  {editDiscussionOptions.length < 10 && (
                     <button
                       type="button"
-                      onClick={() => setEditDiscussionDates([...editDiscussionDates, ''])}
+                      onClick={() => setEditDiscussionOptions([...editDiscussionOptions, { date: '', startTime: '', endTime: '' }])}
                       className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                     >
-                      + {locale === 'vi' ? 'Thêm ngày' : 'Add date'}
+                      + {locale === 'vi' ? 'Thêm lựa chọn' : 'Add option'}
                     </button>
                   )}
                 </div>
