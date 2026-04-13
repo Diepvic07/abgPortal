@@ -823,7 +823,7 @@ export function ProposalDetail({ proposalId }: Props) {
       </div>
 
       {/* Online Discussion */}
-      {(proposal.has_discussion || currentMemberId === proposal.created_by_member_id) && (
+      {proposal.has_discussion && (
         <ProposalDiscussionSection
           proposalId={proposalId}
           proposalSlug={proposal.slug}
