@@ -107,10 +107,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         // Check if discussion already exists (from a previous partial attempt)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: existing } = await (supabase.from('proposal_discussions') as any)
+        const { data: existing, error: checkErr } = await (supabase.from('proposal_discussions') as any)
           .select('id')
           .eq('proposal_id', id)
           .maybeSingle();
+        if (checkErr) {
+          console.error('Error checking existing discussion:', checkErr);
+          return errorResponse(`Failed to create discussion: ${checkErr.message || checkErr.code}`, 500);
+        }
 
         if (!existing) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,7 +129,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             });
           if (insertErr) {
             console.error('Error creating discussion record:', insertErr);
-            return errorResponse('Failed to create discussion', 500);
+            return errorResponse(`Failed to create discussion: ${insertErr.message || insertErr.code || JSON.stringify(insertErr)}`, 500);
           }
         }
 
