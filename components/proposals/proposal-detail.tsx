@@ -160,6 +160,7 @@ export function ProposalDetail({ proposalId }: Props) {
             member_name: member?.name || r.member_name,
             member_email: member?.email || r.member_email,
             member_avatar_url: member?.avatar_url || r.member_avatar_url,
+            member_public_profile_slug: member?.public_profile_slug || r.member_public_profile_slug,
           };
         }));
       }

@@ -3,6 +3,7 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api-respon
 import { requireAuth, getAuthenticatedMember } from '@/lib/auth-middleware';
 import { getProposalById, updateProposal, getCommitmentsByProposal, getCommentsByProposal, getMemberCommitment } from '@/lib/supabase-community';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { generateId, formatDate } from '@/lib/utils';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -32,9 +33,45 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
       if (disc) {
         discussion = disc;
+
+        // Backfill creator's auto-vote if missing or incomplete
+        if (disc.status === 'open') {
+          const creatorId = proposal.created_by_member_id;
+          const allDates = (disc.date_options as string[]) || [];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: creatorResp } = await (supabase.from('proposal_discussion_responses') as any)
+            .select('id, available_dates')
+            .eq('discussion_id', disc.id)
+            .eq('member_id', creatorId)
+            .single();
+
+          const now = formatDate();
+          if (!creatorResp) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase.from('proposal_discussion_responses') as any)
+              .insert({
+                id: generateId(),
+                discussion_id: disc.id,
+                member_id: creatorId,
+                available_dates: allDates,
+                created_at: now,
+                updated_at: now,
+              });
+          } else {
+            const existing = (creatorResp.available_dates as string[]) || [];
+            const missingDates = allDates.filter((d: string) => !existing.includes(d));
+            if (missingDates.length > 0) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (supabase.from('proposal_discussion_responses') as any)
+                .update({ available_dates: allDates, updated_at: now })
+                .eq('id', creatorResp.id);
+            }
+          }
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: respRows } = await (supabase.from('proposal_discussion_responses') as any)
-          .select('*, members:member_id(name, email, avatar_url)')
+          .select('*, members:member_id(name, email, avatar_url, public_profile_slug)')
           .eq('discussion_id', disc.id)
           .order('created_at', { ascending: true });
         discussionResponses = respRows || [];
