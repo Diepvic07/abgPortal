@@ -58,6 +58,36 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return successResponse({ discussion: null, responses: [] });
     }
 
+    // Backfill creator's auto-vote if missing (for discussions created before this feature)
+    if (discussion.status === 'open') {
+      const { data: proposal } = await (supabase.from('community_proposals') as any)
+        .select('created_by_member_id')
+        .eq('id', id)
+        .single();
+
+      if (proposal) {
+        const creatorId = proposal.created_by_member_id as string;
+        const { data: creatorResp } = await (supabase.from('proposal_discussion_responses') as any)
+          .select('id')
+          .eq('discussion_id', discussion.id)
+          .eq('member_id', creatorId)
+          .single();
+
+        if (!creatorResp) {
+          const now = formatDate();
+          await (supabase.from('proposal_discussion_responses') as any)
+            .insert({
+              id: generateId(),
+              discussion_id: discussion.id,
+              member_id: creatorId,
+              available_dates: discussion.date_options,
+              created_at: now,
+              updated_at: now,
+            });
+        }
+      }
+    }
+
     const { data: responseRows } = await (supabase.from('proposal_discussion_responses') as any)
       .select('*, members:member_id(name, email, avatar_url, public_profile_slug)')
       .eq('discussion_id', discussion.id)
