@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Link from 'next/link';
 import { ProposalDiscussion, DiscussionResponse } from '@/types';
 
 const AVATAR_COLORS = [
@@ -15,11 +14,6 @@ function getAvatarColor(name: string): string {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
-function getVoterProfileUrl(resp: DiscussionResponse): string | null {
-  if (!resp.member_public_profile_slug) return null;
-  return `/profile/public/${resp.member_public_profile_slug}`;
 }
 
 interface Props {
@@ -145,7 +139,6 @@ export function ProposalDiscussionSection({
 
   function renderVoterAvatar(resp: DiscussionResponse) {
     const name = resp.member_name || '?';
-    const profileUrl = getVoterProfileUrl(resp);
 
     const avatar = resp.member_avatar_url ? (
       <img src={resp.member_avatar_url} alt={name} className="w-7 h-7 rounded-full object-cover ring-2 ring-white" />
@@ -154,19 +147,6 @@ export function ProposalDiscussionSection({
         {name[0].toUpperCase()}
       </div>
     );
-
-    if (profileUrl) {
-      return (
-        <Link
-          key={resp.id}
-          href={profileUrl}
-          title={name}
-          className="hover:opacity-80 transition-opacity -ml-1.5 first:ml-0"
-        >
-          {avatar}
-        </Link>
-      );
-    }
 
     return (
       <span key={resp.id} title={name} className="-ml-1.5 first:ml-0">
