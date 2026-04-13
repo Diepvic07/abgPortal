@@ -51,7 +51,6 @@ export function ProposalDiscussionSection({
 
   // For member voting
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
-  const [question, setQuestion] = useState('');
 
   // For creator scheduling
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
@@ -70,7 +69,6 @@ export function ProposalDiscussionSection({
   useState(() => {
     if (myResponse) {
       setSelectedDates(myResponse.available_dates || []);
-      setQuestion(myResponse.question || '');
     }
   });
 
@@ -92,11 +90,6 @@ export function ProposalDiscussionSection({
     }
     return data;
   }, [discussion.date_options, responses]);
-
-  const questionsFromMembers = useMemo(
-    () => responses.filter(r => r.question),
-    [responses]
-  );
 
   const mostVotedDate = useMemo(() => {
     let maxDate = discussion.date_options[0];
@@ -185,7 +178,6 @@ export function ProposalDiscussionSection({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           available_dates: selectedDates,
-          question: question.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -326,22 +318,6 @@ export function ProposalDiscussionSection({
             </div>
           )}
 
-          {/* Questions raised */}
-          {questionsFromMembers.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-blue-200">
-              <p className="text-sm font-semibold text-gray-800 mb-2">
-                {vi ? 'Câu hỏi đã đặt:' : 'Questions raised:'}
-              </p>
-              <div className="space-y-2">
-                {questionsFromMembers.map((r) => (
-                  <div key={r.id} className="bg-white rounded-lg p-3 text-sm">
-                    <p className="font-medium text-gray-700">{r.member_name}</p>
-                    <p className="text-gray-600">{r.question}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {isCreator && (
@@ -436,23 +412,13 @@ export function ProposalDiscussionSection({
         </div>
       </div>
 
-      {/* Question input (for non-creators) */}
+      {/* Submit vote (for non-creators) */}
       {currentMemberId && !isCreator && (
-        <div className="bg-gray-50 rounded-xl p-5 mb-4">
-          <label className="block text-sm font-semibold text-gray-800 mb-2">
-            {vi ? 'Đặt câu hỏi cho người đề xuất (tùy chọn):' : 'Ask the proposer a question (optional):'}
-          </label>
-          <textarea
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder={vi ? 'Câu hỏi của bạn...' : 'Your question...'}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-h-[60px] text-sm"
-            maxLength={500}
-          />
+        <div className="mb-4">
           <button
             onClick={handleSubmitResponse}
             disabled={submitting || selectedDates.length === 0}
-            className="mt-3 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 text-sm"
+            className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 text-sm"
           >
             {submitting
               ? (vi ? 'Đang gửi...' : 'Submitting...')
@@ -463,26 +429,9 @@ export function ProposalDiscussionSection({
         </div>
       )}
 
-      {/* Creator view: questions + schedule button */}
+      {/* Creator view: schedule button */}
       {isCreator && (
         <>
-          {/* Questions from members */}
-          {questionsFromMembers.length > 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-4">
-              <p className="text-sm font-semibold text-amber-800 mb-3">
-                {vi ? `${questionsFromMembers.length} câu hỏi từ thành viên:` : `${questionsFromMembers.length} question(s) from members:`}
-              </p>
-              <div className="space-y-2">
-                {questionsFromMembers.map((r) => (
-                  <div key={r.id} className="bg-white rounded-lg p-3 text-sm">
-                    <p className="font-medium text-gray-700">{r.member_name}</p>
-                    <p className="text-gray-600 mt-1">{r.question}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Response summary */}
           <div className="bg-gray-50 rounded-xl p-5 mb-4">
             <p className="text-sm font-semibold text-gray-800 mb-2">
