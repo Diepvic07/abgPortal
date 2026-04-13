@@ -468,6 +468,11 @@ export function ProposalDetail({ proposalId }: Props) {
       const data = await res.json();
       setProposal({ ...proposal, ...data.proposal });
       setIsEditing(false);
+      // Reload to refresh discussion data if poll was created or edited
+      if (editHasDiscussion) {
+        window.location.reload();
+        return;
+      }
     } catch {
       setEditError('Failed to save changes');
     } finally {
