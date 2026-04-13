@@ -1,5 +1,248 @@
 [
   {
+    "id": "2890ca2b-c632-4e10-adcd-cadb5f7a67f7",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/admin",
+    "description": "tôi bấm sửa mà bài thông tin không cập nhật",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-05T03:13:38.92+00:00"
+  },
+  {
+    "id": "37231a60-fe44-403f-abd4-eff70e1e14ab",
+    "reporter_email": "diepvic@gmail.com",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Ngày kết thúc này phải ghi là : Hạn chót đăng ký\r\nNgày diễn ra cần ghi thời gian từ 8h đến 3h chiều 12/4/2026",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-05T01:08:20.108+00:00"
+  },
+  {
+    "id": "8cbf93eb-38ce-47d3-9e2d-1a10e582ff07",
+    "reporter_email": "diepvic@gmail.com",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "The bug report red button should be look like a ladybug",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-05T00:57:45.552+00:00"
+  },
+  {
+    "id": "e5d654ee-185d-46d2-a2c0-54897a06f4ba",
+    "reporter_email": "diepvic@gmail.com",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Sẽ tham gia => Tham gia ngay \r\nSẽ dẫn dắt => Chung tay tổ chức",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-05T00:57:03.182+00:00"
+  },
+  {
+    "id": "c0c1d919-21e0-4b97-a2b0-004894e42d2e",
+    "reporter_email": "diepvic@gmail.com",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Trực tiếp\r\nSự kiện\r\nĐã đăng => Đã đăng ko có nhiều ý nghĩa bằng sự kiện đã diễn ra chưa, hay sắp diễn ra trong bao nhiêu ngày nữa",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-05T00:56:31.061+00:00"
+  },
+  {
+    "id": "3cc8c9ee-d760-4081-93ab-63a5d0026a0c",
+    "reporter_email": "diepvic@gmail.com",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Một số thành viên đăng ký nhưng chưa có ảnh avatar cần hiển thị avatar dạng chữ cái và có màu sắc",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-05T00:55:27.708+00:00"
+  },
+  {
+    "id": "df538973-b038-4d6c-9e4b-7ffc4e06df16",
+    "reporter_email": "diepvic@gmail.com",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Report a Bug cần có giao diện tiếng Việt",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-05T00:54:52.725+00:00"
+  },
+  {
+    "id": "632ed68f-b02d-424d-a4f6-b81ff3a51491",
+    "reporter_email": "diepvic@gmail.com",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Các nút đăng ký tham gia hơi buồn tẻ, cần phải có màu sắc kiểu CTA button trông cho nó vui vẻ, và phải hiển thị commitment score",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-05T00:54:35.737+00:00"
+  },
+  {
+    "id": "3d86a0f6-df01-49e9-9506-2767d6f499b6",
+    "reporter_email": "diepvic@gmail.com",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Nên đổi \"Cách tham gia\" thành \"Địa điểm tổ chức\"",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-05T00:53:47.041+00:00"
+  },
+  {
+    "id": "658143fb-98e8-4d1a-ab7d-5d16208ba8aa",
+    "reporter_email": "diepvic@gmail.com",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "vẫn hiện note là có thể huỷ đăng ký bất kỳ lúc nào ở phần địa điểm",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-05T00:53:16.175+00:00"
+  },
+  {
+    "id": "0a2383a1-8948-42a8-8460-beaa115c8342",
+    "reporter_email": "diepvic@gmail.com",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Mở đăng ký => phải là ngày trong quá khứ hoặc ít nhất là hôm nay 5/4 chứ, tại sao lại mở đăng ký vào một ngày 12/4 còn hạn đăng ký lại là ngày 10/4? \r\nNgoài ra, ko có chỗ nào thể hiện ngày diễn ra sự kiện 12/4/2026 , thời gian từ 9h đến 3h chiều",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-05T00:52:53.483+00:00"
+  },
+  {
+    "id": "3f352ff2-89aa-4ab6-a464-a82d5b524cbc",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/admin",
+    "description": "Trong category nên chia các mục cụ thể đúng hơn: ABG Talks, Fieldtrip, Networking, Learning, Webinar, Event,Community Support, ABG Business Connect, Mục khác",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-04T16:35:39.517+00:00"
+  },
+  {
+    "id": "867c74b1-6a3c-4163-978f-c097fcf2ea2f",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/admin",
+    "description": "Phần khung viết mô tả sự kiện nên cho rộng hơn để có thể bao quát và sửa nội dung. text",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-04T16:30:04.963+00:00"
+  },
+  {
+    "id": "c0b3e646-cddf-4637-9c3f-8b71b1c14bac",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Không nên công khai thông tin người đăng ký",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-04T16:14:28.907+00:00"
+  },
+  {
+    "id": "47d0fd33-f5b9-4c77-a28b-b7628954f7b8",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Phần \"cách tham gia\" đang là thông tin địa điểm là không có logic",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-04T16:13:40.319+00:00"
+  },
+  {
+    "id": "b1b1a831-6738-4629-abb5-89c60ef17111",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Cho ảnh bìa là tuỳ theo tỉ lệ kích thước của ảnh chứ không cắt gọt",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-04T16:12:58.008+00:00"
+  },
+  {
+    "id": "c06077c9-d378-458c-b7b2-0bfda0c9c66b",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Bắt đầu và kết thúc đổi thành : Mở đăng ký - Hạn đăng ký",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-04T16:12:23.354+00:00"
+  },
+  {
+    "id": "00bd15f9-7947-461f-b61f-8c811cd8ea99",
+    "reporter_email": "diu.tran@abg.edu.vn",
+    "page_url": "https://www.abgalumni.vn/events/9defe721-3a42-4f61-b83b-61abd0d22302",
+    "description": "Về hạn huỷ sự kiện thì cho là option trong admin chọn cho ng tham gia có quyền huỷ hay không",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-04T16:11:45.724+00:00"
+  },
+  {
+    "id": "2fc58ce9-98a9-43ae-a0a0-668418e7ec92",
+    "reporter_email": "quephc@gmail.com",
+    "page_url": "https://www.abgalumni.vn/proposals/new",
+    "description": "Font chữ các câu hỏi mục đề xuất ý tưởng nhỏ, khó nhìn",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-04-04T15:37:45.416+00:00"
+  },
+  {
+    "id": "5ea69378-dd8d-4d56-bb57-236919d26da3",
+    "reporter_email": "dxhien92@gmail.com",
+    "page_url": "https://www.abgalumni.vn/request",
+    "description": "I can't find the way to update my profile (avatar, info,...)",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-31T16:37:35.528+00:00"
+  },
+  {
+    "id": "9efc52ac-3e78-45a6-ae26-6ff75ad8382f",
+    "reporter_email": "letructran.edu@gmail.com",
+    "page_url": "https://www.abgalumni.vn/request",
+    "description": "Tài khoản của em không thấy chỗ để cập nhật thông tin cá nhân ạ. Nhờ anh chị xem giúp ạ. Em cảm ơn nhé!",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-31T14:48:49.073+00:00"
+  },
+  {
+    "id": "ed1286a2-ed8e-4d68-abd5-e907af7b1508",
+    "reporter_email": "me@huongman.com",
+    "page_url": "https://www.abgalumni.vn/request?q=-%20C%C3%A1c%20anh%2Fch%E1%BB%8B%20leader%2C%20founder%20ho%E1%BA%B7c%20ch%E1%BB%A7%20doanh%20nghi%E1%BB%87p%20%C4%91ang%20g%E1%BA%B7p%20nh%E1%BB%AFng%20b%C3%A0i%20to%C3%A1n%20v%E1%BB%81%20team%20%26%20t%E1%BB%95%20ch%E1%BB%A9c%20v%C3%A0%20mu%E1%BB%91n%20nh%C3%ACn%20l%E1%BA%A1i%20c%C3%A1ch%20m%C3%ACnh%20%C4%91ang%20v%E1%BA%ADn%20h%C3%A0nh%0A-%20C%C3%A1c%20%C4%91%E1%BB%91i%20t%C3%A1c%20l%C3%A0m%20trong%20l%C4%A9nh%20v%E1%BB%B1c%20ph%C3%A1t%20tri%E1%BB%83n%20con%20ng%C6%B0%E1%BB%9Di%2C%20leadership%2C%20HR%2C%20gi%C3%A1o%20d%E1%BB%A5c%E2%80%A6%20%C4%91%E1%BB%83%20c%C3%B9ng%20x%C3%A2y%20d%E1%BB%B1ng%20ho%E1%BA%B7c%20tri%E1%BB%83n%20khai%20c%C3%A1c%20ch%C6%B0%C6%A1ng%20tr%C3%ACnh%2C%20d%E1%BB%8Bch%20v%E1%BB%A5%0A-%20Nh%E1%BB%AFng%20ng%C6%B0%E1%BB%9Di%20b%E1%BA%A1n%20c%C3%B9ng%20s%E1%BB%9F%20th%C3%ADch%20%C4%91%E1%BB%83%20trao%20%C4%91%E1%BB%95i%20v%E1%BB%81%20v%C4%83n%20h%C3%B3a%2C%20ngh%E1%BB%87%20thu%E1%BA%ADt%2C%20x%C3%A3%20h%E1%BB%99i%2C%20th%E1%BB%83%20thao%2C%20nu%C3%B4i%20d%E1%BA%A1y%20con%20%3AD&from=premium_match",
+    "description": "Sau khi hiện kết quả ghép đôi, mình chọn Request Introduction, 1 cửa sổ hiện ra yêu cầu mình gõ text vào để giới thiệu hoặc request gì đó, nhưng mình cứ đụng vào chỗ text đó là cửa sổ biến mất, trả về màn hình ghép đôi trở lại.",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-26T14:33:58.636+00:00"
+  },
+  {
+    "id": "7750aa0f-5ba1-42fd-8f49-a4714973504f",
+    "reporter_email": "vuthuyduong96@gmail.com",
+    "page_url": "https://www.abgalumni.vn/signup",
+    "description": "Không hiểu lỗi gì ạ?",
+    "screenshot_url": "https://ketrmymhnrtkiygjbtye.supabase.co/storage/v1/object/public/bug-screenshots/b7711afc-0336-49a7-ba66-812265f83c82.blob",
+    "status": "open",
+    "created_at": "2026-03-25T17:51:11.886+00:00"
+  },
+  {
+    "id": "3e290240-6353-44bc-89c0-86630892af8e",
+    "reporter_email": "vuthuyduong96@gmail.com",
+    "page_url": "https://www.abgalumni.vn/request",
+    "description": "Tôi không nhìn thấy hồ sơ của chính mình và không tìm thấy mục cài đặt quyền riêng tư.",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-25T17:37:30.226+00:00"
+  },
+  {
+    "id": "19061754-2b03-465c-b6ec-dcd9d8942d29",
+    "reporter_email": "minhanhmiamia@gmail.com",
+    "page_url": "https://www.abgalumni.vn/profile?edit=true",
+    "description": "Chị Điệp ơii, không thêm được ảnh ạaa",
+    "screenshot_url": "https://ketrmymhnrtkiygjbtye.supabase.co/storage/v1/object/public/bug-screenshots/b4661e4c-87f0-4b7d-a3f4-1a77b9982472.blob",
+    "status": "open",
+    "created_at": "2026-03-25T06:47:15.859+00:00"
+  },
+  {
+    "id": "69eb6196-4099-474d-a709-4fa55fc2b64d",
+    "reporter_email": "minhanhmiamia@gmail.com",
+    "page_url": "https://www.abgalumni.vn/profile?edit=true",
+    "description": "Chị Điệp ưi, trong phần chỉnh sửa hồ sơ chưa có mục thêm ảnh ạa",
+    "screenshot_url": null,
+    "status": "open",
+    "created_at": "2026-03-24T02:49:21.739+00:00"
+  },
+  {
+    "id": "b257ecd8-889b-4726-b8a2-2d8f7e7ada84",
+    "reporter_email": "mtthuong@gmail.com",
+    "page_url": "https://www.abgalumni.vn/onboard",
+    "description": "Đã update và được duyệt gói pro (thấy hiện chữ Pro dưới tên rồi) nhưng chọn profile để vào chỉnh sửa thì vẫn hiện ra màn hình báo upgrade đóng tiền mà không phải màn hình profile",
+    "screenshot_url": "https://ketrmymhnrtkiygjbtye.supabase.co/storage/v1/object/public/bug-screenshots/829aa0f8-ad9e-4d70-86c1-ad22b655cf99.blob",
+    "status": "open",
+    "created_at": "2026-03-24T02:34:00.493+00:00"
+  },
+  {
     "id": "96f45422-c074-47c8-b66f-8c0829c959e7",
     "reporter_email": "ttvietduc@gmail.com",
     "page_url": "https://www.abgalumni.vn/request",
@@ -7,69 +250,6 @@
     "screenshot_url": "https://ketrmymhnrtkiygjbtye.supabase.co/storage/v1/object/public/bug-screenshots/521aacc6-d2fa-4583-bb6c-b2c3a8308a2a.blob",
     "status": "open",
     "created_at": "2026-03-21T04:17:52.664+00:00"
-  },
-  {
-    "id": "565f722e-8db9-4b51-bfe2-672c9b5988a8",
-    "reporter_email": "quephc@gmail.com",
-    "page_url": "https://www.abgalumni.vn/request",
-    "description": "đổi tên nội dung thanh toán thành ABG Alumni  - ho va ten - khóa - data",
-    "screenshot_url": null,
-    "status": "open",
-    "created_at": "2026-03-21T03:35:53.891+00:00"
-  },
-  {
-    "id": "879e1977-fb34-4d25-a34f-7d57b6ffe0a7",
-    "reporter_email": "ttvietduc@gmail.com",
-    "page_url": "https://www.abgalumni.vn/about",
-    "description": "Trang không hiển thị - đang ở chế độ user đã đăng nhập",
-    "screenshot_url": null,
-    "status": "open",
-    "created_at": "2026-03-21T03:25:03.109+00:00"
-  },
-  {
-    "id": "b4d5a451-dc24-4383-9b4d-6f503253c387",
-    "reporter_email": "diu.tran@abg.edu.vn",
-    "page_url": "https://www.abgalumni.vn/request",
-    "description": "Sửa tìm \"người yêu\" thành \"người yêu và bạn bè chung chí hướng và sở thích\"",
-    "screenshot_url": null,
-    "status": "open",
-    "created_at": "2026-03-21T03:11:23.068+00:00"
-  },
-  {
-    "id": "65487ff9-f7c5-46eb-905f-ee692ddfbc39",
-    "reporter_email": "diu.tran@abg.edu.vn",
-    "page_url": "https://www.abgalumni.vn/onboard",
-    "description": "Sửa \"300 thành viên ABG\" thành \" +600 thành viên ABG\"",
-    "screenshot_url": null,
-    "status": "open",
-    "created_at": "2026-03-21T03:10:10.919+00:00"
-  },
-  {
-    "id": "1d4f022a-42bc-439b-a6df-fc2715c2f52e",
-    "reporter_email": "diu.tran@abg.edu.vn",
-    "page_url": "https://www.abgalumni.vn/members",
-    "description": "1/ Phần hiển text thị đang ghi \"tất cả lớp\", hãy chuyển \"lớp\" thành \"khoá ABG\"",
-    "screenshot_url": null,
-    "status": "open",
-    "created_at": "2026-03-21T03:09:13.395+00:00"
-  },
-  {
-    "id": "339e70f2-91af-4e52-b8e3-143a3abae39b",
-    "reporter_email": "diutran.vnu@gmail.com",
-    "page_url": "https://www.abgalumni.vn/request",
-    "description": "Phần footer hãy link đến đến địa chỉ :\r\n1/ Facebook ABG Alumni: https://www.facebook.com/ABGAlumni/\r\n2/ Chương trình ABG:  https://www.facebook.com/ABG.Program",
-    "screenshot_url": null,
-    "status": "open",
-    "created_at": "2026-03-20T10:21:14.502+00:00"
-  },
-  {
-    "id": "41ad0f9b-fcbf-489c-9f2e-e10b649dd521",
-    "reporter_email": "diu.tran@abg.edu.vn",
-    "page_url": "https://www.abgalumni.vn/about",
-    "description": "trang này bị lỗi, trang này cần hiện link về Homepage",
-    "screenshot_url": null,
-    "status": "open",
-    "created_at": "2026-03-16T11:15:04.605+00:00"
   },
   {
     "id": "21c42781-60f3-46be-9d97-da0e47db67ff",
@@ -81,15 +261,6 @@
     "created_at": "2026-03-16T10:48:43.689+00:00"
   },
   {
-    "id": "8b43e596-d1ce-43b7-9c47-3df904c0cf48",
-    "reporter_email": "ttvietduc@gmail.com",
-    "page_url": "https://www.abgalumni.vn/members",
-    "description": "Be default show total number of members để mọi người biết tổng network có bao nhiêu users.\r\nHiển thị các bạn cùng một lớp với users đó - đây là tính năng basic cho tất cả mọi người kết nối với những người học cùng một khoá với mình.",
-    "screenshot_url": "https://ketrmymhnrtkiygjbtye.supabase.co/storage/v1/object/public/bug-screenshots/8d7f0b23-d894-438a-bc1d-9096ff0f93fd.blob",
-    "status": "open",
-    "created_at": "2026-03-11T02:28:24.46+00:00"
-  },
-  {
     "id": "18a8ac8d-d033-495d-8acf-d6ef78c05361",
     "reporter_email": "ttvietduc@gmail.com",
     "page_url": "https://www.abgalumni.vn/members",
@@ -99,15 +270,6 @@
     "created_at": "2026-03-11T02:25:06.97+00:00"
   },
   {
-    "id": "a4bb144f-2b06-45bd-9839-2ab6d9f754b7",
-    "reporter_email": "ttvietduc@gmail.com",
-    "page_url": "https://www.abgalumni.vn/news",
-    "description": "add URL chính xác của các icon Facebook: \"https://www.facebook.com/ABGAlumni\"\r\ncác icon X và LinkedIn remove vì không có",
-    "screenshot_url": "https://ketrmymhnrtkiygjbtye.supabase.co/storage/v1/object/public/bug-screenshots/540afffe-6819-47ce-b192-81a1bbbd0a6c.blob",
-    "status": "open",
-    "created_at": "2026-03-11T02:24:03.826+00:00"
-  },
-  {
     "id": "1bc20512-80e1-4150-af94-b948c51d3d2b",
     "reporter_email": "ttvietduc@gmail.com",
     "page_url": "https://www.abgalumni.vn/request",
@@ -115,15 +277,6 @@
     "screenshot_url": "https://ketrmymhnrtkiygjbtye.supabase.co/storage/v1/object/public/bug-screenshots/9ddfe54b-59ce-4657-985c-f366b42c15c7.blob",
     "status": "open",
     "created_at": "2026-03-11T02:20:16.406+00:00"
-  },
-  {
-    "id": "01a89cb9-1281-4c3c-acf4-2242a4a6b805",
-    "reporter_email": "ttvietduc@gmail.com",
-    "page_url": "https://www.abgalumni.vn/members",
-    "description": "khi tick class xong nên hiện ra luôn thành viên tức thì thay vì phải click search.",
-    "screenshot_url": "https://ketrmymhnrtkiygjbtye.supabase.co/storage/v1/object/public/bug-screenshots/91524993-0aa6-4244-8d40-50bc1b018025.blob",
-    "status": "open",
-    "created_at": "2026-03-11T02:18:37.848+00:00"
   },
   {
     "id": "aa20407b-82fc-471b-99eb-7407ea637759",

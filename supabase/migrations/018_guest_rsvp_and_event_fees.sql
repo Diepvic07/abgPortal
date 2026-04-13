@@ -91,3 +91,4 @@ CREATE POLICY "Service role full access on event_payments"
   ON event_payments FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
+de

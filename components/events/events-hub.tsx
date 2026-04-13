@@ -40,10 +40,10 @@ export function EventsHub() {
   const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = !!session;
   const searchParams = useSearchParams();
-  const validTabs = isAuthenticated ? ['events', 'proposals', 'past'] as TabKey[] : ['events', 'past'] as TabKey[];
+  const validTabs = ['events', 'proposals', 'past'] as TabKey[];
   const initialTab = validTabs.includes(searchParams.get('tab') as TabKey)
     ? (searchParams.get('tab') as TabKey)
-    : 'events';
+    : (isAuthenticated ? 'proposals' : 'events');
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [events, setEvents] = useState<CommunityEvent[]>([]);
   const [pastEvents, setPastEvents] = useState<CommunityEvent[]>([]);
@@ -97,7 +97,10 @@ export function EventsHub() {
   async function fetchProposals() {
     setLoading(true);
     try {
-      const res = await fetch('/api/community/proposals');
+      const url = isAuthenticated
+        ? '/api/community/proposals'
+        : '/api/community/proposals/public';
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setProposals(data.proposals || []);
@@ -111,10 +114,10 @@ export function EventsHub() {
 
   const allTabs: { key: TabKey; label: { en: string; vi: string }; authOnly?: boolean }[] = [
     { key: 'events', label: { en: 'Events', vi: 'Sự kiện' } },
-    { key: 'proposals', label: { en: 'Proposals', vi: 'Đề xuất' }, authOnly: true },
+    { key: 'proposals', label: { en: 'Proposals', vi: 'Đề xuất' } },
     { key: 'past', label: { en: 'Past Events', vi: 'Sự kiện đã qua' } },
   ];
-  const tabs = allTabs.filter(tab => !tab.authOnly || isAuthenticated);
+  const tabs = allTabs;
 
   return (
     <div>
@@ -312,7 +315,7 @@ function ProposalsTabContent({
       {/* Filtered proposals list */}
       <div className="divide-y divide-gray-100">
         {filtered.map((proposal) => (
-          <ProposalRow key={proposal.id} proposal={proposal} locale={locale} />
+          <ProposalRow key={proposal.id} proposal={proposal} locale={locale} isAuthenticated={!!session} />
         ))}
       </div>
     </div>
@@ -400,7 +403,7 @@ function EventRow({ event, locale, isAuthenticated }: { event: CommunityEvent; l
   );
 }
 
-function ProposalRow({ proposal, locale }: { proposal: CommunityProposal; locale: string }) {
+function ProposalRow({ proposal, locale, isAuthenticated }: { proposal: CommunityProposal; locale: string; isAuthenticated?: boolean }) {
   const categoryColors: Record<string, { bg: string; text: string }> = {
     charity: { bg: 'bg-rose-50', text: 'text-rose-600' },
     event: { bg: 'bg-amber-50', text: 'text-amber-600' },
@@ -429,10 +432,12 @@ function ProposalRow({ proposal, locale }: { proposal: CommunityProposal; locale
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-1.053M18 6.75a3 3 0 11-6 0 3 3 0 016 0zM6.75 9.75a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             {proposal.commitment_count}
           </span>
-          <span className="text-sm text-gray-500 flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
-            {proposal.comment_count}
-          </span>
+          {isAuthenticated && (
+            <span className="text-sm text-gray-500 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
+              {proposal.comment_count}
+            </span>
+          )}
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${colors.bg} ${colors.text}`}>
             {categoryLabel}
           </span>

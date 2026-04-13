@@ -187,7 +187,10 @@
 | **Reported** | 2026-03-16 by ttvietduc@gmail.com |
 | **Page** | /request |
 | **Description** | When already on the Find Connection (/request) page, clicking the "Find Connection" nav link does nothing. |
-| **Root Cause** | Next.js `<Link>` component does not trigger visible navigation when the target URL matches the current page. |
+| **Root Cause** | Next.js `<Link>` component does not trigger visible navigation when the target URL matches the current page. |Copy email user for me
+/clear
+/clear
+
 | **Fix** | Added an `onClick` handler that detects when user is already on `/request` (via `usePathname()`), prevents default Link behavior, scrolls to top, and calls `router.refresh()`. Applied to both desktop and mobile nav links. |
 | **Files Changed** | `components/layout/header-navigation.tsx` |
 

@@ -7,7 +7,7 @@ export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname === '/') {
     const token = await getToken({ req: request });
     if (token) {
-      return NextResponse.redirect(new URL('/events', request.url));
+      return NextResponse.redirect(new URL('/events?tab=proposals', request.url));
     }
   }
   return NextResponse.next();

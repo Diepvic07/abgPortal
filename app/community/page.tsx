@@ -16,7 +16,7 @@ export default async function CommunityPage() {
 
   // Logged-in members go to the events hub (the new default home)
   if (session) {
-    redirect('/events');
+    redirect('/events?tab=proposals');
   }
 
   return (
