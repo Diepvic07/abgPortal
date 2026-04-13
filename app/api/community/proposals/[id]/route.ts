@@ -93,30 +93,53 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (location !== undefined) updates.location = location || null;
     if (participation_format !== undefined) updates.participation_format = participation_format;
     if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags.filter((t: string) => typeof t === 'string' && t.trim()).map((t: string) => t.trim()).slice(0, 10) : [];
-    if (body.has_discussion !== undefined) updates.has_discussion = !!body.has_discussion;
 
-    // If enabling discussion, create the discussion record with date options
+    // Update proposal fields first (without has_discussion to avoid schema cache issues)
+    const updated = await updateProposal(id, updates);
+
+    // If enabling discussion, create the discussion record and flag separately
     if (body.has_discussion === true && !proposal.has_discussion) {
       const { discussion_date_options } = body;
       if (Array.isArray(discussion_date_options) && discussion_date_options.length >= 2) {
         const { generateId, formatDate } = await import('@/lib/utils');
         const supabase = createServerSupabaseClient();
         const now = formatDate();
+
+        // Check if discussion already exists (from a previous partial attempt)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('proposal_discussions') as any)
-          .insert({
-            id: generateId(),
-            proposal_id: id,
-            status: 'open',
-            date_options: discussion_date_options.slice(0, 5),
-            created_at: now,
-            updated_at: now,
-          });
+        const { data: existing } = await (supabase.from('proposal_discussions') as any)
+          .select('id')
+          .eq('proposal_id', id)
+          .maybeSingle();
+
+        if (!existing) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { error: insertErr } = await (supabase.from('proposal_discussions') as any)
+            .insert({
+              id: generateId(),
+              proposal_id: id,
+              status: 'open',
+              date_options: discussion_date_options.slice(0, 5),
+              created_at: now,
+              updated_at: now,
+            });
+          if (insertErr) {
+            console.error('Error creating discussion record:', insertErr);
+            return errorResponse('Failed to create discussion', 500);
+          }
+        }
+
+        // Update has_discussion flag separately (matches POST route pattern)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('community_proposals') as any)
+          .update({ has_discussion: true, updated_at: now })
+          .eq('id', id);
       }
     }
 
-    const updated = await updateProposal(id, updates);
-    return successResponse({ proposal: updated });
+    // Re-fetch to get the latest state including has_discussion
+    const latest = await getProposalById(id);
+    return successResponse({ proposal: latest || updated });
   } catch (error) {
     return handleApiError(error);
   }
