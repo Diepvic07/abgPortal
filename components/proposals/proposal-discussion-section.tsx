@@ -27,6 +27,7 @@ export function ProposalDiscussionSection({
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   // For member voting
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
@@ -134,6 +135,7 @@ export function ProposalDiscussionSection({
     if (!currentMemberId) return;
     setSubmitting(true);
     setError('');
+    setSuccessMsg('');
     try {
       const res = await fetch(`/api/community/proposals/${proposalId}/discussion/respond`, {
         method: 'POST',
@@ -148,6 +150,11 @@ export function ProposalDiscussionSection({
         setError(data.error || (vi ? 'Lỗi gửi phản hồi' : 'Failed to submit response'));
         return;
       }
+      setSuccessMsg(
+        myResponse
+          ? (vi ? 'Đã cập nhật phản hồi thành công!' : 'Response updated successfully!')
+          : (vi ? 'Đã gửi phản hồi thành công!' : 'Response submitted successfully!')
+      );
       onRefresh();
     } catch {
       setError(vi ? 'Có lỗi xảy ra' : 'Something went wrong');
@@ -557,6 +564,14 @@ export function ProposalDiscussionSection({
             </button>
           </div>
         </>
+      )}
+
+      {successMsg && (
+        <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-sm text-green-800 flex items-center gap-2">
+            <span>✓</span> {successMsg}
+          </p>
+        </div>
       )}
 
       {error && (
