@@ -176,13 +176,11 @@ export async function getProposals(options: {
     });
   });
 
-  // Sort by activity: pinned first, then by composite activity score
-  // Activity = commitment_score + commitment_count * 2 + comment_count * 3
+  // Sort by activity: pinned first, then by total engagement (participants + comments)
   proposals.sort((a, b) => {
-    // Pinned proposals always come first
     if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
-    const activityA = a.commitment_score + a.commitment_count * 2 + a.comment_count * 3;
-    const activityB = b.commitment_score + b.commitment_count * 2 + b.comment_count * 3;
+    const activityA = a.commitment_count + a.comment_count;
+    const activityB = b.commitment_count + b.comment_count;
     return activityB - activityA;
   });
 
@@ -663,11 +661,11 @@ export async function getPublicProposals(): Promise<CommunityProposal[]> {
     });
   });
 
-  // Sort by activity: pinned first, then by composite activity score
+  // Sort by activity: pinned first, then by total engagement (participants + comments)
   proposals.sort((a, b) => {
     if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
-    const activityA = a.commitment_score + a.commitment_count * 2 + a.comment_count * 3;
-    const activityB = b.commitment_score + b.commitment_count * 2 + b.comment_count * 3;
+    const activityA = a.commitment_count + a.comment_count;
+    const activityB = b.commitment_count + b.comment_count;
     return activityB - activityA;
   });
 
