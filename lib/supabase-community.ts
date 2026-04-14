@@ -154,10 +154,9 @@ export async function getProposals(options: {
     query = query.neq('status', 'removed');
   }
 
-  // Pinned first, then by commitment_score desc
+  // Pinned first, then fetch enough rows for client-side activity sorting
   query = query
     .order('is_pinned', { ascending: false })
-    .order('commitment_score', { ascending: false })
     .range(offset, offset + limit - 1);
 
   const { data: rows, error, count } = await query;
@@ -175,6 +174,16 @@ export async function getProposals(options: {
       author_avatar_url: members?.avatar_url || null,
       author_abg_class: members?.abg_class || null,
     });
+  });
+
+  // Sort by activity: pinned first, then by composite activity score
+  // Activity = commitment_score + commitment_count * 2 + comment_count * 3
+  proposals.sort((a, b) => {
+    // Pinned proposals always come first
+    if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+    const activityA = a.commitment_score + a.commitment_count * 2 + a.comment_count * 3;
+    const activityB = b.commitment_score + b.commitment_count * 2 + b.comment_count * 3;
+    return activityB - activityA;
   });
 
   return { proposals, total: count || 0 };
@@ -637,7 +646,6 @@ export async function getPublicProposals(): Promise<CommunityProposal[]> {
     .select('*, members!community_proposals_created_by_member_id_fkey(name, avatar_url, abg_class)')
     .in('status', ['published', 'selected', 'in_progress'])
     .order('is_pinned', { ascending: false })
-    .order('commitment_score', { ascending: false })
     .limit(20);
 
   if (error) {
@@ -645,7 +653,7 @@ export async function getPublicProposals(): Promise<CommunityProposal[]> {
     return [];
   }
 
-  return (rows || []).map((row: Record<string, unknown>) => {
+  const proposals = (rows || []).map((row: Record<string, unknown>) => {
     const members = row.members as Record<string, unknown> | null;
     return mapRowToProposal({
       ...row,
@@ -654,6 +662,16 @@ export async function getPublicProposals(): Promise<CommunityProposal[]> {
       author_abg_class: members?.abg_class || null,
     });
   });
+
+  // Sort by activity: pinned first, then by composite activity score
+  proposals.sort((a, b) => {
+    if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+    const activityA = a.commitment_score + a.commitment_count * 2 + a.comment_count * 3;
+    const activityB = b.commitment_score + b.commitment_count * 2 + b.comment_count * 3;
+    return activityB - activityA;
+  });
+
+  return proposals;
 }
 
 // ==================== Admin: Recalculate ====================
