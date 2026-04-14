@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 180" fill="none">
+  <rect width="280" height="180" rx="12" fill="#F8FAFC"/>
+  <!-- Dropdown menu -->
+  <rect x="100" y="10" width="140" height="160" rx="8" fill="white" stroke="#E2E8F0" stroke-width="2"/>
+  <!-- Menu items -->
+  <rect x="110" y="22" width="120" height="18" rx="4" fill="#F1F5F9"/>
+  <text x="118" y="35" font-family="system-ui" font-size="9" fill="#94A3B8">New tab</text>
+  <rect x="110" y="46" width="120" height="18" rx="4" fill="#F1F5F9"/>
+  <text x="118" y="59" font-family="system-ui" font-size="9" fill="#94A3B8">New incognito tab</text>
+  <rect x="110" y="70" width="120" height="18" rx="4" fill="#F1F5F9"/>
+  <text x="118" y="83" font-family="system-ui" font-size="9" fill="#94A3B8">Bookmarks</text>
+  <rect x="110" y="94" width="120" height="18" rx="4" fill="#F1F5F9"/>
+  <text x="118" y="107" font-family="system-ui" font-size="9" fill="#94A3B8">History</text>
+  <!-- Highlighted: Add to Home screen -->
+  <rect x="110" y="118" width="120" height="18" rx="4" fill="#DBEAFE" stroke="#3B82F6" stroke-width="1.5"/>
+  <!-- Install icon -->
+  <rect x="116" y="122" width="10" height="10" rx="2" fill="#3B82F6"/>
+  <path d="M121 124v4m0 0l-2-2m2 2l2-2" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="130" y="131" font-family="system-ui" font-size="8" font-weight="600" fill="#1E40AF">Install app</text>
+  <rect x="110" y="142" width="120" height="18" rx="4" fill="#F1F5F9"/>
+  <text x="118" y="155" font-family="system-ui" font-size="9" fill="#94A3B8">Settings</text>
+  <!-- Arrow -->
+  <path d="M40" y="127" width="50" height="0"/>
+  <path d="M60 127l30 0" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+  <path d="M87 123l5 4-5 4" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

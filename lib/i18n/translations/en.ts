@@ -1331,6 +1331,29 @@ export const en = {
     viewAll: 'View all',
     viewSettings: 'Settings',
   },
+
+  // Push notification onboarding
+  pushOnboarding: {
+    bannerTitle: 'Never miss what matters',
+    bannerDescription: 'Get notified about connections, events, and discussions in the community.',
+    setupButton: 'Set up notifications',
+    chooseTitle: 'What would you like to be notified about?',
+    enableButton: 'Enable Notifications',
+    skipButton: 'Not now',
+    successMessage: 'Notifications enabled!',
+    // PWA install guide
+    installGuideTitle: 'Get notifications on your phone',
+    installGuideDescription: 'Install the app on your home screen to receive push notifications on mobile.',
+    installGuideStep1iOS: 'Tap the Share button',
+    installGuideStep2iOS: 'Scroll down and tap "Add to Home Screen"',
+    installGuideStep3iOS: 'Tap "Add" to confirm',
+    installGuideStep1Android: 'Tap the menu button (⋮)',
+    installGuideStep2Android: 'Tap "Add to Home screen" or "Install app"',
+    installGuideStep3Android: 'Tap "Install" to confirm',
+    installGuideDone: 'Got it',
+    installGuideSkip: 'Skip',
+    alreadyInstalled: 'App already installed!',
+  },
 } as const;
 
 // Deep type that converts literal strings to string type

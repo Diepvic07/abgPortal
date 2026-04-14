@@ -1310,4 +1310,27 @@ export const vi: Translations = {
     viewAll: 'Xem tất cả',
     viewSettings: 'Cài đặt',
   },
+
+  // Push notification onboarding
+  pushOnboarding: {
+    bannerTitle: 'Đừng bỏ lỡ điều quan trọng',
+    bannerDescription: 'Nhận thông báo về kết nối, sự kiện và thảo luận trong cộng đồng.',
+    setupButton: 'Thiết lập thông báo',
+    chooseTitle: 'Bạn muốn nhận thông báo về gì?',
+    enableButton: 'Bật thông báo',
+    skipButton: 'Để sau',
+    successMessage: 'Đã bật thông báo!',
+    // PWA install guide
+    installGuideTitle: 'Nhận thông báo trên điện thoại',
+    installGuideDescription: 'Cài ứng dụng vào màn hình chính để nhận thông báo đẩy trên di động.',
+    installGuideStep1iOS: 'Nhấn nút Chia sẻ',
+    installGuideStep2iOS: 'Cuộn xuống và nhấn "Thêm vào MH chính"',
+    installGuideStep3iOS: 'Nhấn "Thêm" để xác nhận',
+    installGuideStep1Android: 'Nhấn nút menu (⋮)',
+    installGuideStep2Android: 'Nhấn "Thêm vào MH chính" hoặc "Cài đặt ứng dụng"',
+    installGuideStep3Android: 'Nhấn "Cài đặt" để xác nhận',
+    installGuideDone: 'Đã hiểu',
+    installGuideSkip: 'Bỏ qua',
+    alreadyInstalled: 'Đã cài ứng dụng!',
+  },
 } as const;

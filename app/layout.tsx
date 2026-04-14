@@ -9,6 +9,7 @@ import { AuthProvider } from '@/components/providers/auth-provider';
 import { BugReportButton } from '@/components/ui/bug-report-button';
 import { PostHogProvider } from '@/components/providers/posthog-provider';
 import { PushNotificationProvider } from '@/components/providers/push-notification-provider';
+import { PushOnboardingBanner } from '@/components/notifications/push-onboarding-banner';
 
 const inter = Inter({ subsets: ['latin', 'vietnamese'] });
 const beVietnamPro = Be_Vietnam_Pro({
@@ -50,6 +51,7 @@ export default function RootLayout({
                   <FooterSection />
                 </div>
                 <BugReportButton />
+                <PushOnboardingBanner />
                 </PushNotificationProvider>
               </ToastProvider>
             </LanguageProvider>
