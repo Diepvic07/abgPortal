@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none">
+  <rect width="320" height="200" rx="16" fill="#F8FAFC"/>
+
+  <!-- Phone frame -->
+  <rect x="85" y="8" width="150" height="184" rx="18" fill="#1E293B"/>
+  <!-- Screen -->
+  <rect x="90" y="14" width="140" height="172" rx="14" fill="#0F172A"/>
+
+  <!-- Status bar -->
+  <text x="104" y="30" font-family="system-ui" font-size="9" font-weight="600" fill="#94A3B8">14:38</text>
+  <!-- Notification icons in status bar -->
+  <circle cx="185" cy="26" r="3" fill="#3B82F6"/>
+  <text x="200" y="30" font-family="system-ui" font-size="8" fill="#94A3B8">4G</text>
+
+  <!-- Pull-down notification shade -->
+  <rect x="93" y="38" width="134" height="142" rx="10" fill="#1A2332"/>
+
+  <!-- Notification 1 (Android Material style) -->
+  <rect x="98" y="44" width="124" height="50" rx="8" fill="#263245"/>
+  <!-- App icon -->
+  <rect x="104" y="50" width="16" height="16" rx="4" fill="#16A34A"/>
+  <text x="109" y="61" font-family="system-ui" font-size="7" font-weight="700" fill="white">A</text>
+  <!-- Header -->
+  <text x="124" y="55" font-family="system-ui" font-size="6" fill="#64748B">ABG Alumni Connect</text>
+  <text x="190" y="55" font-family="system-ui" font-size="5.5" fill="#64748B">2m</text>
+  <!-- Title -->
+  <text x="104" y="72" font-family="system-ui" font-size="7" font-weight="600" fill="white">New connection request</text>
+  <!-- Body -->
+  <text x="104" y="82" font-family="system-ui" font-size="6" fill="#94A3B8">Minh Nguyen wants to connect with you</text>
+
+  <!-- Notification 2 -->
+  <rect x="98" y="100" width="124" height="50" rx="8" fill="#263245"/>
+  <!-- App icon -->
+  <rect x="104" y="106" width="16" height="16" rx="4" fill="#16A34A"/>
+  <text x="109" y="117" font-family="system-ui" font-size="7" font-weight="700" fill="white">A</text>
+  <!-- Header -->
+  <text x="124" y="111" font-family="system-ui" font-size="6" fill="#64748B">ABG Alumni Connect</text>
+  <text x="190" y="111" font-family="system-ui" font-size="5.5" fill="#64748B">5m</text>
+  <!-- Title -->
+  <text x="104" y="128" font-family="system-ui" font-size="7" font-weight="600" fill="white">New event: ABG Meetup</text>
+  <!-- Body -->
+  <text x="104" y="138" font-family="system-ui" font-size="6" fill="#94A3B8">A new event has been published</text>
+
+  <!-- Subtle glow -->
+  <rect x="98" y="44" width="124" height="50" rx="8" fill="none" stroke="rgba(59,130,246,0.3)" stroke-width="1"/>
+  <rect x="98" y="100" width="124" height="50" rx="8" fill="none" stroke="rgba(59,130,246,0.3)" stroke-width="1"/>
+</svg>

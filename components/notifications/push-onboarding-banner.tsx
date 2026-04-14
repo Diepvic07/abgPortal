@@ -8,7 +8,7 @@ import Image from 'next/image';
 
 const STORAGE_KEY = 'push-onboarding-dismissed';
 
-type Step = 'banner' | 'questionnaire' | 'install-guide' | 'done';
+type Step = 'banner' | 'preview' | 'questionnaire' | 'install-guide' | 'done';
 type Platform = 'ios' | 'android' | 'desktop';
 
 interface NotifToggle {
@@ -162,10 +162,17 @@ export function PushOnboardingBanner() {
         { text: t.pushOnboarding.installGuideStep3Android, image: '/images/pwa-guide/android-step3.svg' },
       ];
 
-  // Determine what the banner "Set up" button does:
-  // - iOS Safari (not PWA): go straight to install guide
-  // - Others: go to questionnaire
+  const notiPreviewImage = platform === 'ios'
+    ? '/images/pwa-guide/noti-preview-ios.svg'
+    : '/images/pwa-guide/noti-preview-android.svg';
+
+  // Always show preview first
   const handleSetup = () => {
+    setStep('preview');
+  };
+
+  // After preview, go to install guide (iOS Safari) or questionnaire (others)
+  const handleAfterPreview = () => {
     if (isIosSafari) {
       setStep('install-guide');
     } else {
@@ -227,6 +234,52 @@ export function PushOnboardingBanner() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
+            </div>
+          )}
+
+          {/* Step: Preview — show what notifications look like */}
+          {step === 'preview' && (
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-semibold text-gray-900">
+                  {t.pushOnboarding.previewTitle}
+                </h3>
+                <button
+                  onClick={dismiss}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                {t.pushOnboarding.previewDescription}
+              </p>
+              <div className="flex justify-center mb-4">
+                <Image
+                  src={notiPreviewImage}
+                  alt="Push notification preview"
+                  width={320}
+                  height={200}
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleAfterPreview}
+                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {isIosSafari ? t.pushOnboarding.iosSetupButton : t.pushOnboarding.enableButton}
+                </button>
+                <button
+                  onClick={dismiss}
+                  className="px-4 py-2.5 text-gray-500 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  {t.pushOnboarding.skipButton}
+                </button>
+              </div>
             </div>
           )}
 

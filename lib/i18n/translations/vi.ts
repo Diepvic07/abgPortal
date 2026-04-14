@@ -1336,5 +1336,7 @@ export const vi: Translations = {
     iosBannerDescription: 'Cài ứng dụng vào màn hình chính trước, sau đó bạn có thể bật thông báo đẩy.',
     iosSetupButton: 'Hướng dẫn',
     iosAfterInstall: 'Sau khi cài đặt, mở ứng dụng từ màn hình chính và thiết lập thông báo.',
+    previewTitle: 'Thông báo sẽ trông như thế này',
+    previewDescription: 'Cập nhật ngay trên điện thoại — không bỏ lỡ kết nối, sự kiện hay thảo luận nào.',
   },
 } as const;

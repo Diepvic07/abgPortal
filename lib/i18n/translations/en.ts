@@ -1357,6 +1357,8 @@ export const en = {
     iosBannerDescription: 'Install the app to your home screen first, then you can enable push notifications.',
     iosSetupButton: 'Show me how',
     iosAfterInstall: 'After installing, open the app from your home screen and set up notifications there.',
+    previewTitle: 'This is what you\'ll get',
+    previewDescription: 'Instant updates right on your phone — never miss a connection, event, or discussion.',
   },
 } as const;
 

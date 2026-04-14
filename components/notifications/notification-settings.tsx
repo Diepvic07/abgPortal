@@ -150,8 +150,13 @@ export function NotificationSettings() {
         )}
       </div>
 
-      {/* PWA Install Guide — shown when on mobile browser (not installed) */}
-      {needsInstall && <PwaInstallGuide platform={platform} guideStep={guideStep} setGuideStep={setGuideStep} t={t} />}
+      {/* Notification Preview + PWA Install Guide — shown when on mobile browser (not installed) */}
+      {needsInstall && (
+        <>
+          <NotiPreview platform={platform} t={t} />
+          <PwaInstallGuide platform={platform} guideStep={guideStep} setGuideStep={setGuideStep} t={t} />
+        </>
+      )}
 
       {/* Individual notification type toggles */}
       <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
@@ -228,6 +233,33 @@ function ToggleRow({
           }`}
         />
       </button>
+    </div>
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function NotiPreview({ platform, t }: { platform: string; t: any }) {
+  const previewImage = platform === 'ios'
+    ? '/images/pwa-guide/noti-preview-ios.svg'
+    : '/images/pwa-guide/noti-preview-android.svg';
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+        {t.pushOnboarding.previewTitle}
+      </h3>
+      <p className="text-sm text-gray-500 mb-4">
+        {t.pushOnboarding.previewDescription}
+      </p>
+      <div className="flex justify-center">
+        <Image
+          src={previewImage}
+          alt="Push notification preview"
+          width={320}
+          height={200}
+          className="rounded-xl"
+        />
+      </div>
     </div>
   );
 }
