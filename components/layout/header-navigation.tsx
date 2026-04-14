@@ -87,17 +87,19 @@ export function HeaderNavigation() {
             </span>
           </Link>
 
-          {/* Mobile hamburger button */}
-          <button
-            ref={hamburgerRef}
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMobileMenuOpen(!isMobileMenuOpen);
-            }}
-            className="md:hidden p-2 text-white/80 hover:text-white rounded-md transition-colors"
-            aria-label="Toggle menu"
-            aria-expanded={isMobileMenuOpen}
-          >
+          {/* Mobile notification bell + hamburger */}
+          <div className="md:hidden flex items-center gap-1">
+            {status === 'authenticated' && <NotificationBell />}
+            <button
+              ref={hamburgerRef}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMobileMenuOpen(!isMobileMenuOpen);
+              }}
+              className="p-2 text-white/80 hover:text-white rounded-md transition-colors"
+              aria-label="Toggle menu"
+              aria-expanded={isMobileMenuOpen}
+            >
             {isMobileMenuOpen ? (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -108,6 +110,7 @@ export function HeaderNavigation() {
               </svg>
             )}
           </button>
+          </div>
 
           {/* Desktop navigation */}
           <nav className="hidden md:flex items-center gap-6">
