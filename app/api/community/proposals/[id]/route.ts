@@ -195,7 +195,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         // Check if discussion already exists
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: existing, error: checkErr } = await (supabase.from('proposal_discussions') as any)
-          .select('id')
+          .select('id, date_options')
           .eq('proposal_id', id)
           .maybeSingle();
         if (checkErr) {
@@ -205,7 +205,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         if (existing) {
           // Update existing discussion options + title/description
-          const discUpdates: Record<string, unknown> = { date_options: discussion_date_options.slice(0, 10), updated_at: now };
+          const newOptions = discussion_date_options.slice(0, 10);
+          const discUpdates: Record<string, unknown> = { date_options: newOptions, updated_at: now };
           if (body.discussion_title !== undefined) discUpdates.title = body.discussion_title ? String(body.discussion_title).trim().slice(0, 200) : null;
           if (body.discussion_description !== undefined) discUpdates.description = body.discussion_description ? String(body.discussion_description).trim().slice(0, 1000) : null;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -213,11 +214,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             .update(discUpdates)
             .eq('id', existing.id);
 
-          // Clear all existing votes since options changed
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabase.from('proposal_discussion_responses') as any)
-            .delete()
-            .eq('discussion_id', existing.id);
+          // Only clear votes if the date options actually changed
+          const oldOptions = (existing.date_options as string[]) || [];
+          const optionsChanged = newOptions.length !== oldOptions.length || newOptions.some((o: string, i: number) => o !== oldOptions[i]);
+          if (optionsChanged) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase.from('proposal_discussion_responses') as any)
+              .delete()
+              .eq('discussion_id', existing.id);
+          }
         } else {
           // Create new discussion record
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -265,7 +270,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: existingPoll } = await (supabaseP.from('proposal_polls') as any)
-          .select('id')
+          .select('id, options')
           .eq('proposal_id', id)
           .maybeSingle();
 
@@ -282,11 +287,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             })
             .eq('id', existingPoll.id);
 
-          // Clear votes since options may have changed
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabaseP.from('proposal_poll_responses') as any)
-            .delete()
-            .eq('poll_id', existingPoll.id);
+          // Only clear votes if the options actually changed
+          const oldPollOptions = (existingPoll.options as string[]) || [];
+          const pollOptionsChanged = cleanOptions.length !== oldPollOptions.length || cleanOptions.some((o: string, i: number) => o !== oldPollOptions[i]);
+          if (pollOptionsChanged) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabaseP.from('proposal_poll_responses') as any)
+              .delete()
+              .eq('poll_id', existingPoll.id);
+          }
         } else {
           // Create new poll
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
