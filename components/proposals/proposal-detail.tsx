@@ -1286,7 +1286,7 @@ export function ProposalDetail({ proposalId }: Props) {
                   />
                   {session && (
                     <button
-                      onClick={() => { setReplyingTo(replyingTo === c.id ? null : c.id); setReplyBody(''); }}
+                      onClick={() => { if (replyingTo === c.id) { setReplyingTo(null); setReplyBody(''); } else { setReplyingTo(c.id); if (c.member_id !== currentMemberId) { const authorName = c.member_name || 'Member'; setReplyBody(`@${authorName} `); replyMentionsRef.current = [{ name: authorName, id: c.member_id }]; } else { setReplyBody(''); replyMentionsRef.current = []; } } }}
                       className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
                     >
                       {locale === 'vi' ? 'Trả lời' : 'Reply'}

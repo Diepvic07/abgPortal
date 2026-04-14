@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import { linkifyText } from '@/lib/linkify';
+import { renderMentions } from '@/components/ui/mention-textarea';
 import { useTranslation } from '@/lib/i18n';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
 import { ToastNotification, useToasts } from '@/components/ui/toast-notification';
@@ -1186,7 +1187,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                       </div>
                     ) : (
                       <>
-                        <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">{comment.body}</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">{renderMentions(comment.body)}</p>
                         {comment.image_url && (
                           <a href={comment.image_url} target="_blank" rel="noopener noreferrer" className="mt-2 block">
                             <img src={comment.image_url} alt="" className="max-h-60 rounded-xl border border-gray-200 object-cover" />
@@ -1204,7 +1205,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                       />
                       {session && event?.status === 'published' && (
                         <button
-                          onClick={() => { setReplyingTo(replyingTo === comment.id ? null : comment.id); setReplyBody(''); }}
+                          onClick={() => { if (replyingTo === comment.id) { setReplyingTo(null); setReplyBody(''); } else { setReplyingTo(comment.id); if (comment.member_id !== currentMemberId) { const authorName = comment.member_name || 'Member'; setReplyBody(`@[${authorName}](${comment.member_id}) `); } else { setReplyBody(''); } } }}
                           className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
                         >
                           {locale === 'vi' ? 'Trả lời' : 'Reply'}
@@ -1264,7 +1265,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                             </div>
                           ) : (
                             <>
-                              <p className="mt-0.5 whitespace-pre-wrap text-sm leading-5 text-gray-700">{reply.body}</p>
+                              <p className="mt-0.5 whitespace-pre-wrap text-sm leading-5 text-gray-700">{renderMentions(reply.body)}</p>
                               {reply.image_url && (
                                 <a href={reply.image_url} target="_blank" rel="noopener noreferrer" className="mt-1.5 block">
                                   <img src={reply.image_url} alt="" className="max-h-48 rounded-lg border border-gray-200 object-cover" />
