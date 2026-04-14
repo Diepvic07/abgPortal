@@ -324,6 +324,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return successResponse({ discussion: mapRowToDiscussion(updated as Record<string, unknown>) });
     }
 
+    // Reopen discussion (from completed or cancelled)
+    if (body.status === 'open') {
+      if (discussion.status !== 'completed' && discussion.status !== 'cancelled') {
+        return errorResponse('Can only reopen from completed or cancelled status', 400);
+      }
+      const { data: updated, error } = await (supabase.from('proposal_discussions') as any)
+        .update({ status: 'open', meeting_date: null, meeting_link: null, invited_emails: '{}', updated_at: now })
+        .eq('id', discussion.id)
+        .select()
+        .single();
+
+      if (error) throw new Error('Failed to reopen discussion');
+      return successResponse({ discussion: mapRowToDiscussion(updated as Record<string, unknown>) });
+    }
+
     // Cancel discussion
     if (body.status === 'cancelled') {
       const { data: updated, error } = await (supabase.from('proposal_discussions') as any)

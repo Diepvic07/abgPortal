@@ -224,7 +224,7 @@ export function ProposalDiscussionSection({
     }
   }
 
-  async function handleUpdateStatus(status: 'completed' | 'cancelled') {
+  async function handleUpdateStatus(status: 'completed' | 'cancelled' | 'open') {
     setSubmitting(true);
     try {
       await fetch(`/api/community/proposals/${proposalId}/discussion`, {
@@ -249,14 +249,25 @@ export function ProposalDiscussionSection({
         <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
           💬 {discussion.title || (vi ? 'Thảo luận trực tuyến' : 'Online Discussion')}
         </h3>
-        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
-          discussion.status === 'completed'
-            ? 'bg-green-100 text-green-700'
-            : 'bg-gray-100 text-gray-600'
-        }`}>
-          {discussion.status === 'completed'
-            ? (vi ? 'Đã hoàn thành' : 'Completed')
-            : (vi ? 'Đã hủy' : 'Cancelled')}
+        <div className="flex items-center gap-3">
+          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+            discussion.status === 'completed'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-100 text-gray-600'
+          }`}>
+            {discussion.status === 'completed'
+              ? (vi ? 'Đã hoàn thành' : 'Completed')
+              : (vi ? 'Đã hủy' : 'Cancelled')}
+          </div>
+          {isCreator && (
+            <button
+              onClick={() => handleUpdateStatus('open' as any)}
+              disabled={submitting}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+            >
+              {vi ? 'Mở lại' : 'Reopen'}
+            </button>
+          )}
         </div>
       </div>
     );
