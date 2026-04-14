@@ -1332,5 +1332,9 @@ export const vi: Translations = {
     installGuideDone: 'Đã hiểu',
     installGuideSkip: 'Bỏ qua',
     alreadyInstalled: 'Đã cài ứng dụng!',
+    iosBannerTitle: 'Nhận thông báo trên điện thoại',
+    iosBannerDescription: 'Cài ứng dụng vào màn hình chính trước, sau đó bạn có thể bật thông báo đẩy.',
+    iosSetupButton: 'Hướng dẫn',
+    iosAfterInstall: 'Sau khi cài đặt, mở ứng dụng từ màn hình chính và thiết lập thông báo.',
   },
 } as const;

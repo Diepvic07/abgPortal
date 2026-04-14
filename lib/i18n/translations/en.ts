@@ -1353,6 +1353,10 @@ export const en = {
     installGuideDone: 'Got it',
     installGuideSkip: 'Skip',
     alreadyInstalled: 'App already installed!',
+    iosBannerTitle: 'Get notifications on your phone',
+    iosBannerDescription: 'Install the app to your home screen first, then you can enable push notifications.',
+    iosSetupButton: 'Show me how',
+    iosAfterInstall: 'After installing, open the app from your home screen and set up notifications there.',
   },
 } as const;
 
