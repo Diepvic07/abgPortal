@@ -86,15 +86,28 @@ export async function POST(request: NextRequest) {
     if (has_discussion && Array.isArray(discussion_date_options) && discussion_date_options.length >= 2) {
       const { generateId: genId, formatDate: fmtDate } = await import('@/lib/utils');
       const discNow = fmtDate();
+      const discId = genId();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase.from('proposal_discussions') as any)
         .insert({
-          id: genId(),
+          id: discId,
           proposal_id: proposal.id,
           status: 'open',
           title: discussion_title ? String(discussion_title).trim().slice(0, 200) : null,
           description: discussion_description ? String(discussion_description).trim().slice(0, 1000) : null,
           date_options: discussion_date_options.slice(0, 10),
+          created_at: discNow,
+          updated_at: discNow,
+        });
+
+      // Auto-vote creator for all date options
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('proposal_discussion_responses') as any)
+        .insert({
+          id: genId(),
+          discussion_id: discId,
+          member_id: member.id,
+          available_dates: discussion_date_options.slice(0, 10),
           created_at: discNow,
           updated_at: discNow,
         });
@@ -114,16 +127,29 @@ export async function POST(request: NextRequest) {
         .map((o: string) => o.trim())
         .slice(0, 20);
 
+      const pollId = genPollId();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase.from('proposal_polls') as any)
         .insert({
-          id: genPollId(),
+          id: pollId,
           proposal_id: proposal.id,
           title: String(poll_title).trim().slice(0, 200),
           description: poll_description ? String(poll_description).trim().slice(0, 1000) : null,
           options: cleanOptions,
           allow_multiple: !!poll_allow_multiple,
           status: 'open',
+          created_at: pollNow,
+          updated_at: pollNow,
+        });
+
+      // Auto-vote creator for all options
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('proposal_poll_responses') as any)
+        .insert({
+          id: genPollId(),
+          poll_id: pollId,
+          member_id: member.id,
+          selected_options: cleanOptions,
           created_at: pollNow,
           updated_at: pollNow,
         });
