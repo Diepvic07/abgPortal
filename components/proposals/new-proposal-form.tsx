@@ -153,9 +153,30 @@ export function NewProposalForm() {
     }
   }
 
+  // Check for duplicate discussion date options
+  const discussionDuplicates = (() => {
+    if (!hasDiscussion) return false;
+    const keys = discussionOptions
+      .filter(o => o.date)
+      .map(o => o.startTime && o.endTime ? `${o.date}T${o.startTime}-${o.endTime}` : o.date);
+    return keys.length !== new Set(keys).size;
+  })();
+
+  // Check for duplicate freestyle poll options
+  const pollDuplicates = (() => {
+    if (!hasPoll) return false;
+    const opts = pollOptions.filter(o => o.trim()).map(o => o.trim().toLowerCase());
+    return opts.length !== new Set(opts).size;
+  })();
+
   async function handleSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault();
     setError('');
+
+    if (discussionDuplicates || pollDuplicates) {
+      setError(vi ? 'Không được có lựa chọn trùng lặp trong poll.' : 'Poll options must not have duplicates.');
+      return;
+    }
 
     const description = showPreview ? preview : buildDescription();
     if (description.length < 20) {
@@ -645,6 +666,11 @@ export function NewProposalForm() {
                   + {vi ? 'Thêm lựa chọn' : 'Add option'}
                 </button>
               )}
+              {discussionDuplicates && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  {vi ? '⚠️ Có lựa chọn ngày/giờ bị trùng lặp.' : '⚠️ Duplicate date/time options found.'}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -745,6 +771,11 @@ export function NewProposalForm() {
                 />
                 {vi ? 'Cho phép chọn nhiều lựa chọn' : 'Allow multiple selections'}
               </label>
+              {pollDuplicates && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  {vi ? '⚠️ Có lựa chọn bị trùng lặp.' : '⚠️ Duplicate options found.'}
+                </p>
+              )}
             </div>
           )}
         </div>

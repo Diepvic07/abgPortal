@@ -96,6 +96,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return errorResponse('Poll must have 2-20 options', 400);
     }
 
+    const cleanOptions = options
+      .filter((o: unknown) => typeof o === 'string' && o.trim())
+      .map((o: string) => o.trim())
+      .slice(0, 20);
+
+    const uniqueOpts = new Set(cleanOptions.map((o: string) => o.toLowerCase()));
+    if (uniqueOpts.size !== cleanOptions.length) {
+      return errorResponse('Duplicate poll options are not allowed', 400);
+    }
+
     const supabase = createServerSupabaseClient();
     const now = formatDate();
 
@@ -110,10 +120,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const pollId = generateId();
-    const cleanOptions = options
-      .filter((o: unknown) => typeof o === 'string' && o.trim())
-      .map((o: string) => o.trim())
-      .slice(0, 20);
 
     const { error: insertErr } = await (supabase.from('proposal_polls') as any)
       .insert({
@@ -191,6 +197,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .filter((o: unknown) => typeof o === 'string' && o.trim())
         .map((o: string) => o.trim())
         .slice(0, 20);
+
+      const uniquePatchOpts = new Set((updates.options as string[]).map((o: string) => o.toLowerCase()));
+      if (uniquePatchOpts.size !== (updates.options as string[]).length) {
+        return errorResponse('Duplicate poll options are not allowed', 400);
+      }
 
       // Clear existing votes
       await (supabase.from('proposal_poll_responses') as any)

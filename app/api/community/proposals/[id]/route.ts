@@ -161,6 +161,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.has_discussion === true) {
       const { discussion_date_options } = body;
       if (Array.isArray(discussion_date_options) && discussion_date_options.length >= 2) {
+        const uniqueOpts = new Set(discussion_date_options);
+        if (uniqueOpts.size !== discussion_date_options.length) {
+          return errorResponse('Duplicate date/time options are not allowed', 400);
+        }
         const { generateId, formatDate } = await import('@/lib/utils');
         const supabase = createServerSupabaseClient();
         const now = formatDate();
@@ -223,13 +227,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.has_poll === true) {
       const { poll_title, poll_description, poll_options, poll_allow_multiple } = body;
       if (poll_title && Array.isArray(poll_options) && poll_options.length >= 2) {
-        const supabaseP = createServerSupabaseClient();
-        const nowP = formatDate();
-
         const cleanOptions = poll_options
           .filter((o: unknown) => typeof o === 'string' && (o as string).trim())
           .map((o: string) => o.trim())
           .slice(0, 20);
+
+        const uniquePollOpts = new Set(cleanOptions.map((o: string) => o.toLowerCase()));
+        if (uniquePollOpts.size !== cleanOptions.length) {
+          return errorResponse('Duplicate poll options are not allowed', 400);
+        }
+
+        const supabaseP = createServerSupabaseClient();
+        const nowP = formatDate();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: existingPoll } = await (supabaseP.from('proposal_polls') as any)

@@ -468,8 +468,28 @@ export function ProposalDetail({ proposalId }: Props) {
     setIsEditing(true);
   }
 
+  // Check for duplicate discussion date options
+  const discussionDuplicates = (() => {
+    if (!editHasDiscussion) return false;
+    const keys = editDiscussionOptions
+      .filter(o => o.date)
+      .map(o => o.startTime && o.endTime ? `${o.date}T${o.startTime}-${o.endTime}` : o.date);
+    return keys.length !== new Set(keys).size;
+  })();
+
+  // Check for duplicate freestyle poll options
+  const pollDuplicates = (() => {
+    if (!editHasPoll) return false;
+    const opts = editPollOptions.filter(o => o.trim()).map(o => o.trim().toLowerCase());
+    return opts.length !== new Set(opts).size;
+  })();
+
   async function handleSaveEdit() {
     if (!proposal) return;
+    if (discussionDuplicates || pollDuplicates) {
+      setEditError(locale === 'vi' ? 'Không được có lựa chọn trùng lặp trong poll.' : 'Poll options must not have duplicates.');
+      return;
+    }
     setSavingEdit(true);
     setEditError(null);
     try {
@@ -836,6 +856,11 @@ export function ProposalDetail({ proposalId }: Props) {
                       + {locale === 'vi' ? 'Thêm lựa chọn' : 'Add option'}
                     </button>
                   )}
+                  {discussionDuplicates && (
+                    <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                      {locale === 'vi' ? '⚠️ Có lựa chọn ngày/giờ bị trùng lặp.' : '⚠️ Duplicate date/time options found.'}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -929,6 +954,11 @@ export function ProposalDetail({ proposalId }: Props) {
                     />
                     {locale === 'vi' ? 'Cho phép chọn nhiều lựa chọn' : 'Allow multiple selections'}
                   </label>
+                  {pollDuplicates && (
+                    <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                      {locale === 'vi' ? '⚠️ Có lựa chọn bị trùng lặp.' : '⚠️ Duplicate options found.'}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
