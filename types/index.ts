@@ -354,6 +354,10 @@ export interface CommunityProposal {
   participation_format?: ParticipationFormat;
   has_discussion?: boolean;
   has_poll?: boolean;
+  // Recap fields
+  recap_text?: string;
+  recap_images?: string[];
+  recap_created_at?: string;
   // Joined fields
   author_name?: string;
   author_avatar_url?: string;

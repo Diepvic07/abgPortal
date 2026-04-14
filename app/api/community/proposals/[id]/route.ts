@@ -136,6 +136,29 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const body = await request.json();
+
+    // Recap can be saved by creator or admin regardless of commitment count
+    if (body.recap_text !== undefined || body.recap_images !== undefined) {
+      const recapUpdates: Record<string, unknown> = {};
+      if (body.recap_text !== undefined) {
+        recapUpdates.recap_text = body.recap_text ? String(body.recap_text).trim().slice(0, 5000) : null;
+      }
+      if (body.recap_images !== undefined) {
+        recapUpdates.recap_images = Array.isArray(body.recap_images) ? body.recap_images.slice(0, 20) : [];
+      }
+      // Set recap_created_at on first save
+      if (!proposal.recap_created_at && (body.recap_text || (body.recap_images && body.recap_images.length > 0))) {
+        recapUpdates.recap_created_at = formatDate();
+      }
+      // Clear recap_created_at if both text and images are removed
+      if (!body.recap_text && (!body.recap_images || body.recap_images.length === 0)) {
+        recapUpdates.recap_created_at = null;
+      }
+      const updated = await updateProposal(id, recapUpdates);
+      const latest = await getProposalById(id);
+      return successResponse({ proposal: latest || updated });
+    }
+
     const { title, description, category, genre, target_date, location, participation_format, tags } = body;
 
     const updates: Record<string, unknown> = {};
