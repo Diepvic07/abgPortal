@@ -138,11 +138,9 @@ export function ProposalDetail({ proposalId }: Props) {
   const [pollResponses, setPollResponses] = useState<PollResponse[]>([]);
   const [deleting, setDeleting] = useState(false);
   // Recap state
-  const [isEditingRecap, setIsEditingRecap] = useState(false);
   const [recapText, setRecapText] = useState('');
   const [recapImages, setRecapImages] = useState<string[]>([]);
   const [recapImageUploading, setRecapImageUploading] = useState(false);
-  const [savingRecap, setSavingRecap] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const recapImageRef = useRef<HTMLInputElement>(null);
   const commentImageRef = useRef<HTMLInputElement>(null);
@@ -434,12 +432,6 @@ export function ProposalDetail({ proposalId }: Props) {
     } catch {}
   }
 
-  function startEditingRecap() {
-    setRecapText(proposal?.recap_text || '');
-    setRecapImages(proposal?.recap_images || []);
-    setIsEditingRecap(true);
-  }
-
   async function handleRecapImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -458,41 +450,10 @@ export function ProposalDetail({ proposalId }: Props) {
     }
   }
 
-  async function handleSaveRecap() {
-    setSavingRecap(true);
-    try {
-      const res = await fetch(`/api/community/proposals/${proposalId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recap_text: recapText, recap_images: recapImages }),
-      });
-      if (res.ok) {
-        await fetchProposal(true);
-        setIsEditingRecap(false);
-      }
-    } catch {} finally {
-      setSavingRecap(false);
-    }
-  }
-
-  async function handleDeleteRecap() {
-    if (!confirm(locale === 'vi' ? 'Bạn có chắc muốn xoá recap?' : 'Are you sure you want to delete the recap?')) return;
-    setSavingRecap(true);
-    try {
-      await fetch(`/api/community/proposals/${proposalId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recap_text: '', recap_images: [] }),
-      });
-      await fetchProposal(true);
-      setIsEditingRecap(false);
-    } catch {} finally {
-      setSavingRecap(false);
-    }
-  }
-
   function startEditing() {
     if (!proposal) return;
+    setRecapText(proposal.recap_text || '');
+    setRecapImages(proposal.recap_images || []);
     setEditTitle(proposal.title);
     setEditDescription(proposal.description);
     setEditCategory(proposal.category);
@@ -560,6 +521,16 @@ export function ProposalDetail({ proposalId }: Props) {
     setSavingEdit(true);
     setEditError(null);
     try {
+      // Save recap separately (API handles recap in a separate branch)
+      const recapChanged = recapText !== (proposal.recap_text || '') || JSON.stringify(recapImages) !== JSON.stringify(proposal.recap_images || []);
+      if (recapChanged) {
+        await fetch(`/api/community/proposals/${proposalId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recap_text: recapText, recap_images: recapImages }),
+        });
+      }
+
       const res = await fetch(`/api/community/proposals/${proposalId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -1030,6 +1001,60 @@ export function ProposalDetail({ proposalId }: Props) {
               )}
             </div>
 
+            {/* Recap editor inside editing view */}
+            <div className="mt-4 border border-purple-200 rounded-lg p-4 bg-purple-50/50">
+              <h3 className="text-sm font-semibold text-purple-900 mb-3 flex items-center gap-1.5">
+                <span>📸</span> Recap
+              </h3>
+              <textarea
+                value={recapText}
+                onChange={e => setRecapText(e.target.value)}
+                rows={4}
+                className="w-full border border-purple-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono mb-3"
+                placeholder={locale === 'vi' ? 'Viết recap cho hoạt động này (hỗ trợ Markdown)...' : 'Write a recap for this event (Markdown supported)...'}
+                maxLength={5000}
+              />
+              {recapImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                  {recapImages.map((url, i) => (
+                    <div key={i} className="relative group aspect-[4/3] rounded-lg overflow-hidden border border-purple-200">
+                      <img src={url} alt={`Recap ${i + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setRecapImages(prev => prev.filter((_, idx) => idx !== i))}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <input
+                  ref={recapImageRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={handleRecapImageUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => recapImageRef.current?.click()}
+                  disabled={recapImageUploading || recapImages.length >= 20}
+                  className="text-sm text-purple-600 hover:text-purple-800 font-medium flex items-center gap-1 disabled:opacity-50"
+                >
+                  {recapImageUploading ? (
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  )}
+                  {locale === 'vi' ? 'Thêm ảnh' : 'Add photo'}
+                </button>
+                <span className="text-xs text-gray-400">{recapImages.length}/20</span>
+              </div>
+            </div>
+
           </>
         ) : (
           <>
@@ -1064,26 +1089,13 @@ export function ProposalDetail({ proposalId }: Props) {
         )}
       </div>
 
-      {/* Recap Section — shown at top when recap exists or can be created */}
-      {(proposal.recap_text || (proposal.recap_images && proposal.recap_images.length > 0) || ((isAuthor || currentMemberIsAdmin) && isEditingRecap)) && !isEditingRecap && (
+      {/* Recap Section — read-only display when recap exists and not editing */}
+      {!isEditing && (proposal.recap_text || (proposal.recap_images && proposal.recap_images.length > 0)) && (
         <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-purple-900 flex items-center gap-2">
-              <span className="text-xl">📸</span>
-              {locale === 'vi' ? 'Recap' : 'Recap'}
-            </h2>
-            {(isAuthor || currentMemberIsAdmin) && (
-              <button
-                onClick={startEditingRecap}
-                className="text-sm text-purple-600 hover:text-purple-800 font-medium flex items-center gap-1"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                {locale === 'vi' ? 'Chỉnh sửa' : 'Edit'}
-              </button>
-            )}
-          </div>
+          <h2 className="text-lg font-bold text-purple-900 flex items-center gap-2 mb-4">
+            <span className="text-xl">📸</span>
+            Recap
+          </h2>
           {proposal.recap_text && (
             <div className="prose prose-sm max-w-none text-gray-700 mb-4">
               <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => <a href={href} className="text-purple-600 underline hover:text-purple-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>
@@ -1101,99 +1113,6 @@ export function ProposalDetail({ proposalId }: Props) {
             </div>
           )}
         </div>
-      )}
-
-      {/* Recap Editor */}
-      {isEditingRecap && (
-        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-purple-900 flex items-center gap-2">
-              <span className="text-xl">📸</span>
-              {locale === 'vi' ? 'Chỉnh sửa Recap' : 'Edit Recap'}
-            </h2>
-            <div className="flex items-center gap-2">
-              {proposal.recap_text && (
-                <button
-                  onClick={handleDeleteRecap}
-                  disabled={savingRecap}
-                  className="text-sm text-red-500 hover:text-red-700 font-medium px-3 py-1 rounded-lg border border-red-300"
-                >
-                  {locale === 'vi' ? 'Xoá' : 'Delete'}
-                </button>
-              )}
-              <button
-                onClick={() => setIsEditingRecap(false)}
-                disabled={savingRecap}
-                className="text-sm text-gray-500 hover:text-gray-700 font-medium px-3 py-1 rounded-lg border border-gray-300"
-              >
-                {locale === 'vi' ? 'Hủy' : 'Cancel'}
-              </button>
-              <button
-                onClick={handleSaveRecap}
-                disabled={savingRecap}
-                className="text-sm text-white bg-purple-600 hover:bg-purple-700 font-medium px-3 py-1 rounded-lg disabled:opacity-50"
-              >
-                {savingRecap ? (locale === 'vi' ? 'Đang lưu...' : 'Saving...') : (locale === 'vi' ? 'Lưu Recap' : 'Save Recap')}
-              </button>
-            </div>
-          </div>
-          <textarea
-            value={recapText}
-            onChange={e => setRecapText(e.target.value)}
-            rows={6}
-            className="w-full border border-purple-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono mb-4"
-            placeholder={locale === 'vi' ? 'Viết recap cho hoạt động này (hỗ trợ Markdown)...' : 'Write a recap for this event (Markdown supported)...'}
-          />
-          {/* Recap images */}
-          {recapImages.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-              {recapImages.map((url, i) => (
-                <div key={i} className="relative group aspect-[4/3] rounded-lg overflow-hidden border border-purple-200">
-                  <img src={url} alt={`Recap ${i + 1}`} className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => setRecapImages(prev => prev.filter((_, idx) => idx !== i))}
-                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="flex items-center gap-3">
-            <input
-              ref={recapImageRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={handleRecapImageUpload}
-              className="hidden"
-            />
-            <button
-              onClick={() => recapImageRef.current?.click()}
-              disabled={recapImageUploading || recapImages.length >= 20}
-              className="text-sm text-purple-600 hover:text-purple-800 font-medium flex items-center gap-1 disabled:opacity-50"
-            >
-              {recapImageUploading ? (
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              )}
-              {locale === 'vi' ? 'Thêm ảnh' : 'Add photo'}
-            </button>
-            <span className="text-xs text-gray-400">{recapImages.length}/20</span>
-          </div>
-        </div>
-      )}
-
-      {/* Add Recap button — show when no recap exists and user can create one */}
-      {!proposal.recap_text && (!proposal.recap_images || proposal.recap_images.length === 0) && !isEditingRecap && (isAuthor || currentMemberIsAdmin) && (
-        <button
-          onClick={startEditingRecap}
-          className="w-full py-3 px-4 border-2 border-dashed border-purple-300 rounded-xl text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-colors flex items-center justify-center gap-2 font-medium"
-        >
-          <span className="text-lg">📸</span>
-          {locale === 'vi' ? 'Thêm Recap' : 'Add Recap'}
-        </button>
       )}
 
       {/* Lightbox */}
@@ -1247,7 +1166,7 @@ export function ProposalDetail({ proposalId }: Props) {
             placeholder={locale === 'vi' ? 'Mô tả hoạt động (hỗ trợ Markdown)' : 'Proposal description (Markdown supported)'}
           />
         ) : (
-          <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{linkifyText(proposal.description)}</ReactMarkdown></div>
+          <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-line"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{linkifyText(proposal.description)}</ReactMarkdown></div>
         )}
       </div>
 
