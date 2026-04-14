@@ -268,10 +268,17 @@ function ProposalsTabContent({
     return (genreCounts.get(b) || 0) - (genreCounts.get(a) || 0);
   });
 
-  // Filter by genre; "All" preserves the server's activity-based sort order
+  // Sort by activity: pinned first, then by engagement (participants + comments)
+  const sorted = [...proposals].sort((a, b) => {
+    if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+    const activityA = (a.commitment_count || 0) + (a.comment_count || 0);
+    const activityB = (b.commitment_count || 0) + (b.comment_count || 0);
+    return activityB - activityA;
+  });
+
   const filtered = activeGenre
-    ? proposals.filter(p => (p.genre || 'other') === activeGenre)
-    : proposals;
+    ? sorted.filter(p => (p.genre || 'other') === activeGenre)
+    : sorted;
 
   return (
     <div>
