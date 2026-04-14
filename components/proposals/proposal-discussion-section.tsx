@@ -412,11 +412,9 @@ export function ProposalDiscussionSection({
                     <div className="flex items-center">
                       {voteInfo.voters.map((voter) => renderVoterAvatar(voter))}
                     </div>
-                    {voteInfo.voters.length <= 3 && (
-                      <span className="ml-2 text-xs text-gray-500">
-                        {voteInfo.voters.map(v => v.member_name).join(', ')}
-                      </span>
-                    )}
+                    <span className="ml-2 text-xs text-gray-500">
+                      {voteInfo.voters.map(v => v.member_name).join(', ')}
+                    </span>
                   </div>
                 )}
               </div>
