@@ -194,6 +194,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [memberPhone, setMemberPhone] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [tierCounts, setTierCounts] = useState<{ premium: number; basic: number }>({ premium: 0, basic: 0 });
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const fetchEventDataRef = useRef<() => Promise<void>>(async () => {});
   const fetchCommentsDataRef = useRef<() => Promise<void>>(async () => {});
 
@@ -728,6 +729,53 @@ export function EventDetail({ eventId }: { eventId: string }) {
           </div>
         </section>
       </div>
+
+      {/* Recap Section */}
+      {(event.recap_text || (event.recap_images && event.recap_images.length > 0)) && (
+        <section className="mt-6 rounded-3xl border border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50 p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-purple-900 flex items-center gap-2 mb-4">
+            <span className="text-xl">📸</span>
+            Recap
+          </h2>
+          {event.recap_text && (
+            <div className="prose prose-sm max-w-none text-gray-700 mb-4">
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={{ a: ({ href, children }) => <a href={href} className="text-purple-600 underline hover:text-purple-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>
+                {linkifyText(event.recap_text)}
+              </ReactMarkdown>
+            </div>
+          )}
+          {event.recap_images && event.recap_images.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {event.recap_images.map((url, i) => (
+                <button key={i} onClick={() => setLightboxImage(url)} className="block aspect-[4/3] rounded-lg overflow-hidden border border-purple-200 hover:border-purple-400 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500">
+                  <img src={url} alt={`Recap ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Lightbox */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 text-white text-3xl font-bold hover:text-gray-300 z-10"
+          >
+            ×
+          </button>
+          <img
+            src={lightboxImage}
+            alt="Recap"
+            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

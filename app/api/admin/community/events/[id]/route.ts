@@ -38,6 +38,8 @@ const UpdateEventSchema = z.object({
   payment_instructions: z.string().nullable().optional(),
   require_question: z.boolean().optional(),
   question_prompt: z.string().max(500).nullable().optional(),
+  recap_text: z.string().max(5000).nullable().optional(),
+  recap_images: z.array(z.string()).max(20).nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -65,7 +67,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return errorResponse(parsed.error.issues.map((e) => e.message).join(', '), 400);
     }
 
-    const updated = await updateEvent(id, parsed.data);
+    // Handle recap_created_at automatically
+    const updateData: Record<string, unknown> = { ...parsed.data };
+    if (parsed.data.recap_text !== undefined || parsed.data.recap_images !== undefined) {
+      const hasRecap = parsed.data.recap_text || (parsed.data.recap_images && parsed.data.recap_images.length > 0);
+      if (hasRecap && !event.recap_created_at) {
+        updateData.recap_created_at = new Date().toISOString();
+      } else if (!hasRecap) {
+        updateData.recap_created_at = null;
+      }
+    }
+
+    const updated = await updateEvent(id, updateData);
 
     // Send notifications when event transitions to published
     if (event.status !== 'published' && parsed.data.status === 'published') {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CommunityEvent, EventStatus, EventCategory, EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS } from '@/types';
 import { AdminImageUpload } from './admin-article-image-upload';
 import { AdminEventPayments } from './admin-event-payments';
@@ -87,6 +87,8 @@ interface EventForm {
   registration_deadline: string;
   payment_qr_url: string;
   payment_instructions: string;
+  recap_text: string;
+  recap_images: string[];
 }
 
 const emptyForm: EventForm = {
@@ -113,6 +115,8 @@ const emptyForm: EventForm = {
   registration_deadline: '',
   payment_qr_url: '',
   payment_instructions: '',
+  recap_text: '',
+  recap_images: [],
 };
 
 // Convert UTC ISO string to local datetime-local input value
@@ -133,6 +137,8 @@ export function AdminEventManager() {
   const [editingEvent, setEditingEvent] = useState<CommunityEvent | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [imageUploading, setImageUploading] = useState(false);
+  const [recapImageUploading, setRecapImageUploading] = useState(false);
+  const recapImageRef = useRef<HTMLInputElement>(null);
   const [viewingPayments, setViewingPayments] = useState<CommunityEvent | null>(null);
   const [viewingQuestions, setViewingQuestions] = useState<CommunityEvent | null>(null);
   const [questions, setQuestions] = useState<Array<{ type: string; tier?: string; name: string; email?: string; phone?: string; question: string; created_at: string }>>([]);
@@ -205,6 +211,8 @@ export function AdminEventManager() {
       registration_deadline: event.registration_deadline ? utcToLocalInput(event.registration_deadline) : '',
       payment_qr_url: event.payment_qr_url || '',
       payment_instructions: event.payment_instructions || '',
+      recap_text: event.recap_text || '',
+      recap_images: event.recap_images || [],
     });
     setShowForm(true);
   }
@@ -213,6 +221,24 @@ export function AdminEventManager() {
     setShowForm(false);
     setEditingEvent(null);
     setForm(emptyForm);
+  }
+
+  async function handleRecapImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setRecapImageUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/admin/community/events/upload-image', { method: 'POST', body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        setForm(f => ({ ...f, recap_images: [...f.recap_images, data.data.url] }));
+      }
+    } catch {} finally {
+      setRecapImageUploading(false);
+      if (recapImageRef.current) recapImageRef.current.value = '';
+    }
   }
 
   async function openQuestions(event: CommunityEvent) {
@@ -310,6 +336,11 @@ export function AdminEventManager() {
 
     if (form.payment_instructions) payload.payment_instructions = form.payment_instructions;
     else if (editingEvent) payload.payment_instructions = null;
+
+    // Recap fields
+    if (form.recap_text) payload.recap_text = form.recap_text;
+    else if (editingEvent) payload.recap_text = null;
+    payload.recap_images = form.recap_images.length > 0 ? form.recap_images : null;
 
     try {
       const url = editingEvent
@@ -895,6 +926,64 @@ export function AdminEventManager() {
                       />
                     </div>
                   </>
+                )}
+
+                {/* Recap Section */}
+                {editingEvent && (
+                  <div className="border border-purple-200 rounded-lg p-4 bg-purple-50/50">
+                    <h3 className="text-sm font-semibold text-purple-900 mb-3 flex items-center gap-1.5">
+                      <span>📸</span> Recap
+                    </h3>
+                    <div className="mb-3">
+                      <textarea
+                        rows={4}
+                        value={form.recap_text}
+                        onChange={(e) => setForm((f) => ({ ...f, recap_text: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-vertical"
+                        placeholder={locale === 'vi' ? 'Viết recap cho sự kiện (hỗ trợ Markdown)...' : 'Write event recap (Markdown supported)...'}
+                        maxLength={5000}
+                      />
+                    </div>
+                    {form.recap_images.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        {form.recap_images.map((url, i) => (
+                          <div key={i} className="relative group aspect-[4/3] rounded-lg overflow-hidden border border-purple-200">
+                            <img src={url} alt={`Recap ${i + 1}`} className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setForm(f => ({ ...f, recap_images: f.recap_images.filter((_, idx) => idx !== i) }))}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <input
+                        ref={recapImageRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handleRecapImageUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => recapImageRef.current?.click()}
+                        disabled={recapImageUploading || form.recap_images.length >= 20}
+                        className="text-sm text-purple-600 hover:text-purple-800 font-medium flex items-center gap-1 disabled:opacity-50"
+                      >
+                        {recapImageUploading ? (
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        )}
+                        {locale === 'vi' ? 'Thêm ảnh' : 'Add photo'}
+                      </button>
+                      <span className="text-xs text-gray-400">{form.recap_images.length}/20</span>
+                    </div>
+                  </div>
                 )}
 
                 {/* Event Image */}

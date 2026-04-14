@@ -530,6 +530,10 @@ export interface CommunityEvent {
   published_at?: string;
   completed_at?: string;
   outcome_summary?: string;
+  // Recap fields
+  recap_text?: string;
+  recap_images?: string[];
+  recap_created_at?: string;
   // Joined fields
   author_name?: string;
   author_avatar_url?: string;
