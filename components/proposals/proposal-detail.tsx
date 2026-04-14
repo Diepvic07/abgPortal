@@ -8,8 +8,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, ParticipationFormat, ProposalDiscussion, DiscussionResponse, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS } from '@/types';
+import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, ParticipationFormat, ProposalDiscussion, DiscussionResponse, ProposalPoll, PollResponse, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS } from '@/types';
 import { ProposalDiscussionSection } from '@/components/proposals/proposal-discussion-section';
+import { ProposalPollSection } from '@/components/proposals/proposal-poll-section';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 import { MentionTextarea, renderMentions, encodementions } from '@/components/ui/mention-textarea';
 
@@ -113,10 +114,17 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editTags, setEditTags] = useState<string[]>([]);
   const [editTagInput, setEditTagInput] = useState('');
   const [editHasDiscussion, setEditHasDiscussion] = useState(false);
+  const [editDiscussionTitle, setEditDiscussionTitle] = useState('');
+  const [editDiscussionDescription, setEditDiscussionDescription] = useState('');
   const [editDiscussionOptions, setEditDiscussionOptions] = useState<{date: string; startTime: string; endTime: string}[]>([
     { date: '', startTime: '', endTime: '' },
     { date: '', startTime: '', endTime: '' },
   ]);
+  const [editHasPoll, setEditHasPoll] = useState(false);
+  const [editPollTitle, setEditPollTitle] = useState('');
+  const [editPollDescription, setEditPollDescription] = useState('');
+  const [editPollOptions, setEditPollOptions] = useState<string[]>(['', '']);
+  const [editPollAllowMultiple, setEditPollAllowMultiple] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [rerunningAI, setRerunningAI] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -125,6 +133,8 @@ export function ProposalDetail({ proposalId }: Props) {
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
   const [discussion, setDiscussion] = useState<ProposalDiscussion | null>(null);
   const [discussionResponses, setDiscussionResponses] = useState<DiscussionResponse[]>([]);
+  const [poll, setPoll] = useState<ProposalPoll | null>(null);
+  const [pollResponses, setPollResponses] = useState<PollResponse[]>([]);
   const [deleting, setDeleting] = useState(false);
   const commentImageRef = useRef<HTMLInputElement>(null);
   const replyImageRef = useRef<HTMLInputElement>(null);
@@ -162,6 +172,18 @@ export function ProposalDetail({ proposalId }: Props) {
             member_email: member?.email || r.member_email,
             member_avatar_url: member?.avatar_url || r.member_avatar_url,
             member_public_profile_slug: member?.public_profile_slug || r.member_public_profile_slug,
+          };
+        }));
+      }
+      // Poll data
+      if (data.poll) {
+        setPoll(data.poll);
+        setPollResponses((data.pollResponses || []).map((r: Record<string, unknown>) => {
+          const member = r.members as Record<string, unknown> | null;
+          return {
+            ...r,
+            member_name: member?.name || r.member_name,
+            member_avatar_url: member?.avatar_url || r.member_avatar_url,
           };
         }));
       }
@@ -421,6 +443,8 @@ export function ProposalDetail({ proposalId }: Props) {
     setEditTags(proposal.tags || []);
     setEditTagInput('');
     setEditHasDiscussion(!!proposal.has_discussion);
+    setEditDiscussionTitle(discussion?.title || '');
+    setEditDiscussionDescription(discussion?.description || '');
     // Pre-populate from existing discussion options if available
     if (discussion && discussion.date_options.length > 0) {
       setEditDiscussionOptions(discussion.date_options.map(opt => {
@@ -434,6 +458,12 @@ export function ProposalDetail({ proposalId }: Props) {
         { date: '', startTime: '', endTime: '' },
       ]);
     }
+    // Pre-populate freestyle poll
+    setEditHasPoll(!!proposal.has_poll);
+    setEditPollTitle(poll?.title || '');
+    setEditPollDescription(poll?.description || '');
+    setEditPollOptions(poll?.options?.length ? [...poll.options] : ['', '']);
+    setEditPollAllowMultiple(poll?.allow_multiple || false);
     setEditError(null);
     setIsEditing(true);
   }
@@ -456,10 +486,17 @@ export function ProposalDetail({ proposalId }: Props) {
           participation_format: editParticipationFormat,
           tags: editTags,
           has_discussion: editHasDiscussion,
+          discussion_title: editHasDiscussion ? editDiscussionTitle.trim() || undefined : undefined,
+          discussion_description: editHasDiscussion ? editDiscussionDescription.trim() || undefined : undefined,
           discussion_date_options: editHasDiscussion ? editDiscussionOptions
             .filter(o => o.date)
             .map(o => o.startTime && o.endTime ? `${o.date}T${o.startTime}-${o.endTime}` : o.date)
             : undefined,
+          has_poll: editHasPoll,
+          poll_title: editHasPoll ? editPollTitle.trim() : undefined,
+          poll_description: editHasPoll ? editPollDescription.trim() || undefined : undefined,
+          poll_options: editHasPoll ? editPollOptions.filter(o => o.trim()) : undefined,
+          poll_allow_multiple: editHasPoll ? editPollAllowMultiple : undefined,
         }),
       });
       if (!res.ok) {
@@ -470,8 +507,8 @@ export function ProposalDetail({ proposalId }: Props) {
       const data = await res.json();
       setProposal({ ...proposal, ...data.proposal });
       setIsEditing(false);
-      // Reload to refresh discussion data if poll was created or edited
-      if (editHasDiscussion) {
+      // Reload to refresh discussion/poll data if created or edited
+      if (editHasDiscussion || editHasPoll) {
         window.location.reload();
         return;
       }
@@ -721,6 +758,22 @@ export function ProposalDetail({ proposalId }: Props) {
               </label>
               {editHasDiscussion && (
                 <div className="mt-3 space-y-2">
+                  <input
+                    type="text"
+                    value={editDiscussionTitle}
+                    onChange={e => setEditDiscussionTitle(e.target.value)}
+                    placeholder={locale === 'vi' ? 'Tiêu đề poll (tùy chọn)' : 'Poll title (optional)'}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={200}
+                  />
+                  <input
+                    type="text"
+                    value={editDiscussionDescription}
+                    onChange={e => setEditDiscussionDescription(e.target.value)}
+                    placeholder={locale === 'vi' ? 'Mô tả (tùy chọn)' : 'Description (optional)'}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={1000}
+                  />
                   {proposal.has_discussion && discussionResponses.length > 0 && (
                     <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                       {locale === 'vi'
@@ -783,6 +836,99 @@ export function ProposalDetail({ proposalId }: Props) {
                       + {locale === 'vi' ? 'Thêm lựa chọn' : 'Add option'}
                     </button>
                   )}
+                </div>
+              )}
+            </div>
+
+            {/* Freestyle Poll toggle */}
+            <div className="mt-4 border border-gray-200 rounded-lg p-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editHasPoll}
+                  onChange={e => setEditHasPoll(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">
+                    {locale === 'vi' ? '📊 Bình chọn tự do (Poll)' : '📊 Freestyle Poll'}
+                  </span>
+                  {proposal.has_poll && (
+                    <span className="ml-2 text-xs text-green-600 font-medium">
+                      {locale === 'vi' ? '✓ Đã bật' : '✓ Enabled'}
+                    </span>
+                  )}
+                </div>
+              </label>
+              {editHasPoll && (
+                <div className="mt-3 space-y-2">
+                  <input
+                    type="text"
+                    value={editPollTitle}
+                    onChange={e => setEditPollTitle(e.target.value)}
+                    placeholder={locale === 'vi' ? 'Tiêu đề bình chọn *' : 'Poll title *'}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={200}
+                  />
+                  <input
+                    type="text"
+                    value={editPollDescription}
+                    onChange={e => setEditPollDescription(e.target.value)}
+                    placeholder={locale === 'vi' ? 'Mô tả (tùy chọn)' : 'Description (optional)'}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={1000}
+                  />
+                  {proposal.has_poll && pollResponses.length > 0 && (
+                    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      {locale === 'vi'
+                        ? `⚠️ Đã có ${pollResponses.length} phiếu bầu. Thay đổi lựa chọn sẽ xóa tất cả phiếu bầu hiện tại.`
+                        : `⚠️ ${pollResponses.length} vote(s) exist. Changing options will erase all current votes.`}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    {locale === 'vi' ? 'Thêm 2-20 lựa chọn:' : 'Add 2-20 options:'}
+                  </p>
+                  {editPollOptions.map((opt, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={opt}
+                        onChange={e => {
+                          const updated = [...editPollOptions];
+                          updated[i] = e.target.value;
+                          setEditPollOptions(updated);
+                        }}
+                        placeholder={`${locale === 'vi' ? 'Lựa chọn' : 'Option'} ${i + 1}`}
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        maxLength={200}
+                      />
+                      {editPollOptions.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => setEditPollOptions(editPollOptions.filter((_, j) => j !== i))}
+                          className="text-red-400 hover:text-red-600 text-sm"
+                        >✕</button>
+                      )}
+                    </div>
+                  ))}
+                  {editPollOptions.length < 20 && (
+                    <button
+                      type="button"
+                      onClick={() => setEditPollOptions([...editPollOptions, ''])}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      + {locale === 'vi' ? 'Thêm lựa chọn' : 'Add option'}
+                    </button>
+                  )}
+                  <label className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+                    <input
+                      type="checkbox"
+                      checked={editPollAllowMultiple}
+                      onChange={e => setEditPollAllowMultiple(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    {locale === 'vi' ? 'Cho phép chọn nhiều lựa chọn' : 'Allow multiple selections'}
+                  </label>
                 </div>
               )}
             </div>
@@ -970,6 +1116,19 @@ export function ProposalDetail({ proposalId }: Props) {
           proposalSlug={proposal.slug}
           discussion={discussion}
           responses={discussionResponses}
+          currentMemberId={currentMemberId}
+          isCreator={currentMemberId === proposal.created_by_member_id}
+          locale={locale}
+          onRefresh={() => fetchProposal(true)}
+        />
+      )}
+
+      {/* Freestyle Poll */}
+      {proposal.has_poll && (
+        <ProposalPollSection
+          proposalId={proposalId}
+          poll={poll}
+          responses={pollResponses}
           currentMemberId={currentMemberId}
           isCreator={currentMemberId === proposal.created_by_member_id}
           locale={locale}

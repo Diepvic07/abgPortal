@@ -43,10 +43,17 @@ export function NewProposalForm() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [hasDiscussion, setHasDiscussion] = useState(false);
+  const [discussionTitle, setDiscussionTitle] = useState('');
+  const [discussionDescription, setDiscussionDescription] = useState('');
   const [discussionOptions, setDiscussionOptions] = useState<{date: string; startTime: string; endTime: string}[]>([
     { date: '', startTime: '', endTime: '' },
     { date: '', startTime: '', endTime: '' },
   ]);
+  const [hasPoll, setHasPoll] = useState(false);
+  const [pollTitle, setPollTitle] = useState('');
+  const [pollDescription, setPollDescription] = useState('');
+  const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
+  const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
 
   function buildDescription(): string {
     const parts: string[] = [];
@@ -170,10 +177,17 @@ export function NewProposalForm() {
           location: location === '__custom__' ? customLocation.trim() : location || undefined,
           participation_format: participationFormat,
           has_discussion: hasDiscussion,
+          discussion_title: hasDiscussion ? discussionTitle.trim() || undefined : undefined,
+          discussion_description: hasDiscussion ? discussionDescription.trim() || undefined : undefined,
           discussion_date_options: hasDiscussion ? discussionOptions
             .filter(o => o.date)
             .map(o => o.startTime && o.endTime ? `${o.date}T${o.startTime}-${o.endTime}` : o.date)
             : undefined,
+          has_poll: hasPoll,
+          poll_title: hasPoll ? pollTitle.trim() : undefined,
+          poll_description: hasPoll ? pollDescription.trim() || undefined : undefined,
+          poll_options: hasPoll ? pollOptions.filter(o => o.trim()) : undefined,
+          poll_allow_multiple: hasPoll ? pollAllowMultiple : undefined,
         }),
       });
 
@@ -556,6 +570,22 @@ export function NewProposalForm() {
 
           {hasDiscussion && (
             <div className="space-y-3">
+              <input
+                type="text"
+                value={discussionTitle}
+                onChange={e => setDiscussionTitle(e.target.value)}
+                placeholder={vi ? 'Tiêu đề poll (tùy chọn)' : 'Poll title (optional)'}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                maxLength={200}
+              />
+              <input
+                type="text"
+                value={discussionDescription}
+                onChange={e => setDiscussionDescription(e.target.value)}
+                placeholder={vi ? 'Mô tả (tùy chọn)' : 'Description (optional)'}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                maxLength={1000}
+              />
               <p className="text-sm font-medium text-gray-700">
                 {vi ? 'Đề xuất 2-10 lựa chọn ngày/giờ để thành viên bỏ phiếu:' : 'Propose 2-10 date/time options for members to vote:'}
               </p>
@@ -615,6 +645,106 @@ export function NewProposalForm() {
                   + {vi ? 'Thêm lựa chọn' : 'Add option'}
                 </button>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Step 13: Freestyle Poll */}
+        <div className="bg-gray-50 rounded-xl p-5">
+          <label className="block text-base font-semibold text-gray-900 mb-3">
+            13. {vi ? 'Bình chọn tự do (tùy chọn)' : 'Freestyle Poll (optional)'}
+          </label>
+          <p className="text-sm text-gray-500 mb-3">
+            {vi
+              ? 'Tạo bình chọn để thành viên bỏ phiếu cho các lựa chọn tùy ý (không phải ngày giờ).'
+              : 'Create a poll for members to vote on custom options (not date/time).'}
+          </p>
+
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              type="button"
+              onClick={() => setHasPoll(!hasPoll)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                hasPoll ? 'bg-blue-600' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  hasPoll ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className="text-sm font-medium text-gray-700">
+              {hasPoll
+                ? (vi ? 'Có bình chọn tự do' : 'Freestyle poll enabled')
+                : (vi ? 'Không có bình chọn' : 'No freestyle poll')}
+            </span>
+          </div>
+
+          {hasPoll && (
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={pollTitle}
+                onChange={e => setPollTitle(e.target.value)}
+                placeholder={vi ? 'Tiêu đề bình chọn *' : 'Poll title *'}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                maxLength={200}
+              />
+              <input
+                type="text"
+                value={pollDescription}
+                onChange={e => setPollDescription(e.target.value)}
+                placeholder={vi ? 'Mô tả (tùy chọn)' : 'Description (optional)'}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                maxLength={1000}
+              />
+              <p className="text-sm font-medium text-gray-700">
+                {vi ? 'Thêm 2-20 lựa chọn:' : 'Add 2-20 options:'}
+              </p>
+              {pollOptions.map((opt, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={opt}
+                    onChange={e => {
+                      const updated = [...pollOptions];
+                      updated[idx] = e.target.value;
+                      setPollOptions(updated);
+                    }}
+                    placeholder={`${vi ? 'Lựa chọn' : 'Option'} ${idx + 1}`}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                    maxLength={200}
+                  />
+                  {pollOptions.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
+                      className="text-red-500 hover:text-red-700 text-sm font-medium px-2"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+              {pollOptions.length < 20 && (
+                <button
+                  type="button"
+                  onClick={() => setPollOptions([...pollOptions, ''])}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  + {vi ? 'Thêm lựa chọn' : 'Add option'}
+                </button>
+              )}
+              <label className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+                <input
+                  type="checkbox"
+                  checked={pollAllowMultiple}
+                  onChange={e => setPollAllowMultiple(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                {vi ? 'Cho phép chọn nhiều lựa chọn' : 'Allow multiple selections'}
+              </label>
             </div>
           )}
         </div>

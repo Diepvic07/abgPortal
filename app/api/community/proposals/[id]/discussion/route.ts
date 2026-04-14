@@ -13,6 +13,8 @@ function mapRowToDiscussion(row: Record<string, unknown>): ProposalDiscussion {
   return {
     id: row.id as string,
     proposal_id: row.proposal_id as string,
+    title: (row.title as string) || undefined,
+    description: (row.description as string) || undefined,
     status: row.status as ProposalDiscussion['status'],
     date_options: (row.date_options as string[]) || [],
     meeting_date: (row.meeting_date as string) || undefined,
@@ -346,12 +348,35 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return successResponse({ discussion: mapRowToDiscussion(updated as Record<string, unknown>) });
     }
 
+    // Update title/description (allowed anytime)
+    if (body.title !== undefined || body.description !== undefined) {
+      const titleDescUpdates: Record<string, unknown> = { updated_at: now };
+      if (body.title !== undefined) titleDescUpdates.title = body.title ? String(body.title).trim().slice(0, 200) : null;
+      if (body.description !== undefined) titleDescUpdates.description = body.description ? String(body.description).trim().slice(0, 1000) : null;
+
+      // If also updating date_options in the same request
+      if (body.date_options && discussion.status === 'open') {
+        if (Array.isArray(body.date_options) && body.date_options.length >= 2 && body.date_options.length <= 10) {
+          titleDescUpdates.date_options = body.date_options;
+        }
+      }
+
+      const { data: updated, error } = await (supabase.from('proposal_discussions') as any)
+        .update(titleDescUpdates)
+        .eq('id', discussion.id)
+        .select()
+        .single();
+
+      if (error) throw new Error('Failed to update discussion');
+      return successResponse({ discussion: mapRowToDiscussion(updated as Record<string, unknown>) });
+    }
+
     // Update date options (only while open)
     if (body.date_options) {
       if (discussion.status !== 'open') return errorResponse('Can only update date options while discussion is open', 400);
 
-      if (!Array.isArray(body.date_options) || body.date_options.length < 2 || body.date_options.length > 5) {
-        return errorResponse('Please provide 2-5 date options', 400);
+      if (!Array.isArray(body.date_options) || body.date_options.length < 2 || body.date_options.length > 10) {
+        return errorResponse('Please provide 2-10 date options', 400);
       }
 
       const { data: updated, error } = await (supabase.from('proposal_discussions') as any)

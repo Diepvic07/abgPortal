@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const member = await requireAuth(request);
 
     const body = await request.json();
-    const { title, description, category, genre, target_date, commitment_level, image_url, tags, location, participation_format, has_discussion, discussion_date_options } = body;
+    const { title, description, category, genre, target_date, commitment_level, image_url, tags, location, participation_format, has_discussion, discussion_date_options, discussion_title, discussion_description, has_poll, poll_title, poll_description, poll_options, poll_allow_multiple } = body;
 
     if (!title || title.length < 5 || title.length > 200) {
       return errorResponse('Title must be between 5 and 200 characters', 400);
@@ -92,6 +92,8 @@ export async function POST(request: NextRequest) {
           id: genId(),
           proposal_id: proposal.id,
           status: 'open',
+          title: discussion_title ? String(discussion_title).trim().slice(0, 200) : null,
+          description: discussion_description ? String(discussion_description).trim().slice(0, 1000) : null,
           date_options: discussion_date_options.slice(0, 10),
           created_at: discNow,
           updated_at: discNow,
@@ -100,6 +102,35 @@ export async function POST(request: NextRequest) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase.from('community_proposals') as any)
         .update({ has_discussion: true, updated_at: discNow })
+        .eq('id', proposal.id);
+    }
+
+    // Create freestyle poll if enabled
+    if (has_poll && poll_title && Array.isArray(poll_options) && poll_options.length >= 2) {
+      const { generateId: genPollId, formatDate: fmtPollDate } = await import('@/lib/utils');
+      const pollNow = fmtPollDate();
+      const cleanOptions = poll_options
+        .filter((o: unknown) => typeof o === 'string' && (o as string).trim())
+        .map((o: string) => o.trim())
+        .slice(0, 20);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('proposal_polls') as any)
+        .insert({
+          id: genPollId(),
+          proposal_id: proposal.id,
+          title: String(poll_title).trim().slice(0, 200),
+          description: poll_description ? String(poll_description).trim().slice(0, 1000) : null,
+          options: cleanOptions,
+          allow_multiple: !!poll_allow_multiple,
+          status: 'open',
+          created_at: pollNow,
+          updated_at: pollNow,
+        });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('community_proposals') as any)
+        .update({ has_poll: true, updated_at: pollNow })
         .eq('id', proposal.id);
     }
 

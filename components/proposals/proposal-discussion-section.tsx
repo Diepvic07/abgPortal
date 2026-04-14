@@ -247,7 +247,7 @@ export function ProposalDiscussionSection({
     return (
       <div className="mt-8">
         <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-          💬 {vi ? 'Thảo luận trực tuyến' : 'Online Discussion'}
+          💬 {discussion.title || (vi ? 'Thảo luận trực tuyến' : 'Online Discussion')}
         </h3>
         <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
           discussion.status === 'completed'
@@ -267,7 +267,7 @@ export function ProposalDiscussionSection({
     return (
       <div className="mt-8">
         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          💬 {vi ? 'Thảo luận trực tuyến' : 'Online Discussion'}
+          💬 {discussion.title || (vi ? 'Thảo luận trực tuyến' : 'Online Discussion')}
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
             {vi ? 'Đã lên lịch' : 'Scheduled'}
           </span>
@@ -333,12 +333,13 @@ export function ProposalDiscussionSection({
   // Status: open — voting + questions
   return (
     <div className="mt-8">
-      <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-        💬 {vi ? 'Thảo luận trực tuyến' : 'Online Discussion'}
+      <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+        💬 {discussion.title || (vi ? 'Thảo luận trực tuyến' : 'Online Discussion')}
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
           {vi ? 'Đang mở' : 'Open'}
         </span>
       </h3>
+      {discussion.description && <p className="text-sm text-gray-600 mb-3">{discussion.description}</p>}
 
       {/* Date voting / results */}
       <div className="bg-gray-50 rounded-xl p-5 mb-4">

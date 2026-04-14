@@ -20,6 +20,27 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const comments = await getCommentsByProposal(id, member?.id);
     const myCommitment = member ? await getMemberCommitment(id, member.id) : null;
 
+    // Fetch poll data if proposal has a freestyle poll
+    let poll = null;
+    let pollResponses: unknown[] = [];
+    if (proposal.has_poll) {
+      const supabase2 = createServerSupabaseClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: pollData } = await (supabase2.from('proposal_polls') as any)
+        .select('*')
+        .eq('proposal_id', id)
+        .single();
+      if (pollData) {
+        poll = pollData;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: pollRespRows } = await (supabase2.from('proposal_poll_responses') as any)
+          .select('*, members:member_id(name, avatar_url)')
+          .eq('poll_id', pollData.id)
+          .order('created_at', { ascending: true });
+        pollResponses = pollRespRows || [];
+      }
+    }
+
     // Fetch discussion data if proposal has discussion enabled
     let discussion = null;
     let discussionResponses: unknown[] = [];
@@ -84,6 +105,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       comments,
       discussion,
       discussionResponses,
+      poll,
+      pollResponses,
       currentMemberId: member?.id || null,
       currentMemberAvatarUrl: member?.avatar_url || null,
       currentMemberIsAdmin: member?.is_admin === true,
@@ -154,10 +177,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         }
 
         if (existing) {
-          // Update existing discussion options
+          // Update existing discussion options + title/description
+          const discUpdates: Record<string, unknown> = { date_options: discussion_date_options.slice(0, 10), updated_at: now };
+          if (body.discussion_title !== undefined) discUpdates.title = body.discussion_title ? String(body.discussion_title).trim().slice(0, 200) : null;
+          if (body.discussion_description !== undefined) discUpdates.description = body.discussion_description ? String(body.discussion_description).trim().slice(0, 1000) : null;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (supabase.from('proposal_discussions') as any)
-            .update({ date_options: discussion_date_options.slice(0, 10), updated_at: now })
+            .update(discUpdates)
             .eq('id', existing.id);
 
           // Clear all existing votes since options changed
@@ -173,6 +199,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               id: generateId(),
               proposal_id: id,
               status: 'open',
+              title: body.discussion_title ? String(body.discussion_title).trim().slice(0, 200) : null,
+              description: body.discussion_description ? String(body.discussion_description).trim().slice(0, 1000) : null,
               date_options: discussion_date_options.slice(0, 10),
               created_at: now,
               updated_at: now,
@@ -186,6 +214,66 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (supabase.from('community_proposals') as any)
             .update({ has_discussion: true, updated_at: now })
+            .eq('id', id);
+        }
+      }
+    }
+
+    // Handle freestyle poll: create new or update existing
+    if (body.has_poll === true) {
+      const { poll_title, poll_description, poll_options, poll_allow_multiple } = body;
+      if (poll_title && Array.isArray(poll_options) && poll_options.length >= 2) {
+        const supabaseP = createServerSupabaseClient();
+        const nowP = formatDate();
+
+        const cleanOptions = poll_options
+          .filter((o: unknown) => typeof o === 'string' && (o as string).trim())
+          .map((o: string) => o.trim())
+          .slice(0, 20);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: existingPoll } = await (supabaseP.from('proposal_polls') as any)
+          .select('id')
+          .eq('proposal_id', id)
+          .maybeSingle();
+
+        if (existingPoll) {
+          // Update existing poll
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabaseP.from('proposal_polls') as any)
+            .update({
+              title: String(poll_title).trim().slice(0, 200),
+              description: poll_description ? String(poll_description).trim().slice(0, 1000) : null,
+              options: cleanOptions,
+              allow_multiple: !!poll_allow_multiple,
+              updated_at: nowP,
+            })
+            .eq('id', existingPoll.id);
+
+          // Clear votes since options may have changed
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabaseP.from('proposal_poll_responses') as any)
+            .delete()
+            .eq('poll_id', existingPoll.id);
+        } else {
+          // Create new poll
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabaseP.from('proposal_polls') as any)
+            .insert({
+              id: generateId(),
+              proposal_id: id,
+              title: String(poll_title).trim().slice(0, 200),
+              description: poll_description ? String(poll_description).trim().slice(0, 1000) : null,
+              options: cleanOptions,
+              allow_multiple: !!poll_allow_multiple,
+              status: 'open',
+              created_at: nowP,
+              updated_at: nowP,
+            });
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabaseP.from('community_proposals') as any)
+            .update({ has_poll: true, updated_at: nowP })
             .eq('id', id);
         }
       }

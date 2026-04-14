@@ -353,6 +353,7 @@ export interface CommunityProposal {
   location?: string;
   participation_format?: ParticipationFormat;
   has_discussion?: boolean;
+  has_poll?: boolean;
   // Joined fields
   author_name?: string;
   author_avatar_url?: string;
@@ -398,6 +399,8 @@ export type DiscussionRsvpStatus = 'pending' | 'accepted' | 'declined';
 export interface ProposalDiscussion {
   id: string;
   proposal_id: string;
+  title?: string;
+  description?: string;
   status: DiscussionStatus;
   date_options: string[];
   meeting_date?: string;
@@ -422,6 +425,33 @@ export interface DiscussionResponse {
   member_email?: string;
   member_avatar_url?: string;
   member_public_profile_slug?: string;
+}
+
+// Freestyle Polls
+export type PollStatus = 'open' | 'closed';
+
+export interface ProposalPoll {
+  id: string;
+  proposal_id: string;
+  title: string;
+  description?: string;
+  options: string[];
+  allow_multiple: boolean;
+  status: PollStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PollResponse {
+  id: string;
+  poll_id: string;
+  member_id: string;
+  selected_options: string[];
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  member_name?: string;
+  member_avatar_url?: string;
 }
 
 // Community Events
