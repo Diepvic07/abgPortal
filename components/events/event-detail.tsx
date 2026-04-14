@@ -1213,7 +1213,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                       {currentMemberId === comment.member_id && (
                         <>
                           <button
-                            onClick={() => { setEditingComment(comment.id); setEditBody(comment.body); }}
+                            onClick={() => { setEditingComment(comment.id); setEditBody(comment.body.replace(/@\[([^\]]+)\]\([^)]+\)/g, '@$1')); }}
                             className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
                           >
                             {locale === 'vi' ? 'Sửa' : 'Edit'}
@@ -1281,7 +1281,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                             />
                             {currentMemberId === reply.member_id && (
                               <>
-                                <button onClick={() => { setEditingComment(reply.id); setEditBody(reply.body); }} className="text-xs text-gray-400 hover:text-blue-600 transition-colors">{locale === 'vi' ? 'Sửa' : 'Edit'}</button>
+                                <button onClick={() => { setEditingComment(reply.id); setEditBody(reply.body.replace(/@\[([^\]]+)\]\([^)]+\)/g, '@$1')); }} className="text-xs text-gray-400 hover:text-blue-600 transition-colors">{locale === 'vi' ? 'Sửa' : 'Edit'}</button>
                                 <button onClick={() => { if (confirm(locale === 'vi' ? 'Xóa bình luận này?' : 'Delete this comment?')) handleDeleteComment(reply.id); }} className="text-xs text-gray-400 hover:text-red-600 transition-colors">{locale === 'vi' ? 'Xóa' : 'Delete'}</button>
                               </>
                             )}

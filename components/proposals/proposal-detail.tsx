@@ -12,7 +12,7 @@ import { CommunityProposal, CommunityCommitment, CommunityProposalComment, Commi
 import { ProposalDiscussionSection } from '@/components/proposals/proposal-discussion-section';
 import { ProposalPollSection } from '@/components/proposals/proposal-poll-section';
 import { CommentReactions } from '@/components/ui/comment-reactions';
-import { MentionTextarea, renderMentions, encodementions } from '@/components/ui/mention-textarea';
+import { MentionTextarea, renderMentions, encodementions, decodeMentions } from '@/components/ui/mention-textarea';
 
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
@@ -99,6 +99,7 @@ export function ProposalDetail({ proposalId }: Props) {
   const [currentMemberIsAdmin, setCurrentMemberIsAdmin] = useState(false);
   const [editingComment, setEditingComment] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
+  const [editMentions, setEditMentions] = useState<{ name: string; id: string }[]>([]);
   const [submittingCommitment, setSubmittingCommitment] = useState(false);
   const [commentImageFile, setCommentImageFile] = useState<File | null>(null);
   const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
@@ -391,9 +392,10 @@ export function ProposalDetail({ proposalId }: Props) {
 
   async function handleEditComment(commentId: string) {
     if (!editBody.trim()) return;
-    const newBody = editBody.trim();
+    const newBody = encodementions(editBody.trim(), editMentions);
     setEditingComment(null);
     setEditBody('');
+    setEditMentions([]);
 
     const updateBody = (list: CommunityProposalComment[]): CommunityProposalComment[] =>
       list.map(c => c.id === commentId
@@ -1293,7 +1295,7 @@ export function ProposalDetail({ proposalId }: Props) {
                   {currentMemberId === c.member_id && (
                     <>
                       <button
-                        onClick={() => { setEditingComment(c.id); setEditBody(c.body); }}
+                        onClick={() => { const { displayText, mentions } = decodeMentions(c.body); setEditingComment(c.id); setEditBody(displayText); setEditMentions(mentions); }}
                         className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
                       >
                         {locale === 'vi' ? 'Sửa' : 'Edit'}
@@ -1359,7 +1361,7 @@ export function ProposalDetail({ proposalId }: Props) {
                         />
                         {currentMemberId === reply.member_id && (
                           <>
-                            <button onClick={() => { setEditingComment(reply.id); setEditBody(reply.body); }} className="text-xs text-gray-400 hover:text-blue-600 transition-colors">{locale === 'vi' ? 'Sửa' : 'Edit'}</button>
+                            <button onClick={() => { const { displayText, mentions } = decodeMentions(reply.body); setEditingComment(reply.id); setEditBody(displayText); setEditMentions(mentions); }} className="text-xs text-gray-400 hover:text-blue-600 transition-colors">{locale === 'vi' ? 'Sửa' : 'Edit'}</button>
                             <button onClick={() => { if (confirm(locale === 'vi' ? 'Xóa bình luận này?' : 'Delete this comment?')) handleDeleteComment(reply.id); }} className="text-xs text-gray-400 hover:text-red-600 transition-colors">{locale === 'vi' ? 'Xóa' : 'Delete'}</button>
                           </>
                         )}

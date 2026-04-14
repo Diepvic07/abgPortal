@@ -273,6 +273,26 @@ export function renderMentions(text: string): React.ReactNode[] {
 }
 
 /**
+ * Decode mention markers from stored format to display format.
+ * Converts @[Name](member_id) to @Name, and returns the mention entries
+ * so they can be re-encoded on save.
+ */
+export function decodeMentions(encoded: string): { displayText: string; mentions: MentionEntry[] } {
+  const mentions: MentionEntry[] = [];
+  const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+  let match;
+  while ((match = mentionRegex.exec(encoded)) !== null) {
+    const name = match[1];
+    const id = match[2];
+    if (!mentions.find(m => m.id === id)) {
+      mentions.push({ name, id });
+    }
+  }
+  const displayText = encoded.replace(mentionRegex, '@$1');
+  return { displayText, mentions };
+}
+
+/**
  * Extract mentioned member IDs from encoded comment text.
  */
 export function extractMentionedIds(text: string): string[] {
