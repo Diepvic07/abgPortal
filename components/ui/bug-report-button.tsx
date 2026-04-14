@@ -20,7 +20,7 @@ export function BugReportButton() {
         {/* Ladybug SVG */}
         <svg width="52" height="52" viewBox="0 0 52 52" className="drop-shadow-lg hover:drop-shadow-xl transition-all group-hover:scale-110 duration-200">
           {/* Body */}
-          <ellipse cx="26" cy="30" rx="16" ry="14" fill="#DC2626" />
+          <ellipse cx="26" cy="30" rx="16" ry="14" fill="#9CA3AF" />
           {/* Center line */}
           <line x1="26" y1="16" x2="26" y2="44" stroke="#1a1a1a" strokeWidth="1.5" />
           {/* Spots */}
@@ -42,7 +42,7 @@ export function BugReportButton() {
           <circle cx="18" cy="5" r="1.5" fill="#1a1a1a" />
           <circle cx="34" cy="5" r="1.5" fill="#1a1a1a" />
         </svg>
-        <span className="bg-red-600 text-white text-[11px] font-bold leading-tight text-center px-2.5 py-1 rounded-full shadow-md whitespace-nowrap">
+        <span className="bg-gray-500 text-white text-[11px] font-bold leading-tight text-center px-2.5 py-1 rounded-full shadow-md whitespace-nowrap">
           Báo lỗi
         </span>
       </button>
