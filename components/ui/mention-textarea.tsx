@@ -58,7 +58,7 @@ export function MentionTextarea({
   const [mentionStart, setMentionStart] = useState(-1);
   const [loading, setLoading] = useState(false);
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const mentionsListRef = useRef<MentionEntry[]>([]);
+  const mentionsListRef = useRef<MentionEntry[]>(mentionsRef?.current ? [...mentionsRef.current] : []);
 
   // Keep external ref in sync
   useEffect(() => {
