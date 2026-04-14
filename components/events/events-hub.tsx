@@ -113,9 +113,9 @@ export function EventsHub() {
   }
 
   const allTabs: { key: TabKey; label: { en: string; vi: string }; authOnly?: boolean }[] = [
-    { key: 'events', label: { en: 'Events', vi: 'Sự kiện' } },
+    { key: 'events', label: { en: 'Official Activities', vi: 'Hoạt động chính thức' } },
     { key: 'proposals', label: { en: 'Proposals', vi: 'Đề xuất' } },
-    { key: 'past', label: { en: 'Past Events', vi: 'Sự kiện đã qua' } },
+    { key: 'past', label: { en: 'Past Activities', vi: 'Hoạt động đã qua' } },
   ];
   const tabs = allTabs;
 
@@ -210,7 +210,7 @@ function EventsTabContent({
   if (events.length === 0) {
     return (
       <EmptyState
-        message={locale === 'vi' ? 'Chưa có sự kiện sắp tới. Hãy đề xuất một hoạt động!' : 'No upcoming events. Propose an activity!'}
+        message={locale === 'vi' ? 'Chưa có hoạt động sắp tới. Hãy đề xuất một hoạt động!' : 'No upcoming activities. Propose one!'}
         cta={locale === 'vi' ? 'Đề xuất ngay' : 'Propose Now'}
         href={isAuthenticated ? '/proposals/new' : '/login'}
       />
@@ -220,7 +220,7 @@ function EventsTabContent({
   return (
     <div>
       <h2 className="text-lg font-semibold text-gray-900 mb-4">
-        {locale === 'vi' ? 'SỰ KIỆN SẮP TỚI' : 'UPCOMING EVENTS'}
+        {locale === 'vi' ? 'HOẠT ĐỘNG SẮP TỚI' : 'UPCOMING ACTIVITIES'}
       </h2>
       <div className="divide-y divide-gray-100">
         {events.map((event) => (
@@ -268,10 +268,10 @@ function ProposalsTabContent({
     return (genreCounts.get(b) || 0) - (genreCounts.get(a) || 0);
   });
 
-  // Filter and sort: "All" shows newest first, genre tab filters by genre
+  // Filter by genre; "All" preserves the server's activity-based sort order
   const filtered = activeGenre
     ? proposals.filter(p => (p.genre || 'other') === activeGenre)
-    : [...proposals].sort((a, b) => (b.published_at || b.created_at).localeCompare(a.published_at || a.created_at));
+    : proposals;
 
   return (
     <div>
@@ -336,7 +336,7 @@ function PastEventsTabContent({
   if (events.length === 0) {
     return (
       <EmptyState
-        message={locale === 'vi' ? 'Chưa có sự kiện đã qua.' : 'No past events yet.'}
+        message={locale === 'vi' ? 'Chưa có hoạt động đã qua.' : 'No past activities yet.'}
       />
     );
   }
@@ -344,7 +344,7 @@ function PastEventsTabContent({
   return (
     <div>
       <h2 className="text-lg font-semibold text-gray-900 mb-4">
-        {locale === 'vi' ? 'SỰ KIỆN ĐÃ QUA' : 'PAST EVENTS'}
+        {locale === 'vi' ? 'HOẠT ĐỘNG ĐÃ QUA' : 'PAST ACTIVITIES'}
       </h2>
       <div className="divide-y divide-gray-100">
         {events.map((event) => (
