@@ -24,6 +24,8 @@ interface MentionTextareaProps {
   disabled?: boolean;
   /** Ref to get the mentions map for encoding on submit */
   mentionsRef?: React.MutableRefObject<MentionEntry[]>;
+  /** Called when Ctrl/Cmd+Enter is pressed */
+  onSubmit?: () => void;
 }
 
 /**
@@ -49,6 +51,7 @@ export function MentionTextarea({
   className = '',
   disabled = false,
   mentionsRef,
+  onSubmit,
 }: MentionTextareaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -148,6 +151,16 @@ export function MentionTextarea({
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      if (onSubmit) {
+        onSubmit();
+      } else {
+        textareaRef.current?.closest('form')?.requestSubmit();
+      }
+      return;
+    }
+
     if (!showDropdown || members.length === 0) return;
 
     if (e.key === 'ArrowDown') {

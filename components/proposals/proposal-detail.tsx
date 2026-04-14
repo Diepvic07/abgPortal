@@ -1346,13 +1346,16 @@ export function ProposalDetail({ proposalId }: Props) {
                   )}
                   <span className="ml-1 text-xs text-gray-400">{commentText.length}/2000</span>
                 </div>
-                <button
-                  type="submit"
-                  disabled={(!commentText.trim() && !commentImageFile) || submittingComment}
-                  className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {submittingComment ? '...' : (locale === 'vi' ? 'Gửi' : 'Post')}
-                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-gray-400 hidden sm:inline">⌘/Ctrl ↵</span>
+                  <button
+                    type="submit"
+                    disabled={(!commentText.trim() && !commentImageFile) || submittingComment}
+                    className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {submittingComment ? '...' : (locale === 'vi' ? 'Gửi' : 'Post')}
+                  </button>
+                </div>
               </div>
             </div>
           </form>
@@ -1551,6 +1554,7 @@ export function ProposalDetail({ proposalId }: Props) {
                         >
                           {locale === 'vi' ? 'Hủy' : 'Cancel'}
                         </button>
+                        <span className="text-[10px] text-gray-400 hidden sm:inline">⌘/Ctrl ↵</span>
                         <button
                           type="submit"
                           disabled={(!replyBody.trim() && !replyImageFile) || submittingComment}

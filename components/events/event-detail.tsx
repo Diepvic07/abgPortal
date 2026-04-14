@@ -1147,6 +1147,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
               <textarea
                 value={commentBody}
                 onChange={(e) => setCommentBody(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.closest('form')?.requestSubmit(); } }}
                 placeholder={locale === 'vi' ? 'Ví dụ: Tôi nên chuẩn bị gì trước khi tham gia?' : 'For example: Is there anything I should prepare before joining?'}
                 className="w-full resize-none rounded-t-2xl border-0 px-4 py-3 text-sm focus:outline-none focus:ring-0"
                 rows={3}
@@ -1175,15 +1176,18 @@ export function EventDetail({ eventId }: { eventId: string }) {
                     </div>
                   )}
                 </div>
-                <button
-                  type="submit"
-                  disabled={(!commentBody.trim() && !commentImageFile) || commentLoading}
-                  className="rounded-xl bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {commentLoading
-                    ? (locale === 'vi' ? 'Đang gửi...' : 'Posting...')
-                    : (locale === 'vi' ? 'Gửi bình luận' : 'Post Comment')}
-                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-gray-400 hidden sm:inline">⌘/Ctrl ↵</span>
+                  <button
+                    type="submit"
+                    disabled={(!commentBody.trim() && !commentImageFile) || commentLoading}
+                    className="rounded-xl bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {commentLoading
+                      ? (locale === 'vi' ? 'Đang gửi...' : 'Posting...')
+                      : (locale === 'vi' ? 'Gửi bình luận' : 'Post Comment')}
+                  </button>
+                </div>
               </div>
             </div>
           </form>
@@ -1348,6 +1352,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                       <textarea
                         value={replyBody}
                         onChange={(e) => setReplyBody(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.closest('form')?.requestSubmit(); } }}
                         placeholder={locale === 'vi' ? 'Viết trả lời...' : 'Write a reply...'}
                         className="w-full resize-none rounded-t-xl border-0 px-3 py-2 text-sm focus:outline-none focus:ring-0"
                         rows={2}
@@ -1385,6 +1390,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                           >
                             {locale === 'vi' ? 'Hủy' : 'Cancel'}
                           </button>
+                          <span className="text-[10px] text-gray-400 hidden sm:inline">⌘/Ctrl ↵</span>
                           <button
                             type="submit"
                             disabled={(!replyBody.trim() && !replyImageFile) || commentLoading}
