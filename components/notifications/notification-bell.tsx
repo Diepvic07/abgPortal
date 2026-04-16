@@ -82,17 +82,20 @@ export function NotificationBell() {
     }
   };
 
-  // Mark a single notification as read (fires when user clicks a notification)
-  const markRead = async (id: string) => {
+  // Mark a single notification as read (fires when user clicks a notification).
+  // keepalive lets the request finish even if the browser navigates away
+  // (clicking the Link tears down this component and would otherwise abort the fetch).
+  const markRead = (id: string) => {
     // Optimistic update
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
     try {
-      await fetch('/api/notifications/mark-read', {
+      fetch('/api/notifications/mark-read', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: [id] }),
-      });
+        keepalive: true,
+      }).catch(() => {});
     } catch {
       // Silently fail — optimistic update stays
     }

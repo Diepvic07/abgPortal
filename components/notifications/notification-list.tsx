@@ -59,15 +59,17 @@ export function NotificationList() {
     }
   };
 
-  const handleMarkRead = async (id: string) => {
+  const handleMarkRead = (id: string) => {
+    // Optimistic update. keepalive survives navigation when the user clicks a Link.
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    setUnreadCount(prev => Math.max(0, prev - 1));
     try {
-      await fetch('/api/notifications/mark-read', {
+      fetch('/api/notifications/mark-read', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: [id] }),
-      });
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-      setUnreadCount(prev => Math.max(0, prev - 1));
+        keepalive: true,
+      }).catch(() => {});
     } catch {
       // Silently fail
     }
