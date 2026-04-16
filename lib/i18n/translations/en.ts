@@ -1359,6 +1359,8 @@ export const en = {
     iosAfterInstall: 'After installing, open the app from your home screen and set up notifications there.',
     previewTitle: 'This is what you\'ll get',
     previewDescription: 'Instant updates right on your phone — never miss a connection, event, or discussion.',
+    permissionDenied: 'Notifications were blocked. Please allow notifications in your browser settings and try again.',
+    permissionFailed: 'Could not enable notifications. Please make sure your browser supports push notifications and try again.',
   },
 } as const;
 

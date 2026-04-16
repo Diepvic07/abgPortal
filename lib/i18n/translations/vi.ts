@@ -1338,5 +1338,7 @@ export const vi: Translations = {
     iosAfterInstall: 'Sau khi cài đặt, mở ứng dụng từ màn hình chính và thiết lập thông báo.',
     previewTitle: 'Thông báo sẽ trông như thế này',
     previewDescription: 'Cập nhật ngay trên điện thoại — không bỏ lỡ kết nối, sự kiện hay thảo luận nào.',
+    permissionDenied: 'Thông báo đã bị chặn. Vui lòng cho phép thông báo trong cài đặt trình duyệt và thử lại.',
+    permissionFailed: 'Không thể bật thông báo. Vui lòng kiểm tra trình duyệt hỗ trợ thông báo đẩy và thử lại.',
   },
 } as const;

@@ -49,6 +49,7 @@ export function PushOnboardingBanner() {
   const [exiting, setExiting] = useState(false);
   const [toggles, setToggles] = useState<NotifToggle[]>(DEFAULT_TOGGLES);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [guideStep, setGuideStep] = useState(0);
 
   const platform = useMemo(() => detectPlatform(), []);
@@ -95,10 +96,18 @@ export function PushOnboardingBanner() {
 
   const handleEnable = useCallback(async () => {
     setSubmitting(true);
+    setError(null);
 
     const success = await subscribe();
     if (!success) {
       setSubmitting(false);
+      // Check why it failed and show appropriate message
+      const currentPerm = typeof Notification !== 'undefined' ? Notification.permission : 'default';
+      if (currentPerm === 'denied') {
+        setError(t.pushOnboarding.permissionDenied);
+      } else {
+        setError(t.pushOnboarding.permissionFailed);
+      }
       return;
     }
 
@@ -323,6 +332,12 @@ export function PushOnboardingBanner() {
                   );
                 })}
               </div>
+
+              {error && (
+                <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-700">{error}</p>
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <button
