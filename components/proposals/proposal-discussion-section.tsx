@@ -99,23 +99,20 @@ export function ProposalDiscussionSection({
 
   function formatDateDisplay(dateStr: string) {
     try {
+      const localeStr = vi ? 'vi-VN' : 'en-US';
+      const opts: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' };
+
       const timeMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})-(\d{2}:\d{2})$/);
       if (timeMatch) {
         const [, datePart, startTime, endTime] = timeMatch;
-        const dateFormatted = new Date(datePart + 'T00:00:00').toLocaleDateString(vi ? 'vi-VN' : 'en-US', {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        });
-        return `${dateFormatted}, ${startTime} - ${endTime}`;
+        const d = new Date(datePart + 'T00:00:00');
+        if (isNaN(d.getTime())) return dateStr;
+        return `${d.toLocaleDateString(localeStr, opts)}, ${startTime} - ${endTime}`;
       }
-      return new Date(dateStr + 'T00:00:00').toLocaleDateString(vi ? 'vi-VN' : 'en-US', {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
+
+      const d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString(localeStr, opts);
     } catch {
       return dateStr;
     }
