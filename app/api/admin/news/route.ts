@@ -8,6 +8,7 @@ import { z } from "zod";
 import { v4 as uuid } from "uuid";
 import { notifyTaggedMembers } from "@/lib/news-tag-notify";
 import { extractContentMentionMemberIds } from "@/lib/news-mentions";
+import { repairProfileLinksInContent } from "@/lib/news-content-repair";
 
 const CreateArticleSchema = z.object({
   title_vi: z.string().min(1, "Vietnamese title required"),
@@ -68,10 +69,15 @@ export async function POST(request: NextRequest) {
     // Append short suffix to avoid slug collision
     const slug = `${baseSlug}-${uuid().slice(0, 6)}`;
 
-    // Merge explicit tags + inline @mentions in content.
-    const inlineMentionIds = await extractContentMentionMemberIds(
+    // Heal any stale /profile/<x> links before storing, then extract mentions
+    // from the healed content so tagged_member_ids stays consistent with links.
+    const [healedContent, healedContentVi] = await repairProfileLinksInContent(
       data.content,
       data.content_vi
+    );
+    const inlineMentionIds = await extractContentMentionMemberIds(
+      healedContent,
+      healedContentVi
     );
     const mergedTaggedIds = Array.from(
       new Set([...(data.tagged_member_ids || []), ...inlineMentionIds])
@@ -83,7 +89,7 @@ export async function POST(request: NextRequest) {
       slug,
       category: data.category,
       excerpt: data.excerpt,
-      content: data.content,
+      content: healedContent,
       image_url: data.image_url || undefined,
       author_name: data.author_name,
       published_date: now,
@@ -92,7 +98,7 @@ export async function POST(request: NextRequest) {
       is_featured: data.is_featured,
       title_vi: data.title_vi,
       excerpt_vi: data.excerpt_vi,
-      content_vi: data.content_vi,
+      content_vi: healedContentVi,
       tagged_member_ids: mergedTaggedIds,
     });
 

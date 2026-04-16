@@ -10,6 +10,7 @@ import {
 import { z } from "zod";
 import { notifyTaggedMembers } from "@/lib/news-tag-notify";
 import { extractContentMentionMemberIds } from "@/lib/news-mentions";
+import { repairProfileLinksInContent } from "@/lib/news-content-repair";
 
 const UpdateArticleSchema = z.object({
   title_vi: z.string().min(1).optional(),
@@ -82,9 +83,18 @@ export async function PUT(
     const updatePayload: typeof parsed.data = { ...parsed.data };
     const nextContent = parsed.data.content ?? existing.content;
     const nextContentVi = parsed.data.content_vi ?? existing.content_vi;
-    const inlineMentionIds = await extractContentMentionMemberIds(
+    // Heal any stale /profile/<x> links in the content at save time so the DB
+    // stores canonical UUID URLs going forward.
+    const [healedContent, healedContentVi] = await repairProfileLinksInContent(
       nextContent,
       nextContentVi
+    );
+    if (healedContent !== nextContent) updatePayload.content = healedContent;
+    if (healedContentVi !== nextContentVi)
+      updatePayload.content_vi = healedContentVi;
+    const inlineMentionIds = await extractContentMentionMemberIds(
+      healedContent,
+      healedContentVi
     );
     const hasExplicitTags = 'tagged_member_ids' in parsed.data;
     if (hasExplicitTags || inlineMentionIds.length > 0) {
