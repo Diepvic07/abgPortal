@@ -51,20 +51,27 @@ export async function repairProfileLinksInContent(
   }
 
   // Strategy 3: suffix match for anything still unresolved.
-  // Covers old-style URLs like `/profile/<5-or-8-char-suffix>` that pointed to a
-  // slug like `nguyen-ngoc-quang-<suffix>`.
+  // Covers old-style URLs like `/profile/<suffix>` (or garbage with a valid
+  // suffix as prefix, e.g. "7RpZM4z" where the real slug ends in "7RpZM").
+  // Try progressively shorter prefixes of the identifier as the slug suffix,
+  // from 8 down to 5 chars (matches known generator lengths).
   const unresolved = list.filter((s) => !resolved.has(s));
   for (const s of unresolved) {
-    if (s.length < 3) continue; // too short to disambiguate safely
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: suffixRows } = await (supabase.from('members') as any)
-      .select('id, public_profile_slug')
-      .like('public_profile_slug', `%-${s}`)
-      .limit(2);
-    const rows = (suffixRows || []) as Array<{ id: string }>;
-    // Only accept a suffix hit if it's unambiguous.
-    if (rows.length === 1) {
-      resolved.set(s, rows[0].id);
+    if (s.length < 5) continue;
+    const maxLen = Math.min(8, s.length);
+    for (let len = maxLen; len >= 5; len--) {
+      const prefix = s.slice(0, len);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: suffixRows } = await (supabase.from('members') as any)
+        .select('id, public_profile_slug')
+        .like('public_profile_slug', `%-${prefix}`)
+        .limit(2);
+      const rows = (suffixRows || []) as Array<{ id: string }>;
+      // Only accept if the match is unambiguous.
+      if (rows.length === 1) {
+        resolved.set(s, rows[0].id);
+        break;
+      }
     }
   }
 
