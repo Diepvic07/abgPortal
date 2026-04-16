@@ -82,6 +82,22 @@ export function NotificationBell() {
     }
   };
 
+  // Mark a single notification as read (fires when user clicks a notification)
+  const markRead = async (id: string) => {
+    // Optimistic update
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    setUnreadCount(prev => Math.max(0, prev - 1));
+    try {
+      await fetch('/api/notifications/mark-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [id] }),
+      });
+    } catch {
+      // Silently fail — optimistic update stays
+    }
+  };
+
   // Click outside to close
   useEffect(() => {
     if (!isOpen) return;
@@ -243,13 +259,25 @@ export function NotificationBell() {
                   <Link
                     key={n.id}
                     href={n.url}
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => {
+                      if (!n.is_read) markRead(n.id);
+                      setIsOpen(false);
+                    }}
                     className="block"
                   >
                     {content}
                   </Link>
                 ) : (
-                  content
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => {
+                      if (!n.is_read) markRead(n.id);
+                    }}
+                    className="block w-full text-left"
+                  >
+                    {content}
+                  </button>
                 );
               })
             )}
