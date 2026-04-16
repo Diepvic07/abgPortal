@@ -301,6 +301,15 @@ export async function upsertCommitment(data: {
       console.error('Error updating commitment:', error);
       throw new Error('Failed to update commitment');
     }
+
+    // Scoring hook: check traction after commitment level change
+    try {
+      const { scoreProposalTraction } = await import('@/lib/scoring');
+      await scoreProposalTraction(data.proposal_id);
+    } catch (err) {
+      console.error('[scoring] Proposal traction check failed:', err);
+    }
+
     return mapRowToCommitment(row as Record<string, unknown>);
   }
 
@@ -323,7 +332,17 @@ export async function upsertCommitment(data: {
     throw new Error('Failed to create commitment');
   }
 
-  return mapRowToCommitment(row as Record<string, unknown>);
+  const commitment = mapRowToCommitment(row as Record<string, unknown>);
+
+  // Scoring hook: check proposal traction threshold
+  try {
+    const { scoreProposalTraction } = await import('@/lib/scoring');
+    await scoreProposalTraction(data.proposal_id);
+  } catch (err) {
+    console.error('[scoring] Proposal traction check failed:', err);
+  }
+
+  return commitment;
 }
 
 export async function removeCommitment(proposalId: string, memberId: string): Promise<void> {
@@ -418,7 +437,17 @@ export async function createComment(data: {
     throw new Error('Failed to create comment');
   }
 
-  return mapRowToComment(row as Record<string, unknown>);
+  const comment = mapRowToComment(row as Record<string, unknown>);
+
+  // Scoring hook: evaluate comment qualification
+  try {
+    const { evaluateCommentScoring } = await import('@/lib/scoring');
+    await evaluateCommentScoring(comment.id, 'proposal');
+  } catch (err) {
+    console.error('[scoring] Proposal comment scoring failed:', err);
+  }
+
+  return comment;
 }
 
 export async function getCommentsByProposal(proposalId: string, currentMemberId?: string): Promise<CommunityProposalComment[]> {
@@ -488,10 +517,26 @@ export async function updateComment(commentId: string, body: string): Promise<Co
     throw new Error('Failed to update comment');
   }
 
+  // Scoring hook: re-evaluate comment qualification after edit
+  try {
+    const { evaluateCommentScoring } = await import('@/lib/scoring');
+    await evaluateCommentScoring(commentId, 'proposal');
+  } catch (err) {
+    console.error('[scoring] Proposal comment re-evaluation failed:', err);
+  }
+
   return mapRowToComment(row as Record<string, unknown>);
 }
 
 export async function deleteComment(commentId: string): Promise<void> {
+  // Scoring hook: reverse any scores BEFORE deleting the comment
+  try {
+    const { reverseCommentScores } = await import('@/lib/scoring');
+    await reverseCommentScores(commentId, 'proposal');
+  } catch (err) {
+    console.error('[scoring] Proposal comment score reversal failed:', err);
+  }
+
   const supabase = createServerSupabaseClient();
 
   const { error } = await supabase
@@ -516,6 +561,18 @@ export async function moderateComment(commentId: string, status: CommentStatus):
   if (error) {
     console.error('Error moderating comment:', error);
     throw new Error('Failed to moderate comment');
+  }
+
+  // Scoring hook: re-evaluate or reverse based on new status
+  try {
+    const { evaluateCommentScoring, reverseCommentScores } = await import('@/lib/scoring');
+    if (status === 'visible') {
+      await evaluateCommentScoring(commentId, 'proposal');
+    } else {
+      await reverseCommentScores(commentId, 'proposal');
+    }
+  } catch (err) {
+    console.error('[scoring] Comment moderation scoring failed:', err);
   }
 }
 

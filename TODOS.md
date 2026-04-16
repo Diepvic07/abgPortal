@@ -39,6 +39,29 @@
 - **Priority:** P3
 - **Depends on:** Push notification infrastructure (shipped) + email digest feature
 
+## Member Scoring & Leaderboard — Deferred from v1
+
+### Comment Scoring Rate Limiting
+- **What:** Add a daily per-member cap (e.g., max 10 scored comments/day) to prevent gaming via high-volume low-effort 40-character comments.
+- **Why:** The v1 duplicate rule only catches exact matches. A motivated member could post 20 unique low-effort comments/day for +100 points. High-trust community mitigates risk at current scale, but a cap is the correct long-term fix.
+- **Effort:** S (human ~30 min / CC ~3 min)
+- **Priority:** P3
+- **Depends on:** v1 scoring system
+
+### Migrate Old Leaderboard Consumers
+- **What:** Switch existing UI consumers of `getLeaderboard()` and `getMemberContributions()` (proposals sidebar, member profiles) to use the new `member_score_periods`-based scoring system.
+- **Why:** The old functions only reflect commitment weights, not the full scoring model. They're deprecated but still used by existing UI.
+- **Effort:** S (human ~1 day / CC ~10 min)
+- **Priority:** P2
+- **Depends on:** v1 scoring system + backfill complete
+
+### Score Breakdown on Member Profile
+- **What:** Show individual score breakdown on member profile page: what earned them points, recent score events, category split.
+- **Why:** Members will naturally ask "why do I have this score?" The `score_events` ledger already supports this query. The leaderboard shows totals; profiles should show the explanation.
+- **Effort:** M (human ~2 days / CC ~15 min)
+- **Priority:** P2
+- **Depends on:** v1 scoring system
+
 ## Design System
 
 ### Create DESIGN.md (Design System)

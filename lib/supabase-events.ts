@@ -312,6 +312,14 @@ export async function updateEvent(id: string, data: Partial<{
 }>): Promise<CommunityEvent> {
   const supabase = createServerSupabaseClient();
 
+  // Fetch current status before update for scoring comparison
+  const { data: currentEvent } = await supabase
+    .from('community_events')
+    .select('status')
+    .eq('id', id)
+    .single();
+  const oldStatus = (currentEvent as Record<string, unknown>)?.status as string | undefined;
+
   const { data: row, error } = await supabase
     .from('community_events')
     .update({ ...data, updated_at: formatDate() })
@@ -322,6 +330,21 @@ export async function updateEvent(id: string, data: Partial<{
   if (error) {
     console.error('Error updating event:', error);
     throw new Error('Failed to update event');
+  }
+
+  // Scoring hooks: event completion / reopening
+  const newStatus = data.status;
+  if (oldStatus !== newStatus && (newStatus === 'completed' || oldStatus === 'completed')) {
+    try {
+      const { scoreEventCompletion, reverseEventScores } = await import('@/lib/scoring');
+      if (newStatus === 'completed') {
+        await scoreEventCompletion(id);
+      } else if (oldStatus === 'completed') {
+        await reverseEventScores(id);
+      }
+    } catch (err) {
+      console.error('[scoring] Event completion scoring failed:', err);
+    }
   }
 
   return mapRowToEvent(row as Record<string, unknown>);
@@ -474,7 +497,17 @@ export async function createEventComment(data: {
     throw new Error('Failed to create comment');
   }
 
-  return mapRowToComment(row as Record<string, unknown>);
+  const comment = mapRowToComment(row as Record<string, unknown>);
+
+  // Scoring hook: evaluate comment qualification
+  try {
+    const { evaluateCommentScoring } = await import('@/lib/scoring');
+    await evaluateCommentScoring(comment.id, 'event');
+  } catch (err) {
+    console.error('[scoring] Event comment scoring failed:', err);
+  }
+
+  return comment;
 }
 
 export async function getEventComments(eventId: string, currentMemberId?: string): Promise<EventComment[]> {
@@ -544,6 +577,14 @@ export async function updateEventComment(commentId: string, body: string): Promi
     throw new Error('Failed to update comment');
   }
 
+  // Scoring hook: re-evaluate comment qualification after edit
+  try {
+    const { evaluateCommentScoring } = await import('@/lib/scoring');
+    await evaluateCommentScoring(commentId, 'event');
+  } catch (err) {
+    console.error('[scoring] Event comment re-evaluation failed:', err);
+  }
+
   return mapRowToComment(row as Record<string, unknown>);
 }
 
@@ -562,6 +603,14 @@ export async function deleteEvent(eventId: string): Promise<void> {
 }
 
 export async function deleteEventComment(commentId: string): Promise<void> {
+  // Scoring hook: reverse any scores BEFORE deleting the comment
+  try {
+    const { reverseCommentScores } = await import('@/lib/scoring');
+    await reverseCommentScores(commentId, 'event');
+  } catch (err) {
+    console.error('[scoring] Event comment score reversal failed:', err);
+  }
+
   const supabase = createServerSupabaseClient();
 
   const { error } = await supabase
@@ -659,6 +708,14 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
     })
     .eq('id', proposalId);
 
+  // Scoring hook: score proposal conversion
+  try {
+    const { scoreProposalConversion } = await import('@/lib/scoring');
+    await scoreProposalConversion(proposalId, event.created_at);
+  } catch (err) {
+    console.error('[scoring] Proposal conversion scoring failed:', err);
+  }
+
   // Re-fetch event to get updated counts from triggers
   const updated = await getEventById(event.id);
   return updated || event;
@@ -669,21 +726,34 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
 export async function updateRsvpAttendance(rsvpId: string, data: {
   actual_attendance: boolean;
   actual_participation_score?: number;
+  verified_event_role?: 'attendee' | 'lead' | null;
+  attendance_mode?: 'offline' | 'online' | null;
 }): Promise<void> {
   const supabase = createServerSupabaseClient();
 
-  const { error } = await supabase
-    .from('community_event_rsvps')
-    .update({
-      actual_attendance: data.actual_attendance,
-      actual_participation_score: data.actual_participation_score || null,
-      updated_at: formatDate(),
-    })
+  const updateData: Record<string, unknown> = {
+    actual_attendance: data.actual_attendance,
+    actual_participation_score: data.actual_participation_score || null,
+    updated_at: formatDate(),
+  };
+  if (data.verified_event_role !== undefined) updateData.verified_event_role = data.verified_event_role;
+  if (data.attendance_mode !== undefined) updateData.attendance_mode = data.attendance_mode;
+
+  const { error } = await (supabase.from('community_event_rsvps') as any)
+    .update(updateData)
     .eq('id', rsvpId);
 
   if (error) {
     console.error('Error updating attendance:', error);
     throw new Error('Failed to update attendance');
+  }
+
+  // Scoring hook: score attendance if event is completed
+  try {
+    const { scoreRsvpAttendance } = await import('@/lib/scoring');
+    await scoreRsvpAttendance(rsvpId);
+  } catch (err) {
+    console.error('[scoring] RSVP attendance scoring failed:', err);
   }
 }
 

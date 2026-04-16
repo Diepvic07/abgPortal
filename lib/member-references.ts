@@ -137,7 +137,17 @@ export async function createMemberReference(input: {
     throw new Error(`Failed to create reference: ${error.message}`);
   }
 
-  return mapRowToReference(data as Record<string, unknown>);
+  const reference = mapRowToReference(data as Record<string, unknown>);
+
+  // Scoring hook: score reference written
+  try {
+    const { scoreReferenceWritten } = await import('@/lib/scoring');
+    await scoreReferenceWritten(reference.id, input.writerMemberId);
+  } catch (err) {
+    console.error('[scoring] Reference scoring failed:', err);
+  }
+
+  return reference;
 }
 
 export async function getReceivedReferences(

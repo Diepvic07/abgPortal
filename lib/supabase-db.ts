@@ -803,6 +803,20 @@ export async function updateContactRequestStatus(
     console.error('[SupabaseDB] updateContactRequestStatus error:', error);
     throw new Error(`Failed to update contact request: ${error.message}`);
   }
+
+  // Scoring hook: score accepted connection
+  if (status === 'accepted') {
+    try {
+      const { data: request } = await db.from('contact_requests').select('target_id').eq('id', id).single();
+      if (request) {
+        const { scoreConnectionAccepted } = await import('@/lib/scoring');
+        await scoreConnectionAccepted(id, (request as Record<string, unknown>).target_id as string);
+      }
+    } catch (err) {
+      console.error('[scoring] Connection accepted scoring failed:', err);
+    }
+  }
+
   return true;
 }
 
