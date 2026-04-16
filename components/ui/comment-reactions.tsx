@@ -74,7 +74,10 @@ export function CommentReactions({ commentId, commentType, entityId, reactions: 
     // Fire API in background
     setLoading(true);
     try {
-      const url = `/api/community/${commentType === 'event' ? 'events' : 'proposals'}/${entityId}/comments/${commentId}/reactions`;
+      const url =
+        commentType === 'news'
+          ? `/api/news/${entityId}/comments/${commentId}/reactions`
+          : `/api/community/${commentType === 'event' ? 'events' : 'proposals'}/${entityId}/comments/${commentId}/reactions`;
 
       const res = isRemoving
         ? await fetch(url, { method: 'DELETE' })

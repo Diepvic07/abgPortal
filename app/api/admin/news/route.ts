@@ -6,6 +6,7 @@ import { getAllNewsArticles, createNewsArticle } from "@/lib/supabase-db";
 import { generateSlug } from "@/lib/news-utils";
 import { z } from "zod";
 import { v4 as uuid } from "uuid";
+import { notifyTaggedMembers } from "@/lib/news-tag-notify";
 
 const CreateArticleSchema = z.object({
   title_vi: z.string().min(1, "Vietnamese title required"),
@@ -20,6 +21,7 @@ const CreateArticleSchema = z.object({
   is_published_vi: z.boolean().optional().default(false),
   is_published_en: z.boolean().optional().default(false),
   is_featured: z.boolean().optional().default(false),
+  tagged_member_ids: z.array(z.string()).optional().default([]),
 });
 
 // GET: List all articles (admin sees drafts too)
@@ -81,7 +83,19 @@ export async function POST(request: NextRequest) {
       title_vi: data.title_vi,
       excerpt_vi: data.excerpt_vi,
       content_vi: data.content_vi,
+      tagged_member_ids: data.tagged_member_ids,
     });
+
+    // Notify newly tagged members (all members on create are "new")
+    if (data.tagged_member_ids.length > 0) {
+      await notifyTaggedMembers({
+        memberIds: data.tagged_member_ids,
+        articleSlug: slug,
+        articleTitle: data.title,
+        articleTitleVi: data.title_vi,
+        actorName: session?.user?.name || 'Admin',
+      });
+    }
 
     return NextResponse.json({ data: article }, { status: 201 });
   } catch (error) {

@@ -1307,6 +1307,10 @@ export const en = {
     newProposalBody: '{proposerName} created a new proposal',
     proposalCommentTitle: '{commenterName} commented',
     proposalCommentBody: '{commentPreview}',
+    newsCommentTitle: '{commenterName} commented on "{articleTitle}"',
+    newsCommentBody: '{commentPreview}',
+    newsTaggedTitle: 'You were tagged in a news article',
+    newsTaggedBody: '{actorName} mentioned you in "{articleTitle}"',
   },
 
   // Notification settings
@@ -1324,6 +1328,10 @@ export const en = {
     proposalDescription: 'When a new proposal is created',
     proposalComment: 'Proposal Comments',
     commentDescription: 'When someone comments on your proposal or replies to your comment',
+    newsComment: 'News Comments',
+    newsCommentDescription: 'When someone replies to your news comment or mentions you',
+    newsTagged: 'Tagged in News',
+    newsTaggedDescription: 'When admin tags you in a news article',
     saved: 'Preferences saved',
     enableFirst: 'Enable push notifications first to configure preferences',
     markAllRead: 'Mark all as read',

@@ -1286,6 +1286,10 @@ export const vi: Translations = {
     newProposalBody: '{proposerName} đã tạo một đề xuất mới',
     proposalCommentTitle: '{commenterName} đã bình luận',
     proposalCommentBody: '{commentPreview}',
+    newsCommentTitle: '{commenterName} đã bình luận về "{articleTitle}"',
+    newsCommentBody: '{commentPreview}',
+    newsTaggedTitle: 'Bạn được gắn thẻ trong một tin tức',
+    newsTaggedBody: '{actorName} đã gắn thẻ bạn trong "{articleTitle}"',
   },
 
   // Notification settings
@@ -1303,6 +1307,10 @@ export const vi: Translations = {
     proposalDescription: 'Khi có đề xuất mới được tạo',
     proposalComment: 'Bình luận đề xuất',
     commentDescription: 'Khi có bình luận mới trên đề xuất của bạn hoặc trả lời bình luận của bạn',
+    newsComment: 'Bình luận tin tức',
+    newsCommentDescription: 'Khi có người trả lời bình luận tin tức của bạn hoặc nhắc đến bạn',
+    newsTagged: 'Được gắn thẻ trong tin tức',
+    newsTaggedDescription: 'Khi admin gắn thẻ bạn trong một bài tin tức',
     saved: 'Đã lưu cài đặt',
     enableFirst: 'Bật thông báo đẩy trước để cấu hình tùy chọn',
     markAllRead: 'Đánh dấu đã đọc',

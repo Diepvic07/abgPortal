@@ -3,7 +3,7 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api-respon
 import { requireAuth } from '@/lib/auth-middleware';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
-const VALID_KEYS = ['connection_request', 'new_event', 'new_proposal', 'proposal_comment'] as const;
+const VALID_KEYS = ['connection_request', 'new_event', 'new_proposal', 'proposal_comment', 'news_comment', 'news_tagged'] as const;
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase.from('notification_preferences') as any)
-      .select('connection_request, new_event, new_proposal, proposal_comment')
+      .select('connection_request, new_event, new_proposal, proposal_comment, news_comment, news_tagged')
       .eq('member_id', member.id)
       .single();
 
@@ -28,6 +28,8 @@ export async function GET(request: NextRequest) {
       new_event: true,
       new_proposal: true,
       proposal_comment: true,
+      news_comment: true,
+      news_tagged: true,
     };
 
     return successResponse({ preferences });
@@ -74,7 +76,7 @@ export async function PUT(request: NextRequest) {
     // Fetch updated preferences to return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase.from('notification_preferences') as any)
-      .select('connection_request, new_event, new_proposal, proposal_comment')
+      .select('connection_request, new_event, new_proposal, proposal_comment, news_comment, news_tagged')
       .eq('member_id', member.id)
       .single();
 

@@ -6,6 +6,7 @@ import { getNewsBySlug, getPublishedNews, getAdjacentArticles } from '@/lib/news
 import { ArticleHeader } from '@/components/news/article-header';
 import { ArticleContent } from '@/components/news/article-content';
 import { ArticleNavigation } from '@/components/news/article-navigation';
+import { NewsComments } from '@/components/news/news-comments';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +59,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         )}
 
         <ArticleContent article={article} />
+        <NewsComments slug={slug} />
         <ArticleNavigation prev={prev} next={next} />
       </div>
     </div>

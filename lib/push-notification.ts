@@ -4,7 +4,7 @@ import { getTranslations, interpolate, type Locale } from '@/lib/i18n/utils';
 
 // --- Types ---
 
-export type NotificationType = 'connection_request' | 'new_event' | 'new_proposal' | 'proposal_comment' | 'discussion_meeting';
+export type NotificationType = 'connection_request' | 'new_event' | 'new_proposal' | 'proposal_comment' | 'discussion_meeting' | 'news_comment' | 'news_tagged';
 
 export interface PushPayload {
   title: string;
@@ -26,6 +26,8 @@ interface SubscriptionWithPrefs {
   new_proposal: boolean | null;
   proposal_comment: boolean | null;
   discussion_meeting: boolean | null;
+  news_comment: boolean | null;
+  news_tagged: boolean | null;
   locale: string | null;
 }
 
@@ -87,7 +89,7 @@ export async function sendPushToMember(
     // Fetch preferences (separate query — no FK between these tables)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: prefs } = await (supabase.from('notification_preferences') as any)
-      .select('connection_request, new_event, new_proposal, proposal_comment, discussion_meeting')
+      .select('connection_request, new_event, new_proposal, proposal_comment, discussion_meeting, news_comment, news_tagged')
       .eq('member_id', memberId)
       .single();
 
@@ -110,6 +112,8 @@ export async function sendPushToMember(
       new_proposal: prefs?.new_proposal ?? null,
       proposal_comment: prefs?.proposal_comment ?? null,
       discussion_meeting: prefs?.discussion_meeting ?? null,
+      news_comment: prefs?.news_comment ?? null,
+      news_tagged: prefs?.news_tagged ?? null,
       locale: member?.locale ?? null,
     }));
 
@@ -169,7 +173,7 @@ export async function sendPushToAllMembers(
     // Fetch all preferences for these members in one query
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: allPrefs } = await (supabase.from('notification_preferences') as any)
-      .select('member_id, connection_request, new_event, new_proposal, proposal_comment, discussion_meeting')
+      .select('member_id, connection_request, new_event, new_proposal, proposal_comment, discussion_meeting, news_comment, news_tagged')
       .in('member_id', memberIds);
 
     // Fetch member locales
@@ -197,6 +201,8 @@ export async function sendPushToAllMembers(
           new_proposal: prefs?.new_proposal as boolean | null ?? null,
           proposal_comment: prefs?.proposal_comment as boolean | null ?? null,
           discussion_meeting: prefs?.discussion_meeting as boolean | null ?? null,
+          news_comment: prefs?.news_comment as boolean | null ?? null,
+          news_tagged: prefs?.news_tagged as boolean | null ?? null,
           locale: (localeMap.get(row.member_id as string) as string) ?? null,
         };
       })
@@ -296,6 +302,18 @@ export function getPushMessage(
       return {
         title: interpolate(t.push.proposalCommentTitle, data),
         body: interpolate(t.push.proposalCommentBody, data),
+        _data: data,
+      };
+    case 'news_comment':
+      return {
+        title: interpolate(t.push.newsCommentTitle, data),
+        body: interpolate(t.push.newsCommentBody, data),
+        _data: data,
+      };
+    case 'news_tagged':
+      return {
+        title: interpolate(t.push.newsTaggedTitle, data),
+        body: interpolate(t.push.newsTaggedBody, data),
         _data: data,
       };
     case 'discussion_meeting': {

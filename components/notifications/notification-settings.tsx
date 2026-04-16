@@ -10,6 +10,8 @@ interface NotificationPreferences {
   new_event: boolean;
   new_proposal: boolean;
   proposal_comment: boolean;
+  news_comment: boolean;
+  news_tagged: boolean;
 }
 
 const DEFAULT_PREFS: NotificationPreferences = {
@@ -17,6 +19,8 @@ const DEFAULT_PREFS: NotificationPreferences = {
   new_event: true,
   new_proposal: true,
   proposal_comment: true,
+  news_comment: true,
+  news_tagged: true,
 };
 
 function detectPlatform(): 'ios' | 'android' | 'desktop' {
@@ -192,6 +196,20 @@ export function NotificationSettings() {
           description={t.notifications.commentDescription}
           checked={preferences.proposal_comment}
           onChange={() => handlePrefToggle('proposal_comment')}
+          disabled={!isSubscribed || saving || isLoading}
+        />
+        <ToggleRow
+          label={t.notifications.newsComment}
+          description={t.notifications.newsCommentDescription}
+          checked={preferences.news_comment}
+          onChange={() => handlePrefToggle('news_comment')}
+          disabled={!isSubscribed || saving || isLoading}
+        />
+        <ToggleRow
+          label={t.notifications.newsTagged}
+          description={t.notifications.newsTaggedDescription}
+          checked={preferences.news_tagged}
+          onChange={() => handlePrefToggle('news_tagged')}
           disabled={!isSubscribed || saving || isLoading}
         />
       </div>

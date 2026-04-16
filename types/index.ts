@@ -256,7 +256,7 @@ export type CommentStatus = 'visible' | 'hidden' | 'removed';
 
 // Comment Reactions
 export type ReactionType = 'like' | 'heart' | 'haha' | 'wow' | 'sad' | 'cold' | 'fire' | 'hug' | 'highfive';
-export type CommentType = 'event' | 'proposal';
+export type CommentType = 'event' | 'proposal' | 'news';
 
 export const REACTION_EMOJI: Record<ReactionType, string> = {
   like: '👍',
@@ -673,4 +673,24 @@ export interface NewsArticle {
   title_vi?: string;
   excerpt_vi?: string;
   content_vi?: string;
+  comment_count?: number;
+  tagged_member_ids?: string[];
+}
+
+export interface NewsArticleComment {
+  id: string;
+  article_id: string;
+  member_id: string;
+  body: string;
+  status: CommentStatus;
+  parent_comment_id?: string;
+  image_url?: string;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  member_name?: string;
+  member_avatar_url?: string;
+  // Enriched fields
+  reactions?: ReactionSummary;
+  replies?: NewsArticleComment[];
 }

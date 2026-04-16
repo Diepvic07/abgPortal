@@ -6,6 +6,7 @@ import { generateSlug } from "@/lib/news-utils";
 import { AdminMarkdownEditor } from "./admin-markdown-editor";
 import { AdminImageUpload } from "./admin-article-image-upload";
 import { AdminTranslatePanel } from "./admin-translate-panel";
+import { AdminTagPicker } from "./admin-tag-picker";
 
 interface AdminArticleEditorProps {
   articleId: string | null;
@@ -28,6 +29,7 @@ interface FormData {
   is_published_vi: boolean;
   is_published_en: boolean;
   is_featured: boolean;
+  tagged_member_ids: string[];
 }
 
 const EMPTY_FORM: FormData = {
@@ -44,6 +46,7 @@ const EMPTY_FORM: FormData = {
   is_published_vi: false,
   is_published_en: false,
   is_featured: false,
+  tagged_member_ids: [],
 };
 
 export function AdminArticleEditor({ articleId, onBack }: AdminArticleEditorProps) {
@@ -78,6 +81,7 @@ export function AdminArticleEditor({ articleId, onBack }: AdminArticleEditorProp
           is_published_vi: data.is_published_vi,
           is_published_en: data.is_published_en,
           is_featured: data.is_featured,
+          tagged_member_ids: data.tagged_member_ids || [],
         });
       } catch {
         alert("Failed to load article");
@@ -87,6 +91,11 @@ export function AdminArticleEditor({ articleId, onBack }: AdminArticleEditorProp
       }
     })();
   }, [articleId, onBack]);
+
+  const updateTaggedIds = useCallback((ids: string[]) => {
+    setForm((prev) => ({ ...prev, tagged_member_ids: ids }));
+    setIsDirty(true);
+  }, []);
 
   // Auto-generate slug from Vietnamese title
   const updateField = useCallback(
@@ -236,6 +245,9 @@ export function AdminArticleEditor({ articleId, onBack }: AdminArticleEditorProp
 
       {/* Cover image */}
       <AdminImageUpload imageUrl={form.image_url} onImageChange={(url) => updateField("image_url", url)} />
+
+      {/* Tag members */}
+      <AdminTagPicker taggedIds={form.tagged_member_ids} onChange={updateTaggedIds} />
 
       {/* Vietnamese section */}
       <div className="border border-green-200 rounded-lg p-4 space-y-4">

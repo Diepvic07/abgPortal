@@ -135,6 +135,7 @@ function mapRowToNewsArticle(row: Record<string, unknown>): NewsArticle {
     title_vi: nullToUndefined(row.title_vi as string | null),
     excerpt_vi: nullToUndefined(row.excerpt_vi as string | null),
     content_vi: nullToUndefined(row.content_vi as string | null),
+    tagged_member_ids: (row.tagged_member_ids as string[] | null) || [],
   };
 }
 
@@ -1178,4 +1179,19 @@ export async function getAdminEmails(): Promise<string[]> {
     return [];
   }
   return (data || []).map(r => r.email as string);
+}
+
+/** Get IDs of all approved members with is_admin=true */
+export async function getAdminMemberIds(): Promise<string[]> {
+  const db = createServerSupabaseClient();
+  const { data, error } = await db
+    .from('members')
+    .select('id')
+    .eq('is_admin', true)
+    .eq('approval_status', 'approved');
+  if (error) {
+    console.error('[SupabaseDB] getAdminMemberIds error:', error);
+    return [];
+  }
+  return (data || []).map(r => r.id as string);
 }

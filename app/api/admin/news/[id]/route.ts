@@ -8,6 +8,7 @@ import {
   deleteNewsArticle,
 } from "@/lib/supabase-db";
 import { z } from "zod";
+import { notifyTaggedMembers } from "@/lib/news-tag-notify";
 
 const UpdateArticleSchema = z.object({
   title_vi: z.string().min(1).optional(),
@@ -23,6 +24,7 @@ const UpdateArticleSchema = z.object({
   is_published_vi: z.boolean().optional(),
   is_published_en: z.boolean().optional(),
   is_featured: z.boolean().optional(),
+  tagged_member_ids: z.array(z.string()).optional(),
 });
 
 // GET: Single article by id
@@ -76,6 +78,22 @@ export async function PUT(
     }
 
     const article = await updateNewsArticle(id, parsed.data);
+
+    // Detect newly-added tags and notify those members
+    if (parsed.data.tagged_member_ids) {
+      const prevIds = new Set(existing.tagged_member_ids || []);
+      const newlyAdded = parsed.data.tagged_member_ids.filter(mid => !prevIds.has(mid));
+      if (newlyAdded.length > 0) {
+        await notifyTaggedMembers({
+          memberIds: newlyAdded,
+          articleSlug: article.slug,
+          articleTitle: article.title,
+          articleTitleVi: article.title_vi || null,
+          actorName: session?.user?.name || 'Admin',
+        });
+      }
+    }
+
     return NextResponse.json({ data: article });
   } catch (error) {
     console.error("Admin news update error:", error);
