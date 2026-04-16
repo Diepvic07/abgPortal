@@ -9,6 +9,7 @@ import {
 } from "@/lib/supabase-db";
 import { z } from "zod";
 import { notifyTaggedMembers } from "@/lib/news-tag-notify";
+import { extractContentMentionMemberIds } from "@/lib/news-mentions";
 
 const UpdateArticleSchema = z.object({
   title_vi: z.string().min(1).optional(),
@@ -77,12 +78,30 @@ export async function PUT(
       return NextResponse.json({ error: "Article not found" }, { status: 404 });
     }
 
-    const article = await updateNewsArticle(id, parsed.data);
+    // Merge explicit tags with inline @mentions found in the content.
+    const updatePayload: typeof parsed.data = { ...parsed.data };
+    const nextContent = parsed.data.content ?? existing.content;
+    const nextContentVi = parsed.data.content_vi ?? existing.content_vi;
+    const inlineMentionIds = await extractContentMentionMemberIds(
+      nextContent,
+      nextContentVi
+    );
+    const hasExplicitTags = 'tagged_member_ids' in parsed.data;
+    if (hasExplicitTags || inlineMentionIds.length > 0) {
+      const baseTags = hasExplicitTags
+        ? parsed.data.tagged_member_ids || []
+        : existing.tagged_member_ids || [];
+      updatePayload.tagged_member_ids = Array.from(
+        new Set([...baseTags, ...inlineMentionIds])
+      );
+    }
 
-    // Detect newly-added tags and notify those members
-    if (parsed.data.tagged_member_ids) {
+    const article = await updateNewsArticle(id, updatePayload);
+
+    // Detect newly-added tags (explicit + inline) and notify those members
+    if (updatePayload.tagged_member_ids) {
       const prevIds = new Set(existing.tagged_member_ids || []);
-      const newlyAdded = parsed.data.tagged_member_ids.filter(mid => !prevIds.has(mid));
+      const newlyAdded = updatePayload.tagged_member_ids.filter(mid => !prevIds.has(mid));
       if (newlyAdded.length > 0) {
         await notifyTaggedMembers({
           memberIds: newlyAdded,

@@ -8,6 +8,12 @@ export interface TaggedMember {
   public_profile_slug?: string | null;
 }
 
+function profileHref(m: TaggedMember): string {
+  // Prefer the friendly slug when available; otherwise fall back to the id.
+  // /profile/[id] handles both and gates contact details by viewer tier.
+  return `/profile/${m.public_profile_slug || m.id}`;
+}
+
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
   'bg-indigo-500', 'bg-teal-500', 'bg-orange-500', 'bg-cyan-500', 'bg-emerald-500',
@@ -35,7 +41,7 @@ export function ArticleTaggedMembers({ members, locale }: Props) {
     <div className="mt-5 flex flex-wrap items-center gap-2">
       <span className="text-xs font-medium text-gray-500 mr-1">{label}:</span>
       {members.map((m) => {
-        const href = m.public_profile_slug ? `/u/${m.public_profile_slug}` : null;
+        const href = profileHref(m);
         const chip = (
           <span className="inline-flex items-center gap-1.5 pl-0.5 pr-2.5 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-xs text-gray-800 hover:bg-blue-50 hover:border-blue-200 transition-colors">
             {m.avatar_url ? (
@@ -54,10 +60,8 @@ export function ArticleTaggedMembers({ members, locale }: Props) {
             )}
           </span>
         );
-        return href ? (
+        return (
           <Link key={m.id} href={href}>{chip}</Link>
-        ) : (
-          <span key={m.id}>{chip}</span>
         );
       })}
     </div>

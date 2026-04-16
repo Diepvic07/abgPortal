@@ -7,6 +7,7 @@ import { generateSlug } from "@/lib/news-utils";
 import { z } from "zod";
 import { v4 as uuid } from "uuid";
 import { notifyTaggedMembers } from "@/lib/news-tag-notify";
+import { extractContentMentionMemberIds } from "@/lib/news-mentions";
 
 const CreateArticleSchema = z.object({
   title_vi: z.string().min(1, "Vietnamese title required"),
@@ -67,6 +68,15 @@ export async function POST(request: NextRequest) {
     // Append short suffix to avoid slug collision
     const slug = `${baseSlug}-${uuid().slice(0, 6)}`;
 
+    // Merge explicit tags + inline @mentions in content.
+    const inlineMentionIds = await extractContentMentionMemberIds(
+      data.content,
+      data.content_vi
+    );
+    const mergedTaggedIds = Array.from(
+      new Set([...(data.tagged_member_ids || []), ...inlineMentionIds])
+    );
+
     const article = await createNewsArticle({
       id: uuid(),
       title: data.title,
@@ -83,13 +93,13 @@ export async function POST(request: NextRequest) {
       title_vi: data.title_vi,
       excerpt_vi: data.excerpt_vi,
       content_vi: data.content_vi,
-      tagged_member_ids: data.tagged_member_ids,
+      tagged_member_ids: mergedTaggedIds,
     });
 
     // Notify newly tagged members (all members on create are "new")
-    if (data.tagged_member_ids.length > 0) {
+    if (mergedTaggedIds.length > 0) {
       await notifyTaggedMembers({
-        memberIds: data.tagged_member_ids,
+        memberIds: mergedTaggedIds,
         articleSlug: slug,
         articleTitle: data.title,
         articleTitleVi: data.title_vi,

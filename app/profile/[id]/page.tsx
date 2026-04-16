@@ -36,12 +36,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         redirect(getInternalProfileUrl(targetMember));
     }
 
-    // Check Authorization
+    // Check Authorization for viewing contact details.
+    // Owner/admin always see; connected members see; premium members see as a
+    // membership benefit. Basic members see the profile but not contact info.
     const isOwner = currentUser.id === targetMember.id;
     const isAdmin = currentUser.is_admin;
     const isConnected = isOwner || isAdmin ? false : await areMembersConnected(currentUser.id, targetMember.id);
+    const isPremiumViewer = isEligibleForPremiumFeatures(currentUser);
 
-    const isAuthorized = isOwner || isAdmin || isConnected;
+    const isAuthorized = isOwner || isAdmin || isConnected || isPremiumViewer;
     let existingReference = null;
     let canLoadReferenceComposer = false;
 
@@ -74,7 +77,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             <MemberProfileCard member={visibleMember} />
             {!isAuthorized && (
                 <div className="max-w-3xl mx-auto mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 text-center text-sm text-amber-700">
-                    Contact info is hidden. Request an introduction to connect with this member.
+                    Contact info is hidden. Upgrade to a premium membership or request an introduction to see contact details.
                 </div>
             )}
             {canLoadReferenceComposer && (
