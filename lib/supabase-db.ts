@@ -981,12 +981,9 @@ export async function createNewsArticle(article: Omit<NewsArticle, 'created_at'>
     'tagged_member_ids' in payload &&
     /column.*tagged_member_ids/i.test(error.message)
   ) {
-    console.warn('[SupabaseDB] tagged_member_ids column missing — retrying insert without it. Run migration 040.');
-    delete payload.tagged_member_ids;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const retry = await (db.from('news') as any).insert(payload).select().single();
-    if (retry.error) throw new Error(`Failed to create news: ${retry.error.message}`);
-    return mapRowToNewsArticle(retry.data as unknown as Record<string, unknown>);
+    throw new Error(
+      'Cannot save tagged members: run migration 040_news_tagged_members.sql in Supabase first.'
+    );
   }
 
   if (error) throw new Error(`Failed to create news: ${error.message}`);
@@ -1007,12 +1004,9 @@ export async function updateNewsArticle(id: string, updates: Partial<Omit<NewsAr
     'tagged_member_ids' in payload &&
     /column.*tagged_member_ids/i.test(error.message)
   ) {
-    console.warn('[SupabaseDB] tagged_member_ids column missing — retrying update without it. Run migration 040.');
-    delete payload.tagged_member_ids;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const retry = await (db.from('news') as any).update(payload).eq('id', id).select().single();
-    if (retry.error) throw new Error(`Failed to update news: ${retry.error.message}`);
-    return mapRowToNewsArticle(retry.data as unknown as Record<string, unknown>);
+    throw new Error(
+      'Cannot save tagged members: run migration 040_news_tagged_members.sql in Supabase first.'
+    );
   }
 
   if (error) throw new Error(`Failed to update news: ${error.message}`);
