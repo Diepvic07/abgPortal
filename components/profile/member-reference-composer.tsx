@@ -34,13 +34,37 @@ export function MemberReferenceComposer({
   const [submittedReference, setSubmittedReference] = useState<MemberReference | null>(existingReference);
   const [loading, setLoading] = useState(false);
 
-  if (isSelf) return null;
+  // ─── Self view: only show a prompt if the profile owner is not yet premium ───
+  if (isSelf) {
+    if (recipientEligible) return null;
+    return (
+      <section className="max-w-3xl mx-auto mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-amber-900">{t.references.selfUpgradeTitle}</h2>
+        <p className="mt-2 text-sm text-amber-800">{t.references.selfUpgradeBody}</p>
+        <Link
+          href="/upgrade"
+          className="mt-3 inline-flex items-center gap-1 text-amber-900 font-medium underline underline-offset-2 hover:text-amber-950"
+        >
+          {t.references.upgradeLink}
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
+        </Link>
+      </section>
+    );
+  }
 
   const vars = { name: recipientName };
+
+  // ─── Someone else viewing this profile ──────────────────────────────────────
+  // If the viewer themselves can't write (basic membership), invite them to
+  // upgrade. If the recipient isn't eligible, stay vague so their tier isn't
+  // leaked to other members. If both fail we prefer the writer prompt because
+  // that's the one the viewer can act on.
   const blocked = !writerEligible
     ? { message: t.references.writerNotEligible, showUpgrade: true }
     : !recipientEligible
-    ? { message: interpolate(t.references.recipientNotEligible, vars), showUpgrade: false }
+    ? { message: t.references.recipientNotAvailable, showUpgrade: false }
     : null;
 
   async function handleSubmit(e: React.FormEvent) {

@@ -731,7 +731,10 @@ export const vi: Translations = {
     title: 'Viết nhận xét',
     intro: 'Nhận xét không thể chỉnh sửa sau khi gửi. {name} có thể chọn hiển thị công khai trên hồ sơ của mình.',
     writerNotEligible: 'Viết nhận xét là quyền lợi của thành viên premium. Nâng cấp thành viên để có thể nhận xét các thành viên khác.',
-    recipientNotEligible: '{name} hiện đang là thành viên basic, nên chưa thể nhận nhận xét công khai. Nhận xét là tính năng dành cho thành viên premium — chúng sẽ hiển thị trên hồ sơ công khai của thành viên premium.',
+    recipientNotAvailable: 'Hiện chưa thể viết nhận xét cho thành viên này.',
+    // Chỉ hiện cho chính chủ hồ sơ.
+    selfUpgradeTitle: 'Mở tính năng nhận xét trên hồ sơ của bạn',
+    selfUpgradeBody: 'Bạn đang dùng gói basic. Nâng cấp lên premium để các thành viên khác có thể viết nhận xét công khai hiển thị trên hồ sơ của bạn.',
     relationshipLabel: 'Bạn biết {name} như thế nào?',
     relationshipPlaceholder: 'Ví dụ: Chúng tôi từng cùng tham gia các hoạt động cộng đồng ABG và mentoring khởi nghiệp.',
     bodyLabel: 'Nhận xét',

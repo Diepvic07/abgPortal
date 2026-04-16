@@ -80,15 +80,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
     const isAuthorized = isOwner || isAdmin || isConnected || isPremiumViewer;
     let existingReference = null;
-    let canLoadReferenceComposer = false;
+    // The composer is rendered for everyone — for the owner it becomes a
+    // self-upgrade prompt (shown only if they're not premium yet); for other
+    // viewers it's the write-a-reference form (or a vague unavailable message).
+    let canLoadReferenceComposer = true;
 
     if (!isOwner) {
         try {
             existingReference = await getReferenceByWriterAndRecipient(currentUser.id, targetMember.id);
-            canLoadReferenceComposer = true;
         } catch (error) {
             // Keep the core profile page available even if the optional references feature is unavailable.
             console.error('[ProfilePage] Failed to load reference composer state:', error);
+            canLoadReferenceComposer = false;
         }
     }
 

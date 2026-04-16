@@ -729,7 +729,10 @@ export const en = {
     title: 'Write a Reference',
     intro: 'References are permanent once submitted. {name} chooses whether to show them on their public profile.',
     writerNotEligible: 'Writing references is a premium-member benefit. Upgrade your membership to endorse other members.',
-    recipientNotEligible: '{name} is on a basic membership, so references cannot be written here yet. References are a premium-member feature — they appear on a premium member\'s public profile.',
+    recipientNotAvailable: 'References are not available for this member right now.',
+    // Shown only to the recipient themselves — explains why they can't receive references and how to change it.
+    selfUpgradeTitle: 'Unlock references on your profile',
+    selfUpgradeBody: 'You\'re on a basic membership. Upgrade to premium so other members can write public references that appear on your profile.',
     relationshipLabel: 'How do you know {name}?',
     relationshipPlaceholder: 'For example: we worked together on ABG community events and startup mentoring.',
     bodyLabel: 'Reference',
