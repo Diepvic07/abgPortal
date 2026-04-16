@@ -70,8 +70,9 @@ export function AdminMarkdownEditor({ value, onChange, height = 300 }: AdminMark
   }, [showTagPopover]);
 
   function insertMention(m: PickerMember) {
-    const slug = m.public_profile_slug || m.id;
-    const mention = `[@${m.name}](/profile/${slug})`;
+    // Always link via the member UUID — it's stable (never changes if the
+    // admin renames a member) and /profile/[id] resolves UUIDs directly.
+    const mention = `[@${m.name}](/profile/${m.id})`;
     const textarea = containerRef.current?.querySelector<HTMLTextAreaElement>(".w-md-editor-text-input");
 
     if (!textarea) {
