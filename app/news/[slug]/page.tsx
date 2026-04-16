@@ -8,8 +8,26 @@ import { ArticleHeader } from '@/components/news/article-header';
 import { ArticleContent } from '@/components/news/article-content';
 import { ArticleNavigation } from '@/components/news/article-navigation';
 import { NewsComments } from '@/components/news/news-comments';
+import {
+  ArticleTaggedMembers,
+  type TaggedMember,
+} from '@/components/news/article-tagged-members';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
+
+async function fetchTaggedMembers(ids: string[]): Promise<TaggedMember[]> {
+  if (!ids.length) return [];
+  const supabase = createServerSupabaseClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('members') as any)
+    .select('id, name, avatar_url, abg_class, public_profile_slug')
+    .in('id', ids);
+  if (error || !data) return [];
+  // Preserve the admin's ordering from tagged_member_ids
+  const byId = new Map<string, TaggedMember>((data as TaggedMember[]).map((m) => [m.id, m]));
+  return ids.map((id) => byId.get(id)).filter((m): m is TaggedMember => !!m);
+}
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>;
@@ -45,11 +63,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   if (!article) notFound();
   const localized = localizeArticle(article, locale);
   const { prev, next } = await getAdjacentArticles(slug, undefined, locale);
+  const taggedMembers = await fetchTaggedMembers(article.tagged_member_ids || []);
 
   return (
     <div className="news-page-wrapper bg-white">
       <div className="py-8 md:py-12">
-        <ArticleHeader article={article} />
+        <ArticleHeader article={article} taggedMembers={taggedMembers} />
 
         {/* Hero image */}
         {article.image_url && (

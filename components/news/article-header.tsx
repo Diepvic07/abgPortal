@@ -5,16 +5,21 @@ import Link from 'next/link';
 import { NewsArticle } from '@/types';
 import { getCategoryColor, localizeArticle } from '@/lib/news-utils';
 import { useTranslation } from '@/lib/i18n';
+import {
+  ArticleTaggedMembers,
+  type TaggedMember,
+} from '@/components/news/article-tagged-members';
 
 interface ArticleHeaderProps {
   article: NewsArticle;
+  taggedMembers?: TaggedMember[];
 }
 
 function getInitials(name: string): string {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
-export function ArticleHeader({ article }: ArticleHeaderProps) {
+export function ArticleHeader({ article, taggedMembers = [] }: ArticleHeaderProps) {
   const { t, locale } = useTranslation();
   const localized = localizeArticle(article, locale);
   const [copied, setCopied] = useState(false);
@@ -105,6 +110,9 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
           <p className="text-xs text-gray-500">{t.news.communityManagement}</p>
         </div>
       </div>
+
+      {/* Tagged members */}
+      <ArticleTaggedMembers members={taggedMembers} locale={locale} />
     </div>
   );
 }
