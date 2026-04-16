@@ -13,6 +13,7 @@ import {
   type TaggedMember,
 } from '@/components/news/article-tagged-members';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { repairProfileLinksInContent } from '@/lib/news-content-repair';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,6 +62,14 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   const article = await getNewsBySlug(slug, locale);
   if (!article) notFound();
+  // Heal any stale/broken `/profile/<x>` links in the content so historical
+  // inline mentions keep working after slug changes.
+  const [repairedContent, repairedContentVi] = await repairProfileLinksInContent(
+    article.content,
+    article.content_vi
+  );
+  article.content = repairedContent;
+  article.content_vi = repairedContentVi;
   const localized = localizeArticle(article, locale);
   const { prev, next } = await getAdjacentArticles(slug, undefined, locale);
   const taggedMembers = await fetchTaggedMembers(article.tagged_member_ids || []);
