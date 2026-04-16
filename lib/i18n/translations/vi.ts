@@ -726,6 +726,25 @@ export const vi: Translations = {
     },
   },
 
+  // References (written on another member's profile)
+  references: {
+    title: 'Viết nhận xét',
+    intro: 'Nhận xét không thể chỉnh sửa sau khi gửi. {name} có thể chọn hiển thị công khai trên hồ sơ của mình.',
+    writerNotEligible: 'Viết nhận xét là quyền lợi của thành viên premium. Nâng cấp thành viên để có thể nhận xét các thành viên khác.',
+    recipientNotEligible: '{name} hiện đang là thành viên basic, nên chưa thể nhận nhận xét công khai. Nhận xét là tính năng dành cho thành viên premium — chúng sẽ hiển thị trên hồ sơ công khai của thành viên premium.',
+    relationshipLabel: 'Bạn biết {name} như thế nào?',
+    relationshipPlaceholder: 'Ví dụ: Chúng tôi từng cùng tham gia các hoạt động cộng đồng ABG và mentoring khởi nghiệp.',
+    bodyLabel: 'Nhận xét',
+    bodyPlaceholder: 'Mô tả điểm mạnh, uy tín, hoặc trải nghiệm hợp tác mà những người khác nên biết về thành viên này.',
+    submit: 'Gửi nhận xét',
+    submitting: 'Đang gửi...',
+    alreadySubmitted: 'Bạn đã gửi nhận xét cho {name}.',
+    relationshipContext: 'Mối quan hệ',
+    submitSuccess: 'Đã gửi nhận xét thành công.',
+    submitFailed: 'Không thể gửi nhận xét.',
+    upgradeLink: 'Nâng cấp premium',
+  },
+
   // News pages
   news: {
     pageTitle: 'Tin Tức & Cập Nhật Cộng Đồng',

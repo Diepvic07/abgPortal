@@ -724,6 +724,25 @@ export const en = {
     },
   },
 
+  // References (written on another member's profile)
+  references: {
+    title: 'Write a Reference',
+    intro: 'References are permanent once submitted. {name} chooses whether to show them on their public profile.',
+    writerNotEligible: 'Writing references is a premium-member benefit. Upgrade your membership to endorse other members.',
+    recipientNotEligible: '{name} is on a basic membership, so references cannot be written here yet. References are a premium-member feature — they appear on a premium member\'s public profile.',
+    relationshipLabel: 'How do you know {name}?',
+    relationshipPlaceholder: 'For example: we worked together on ABG community events and startup mentoring.',
+    bodyLabel: 'Reference',
+    bodyPlaceholder: 'Describe this member\'s strengths, credibility, or the kind of collaboration experience others should know about.',
+    submit: 'Submit Reference',
+    submitting: 'Submitting...',
+    alreadySubmitted: 'You already submitted a reference for {name}.',
+    relationshipContext: 'Relationship context',
+    submitSuccess: 'Reference submitted successfully.',
+    submitFailed: 'Unable to submit reference.',
+    upgradeLink: 'Upgrade to premium',
+  },
+
   // News pages
   news: {
     pageTitle: 'Community News & Updates',
