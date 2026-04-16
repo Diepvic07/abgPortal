@@ -1,19 +1,30 @@
 import { NewsArticle, NewsCategory } from '@/types';
 import slugifyLib from 'slugify';
 
-/** Returns localized title/excerpt/content for an article, falling back to English. */
+/**
+ * Returns localized title/excerpt/content. Falls back to the other language
+ * when the preferred language's field is empty — admins often publish in both
+ * languages without supplying a translation for every field.
+ */
 export function localizeArticle(
   article: NewsArticle,
   locale: string
 ): { title: string; excerpt: string; content: string } {
+  const pick = (preferred: string | undefined, fallback: string | undefined) =>
+    (preferred && preferred.trim()) || (fallback && fallback.trim()) || '';
+
   if (locale === 'vi') {
     return {
-      title: article.title_vi || article.title,
-      excerpt: article.excerpt_vi || article.excerpt,
-      content: article.content_vi || article.content,
+      title: pick(article.title_vi, article.title),
+      excerpt: pick(article.excerpt_vi, article.excerpt),
+      content: pick(article.content_vi, article.content),
     };
   }
-  return { title: article.title, excerpt: article.excerpt, content: article.content };
+  return {
+    title: pick(article.title, article.title_vi),
+    excerpt: pick(article.excerpt, article.excerpt_vi),
+    content: pick(article.content, article.content_vi),
+  };
 }
 
 export function generateSlug(title: string): string {

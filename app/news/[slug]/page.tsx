@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { getNewsBySlug, getPublishedNews, getAdjacentArticles } from '@/lib/news-service';
+import { localizeArticle } from '@/lib/news-utils';
 import { ArticleHeader } from '@/components/news/article-header';
 import { ArticleContent } from '@/components/news/article-content';
 import { ArticleNavigation } from '@/components/news/article-navigation';
@@ -20,12 +21,13 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   const locale = cookieStore.get('locale')?.value || 'vi';
   const article = await getNewsBySlug(slug, locale);
   if (!article) return { title: 'Article Not Found' };
+  const { title, excerpt } = localizeArticle(article, locale);
   return {
-    title: `${article.title} | ABG Alumni Connect`,
-    description: article.excerpt,
+    title: `${title} | ABG Alumni Connect`,
+    description: excerpt,
     openGraph: {
-      title: article.title,
-      description: article.excerpt,
+      title,
+      description: excerpt,
       images: article.image_url ? [{ url: article.image_url }] : [],
       type: 'article',
       publishedTime: article.published_date,
@@ -41,6 +43,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   const article = await getNewsBySlug(slug, locale);
   if (!article) notFound();
+  const localized = localizeArticle(article, locale);
   const { prev, next } = await getAdjacentArticles(slug, undefined, locale);
 
   return (
@@ -52,7 +55,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {article.image_url && (
           <div className="max-w-5xl mx-auto px-4 mb-10">
             <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-sm">
-              <Image src={article.image_url} alt={article.title} fill
+              <Image src={article.image_url} alt={localized.title} fill
                 className="object-cover" priority />
             </div>
           </div>
