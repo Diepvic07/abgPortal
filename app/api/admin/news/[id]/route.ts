@@ -97,7 +97,9 @@ export async function PUT(
     return NextResponse.json({ data: article });
   } catch (error) {
     console.error("Admin news update error:", error);
-    return NextResponse.json({ error: "Failed to update article" }, { status: 500 });
+    const message =
+      error instanceof Error ? error.message : "Failed to update article";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

@@ -964,21 +964,57 @@ export async function getNewsArticleById(id: string): Promise<NewsArticle | null
 
 export async function createNewsArticle(article: Omit<NewsArticle, 'created_at'>): Promise<NewsArticle> {
   const db = createServerSupabaseClient();
-  const { data, error } = await db.from('news').insert({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const payload: Record<string, any> = {
     ...article,
     image_url: article.image_url ?? null,
     title_vi: article.title_vi ?? null,
     excerpt_vi: article.excerpt_vi ?? null,
     content_vi: article.content_vi ?? null,
     created_at: new Date().toISOString(),
-  }).select().single();
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (db.from('news') as any).insert(payload).select().single();
+
+  if (
+    error &&
+    'tagged_member_ids' in payload &&
+    /column.*tagged_member_ids/i.test(error.message)
+  ) {
+    console.warn('[SupabaseDB] tagged_member_ids column missing — retrying insert without it. Run migration 040.');
+    delete payload.tagged_member_ids;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const retry = await (db.from('news') as any).insert(payload).select().single();
+    if (retry.error) throw new Error(`Failed to create news: ${retry.error.message}`);
+    return mapRowToNewsArticle(retry.data as unknown as Record<string, unknown>);
+  }
+
   if (error) throw new Error(`Failed to create news: ${error.message}`);
   return mapRowToNewsArticle(data as unknown as Record<string, unknown>);
 }
 
 export async function updateNewsArticle(id: string, updates: Partial<Omit<NewsArticle, 'id' | 'created_at'>>): Promise<NewsArticle> {
   const db = createServerSupabaseClient();
-  const { data, error } = await db.from('news').update(updates).eq('id', id).select().single();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const payload: Record<string, any> = { ...updates };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (db.from('news') as any).update(payload).eq('id', id).select().single();
+
+  // If the tagged_member_ids column hasn't been migrated yet, retry without it
+  // so the admin can still save the rest of the article.
+  if (
+    error &&
+    'tagged_member_ids' in payload &&
+    /column.*tagged_member_ids/i.test(error.message)
+  ) {
+    console.warn('[SupabaseDB] tagged_member_ids column missing — retrying update without it. Run migration 040.');
+    delete payload.tagged_member_ids;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const retry = await (db.from('news') as any).update(payload).eq('id', id).select().single();
+    if (retry.error) throw new Error(`Failed to update news: ${retry.error.message}`);
+    return mapRowToNewsArticle(retry.data as unknown as Record<string, unknown>);
+  }
+
   if (error) throw new Error(`Failed to update news: ${error.message}`);
   return mapRowToNewsArticle(data as unknown as Record<string, unknown>);
 }

@@ -100,6 +100,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: article }, { status: 201 });
   } catch (error) {
     console.error("Admin news create error:", error);
-    return NextResponse.json({ error: "Failed to create article" }, { status: 500 });
+    const message =
+      error instanceof Error ? error.message : "Failed to create article";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
