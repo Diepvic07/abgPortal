@@ -505,6 +505,7 @@ export interface CommunityEvent {
   capacity_basic?: number;
   image_url?: string;
   created_by_member_id: string;
+  organizer_member_id?: string;
   proposal_id?: string;
   status: EventStatus;
   rsvp_count: number;
@@ -538,6 +539,9 @@ export interface CommunityEvent {
   author_name?: string;
   author_avatar_url?: string;
   author_abg_class?: string;
+  organizer_name?: string;
+  organizer_avatar_url?: string;
+  organizer_abg_class?: string;
   my_rsvp?: CommitmentLevel;
 }
 
@@ -549,6 +553,8 @@ export interface EventRsvp {
   note?: string;
   actual_attendance?: boolean;
   actual_participation_score?: number;
+  verified_event_role?: 'attendee' | 'lead';
+  attendance_mode?: 'offline' | 'online';
   created_at: string;
   updated_at: string;
   // Joined fields

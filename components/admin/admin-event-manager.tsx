@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { CommunityEvent, EventStatus, EventCategory, EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS } from '@/types';
+import { CommunityEvent, EventRsvp, EventStatus, EventCategory, EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS } from '@/types';
 import { AdminImageUpload } from './admin-article-image-upload';
 import { AdminEventPayments } from './admin-event-payments';
 import { useTranslation } from '@/lib/i18n';
@@ -68,6 +68,8 @@ interface EventForm {
   description: string;
   category: EventCategory;
   status: EventStatus;
+  organizer_member_id: string;
+  organizer_name: string;
   event_date: string;
   event_end_date: string;
   location: string;
@@ -91,11 +93,20 @@ interface EventForm {
   recap_images: string[];
 }
 
+interface OrganizerOption {
+  id: string;
+  name: string;
+  avatar_url?: string | null;
+  abg_class?: string | null;
+}
+
 const emptyForm: EventForm = {
   title: '',
   description: '',
   category: 'event',
   status: 'draft',
+  organizer_member_id: '',
+  organizer_name: '',
   event_date: '',
   event_end_date: '',
   location: '',
@@ -145,6 +156,13 @@ export function AdminEventManager() {
   const [questionsLoading, setQuestionsLoading] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<EventPreset>('custom');
   const [presetMessage, setPresetMessage] = useState(false);
+  const [organizerQuery, setOrganizerQuery] = useState('');
+  const [organizerResults, setOrganizerResults] = useState<OrganizerOption[]>([]);
+  const [organizerSearchLoading, setOrganizerSearchLoading] = useState(false);
+  const [viewingAttendance, setViewingAttendance] = useState<CommunityEvent | null>(null);
+  const [attendanceRows, setAttendanceRows] = useState<EventRsvp[]>([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [attendanceSaving, setAttendanceSaving] = useState(false);
   const { t, locale } = useTranslation();
 
   useEffect(() => {
@@ -166,9 +184,43 @@ export function AdminEventManager() {
     }
   }
 
+  async function handleOrganizerSearch(value: string) {
+    setOrganizerQuery(value);
+    setForm((f) => ({ ...f, organizer_member_id: '', organizer_name: value }));
+
+    const query = value.trim();
+    if (query.length < 2) {
+      setOrganizerResults([]);
+      return;
+    }
+
+    setOrganizerSearchLoading(true);
+    try {
+      const res = await fetch(`/api/admin/members/search?name=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setOrganizerResults((data.members || []).slice(0, 8));
+    } catch {
+      setOrganizerResults([]);
+    } finally {
+      setOrganizerSearchLoading(false);
+    }
+  }
+
+  function selectOrganizer(member: OrganizerOption) {
+    setForm((f) => ({
+      ...f,
+      organizer_member_id: member.id,
+      organizer_name: member.name,
+    }));
+    setOrganizerQuery(member.name);
+    setOrganizerResults([]);
+  }
+
   function openCreateForm() {
     setEditingEvent(null);
     setForm(emptyForm);
+    setOrganizerQuery('');
+    setOrganizerResults([]);
     setSelectedPreset('custom');
     setPresetMessage(false);
     setShowForm(true);
@@ -187,11 +239,15 @@ export function AdminEventManager() {
 
   function openEditForm(event: CommunityEvent) {
     setEditingEvent(event);
+    const organizerId = event.organizer_member_id || event.created_by_member_id;
+    const organizerName = event.organizer_name || event.author_name || '';
     setForm({
       title: event.title,
       description: event.description,
       category: event.category,
       status: event.status,
+      organizer_member_id: organizerId,
+      organizer_name: organizerName,
       event_date: event.event_date ? utcToLocalInput(event.event_date) : '',
       event_end_date: event.event_end_date ? utcToLocalInput(event.event_end_date) : '',
       location: event.location || '',
@@ -214,6 +270,8 @@ export function AdminEventManager() {
       recap_text: event.recap_text || '',
       recap_images: event.recap_images || [],
     });
+    setOrganizerQuery(organizerName);
+    setOrganizerResults([]);
     setShowForm(true);
   }
 
@@ -221,6 +279,8 @@ export function AdminEventManager() {
     setShowForm(false);
     setEditingEvent(null);
     setForm(emptyForm);
+    setOrganizerQuery('');
+    setOrganizerResults([]);
   }
 
   async function handleRecapImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -277,16 +337,87 @@ export function AdminEventManager() {
     XLSX.writeFile(wb, `questions-${viewingQuestions.slug || viewingQuestions.id}.xlsx`);
   }
 
+  async function openAttendance(event: CommunityEvent) {
+    setViewingAttendance(event);
+    setAttendanceRows([]);
+    setAttendanceLoading(true);
+    try {
+      const res = await fetch(`/api/admin/community/events/${event.id}/attendance`);
+      const data = await res.json();
+      if (res.ok) {
+        setViewingAttendance(data.event || event);
+        setAttendanceRows(data.rsvps || []);
+      } else {
+        setMessage({ text: data.error || (locale === 'vi' ? 'Không tải được danh sách điểm danh' : 'Failed to load attendance'), type: 'error' });
+      }
+    } catch {
+      setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
+    } finally {
+      setAttendanceLoading(false);
+    }
+  }
+
+  function updateAttendanceRow(rsvpId: string, changes: Partial<EventRsvp>) {
+    setAttendanceRows((rows) => rows.map((row) => row.id === rsvpId ? { ...row, ...changes } : row));
+  }
+
+  function getAttendanceScorePreview(row: EventRsvp, event: CommunityEvent): number {
+    const organizerId = event.organizer_member_id || event.created_by_member_id;
+    if (row.member_id === organizerId) return 100;
+    if (!row.actual_attendance) return 0;
+    if (row.verified_event_role === 'lead') return 80;
+    return row.attendance_mode === 'online' ? 20 : 30;
+  }
+
+  async function saveAttendance() {
+    if (!viewingAttendance) return;
+    setAttendanceSaving(true);
+    try {
+      const res = await fetch(`/api/admin/community/events/${viewingAttendance.id}/attendance`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rsvps: attendanceRows.map((row) => ({
+            rsvp_id: row.id,
+            actual_attendance: Boolean(row.actual_attendance),
+            actual_participation_score: row.actual_participation_score ?? null,
+            verified_event_role: row.actual_attendance ? (row.verified_event_role || 'attendee') : null,
+            attendance_mode: row.actual_attendance ? (row.attendance_mode || 'offline') : null,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAttendanceRows(data.rsvps || []);
+        setMessage({ text: locale === 'vi' ? 'Đã lưu điểm danh và vai trò sự kiện' : 'Attendance and event roles saved', type: 'success' });
+        await fetchEvents();
+      } else {
+        setMessage({ text: data.error || t.admin.events.saveFailed, type: 'error' });
+      }
+    } catch {
+      setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
+    } finally {
+      setAttendanceSaving(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setActionLoading('form');
     setMessage(null);
+
+    if (!form.organizer_member_id) {
+      setMessage({ text: locale === 'vi' ? 'Vui lòng chọn người tổ chức thật của sự kiện' : 'Please choose the real event organizer', type: 'error' });
+      setActionLoading(null);
+      return;
+    }
 
     const payload: Record<string, unknown> = {
       title: form.title,
       description: form.description,
       category: form.category,
       status: form.status,
+      organizer_member_id: form.organizer_member_id,
       event_date: new Date(form.event_date).toISOString(),
     };
 
@@ -515,6 +646,9 @@ export function AdminEventManager() {
                     {event.capacity_basic != null && <> · {t.admin.events.basicSeats} {event.capacity_basic}</>}
                     {(event.guest_rsvp_count || 0) > 0 && <> · {event.guest_rsvp_count} {t.admin.events.guests}</>}
                   </p>
+                  <p className="text-sm text-gray-500">
+                    {locale === 'vi' ? 'Người tổ chức' : 'Organizer'}: {event.organizer_name || event.author_name || 'Unknown'}
+                  </p>
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     {event.is_public && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{t.admin.events.publicBadge}</span>}
                     {event.fee_premium != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{t.admin.events.paidBadge}</span>}
@@ -561,6 +695,12 @@ export function AdminEventManager() {
                     className="text-xs px-3 py-1.5 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50"
                   >
                     {t.admin.events.payments}
+                  </button>
+                  <button
+                    onClick={() => openAttendance(event)}
+                    className="text-xs px-3 py-1.5 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-50"
+                  >
+                    {locale === 'vi' ? 'Điểm danh' : 'Attendance'}
                   </button>
                   {event.require_question && (
                     <button
@@ -669,6 +809,44 @@ export function AdminEventManager() {
                       ))}
                     </select>
                   </div>
+                </div>
+
+                {/* Organizer */}
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {locale === 'vi' ? 'Người tổ chức thật' : 'Real organizer'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={organizerQuery}
+                    onChange={(e) => handleOrganizerSearch(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder={locale === 'vi' ? 'Tìm thành viên theo tên...' : 'Search member by name...'}
+                  />
+                  {organizerSearchLoading && (
+                    <p className="text-xs text-gray-500 mt-1">{locale === 'vi' ? 'Đang tìm...' : 'Searching...'}</p>
+                  )}
+                  {organizerResults.length > 0 && (
+                    <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                      {organizerResults.map((member) => (
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() => selectOrganizer(member)}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center justify-between gap-3"
+                        >
+                          <span className="text-sm font-medium text-gray-900 truncate">{member.name}</span>
+                          {member.abg_class && <span className="text-xs text-gray-500 shrink-0">{member.abg_class}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {form.organizer_member_id && (
+                    <p className="text-xs text-green-700 mt-1">
+                      {locale === 'vi' ? 'Đã chọn' : 'Selected'}: {form.organizer_name}
+                    </p>
+                  )}
                 </div>
 
                 {/* Description */}
@@ -1063,6 +1241,116 @@ export function AdminEventManager() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Attendance Modal */}
+      {viewingAttendance && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b flex items-center justify-between shrink-0">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {locale === 'vi' ? 'Điểm danh và vai trò' : 'Attendance and Roles'}
+                </h2>
+                <p className="text-sm text-gray-500">{viewingAttendance.title}</p>
+              </div>
+              <button onClick={() => setViewingAttendance(null)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+            </div>
+            <div className="px-6 py-4 overflow-y-auto">
+              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+                <p className="text-sm text-emerald-900">
+                  {locale === 'vi' ? 'Người tổ chức' : 'Organizer'}: {viewingAttendance.organizer_name || viewingAttendance.author_name || 'Unknown'}
+                  <span className="ml-2 text-xs font-medium text-emerald-700">+100</span>
+                </p>
+              </div>
+
+              {attendanceLoading ? (
+                <p className="text-sm text-gray-500 text-center py-8">{locale === 'vi' ? 'Đang tải...' : 'Loading...'}</p>
+              ) : attendanceRows.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">{locale === 'vi' ? 'Chưa có thành viên đăng ký.' : 'No member RSVPs yet.'}</p>
+              ) : (
+                <div className="border border-gray-200 rounded-lg overflow-x-auto">
+                  <div className="min-w-[720px]">
+                    <div className="grid grid-cols-[minmax(180px,1fr)_110px_130px_130px_80px] gap-3 px-3 py-2 bg-gray-50 text-xs font-medium text-gray-500">
+                      <span>{locale === 'vi' ? 'Thành viên' : 'Member'}</span>
+                      <span>{locale === 'vi' ? 'Có mặt' : 'Attended'}</span>
+                      <span>{locale === 'vi' ? 'Vai trò' : 'Role'}</span>
+                      <span>{locale === 'vi' ? 'Hình thức' : 'Mode'}</span>
+                      <span>{locale === 'vi' ? 'Điểm' : 'Score'}</span>
+                    </div>
+                    {attendanceRows.map((row) => {
+                      const organizerId = viewingAttendance.organizer_member_id || viewingAttendance.created_by_member_id;
+                      const isOrganizer = row.member_id === organizerId;
+                      const attended = Boolean(row.actual_attendance);
+                      const scorePreview = getAttendanceScorePreview(row, viewingAttendance);
+
+                      return (
+                        <div key={row.id} className="grid grid-cols-[minmax(180px,1fr)_110px_130px_130px_80px] gap-3 px-3 py-3 border-t border-gray-100 items-center text-sm">
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 truncate">{row.member_name || row.member_id}</p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {row.member_abg_class || row.commitment_level}
+                              {isOrganizer && <> · {locale === 'vi' ? 'Người tổ chức' : 'Organizer'}</>}
+                            </p>
+                          </div>
+                          <label className="flex items-center gap-2 text-gray-700">
+                            <input
+                              type="checkbox"
+                              checked={attended}
+                              onChange={(e) => updateAttendanceRow(row.id, {
+                                actual_attendance: e.target.checked,
+                                verified_event_role: e.target.checked ? (row.verified_event_role || 'attendee') : undefined,
+                                attendance_mode: e.target.checked ? (row.attendance_mode || 'offline') : undefined,
+                              })}
+                              className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            <span>{attended ? (locale === 'vi' ? 'Có' : 'Yes') : (locale === 'vi' ? 'Không' : 'No')}</span>
+                          </label>
+                          <select
+                            value={row.verified_event_role || 'attendee'}
+                            disabled={!attended || isOrganizer}
+                            onChange={(e) => updateAttendanceRow(row.id, { verified_event_role: e.target.value as 'attendee' | 'lead' })}
+                            className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                          >
+                            <option value="attendee">{locale === 'vi' ? 'Tham dự' : 'Attendee'}</option>
+                            <option value="lead">{locale === 'vi' ? 'Dẫn dắt' : 'Lead'}</option>
+                          </select>
+                          <select
+                            value={row.attendance_mode || 'offline'}
+                            disabled={!attended || isOrganizer}
+                            onChange={(e) => updateAttendanceRow(row.id, { attendance_mode: e.target.value as 'offline' | 'online' })}
+                            className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                          >
+                            <option value="offline">{locale === 'vi' ? 'Trực tiếp' : 'Offline'}</option>
+                            <option value="online">{locale === 'vi' ? 'Online' : 'Online'}</option>
+                          </select>
+                          <span className="font-semibold text-gray-900">+{scorePreview}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t flex justify-end gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setViewingAttendance(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
+              >
+                {t.admin.actions.cancel}
+              </button>
+              <button
+                type="button"
+                onClick={saveAttendance}
+                disabled={attendanceSaving || attendanceLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50"
+              >
+                {attendanceSaving ? t.admin.actions.saving : (locale === 'vi' ? 'Lưu điểm danh' : 'Save Attendance')}
+              </button>
             </div>
           </div>
         </div>

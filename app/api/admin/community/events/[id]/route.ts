@@ -40,6 +40,7 @@ const UpdateEventSchema = z.object({
   question_prompt: z.string().max(500).nullable().optional(),
   recap_text: z.string().max(5000).nullable().optional(),
   recap_images: z.array(z.string()).max(20).nullable().optional(),
+  organizer_member_id: z.string().nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

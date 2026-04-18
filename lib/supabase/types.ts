@@ -494,6 +494,7 @@ export interface Database {
           capacity_basic: number | null;
           image_url: string | null;
           created_by_member_id: string;
+          organizer_member_id: string | null;
           proposal_id: string | null;
           status: string;
           rsvp_count: number;
@@ -528,6 +529,7 @@ export interface Database {
           capacity_basic?: number | null;
           image_url?: string | null;
           created_by_member_id: string;
+          organizer_member_id?: string | null;
           proposal_id?: string | null;
           status?: string;
           rsvp_count?: number;
@@ -559,6 +561,8 @@ export interface Database {
           note: string | null;
           actual_attendance: boolean | null;
           actual_participation_score: number | null;
+          verified_event_role: string | null;
+          attendance_mode: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -570,6 +574,8 @@ export interface Database {
           note?: string | null;
           actual_attendance?: boolean | null;
           actual_participation_score?: number | null;
+          verified_event_role?: string | null;
+          attendance_mode?: string | null;
           created_at?: string;
           updated_at?: string;
         };

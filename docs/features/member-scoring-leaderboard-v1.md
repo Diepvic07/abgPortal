@@ -124,7 +124,7 @@ V1 therefore requires a small schema extension on `community_event_rsvps`:
 Notes:
 - `attendee` means verified participant without lead credit
 - `lead` covers speaker, lead, and core volunteer for scoring purposes
-- organizer remains the event creator from `community_events.created_by_member_id`
+- organizer is the admin-selected real organizer from `community_events.organizer_member_id`
 - this keeps v1 aligned to the existing RSVP-based attendance model without introducing a separate participants table
 
 ## 7. Scoring Model
@@ -136,7 +136,7 @@ Notes:
 ### 7.2 Scoring rules
 | Rule key | Category | Score | Trigger |
 |---|---|---:|---|
-| `event.organizer.completed` | participation | `+100` | Event creator when an event becomes completed |
+| `event.organizer.completed` | participation | `+100` | Admin-selected organizer when an event becomes completed |
 | `event.lead.completed` | participation | `+80` | Member with verified role `lead` on a completed event |
 | `event.attendee.offline.completed` | participation | `+30` | Member with verified offline attendance on a completed event |
 | `event.attendee.online.completed` | participation | `+20` | Member with verified online attendance on a completed event |
@@ -349,9 +349,9 @@ Source systems:
 
 Implementation:
 - event scoring is finalized when an event is marked `completed`
-- on completion, scoring logic inspects the event creator and all RSVP records for that event
+- on completion, scoring logic inspects the selected organizer and all RSVP records for that event
 - only members with verified attendance or verified role are scoreable
-- organizer scoring uses `community_events.created_by_member_id`
+- organizer scoring uses `community_events.organizer_member_id`, falling back to `community_events.created_by_member_id` for older rows
 - attendee and lead scoring use `community_event_rsvps.actual_attendance`, `community_events.event_mode`, and `community_event_rsvps.verified_event_role`
 
 #### Proposal traction threshold crossing

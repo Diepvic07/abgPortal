@@ -124,13 +124,37 @@ export async function writeScoreEvent(params: ScoreEventParams): Promise<string 
   const now = formatDate();
   const id = generateId();
 
-  // Idempotency check: if this key already exists, no-op
-  const { data: existing } = await (supabase.from('score_events') as any)
+  // If this member already has an active score for the same rule/source, no-op.
+  // A reversed score can be applied again after an admin correction.
+  const { data: existingActive } = await (supabase.from('score_events') as any)
     .select('id')
-    .eq('idempotency_key', params.idempotencyKey)
+    .eq('member_id', params.memberId)
+    .eq('source_type', params.sourceType)
+    .eq('source_id', params.sourceId)
+    .eq('rule_key', params.ruleKey)
+    .eq('is_reversal', false)
+    .order('created_at', { ascending: false })
+    .limit(1)
     .maybeSingle();
 
-  if (existing) return null;
+  if (existingActive) {
+    const { data: reversal } = await (supabase.from('score_events') as any)
+      .select('id')
+      .eq('idempotency_key', `reversal:${(existingActive as Record<string, unknown>).id}`)
+      .maybeSingle();
+
+    if (!reversal) return null;
+  }
+
+  let idempotencyKey = params.idempotencyKey;
+  const { data: existingKey } = await (supabase.from('score_events') as any)
+    .select('id')
+    .eq('idempotency_key', idempotencyKey)
+    .maybeSingle();
+
+  if (existingKey) {
+    idempotencyKey = `${idempotencyKey}:reapply:${id}`;
+  }
 
   // Insert score event
   const { error } = await (supabase.from('score_events') as any)
@@ -143,7 +167,7 @@ export async function writeScoreEvent(params: ScoreEventParams): Promise<string 
       source_type: params.sourceType,
       source_id: params.sourceId,
       effective_at: params.effectiveAt,
-      idempotency_key: params.idempotencyKey,
+      idempotency_key: idempotencyKey,
       is_reversal: false,
       reverses_score_event_id: null,
       metadata: params.metadata || {},
@@ -287,14 +311,16 @@ export async function scoreEventCompletion(eventId: string): Promise<void> {
   // Fetch event
   const { data: event } = await supabase
     .from('community_events')
-    .select('id, status, created_by_member_id, completed_at, title')
+    .select('id, status, created_by_member_id, organizer_member_id, completed_at, title')
     .eq('id', eventId)
     .single();
 
   if (!event || (event as Record<string, unknown>).status !== 'completed') return;
 
   const e = event as Record<string, unknown>;
-  const memberId = e.created_by_member_id as string;
+  const memberId = ((e.organizer_member_id as string | null) || e.created_by_member_id) as string;
+  if (!memberId) return;
+
   const effectiveAt = (e.completed_at as string) || formatDate();
 
   // Score organizer
@@ -309,6 +335,15 @@ export async function scoreEventCompletion(eventId: string): Promise<void> {
     idempotencyKey: `event:${eventId}:member:${memberId}:rule:event.organizer.completed`,
     metadata: { event_title: e.title },
   });
+
+  const { data: verifiedRsvps } = await (supabase.from('community_event_rsvps') as any)
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('actual_attendance', true);
+
+  for (const rsvp of (verifiedRsvps || []) as Array<Record<string, unknown>>) {
+    await scoreRsvpAttendance(rsvp.id as string);
+  }
 }
 
 export async function scoreRsvpAttendance(rsvpId: string): Promise<void> {
@@ -329,7 +364,7 @@ export async function scoreRsvpAttendance(rsvpId: string): Promise<void> {
   // Fetch event to check status and mode
   const { data: event } = await supabase
     .from('community_events')
-    .select('id, status, created_by_member_id, event_mode, completed_at, title')
+    .select('id, status, created_by_member_id, organizer_member_id, event_mode, completed_at, title')
     .eq('id', eventId)
     .single();
 
@@ -338,11 +373,16 @@ export async function scoreRsvpAttendance(rsvpId: string): Promise<void> {
   const e = event as Record<string, unknown>;
   const effectiveAt = (e.completed_at as string) || formatDate();
 
-  // If member is the organizer, they already get +100; skip attendee/lead scoring
-  if (memberId === (e.created_by_member_id as string)) return;
-
   // If attendance was removed, reverse any existing scores for this member+event
   if (!r.actual_attendance) {
+    await reverseRsvpScores(eventId, memberId);
+    return;
+  }
+
+  const organizerId = ((e.organizer_member_id as string | null) || e.created_by_member_id) as string;
+
+  // If member is the selected organizer, they already get +100; remove attendee/lead scoring.
+  if (memberId === organizerId) {
     await reverseRsvpScores(eventId, memberId);
     return;
   }
