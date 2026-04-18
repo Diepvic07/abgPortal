@@ -6,6 +6,27 @@ function nullToUndefined<T>(val: T | null): T | undefined {
   return val === null ? undefined : val;
 }
 
+const EVENT_MEMBER_SELECT = `
+  *,
+  creator:members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class),
+  organizer:members!community_events_organizer_member_id_fkey(name, avatar_url, abg_class)
+`;
+
+function mapJoinedEventRow(row: Record<string, unknown>): CommunityEvent {
+  const creator = row.creator as Record<string, unknown> | null;
+  const organizer = row.organizer as Record<string, unknown> | null;
+
+  return mapRowToEvent({
+    ...row,
+    author_name: creator?.name || null,
+    author_avatar_url: creator?.avatar_url || null,
+    author_abg_class: creator?.abg_class || null,
+    organizer_name: organizer?.name || creator?.name || null,
+    organizer_avatar_url: organizer?.avatar_url || creator?.avatar_url || null,
+    organizer_abg_class: organizer?.abg_class || creator?.abg_class || null,
+  });
+}
+
 // ==================== Map Functions ====================
 
 function mapRowToEvent(row: Record<string, unknown>): CommunityEvent {
@@ -25,6 +46,7 @@ function mapRowToEvent(row: Record<string, unknown>): CommunityEvent {
     capacity_basic: nullToUndefined(row.capacity_basic as number | null),
     image_url: nullToUndefined(row.image_url as string | null),
     created_by_member_id: row.created_by_member_id as string,
+    organizer_member_id: nullToUndefined(row.organizer_member_id as string | null) || (row.created_by_member_id as string),
     proposal_id: nullToUndefined(row.proposal_id as string | null),
     status: (row.status as EventStatus) || 'draft',
     rsvp_count: (row.rsvp_count as number) || 0,
@@ -54,6 +76,9 @@ function mapRowToEvent(row: Record<string, unknown>): CommunityEvent {
     author_name: nullToUndefined(row.author_name as string | null),
     author_avatar_url: nullToUndefined(row.author_avatar_url as string | null),
     author_abg_class: nullToUndefined(row.author_abg_class as string | null),
+    organizer_name: nullToUndefined(row.organizer_name as string | null),
+    organizer_avatar_url: nullToUndefined(row.organizer_avatar_url as string | null),
+    organizer_abg_class: nullToUndefined(row.organizer_abg_class as string | null),
   };
 }
 
@@ -66,6 +91,8 @@ function mapRowToRsvp(row: Record<string, unknown>): EventRsvp {
     note: nullToUndefined(row.note as string | null),
     actual_attendance: nullToUndefined(row.actual_attendance as boolean | null),
     actual_participation_score: nullToUndefined(row.actual_participation_score as number | null),
+    verified_event_role: nullToUndefined(row.verified_event_role as 'attendee' | 'lead' | null),
+    attendance_mode: nullToUndefined(row.attendance_mode as 'offline' | 'online' | null),
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
     member_name: nullToUndefined(row.member_name as string | null),
@@ -115,6 +142,7 @@ export async function createEvent(data: {
   registration_deadline?: string;
   allow_cancellation?: boolean;
   created_by_member_id: string;
+  organizer_member_id?: string;
   proposal_id?: string;
   status?: EventStatus;
 }): Promise<CommunityEvent> {
@@ -153,6 +181,7 @@ export async function createEvent(data: {
       allow_cancellation: data.allow_cancellation ?? true,
       guest_rsvp_count: 0,
       created_by_member_id: data.created_by_member_id,
+      organizer_member_id: data.organizer_member_id || data.created_by_member_id,
       proposal_id: data.proposal_id || null,
       status,
       rsvp_count: 0,
@@ -162,7 +191,7 @@ export async function createEvent(data: {
       updated_at: now,
       published_at: status === 'published' ? now : null,
     })
-    .select()
+    .select(EVENT_MEMBER_SELECT)
     .single();
 
   if (error) {
@@ -170,7 +199,7 @@ export async function createEvent(data: {
     throw new Error('Failed to create event');
   }
 
-  return mapRowToEvent(row as Record<string, unknown>);
+  return mapJoinedEventRow(row as Record<string, unknown>);
 }
 
 export async function getEvents(options: {
@@ -188,7 +217,7 @@ export async function getEvents(options: {
 
   let query = supabase
     .from('community_events')
-    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)', { count: 'exact' });
+    .select(EVENT_MEMBER_SELECT, { count: 'exact' });
 
   if (options.status) {
     query = query.eq('status', options.status);
@@ -220,15 +249,7 @@ export async function getEvents(options: {
     throw new Error('Failed to fetch events');
   }
 
-  const events = (rows || []).map((row: Record<string, unknown>) => {
-    const members = row.members as Record<string, unknown> | null;
-    return mapRowToEvent({
-      ...row,
-      author_name: members?.name || null,
-      author_avatar_url: members?.avatar_url || null,
-      author_abg_class: members?.abg_class || null,
-    });
-  });
+  const events = (rows || []).map((row: Record<string, unknown>) => mapJoinedEventRow(row));
 
   return { events, total: count || 0 };
 }
@@ -238,7 +259,7 @@ export async function getEventById(id: string): Promise<CommunityEvent | null> {
 
   const { data: row, error } = await supabase
     .from('community_events')
-    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)')
+    .select(EVENT_MEMBER_SELECT)
     .eq('id', id)
     .maybeSingle();
 
@@ -249,13 +270,7 @@ export async function getEventById(id: string): Promise<CommunityEvent | null> {
 
   if (!row) return null;
 
-  const members = (row as Record<string, unknown>).members as Record<string, unknown> | null;
-  return mapRowToEvent({
-    ...(row as Record<string, unknown>),
-    author_name: members?.name || null,
-    author_avatar_url: members?.avatar_url || null,
-    author_abg_class: members?.abg_class || null,
-  });
+  return mapJoinedEventRow(row as Record<string, unknown>);
 }
 
 export async function getEventBySlug(slug: string): Promise<CommunityEvent | null> {
@@ -263,7 +278,7 @@ export async function getEventBySlug(slug: string): Promise<CommunityEvent | nul
 
   const { data: row, error } = await supabase
     .from('community_events')
-    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)')
+    .select(EVENT_MEMBER_SELECT)
     .eq('slug', slug)
     .maybeSingle();
 
@@ -274,13 +289,7 @@ export async function getEventBySlug(slug: string): Promise<CommunityEvent | nul
 
   if (!row) return null;
 
-  const members = (row as Record<string, unknown>).members as Record<string, unknown> | null;
-  return mapRowToEvent({
-    ...(row as Record<string, unknown>),
-    author_name: members?.name || null,
-    author_avatar_url: members?.avatar_url || null,
-    author_abg_class: members?.abg_class || null,
-  });
+  return mapJoinedEventRow(row as Record<string, unknown>);
 }
 
 export async function updateEvent(id: string, data: Partial<{
@@ -309,22 +318,33 @@ export async function updateEvent(id: string, data: Partial<{
   registration_deadline: string | null;
   payment_qr_url: string | null;
   payment_instructions: string | null;
+  organizer_member_id: string | null;
 }>): Promise<CommunityEvent> {
   const supabase = createServerSupabaseClient();
+  const now = formatDate();
 
   // Fetch current status before update for scoring comparison
   const { data: currentEvent } = await supabase
     .from('community_events')
-    .select('status')
+    .select('status, created_by_member_id, organizer_member_id')
     .eq('id', id)
     .single();
-  const oldStatus = (currentEvent as Record<string, unknown>)?.status as string | undefined;
+  const current = currentEvent as Record<string, unknown> | null;
+  const oldStatus = current?.status as string | undefined;
+  const oldOrganizerId = (current?.organizer_member_id as string | null) || (current?.created_by_member_id as string | undefined);
+  const updatePayload: Record<string, unknown> = { ...data, updated_at: now };
+
+  if (data.status === 'completed' && oldStatus !== 'completed') {
+    updatePayload.completed_at = now;
+  } else if (data.status && data.status !== 'completed' && oldStatus === 'completed') {
+    updatePayload.completed_at = null;
+  }
 
   const { data: row, error } = await supabase
     .from('community_events')
-    .update({ ...data, updated_at: formatDate() })
+    .update(updatePayload)
     .eq('id', id)
-    .select()
+    .select(EVENT_MEMBER_SELECT)
     .single();
 
   if (error) {
@@ -334,20 +354,32 @@ export async function updateEvent(id: string, data: Partial<{
 
   // Scoring hooks: event completion / reopening
   const newStatus = data.status;
-  if (oldStatus !== newStatus && (newStatus === 'completed' || oldStatus === 'completed')) {
+  const updated = mapJoinedEventRow(row as Record<string, unknown>);
+  const newOrganizerId = updated.organizer_member_id || updated.created_by_member_id;
+  const organizerChangedWhileCompleted = oldStatus === 'completed'
+    && newStatus !== 'cancelled'
+    && oldOrganizerId
+    && newOrganizerId
+    && oldOrganizerId !== newOrganizerId
+    && data.organizer_member_id !== undefined;
+
+  if ((oldStatus !== newStatus && (newStatus === 'completed' || oldStatus === 'completed')) || organizerChangedWhileCompleted) {
     try {
       const { scoreEventCompletion, reverseEventScores } = await import('@/lib/scoring');
       if (newStatus === 'completed') {
         await scoreEventCompletion(id);
       } else if (oldStatus === 'completed') {
         await reverseEventScores(id);
+        if (organizerChangedWhileCompleted) {
+          await scoreEventCompletion(id);
+        }
       }
     } catch (err) {
       console.error('[scoring] Event completion scoring failed:', err);
     }
   }
 
-  return mapRowToEvent(row as Record<string, unknown>);
+  return updated;
 }
 
 // ==================== RSVPs ====================
@@ -768,7 +800,7 @@ export async function getAllEvents(options?: {
 
   let query = supabase
     .from('community_events')
-    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)')
+    .select(EVENT_MEMBER_SELECT)
     .order('created_at', { ascending: false });
 
   if (options?.status) {
@@ -788,15 +820,7 @@ export async function getAllEvents(options?: {
     throw new Error('Failed to fetch events');
   }
 
-  return (rows || []).map((row: Record<string, unknown>) => {
-    const members = row.members as Record<string, unknown> | null;
-    return mapRowToEvent({
-      ...row,
-      author_name: members?.name || null,
-      author_avatar_url: members?.avatar_url || null,
-      author_abg_class: members?.abg_class || null,
-    });
-  });
+  return (rows || []).map((row: Record<string, unknown>) => mapJoinedEventRow(row));
 }
 
 // ==================== Get Event by Proposal ====================
@@ -806,7 +830,7 @@ export async function getEventByProposalId(proposalId: string): Promise<Communit
 
   const { data: row, error } = await supabase
     .from('community_events')
-    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)')
+    .select(EVENT_MEMBER_SELECT)
     .eq('proposal_id', proposalId)
     .neq('status', 'cancelled')
     .maybeSingle();
@@ -818,13 +842,7 @@ export async function getEventByProposalId(proposalId: string): Promise<Communit
 
   if (!row) return null;
 
-  const members = (row as Record<string, unknown>).members as Record<string, unknown> | null;
-  return mapRowToEvent({
-    ...(row as Record<string, unknown>),
-    author_name: members?.name || null,
-    author_avatar_url: members?.avatar_url || null,
-    author_abg_class: members?.abg_class || null,
-  });
+  return mapJoinedEventRow(row as Record<string, unknown>);
 }
 
 // ==================== Public Events (no auth) ====================
@@ -843,7 +861,7 @@ export async function getPublicEvents(options?: {
 
   let query = supabase
     .from('community_events')
-    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)', { count: 'exact' })
+    .select(EVENT_MEMBER_SELECT, { count: 'exact' })
     .eq('status', 'published');
 
   if (options?.past) {
@@ -860,15 +878,7 @@ export async function getPublicEvents(options?: {
     throw new Error('Failed to fetch public events');
   }
 
-  const events = (rows || []).map((row: Record<string, unknown>) => {
-    const m = row.members as Record<string, unknown> | null;
-    return mapRowToEvent({
-      ...row,
-      author_name: m?.name || null,
-      author_avatar_url: m?.avatar_url || null,
-      author_abg_class: m?.abg_class || null,
-    });
-  });
+  const events = (rows || []).map((row: Record<string, unknown>) => mapJoinedEventRow(row));
 
   return { events, total: count || 0 };
 }
@@ -878,7 +888,7 @@ export async function getPublicEventById(eventId: string): Promise<CommunityEven
 
   const { data: row, error } = await supabase
     .from('community_events')
-    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)')
+    .select(EVENT_MEMBER_SELECT)
     .eq('id', eventId)
     .eq('status', 'published')
     .maybeSingle();
@@ -889,13 +899,7 @@ export async function getPublicEventById(eventId: string): Promise<CommunityEven
   }
   if (!row) return null;
 
-  const m = (row as Record<string, unknown>).members as Record<string, unknown> | null;
-  return mapRowToEvent({
-    ...(row as Record<string, unknown>),
-    author_name: m?.name || null,
-    author_avatar_url: m?.avatar_url || null,
-    author_abg_class: m?.abg_class || null,
-  });
+  return mapJoinedEventRow(row as Record<string, unknown>);
 }
 
 export async function getPublicEventBySlug(slug: string): Promise<CommunityEvent | null> {
@@ -903,7 +907,7 @@ export async function getPublicEventBySlug(slug: string): Promise<CommunityEvent
 
   const { data: row, error } = await supabase
     .from('community_events')
-    .select('*, members!community_events_created_by_member_id_fkey(name, avatar_url, abg_class)')
+    .select(EVENT_MEMBER_SELECT)
     .eq('slug', slug)
     .eq('status', 'published')
     .maybeSingle();
@@ -914,13 +918,7 @@ export async function getPublicEventBySlug(slug: string): Promise<CommunityEvent
   }
   if (!row) return null;
 
-  const m = (row as Record<string, unknown>).members as Record<string, unknown> | null;
-  return mapRowToEvent({
-    ...(row as Record<string, unknown>),
-    author_name: m?.name || null,
-    author_avatar_url: m?.avatar_url || null,
-    author_abg_class: m?.abg_class || null,
-  });
+  return mapJoinedEventRow(row as Record<string, unknown>);
 }
 
 // ==================== Guest RSVPs ====================

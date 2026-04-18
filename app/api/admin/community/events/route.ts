@@ -36,6 +36,7 @@ const CreateEventSchema = z.object({
   payment_instructions: z.string().optional(),
   require_question: z.boolean().optional(),
   question_prompt: z.string().max(500).optional(),
+  organizer_member_id: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
     const event = await createEvent({
       ...parsed.data,
       created_by_member_id: member.id,
+      organizer_member_id: parsed.data.organizer_member_id || member.id,
     });
 
     return successResponse({ event }, 201);
