@@ -143,6 +143,9 @@ export function HeaderNavigation() {
                 <Link href="/profile" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
                   {t.nav.profile || 'Profile'}
                 </Link>
+                <Link href="/members/leaderboard" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+                  {t.nav.leaderboard || 'Leaderboard'}
+                </Link>
               </>
             )}
             <Link href="/news" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
@@ -242,6 +245,13 @@ export function HeaderNavigation() {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {t.nav.profile || 'Profile'}
+                  </Link>
+                  <Link
+                    href="/members/leaderboard"
+                    className="text-sm text-white/80 hover:text-white hover:bg-white/10 px-4 py-3 rounded-md transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {t.nav.leaderboard || 'Leaderboard'}
                   </Link>
                 </>
               )}

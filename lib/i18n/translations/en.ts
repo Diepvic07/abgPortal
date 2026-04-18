@@ -16,6 +16,7 @@ export const en = {
     join: 'Join',
     findConnection: 'Find Connection',
     profile: 'Profile',
+    leaderboard: 'Leaderboard',
     history: 'History',
     faq: 'FAQ',
     news: 'News',

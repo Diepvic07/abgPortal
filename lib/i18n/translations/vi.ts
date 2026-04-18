@@ -18,6 +18,7 @@ export const vi: Translations = {
     join: 'Nhập hội',
     findConnection: 'Kiếm kèo kết nối',
     profile: 'Hồ sơ',
+    leaderboard: 'Leaderboard',
     history: 'Lịch sử',
     faq: 'FAQ',
     news: 'Tin tức',
