@@ -389,7 +389,17 @@ export function AdminEventManager() {
       const data = await res.json();
       if (res.ok) {
         setAttendanceRows(data.rsvps || []);
-        setMessage({ text: locale === 'vi' ? 'Đã lưu điểm danh và vai trò sự kiện' : 'Attendance and event roles saved', type: 'success' });
+        const savedEvent = data.event || viewingAttendance;
+        const pointsAreLive = savedEvent.status === 'completed';
+        setViewingAttendance(null);
+        setMessage({
+          text: pointsAreLive
+            ? (locale === 'vi' ? 'Đã lưu điểm danh và cập nhật điểm' : 'Attendance saved and scores updated')
+            : (locale === 'vi'
+              ? 'Đã lưu điểm danh. Điểm sẽ hiển thị khi sự kiện được chuyển sang trạng thái completed.'
+              : 'Attendance saved. Scores will appear after the event status is changed to completed.'),
+          type: 'success',
+        });
         await fetchEvents();
       } else {
         setMessage({ text: data.error || t.admin.events.saveFailed, type: 'error' });
@@ -1264,6 +1274,13 @@ export function AdminEventManager() {
                 <p className="text-sm text-emerald-900">
                   {locale === 'vi' ? 'Người tổ chức' : 'Organizer'}: {viewingAttendance.organizer_name || viewingAttendance.author_name || 'Unknown'}
                   <span className="ml-2 text-xs font-medium text-emerald-700">+100</span>
+                </p>
+                <p className="text-xs text-emerald-800 mt-1">
+                  {viewingAttendance.status === 'completed'
+                    ? (locale === 'vi' ? 'Điểm leaderboard sẽ được cập nhật khi lưu.' : 'Leaderboard scores will update when saved.')
+                    : (locale === 'vi'
+                      ? 'Điểm danh được lưu ngay. Điểm leaderboard chỉ hiển thị sau khi sự kiện ở trạng thái completed.'
+                      : 'Attendance is saved immediately. Leaderboard scores only appear after the event status is completed.')}
                 </p>
               </div>
 
