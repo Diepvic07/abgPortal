@@ -247,7 +247,7 @@ export interface BugReport {
 }
 
 // Community Proposals
-export type ProposalCategory = 'talk' | 'learning' | 'fieldtrip' | 'meeting' | 'sports' | 'community_support' | 'charity' | 'event' | 'other';
+export type ProposalCategory = 'talk' | 'learning' | 'fieldtrip' | 'coffee' | 'meeting' | 'sports' | 'community_support' | 'charity' | 'event' | 'other';
 export type ParticipationFormat = 'online' | 'offline' | 'hybrid';
 export type ProposalGenre = 'education' | 'health' | 'finance' | 'technology' | 'business' | 'culture' | 'environment' | 'other';
 export type ProposalStatus = 'published' | 'selected' | 'in_progress' | 'completed' | 'archived' | 'removed';
@@ -300,6 +300,7 @@ export const PROPOSAL_CATEGORY_LABELS: Record<ProposalCategory, { en: string; vi
   talk: { en: 'Talk', vi: 'Talk', icon: '🎤' },
   learning: { en: 'Learning', vi: 'Học tập', icon: '📚' },
   fieldtrip: { en: 'Fieldtrip', vi: 'Fieldtrip', icon: '🚌' },
+  coffee: { en: 'Coffee', vi: 'Cà phê', icon: '☕' },
   meeting: { en: 'Meetup', vi: 'Gặp gỡ', icon: '🤝' },
   sports: { en: 'Sports', vi: 'Thể thao', icon: '⚽' },
   community_support: { en: 'Community Support', vi: 'Hỗ trợ cộng đồng', icon: '💛' },
@@ -354,6 +355,13 @@ export interface CommunityProposal {
   participation_format?: ParticipationFormat;
   has_discussion?: boolean;
   has_poll?: boolean;
+  // Activity-type-specific fields
+  duration?: string;
+  agenda?: string;
+  has_fee?: boolean;
+  estimated_fee?: string;
+  requirements?: string;
+  registration_info?: string;
   // Recap fields
   recap_text?: string;
   recap_images?: string[];

@@ -9,7 +9,7 @@ import { createInAppNotifications } from '@/lib/in-app-notifications';
 
 const PROPOSAL_RATE_LIMIT_MINUTES = 1;
 
-const VALID_CATEGORIES: ProposalCategory[] = ['talk', 'learning', 'fieldtrip', 'meeting', 'sports', 'community_support', 'charity', 'event', 'other'];
+const VALID_CATEGORIES: ProposalCategory[] = ['talk', 'learning', 'fieldtrip', 'coffee', 'meeting', 'sports', 'community_support', 'charity', 'event', 'other'];
 const VALID_COMMITMENTS: CommitmentLevel[] = ['interested', 'will_participate', 'will_lead'];
 const VALID_FORMATS: ParticipationFormat[] = ['online', 'offline', 'hybrid'];
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const member = await requireAuth(request);
 
     const body = await request.json();
-    const { title, description, category, genre, target_date, commitment_level, image_url, tags, location, participation_format, has_discussion, discussion_date_options, discussion_title, discussion_description, has_poll, poll_title, poll_description, poll_options, poll_allow_multiple } = body;
+    const { title, description, category, genre, target_date, commitment_level, image_url, tags, location, participation_format, has_discussion, discussion_date_options, discussion_title, discussion_description, has_poll, poll_title, poll_description, poll_options, poll_allow_multiple, duration, agenda, has_fee, estimated_fee, requirements, registration_info } = body;
 
     if (!title || title.length < 5 || title.length > 200) {
       return errorResponse('Title must be between 5 and 200 characters', 400);
@@ -49,6 +49,41 @@ export async function POST(request: NextRequest) {
     }
     if (!category || !VALID_CATEGORIES.includes(category)) {
       return errorResponse('Invalid category', 400);
+    }
+
+    // Type-specific field validation
+    const typesNeedingDetails: ProposalCategory[] = ['coffee', 'fieldtrip', 'sports', 'community_support', 'talk'];
+    if (typesNeedingDetails.includes(category)) {
+      const hasDatePoll = has_discussion && Array.isArray(discussion_date_options) && discussion_date_options.length >= 2;
+      if (!hasDatePoll && !target_date) {
+        return errorResponse('Date/time is required unless you create a date poll', 400);
+      }
+      if (!duration || typeof duration !== 'string' || !duration.trim()) {
+        return errorResponse('Duration is required for this activity type', 400);
+      }
+      const isOnlineTalk = category === 'talk' && participation_format === 'online';
+      if (!isOnlineTalk && (!location || typeof location !== 'string' || !location.trim())) {
+        return errorResponse('Location is required for this activity type', 400);
+      }
+    }
+    const typesNeedingAgenda: ProposalCategory[] = ['fieldtrip', 'sports', 'community_support', 'talk'];
+    if (typesNeedingAgenda.includes(category)) {
+      if (!agenda || typeof agenda !== 'string' || !agenda.trim()) {
+        return errorResponse('Agenda is required for this activity type', 400);
+      }
+    }
+    if (category === 'community_support') {
+      if (!requirements || typeof requirements !== 'string' || !requirements.trim()) {
+        return errorResponse('Requirements are required for community support activities', 400);
+      }
+      if (!registration_info || typeof registration_info !== 'string' || !registration_info.trim()) {
+        return errorResponse('Registration info is required for community support activities', 400);
+      }
+    }
+    if (category === 'talk') {
+      if (!participation_format || !VALID_FORMATS.includes(participation_format)) {
+        return errorResponse('Participation format is required for talk activities', 400);
+      }
     }
 
     // Rate limit: 1 proposal per minute per user
@@ -80,6 +115,12 @@ export async function POST(request: NextRequest) {
       tags: Array.isArray(tags) ? tags.filter((t: string) => typeof t === 'string' && t.trim()).map((t: string) => t.trim()).slice(0, 10) : [],
       location: typeof location === 'string' ? location.trim().slice(0, 100) : undefined,
       participation_format: participation_format && VALID_FORMATS.includes(participation_format) ? participation_format : 'offline',
+      duration: typeof duration === 'string' ? duration.trim().slice(0, 100) : undefined,
+      agenda: typeof agenda === 'string' ? agenda.trim().slice(0, 5000) : undefined,
+      has_fee: typeof has_fee === 'boolean' ? has_fee : undefined,
+      estimated_fee: typeof estimated_fee === 'string' ? estimated_fee.trim().slice(0, 200) : undefined,
+      requirements: typeof requirements === 'string' ? requirements.trim().slice(0, 2000) : undefined,
+      registration_info: typeof registration_info === 'string' ? registration_info.trim().slice(0, 2000) : undefined,
     });
 
     // Create discussion if enabled

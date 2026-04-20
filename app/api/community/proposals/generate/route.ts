@@ -47,9 +47,8 @@ META: {"category": "...", "tags": ["thẻ1", "thẻ2", "thẻ3"], "genre": "..."
 Quy tắc cho META:
 - category: chọn MỘT loại hoạt động PHÙ HỢP NHẤT dựa trên NỘI DUNG THỰC TẾ (KHÔNG dùng giá trị người dùng đã chọn, hãy tự đánh giá lại):
   * "talk" = buổi nói chuyện, chia sẻ, workshop, webinar, thuyết trình (KHÔNG có di chuyển/du lịch)
-  * "learning" = khóa học, lớp học, đào tạo, mentoring
   * "fieldtrip" = dã ngoại, du lịch, tham quan, đi chơi, khám phá địa điểm, camping, team building ngoài trời
-  * "meeting" = gặp gỡ, networking, họp mặt, giao lưu, coffee chat
+  * "coffee" = cà phê, gặp gỡ nhẹ nhàng, networking, coffee chat, trà đàm
   * "sports" = thể thao, chạy bộ, marathon, đạp xe, bơi lội, gym
   * "community_support" = từ thiện, tình nguyện, hỗ trợ cộng đồng, quyên góp
 - tags: 3-5 thẻ ngắn gọn bằng tiếng Việt (1-3 từ, viết thường), liên quan trực tiếp đến nội dung

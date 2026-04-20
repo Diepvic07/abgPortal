@@ -6,12 +6,13 @@ import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, ProposalCategory, ProposalGenre, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS, ParticipationFormat, COMMITMENT_LABELS } from '@/types';
 
-const CATEGORIES: ProposalCategory[] = ['talk', 'learning', 'fieldtrip', 'meeting', 'sports', 'community_support'];
+const CATEGORIES: ProposalCategory[] = ['talk', 'fieldtrip', 'coffee', 'sports', 'community_support', 'other'];
 
 const CATEGORY_COLORS: Record<ProposalCategory, { border: string; bg: string; accent: string }> = {
   talk: { border: 'border-l-indigo-400', bg: 'bg-indigo-50/40', accent: 'text-indigo-600' },
   learning: { border: 'border-l-blue-400', bg: 'bg-blue-50/40', accent: 'text-blue-600' },
   fieldtrip: { border: 'border-l-teal-400', bg: 'bg-teal-50/40', accent: 'text-teal-600' },
+  coffee: { border: 'border-l-amber-600', bg: 'bg-amber-50/40', accent: 'text-amber-700' },
   meeting: { border: 'border-l-emerald-400', bg: 'bg-emerald-50/40', accent: 'text-emerald-600' },
   sports: { border: 'border-l-orange-400', bg: 'bg-orange-50/40', accent: 'text-orange-600' },
   community_support: { border: 'border-l-amber-400', bg: 'bg-amber-50/40', accent: 'text-amber-600' },

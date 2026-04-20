@@ -1084,7 +1084,47 @@ export function ProposalDetail({ proposalId }: Props) {
                   {PROPOSAL_GENRE_LABELS[proposal.genre]?.icon} {PROPOSAL_GENRE_LABELS[proposal.genre]?.[locale === 'vi' ? 'vi' : 'en']}
                 </span>
               )}
+              {proposal.duration && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                  ⏱️ {proposal.duration}
+                </span>
+              )}
+              {proposal.has_fee !== undefined && proposal.has_fee !== null && (
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${proposal.has_fee ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
+                  {proposal.has_fee ? `💰 ${proposal.estimated_fee || (locale === 'vi' ? 'Có phí' : 'Has fee')}` : (locale === 'vi' ? '🆓 Miễn phí' : '🆓 Free')}
+                </span>
+              )}
             </div>
+
+            {/* Activity-type-specific details */}
+            {(proposal.agenda || proposal.requirements || proposal.registration_info) && (
+              <div className="mt-4 space-y-4">
+                {proposal.agenda && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-blue-900 mb-2">
+                      📋 {locale === 'vi' ? 'Chương trình / Agenda' : 'Agenda'}
+                    </h3>
+                    <div className="text-sm text-blue-800 whitespace-pre-wrap">{proposal.agenda}</div>
+                  </div>
+                )}
+                {proposal.requirements && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-amber-900 mb-2">
+                      📝 {locale === 'vi' ? 'Yêu cầu đối với người tham gia' : 'Requirements'}
+                    </h3>
+                    <div className="text-sm text-amber-800 whitespace-pre-wrap">{proposal.requirements}</div>
+                  </div>
+                )}
+                {proposal.registration_info && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-green-900 mb-2">
+                      ✍️ {locale === 'vi' ? 'Cách đăng ký' : 'How to register'}
+                    </h3>
+                    <div className="text-sm text-green-800 whitespace-pre-wrap">{proposal.registration_info}</div>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

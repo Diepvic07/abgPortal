@@ -88,6 +88,12 @@ export async function createProposal(data: {
   tags?: string[];
   location?: string;
   participation_format?: string;
+  duration?: string;
+  agenda?: string;
+  has_fee?: boolean;
+  estimated_fee?: string;
+  requirements?: string;
+  registration_info?: string;
 }): Promise<CommunityProposal> {
   const supabase = createServerSupabaseClient();
   const id = generateId();
@@ -110,6 +116,12 @@ export async function createProposal(data: {
       ...(data.tags && data.tags.length > 0 ? { tags: data.tags } : {}),
       ...(data.location ? { location: data.location } : {}),
       ...(data.participation_format ? { participation_format: data.participation_format } : {}),
+      ...(data.duration ? { duration: data.duration } : {}),
+      ...(data.agenda ? { agenda: data.agenda } : {}),
+      ...(data.has_fee !== undefined ? { has_fee: data.has_fee } : {}),
+      ...(data.estimated_fee ? { estimated_fee: data.estimated_fee } : {}),
+      ...(data.requirements ? { requirements: data.requirements } : {}),
+      ...(data.registration_info ? { registration_info: data.registration_info } : {}),
       status: 'published',
       is_pinned: false,
       commitment_score: 0,
