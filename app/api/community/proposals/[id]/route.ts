@@ -159,7 +159,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return successResponse({ proposal: latest || updated });
     }
 
-    const { title, description, category, genre, target_date, location, participation_format, tags } = body;
+    const { title, description, category, genre, target_date, location, participation_format, tags, duration, agenda, has_fee, estimated_fee, requirements, registration_info } = body;
 
     const updates: Record<string, unknown> = {};
     if (title !== undefined) {
@@ -176,6 +176,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (location !== undefined) updates.location = location || null;
     if (participation_format !== undefined) updates.participation_format = participation_format;
     if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags.filter((t: string) => typeof t === 'string' && t.trim()).map((t: string) => t.trim()).slice(0, 10) : [];
+    // Activity-type-specific fields
+    if (duration !== undefined) updates.duration = typeof duration === 'string' ? duration.trim().slice(0, 100) || null : null;
+    if (agenda !== undefined) updates.agenda = typeof agenda === 'string' ? agenda.trim().slice(0, 5000) || null : null;
+    if (has_fee !== undefined) updates.has_fee = typeof has_fee === 'boolean' ? has_fee : null;
+    if (estimated_fee !== undefined) updates.estimated_fee = typeof estimated_fee === 'string' ? estimated_fee.trim().slice(0, 200) || null : null;
+    if (requirements !== undefined) updates.requirements = typeof requirements === 'string' ? requirements.trim().slice(0, 2000) || null : null;
+    if (registration_info !== undefined) updates.registration_info = typeof registration_info === 'string' ? registration_info.trim().slice(0, 2000) || null : null;
 
     // Update proposal fields first (without has_discussion to avoid schema cache issues)
     const updated = await updateProposal(id, updates);

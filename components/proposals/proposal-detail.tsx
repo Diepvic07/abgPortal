@@ -126,6 +126,15 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editPollDescription, setEditPollDescription] = useState('');
   const [editPollOptions, setEditPollOptions] = useState<string[]>(['', '']);
   const [editPollAllowMultiple, setEditPollAllowMultiple] = useState(false);
+  // Activity-type-specific edit fields
+  const [editDuration, setEditDuration] = useState('');
+  const [editCustomDuration, setEditCustomDuration] = useState('');
+  const [editAgenda, setEditAgenda] = useState('');
+  const [editGeneratingAgenda, setEditGeneratingAgenda] = useState(false);
+  const [editHasFee, setEditHasFee] = useState<boolean | null>(null);
+  const [editEstimatedFee, setEditEstimatedFee] = useState('');
+  const [editRequirements, setEditRequirements] = useState('');
+  const [editRegistrationInfo, setEditRegistrationInfo] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [rerunningAI, setRerunningAI] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -492,6 +501,24 @@ export function ProposalDetail({ proposalId }: Props) {
     setEditPollDescription(poll?.description || '');
     setEditPollOptions(poll?.options?.length ? [...poll.options] : ['', '']);
     setEditPollAllowMultiple(poll?.allow_multiple || false);
+    // Activity-type-specific fields
+    const dur = proposal.duration || '';
+    const durationPresets = ['1 giờ', '2 giờ', '3 giờ', 'Nửa ngày', 'Cả ngày'];
+    if (durationPresets.includes(dur)) {
+      setEditDuration(dur);
+      setEditCustomDuration('');
+    } else if (dur) {
+      setEditDuration('__custom__');
+      setEditCustomDuration(dur);
+    } else {
+      setEditDuration('');
+      setEditCustomDuration('');
+    }
+    setEditAgenda(proposal.agenda || '');
+    setEditHasFee(proposal.has_fee !== undefined && proposal.has_fee !== null ? proposal.has_fee : null);
+    setEditEstimatedFee(proposal.estimated_fee || '');
+    setEditRequirements(proposal.requirements || '');
+    setEditRegistrationInfo(proposal.registration_info || '');
     setEditError(null);
     setIsEditing(true);
   }
@@ -555,6 +582,13 @@ export function ProposalDetail({ proposalId }: Props) {
           poll_description: editHasPoll ? editPollDescription.trim() || undefined : undefined,
           poll_options: editHasPoll ? editPollOptions.filter(o => o.trim()) : undefined,
           poll_allow_multiple: editHasPoll ? editPollAllowMultiple : undefined,
+          // Activity-type-specific fields
+          duration: (editDuration === '__custom__' ? editCustomDuration.trim() : editDuration) || null,
+          agenda: editAgenda.trim() || null,
+          has_fee: editHasFee,
+          estimated_fee: editEstimatedFee.trim() || null,
+          requirements: editRequirements.trim() || null,
+          registration_info: editRegistrationInfo.trim() || null,
         }),
       });
       if (!res.ok) {
@@ -793,6 +827,194 @@ export function ProposalDetail({ proposalId }: Props) {
                 </select>
               </label>
             </div>
+
+            {/* Activity-type-specific fields */}
+            {editCategory && editCategory !== 'other' && (
+              <div className="mt-4 border-2 border-blue-100 rounded-lg p-4 space-y-4">
+                <p className="text-sm font-semibold text-blue-700">
+                  {locale === 'vi' ? 'Thông tin theo loại hoạt động' : 'Activity-type fields'}
+                </p>
+
+                {/* Duration */}
+                {['coffee', 'fieldtrip', 'sports', 'community_support', 'talk'].includes(editCategory) && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-1">
+                      {locale === 'vi' ? 'Thời lượng' : 'Duration'} *
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: '1 giờ', label: '1 giờ' },
+                        { value: '2 giờ', label: '2 giờ' },
+                        { value: '3 giờ', label: '3 giờ' },
+                        { value: 'Nửa ngày', label: locale === 'vi' ? 'Nửa ngày' : 'Half day' },
+                        { value: 'Cả ngày', label: locale === 'vi' ? 'Cả ngày' : 'Full day' },
+                      ].map(d => (
+                        <button
+                          key={d.value}
+                          type="button"
+                          onClick={() => { setEditDuration(d.value); setEditCustomDuration(''); }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                            editDuration === d.value
+                              ? 'bg-blue-600 border-blue-600 text-white'
+                              : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
+                          }`}
+                        >
+                          {d.label}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setEditDuration('__custom__')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                          editDuration === '__custom__'
+                            ? 'bg-blue-600 border-blue-600 text-white'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
+                        }`}
+                      >
+                        ✏️ {locale === 'vi' ? 'Khác' : 'Other'}
+                      </button>
+                    </div>
+                    {editDuration === '__custom__' && (
+                      <input
+                        type="text"
+                        value={editCustomDuration}
+                        onChange={e => setEditCustomDuration(e.target.value)}
+                        placeholder={locale === 'vi' ? 'VD: 4 tiếng, 2 ngày 1 đêm...' : 'e.g. 4 hours, 2 days...'}
+                        className="mt-2 w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        maxLength={100}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* Agenda */}
+                {['fieldtrip', 'sports', 'community_support', 'talk'].includes(editCategory) && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-1">
+                      {locale === 'vi'
+                        ? (editCategory === 'community_support' ? 'Chương trình / Mô tả công việc' : 'Chương trình / Agenda')
+                        : (editCategory === 'community_support' ? 'Agenda / Task description' : 'Agenda')} *
+                    </label>
+                    <textarea
+                      value={editAgenda}
+                      onChange={e => setEditAgenda(e.target.value)}
+                      placeholder={locale === 'vi'
+                        ? 'VD:\n08:00 - Tập trung\n08:30 - Khởi hành\n10:00 - Hoạt động chính'
+                        : 'e.g.\n08:00 - Gathering\n08:30 - Departure\n10:00 - Main activity'}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!editTitle || !editDescription) return;
+                        setEditGeneratingAgenda(true);
+                        try {
+                          const res = await fetch('/api/community/proposals/generate-agenda', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              title: editTitle,
+                              category: editCategory,
+                              description: editDescription,
+                              location: editLocation === '__custom__' ? editCustomLocation : editLocation,
+                              duration: editDuration === '__custom__' ? editCustomDuration : editDuration,
+                            }),
+                          });
+                          const data = await res.json();
+                          if (res.ok && data.agenda) setEditAgenda(data.agenda);
+                        } catch { /* ignore */ } finally {
+                          setEditGeneratingAgenda(false);
+                        }
+                      }}
+                      disabled={editGeneratingAgenda || !editTitle || !editDescription}
+                      className="mt-1 text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 flex items-center gap-1"
+                    >
+                      {editGeneratingAgenda ? (
+                        <>
+                          <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                          {locale === 'vi' ? 'AI đang tạo...' : 'AI generating...'}
+                        </>
+                      ) : (
+                        <>{editAgenda ? '🔄' : '✨'} {locale === 'vi' ? (editAgenda ? 'Tạo lại bằng AI' : 'Tạo bằng AI') : (editAgenda ? 'Regenerate with AI' : 'Generate with AI')}</>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* Fee */}
+                {['fieldtrip', 'sports'].includes(editCategory) && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-2">
+                      {locale === 'vi' ? 'Chi phí tham gia' : 'Participation fee'} *
+                    </label>
+                    <div className="flex gap-2 mb-2">
+                      <button
+                        type="button"
+                        onClick={() => { setEditHasFee(false); setEditEstimatedFee(''); }}
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
+                          editHasFee === false
+                            ? 'border-green-500 bg-green-50 text-green-700'
+                            : 'border-gray-200 text-gray-600 hover:border-green-300 bg-white'
+                        }`}
+                      >
+                        {locale === 'vi' ? '🆓 Miễn phí' : '🆓 No Fee'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditHasFee(true)}
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
+                          editHasFee === true
+                            ? 'border-orange-500 bg-orange-50 text-orange-700'
+                            : 'border-gray-200 text-gray-600 hover:border-orange-300 bg-white'
+                        }`}
+                      >
+                        {locale === 'vi' ? '💰 Có phí' : '💰 Has Fee'}
+                      </button>
+                    </div>
+                    {editHasFee === true && (
+                      <input
+                        type="text"
+                        value={editEstimatedFee}
+                        onChange={e => setEditEstimatedFee(e.target.value)}
+                        placeholder={locale === 'vi' ? 'Chi phí ước tính (tùy chọn), VD: 200.000 VNĐ / người' : 'Estimated fee (optional)'}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        maxLength={200}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* Requirements (Community Support) */}
+                {editCategory === 'community_support' && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-1">
+                      {locale === 'vi' ? 'Yêu cầu đối với người tham gia' : 'Requirements for participants'} *
+                    </label>
+                    <textarea
+                      value={editRequirements}
+                      onChange={e => setEditRequirements(e.target.value)}
+                      placeholder={locale === 'vi' ? 'VD: Có tinh thần tình nguyện, mang giày thể thao...' : 'e.g. Volunteer spirit, bring sport shoes...'}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[60px]"
+                    />
+                  </div>
+                )}
+
+                {/* Registration Info (Community Support) */}
+                {editCategory === 'community_support' && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-1">
+                      {locale === 'vi' ? 'Cách đăng ký tham gia' : 'How to register'} *
+                    </label>
+                    <textarea
+                      value={editRegistrationInfo}
+                      onChange={e => setEditRegistrationInfo(e.target.value)}
+                      placeholder={locale === 'vi' ? 'VD: Đăng ký qua Google Form: [link]...' : 'e.g. Register via Google Form: [link]...'}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[60px]"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Discussion toggle */}
             <div className="mt-4 border border-gray-200 rounded-lg p-4">
