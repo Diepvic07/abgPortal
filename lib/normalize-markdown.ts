@@ -10,6 +10,9 @@ export function normalizeMarkdown(text: string): string {
   if (!text) return text;
   let out = text;
 
+  // Unescape escaped asterisks (e.g. \*\*text\*\* → **text**)
+  out = out.replace(/\\\*/g, '*');
+
   // Bold: **…**  (non-greedy, single line)
   out = out.replace(/\*\*([ \t]*)([^*\n]+?)([ \t]*)\*\*/g, (_m, _l, inner: string) => {
     const trimmed = inner.trim();
