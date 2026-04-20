@@ -25,5 +25,9 @@ export function normalizeMarkdown(text: string): string {
     return trimmed ? `__${trimmed}__` : _m;
   });
 
+  // Ensure a space after closing ** when immediately followed by a letter.
+  // e.g. **text:**Giữ → **text:** Giữ — so the parser recognises the closing delimiter.
+  out = out.replace(/(\*\*[^*\n]+?\*\*)([A-Za-z\u00C0-\u024F\u1E00-\u1EFF])/g, '$1 $2');
+
   return out;
 }
