@@ -96,7 +96,7 @@ export function ArticleHeader({ article, taggedMembers = [] }: ArticleHeaderProp
       </div>
 
       {/* Title */}
-      <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-8 leading-tight">
+      <h1 className="text-3xl font-bold text-gray-900 mb-4">
         {localized.title}
       </h1>
 
