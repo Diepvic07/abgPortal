@@ -42,6 +42,12 @@ function mapRowToProposal(row: Record<string, unknown>): CommunityProposal {
     author_name: nullToUndefined(row.author_name as string | null),
     author_avatar_url: nullToUndefined(row.author_avatar_url as string | null),
     author_abg_class: nullToUndefined(row.author_abg_class as string | null),
+    duration: nullToUndefined(row.duration as string | null),
+    agenda: nullToUndefined(row.agenda as string | null),
+    has_fee: row.has_fee as boolean | undefined,
+    estimated_fee: nullToUndefined(row.estimated_fee as string | null),
+    requirements: nullToUndefined(row.requirements as string | null),
+    registration_info: nullToUndefined(row.registration_info as string | null),
   };
 }
 
