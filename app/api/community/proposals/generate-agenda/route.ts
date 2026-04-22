@@ -46,6 +46,7 @@ Yêu cầu:
 - Nếu là sports/thể thao: bao gồm khởi động, hoạt động chính, nghỉ giải lao, kết thúc
 - Nếu là community_support: bao gồm briefing, phân công, thực hiện, tổng kết
 - Giữ ngắn gọn nhưng đầy đủ thông tin
+- MỖI bullet point TỐI ĐA 5-7 từ, viết cô đọng kiểu gạch đầu dòng, KHÔNG viết câu dài
 - KHÔNG thêm tiêu đề "Chương trình" hay "Agenda" ở đầu, chỉ viết nội dung
 - Sử dụng emoji phù hợp để dễ đọc`;
 
