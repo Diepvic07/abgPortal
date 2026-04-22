@@ -1066,6 +1066,34 @@ export function ProposalDetail({ proposalId }: Props) {
                   </p>
                   {editDiscussionOptions.map((opt, i) => (
                     <div key={i} className="flex items-center gap-2 flex-wrap">
+                      <div className="flex flex-col gap-0.5 mr-1">
+                        <button
+                          type="button"
+                          disabled={i === 0}
+                          onClick={() => {
+                            const updated = [...editDiscussionOptions];
+                            [updated[i - 1], updated[i]] = [updated[i], updated[i - 1]];
+                            setEditDiscussionOptions(updated);
+                          }}
+                          className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-xs leading-none p-0.5"
+                          title={locale === 'vi' ? 'Di chuyển lên' : 'Move up'}
+                        >
+                          ▲
+                        </button>
+                        <button
+                          type="button"
+                          disabled={i === editDiscussionOptions.length - 1}
+                          onClick={() => {
+                            const updated = [...editDiscussionOptions];
+                            [updated[i], updated[i + 1]] = [updated[i + 1], updated[i]];
+                            setEditDiscussionOptions(updated);
+                          }}
+                          className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-xs leading-none p-0.5"
+                          title={locale === 'vi' ? 'Di chuyển xuống' : 'Move down'}
+                        >
+                          ▼
+                        </button>
+                      </div>
                       <input
                         type="date"
                         value={opt.date}
@@ -1175,6 +1203,34 @@ export function ProposalDetail({ proposalId }: Props) {
                   </p>
                   {editPollOptions.map((opt, i) => (
                     <div key={i} className="flex items-center gap-2">
+                      <div className="flex flex-col gap-0.5 mr-1">
+                        <button
+                          type="button"
+                          disabled={i === 0}
+                          onClick={() => {
+                            const updated = [...editPollOptions];
+                            [updated[i - 1], updated[i]] = [updated[i], updated[i - 1]];
+                            setEditPollOptions(updated);
+                          }}
+                          className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-xs leading-none p-0.5"
+                          title={locale === 'vi' ? 'Di chuyển lên' : 'Move up'}
+                        >
+                          ▲
+                        </button>
+                        <button
+                          type="button"
+                          disabled={i === editPollOptions.length - 1}
+                          onClick={() => {
+                            const updated = [...editPollOptions];
+                            [updated[i], updated[i + 1]] = [updated[i + 1], updated[i]];
+                            setEditPollOptions(updated);
+                          }}
+                          className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed text-xs leading-none p-0.5"
+                          title={locale === 'vi' ? 'Di chuyển xuống' : 'Move down'}
+                        >
+                          ▼
+                        </button>
+                      </div>
                       <input
                         type="text"
                         value={opt}
