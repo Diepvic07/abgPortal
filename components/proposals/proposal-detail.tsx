@@ -1374,35 +1374,6 @@ export function ProposalDetail({ proposalId }: Props) {
               )}
             </div>
 
-            {/* Activity-type-specific details */}
-            {(proposal.agenda || proposal.requirements || proposal.registration_info) && (
-              <div className="mt-4 space-y-4">
-                {proposal.agenda && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-blue-900 mb-2">
-                      📋 {locale === 'vi' ? 'Chương trình / Agenda' : 'Agenda'}
-                    </h3>
-                    <div className="text-sm text-blue-800 whitespace-pre-wrap">{proposal.agenda}</div>
-                  </div>
-                )}
-                {proposal.requirements && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-amber-900 mb-2">
-                      📝 {locale === 'vi' ? 'Yêu cầu đối với người tham gia' : 'Requirements'}
-                    </h3>
-                    <div className="text-sm text-amber-800 whitespace-pre-wrap">{proposal.requirements}</div>
-                  </div>
-                )}
-                {proposal.registration_info && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-green-900 mb-2">
-                      ✍️ {locale === 'vi' ? 'Cách đăng ký' : 'How to register'}
-                    </h3>
-                    <div className="text-sm text-green-800 whitespace-pre-wrap">{proposal.registration_info}</div>
-                  </div>
-                )}
-              </div>
-            )}
           </>
         )}
       </div>
@@ -1485,6 +1456,36 @@ export function ProposalDetail({ proposalId }: Props) {
           />
         ) : (
           <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ p: ({ children }) => <p className="mb-3">{children}</p>, a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{linkifyText(proposal.description)}</ReactMarkdown></div>
+        )}
+
+        {/* Activity-type-specific details */}
+        {(proposal.agenda || proposal.requirements || proposal.registration_info) && (
+          <div className="space-y-4 mt-4">
+            {proposal.agenda && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-blue-900 mb-2">
+                  📋 {locale === 'vi' ? 'Chương trình / Agenda' : 'Agenda'}
+                </h3>
+                <div className="text-sm text-blue-800 whitespace-pre-wrap">{proposal.agenda}</div>
+              </div>
+            )}
+            {proposal.requirements && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-amber-900 mb-2">
+                  📝 {locale === 'vi' ? 'Yêu cầu đối với người tham gia' : 'Requirements'}
+                </h3>
+                <div className="text-sm text-amber-800 whitespace-pre-wrap">{proposal.requirements}</div>
+              </div>
+            )}
+            {proposal.registration_info && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-green-900 mb-2">
+                  ✍️ {locale === 'vi' ? 'Cách đăng ký' : 'How to register'}
+                </h3>
+                <div className="text-sm text-green-800 whitespace-pre-wrap">{proposal.registration_info}</div>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
