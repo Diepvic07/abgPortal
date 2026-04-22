@@ -29,7 +29,7 @@ ${why ? `Tại sao quan trọng: ${why}` : ''}
 ${who ? `Đối tượng: ${who}` : ''}
 ${howMany ? `Số lượng: ${howMany}` : ''}
 ${resources ? `Cần hỗ trợ: ${resources}` : ''}
-${targetDate ? `Thời gian: ${targetDate}` : ''}
+${targetDate ? `Ngày dự kiến: ${targetDate}` : ''}
 ${extra ? `Thông tin thêm: ${extra}` : ''}
 
 Yêu cầu:
