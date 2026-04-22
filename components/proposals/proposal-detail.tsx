@@ -1468,7 +1468,7 @@ export function ProposalDetail({ proposalId }: Props) {
                 <h3 className="text-sm font-semibold text-blue-900 mb-2">
                   📋 {locale === 'vi' ? 'Chương trình / Agenda' : 'Agenda'}
                 </h3>
-                <div className="prose prose-sm max-w-none text-blue-800"><ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{proposal.agenda}</ReactMarkdown></div>
+                <div className="prose prose-sm max-w-none text-blue-800 prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:mb-1 prose-headings:mt-2"><ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{proposal.agenda}</ReactMarkdown></div>
               </div>
             )}
             {proposal.requirements && (

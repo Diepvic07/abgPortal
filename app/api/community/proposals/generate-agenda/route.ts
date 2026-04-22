@@ -39,8 +39,8 @@ ${timeSlots && timeSlots.length > 0 ? `Các khung giờ đề xuất từ poll:\
 
 Yêu cầu:
 - LUÔN viết bằng tiếng Việt
-- Tạo chương trình chi tiết với các mốc thời gian cụ thể
-- Nếu có khung giờ từ poll, SỬ DỤNG CHÍNH XÁC các khung giờ đó (startTime-endTime) để chia agenda thành các phần tương ứng
+- KHÔNG dùng giờ cụ thể (09:30 - 10:10). Thay vào đó dùng format tương đối: "10 phút đầu - Mở đầu", "20 phút tiếp - Chia sẻ chuyên môn", "15 phút cuối - Q&A & Tổng kết"
+- Nếu có khung giờ từ poll, chỉ dùng để ước tính tổng thời lượng, KHÔNG ghi giờ cụ thể
 - Sử dụng format rõ ràng, dễ đọc
 - Phù hợp với loại hoạt động "${categoryLabel}"
 - Nếu là fieldtrip/dã ngoại: bao gồm các điểm dừng, hoạt động tại mỗi điểm
@@ -48,7 +48,8 @@ Yêu cầu:
 - Nếu là sports/thể thao: bao gồm khởi động, hoạt động chính, nghỉ giải lao, kết thúc
 - Nếu là community_support: bao gồm briefing, phân công, thực hiện, tổng kết
 - Giữ ngắn gọn nhưng đầy đủ thông tin
-- MỖI bullet point TỐI ĐA 5-7 từ, viết cô đọng kiểu gạch đầu dòng, KHÔNG viết câu dài
+- MỖI bullet point TỐI ĐA 5-7 từ, viết cô đọng, KHÔNG viết câu dài
+- Mỗi phần chỉ gồm: 1 dòng tiêu đề (vd: **10 phút đầu - Mở đầu**) và 2-4 bullet points ngay bên dưới, KHÔNG để dòng trống giữa tiêu đề và bullet points
 - KHÔNG thêm tiêu đề "Chương trình" hay "Agenda" ở đầu, chỉ viết nội dung
 - Sử dụng emoji phù hợp để dễ đọc
 - QUAN TRỌNG: Dùng cú pháp Markdown chuẩn cho danh sách (dùng "* " hoặc "- " ở đầu dòng), KHÔNG dùng ký tự "•"`;
