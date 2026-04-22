@@ -1343,7 +1343,7 @@ export function ProposalDetail({ proposalId }: Props) {
               <span>
                 {locale === 'vi' ? 'bởi' : 'by'} {proposal.author_name || 'Unknown'}
                 {proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
-                {proposal.target_date ? ` · ${locale === 'vi' ? 'Mục tiêu' : 'Target'}: ${proposal.target_date}` : ''}
+                {proposal.target_date ? ` · ${locale === 'vi' ? 'Ngày dự kiến' : 'Target date'}: ${proposal.target_date}` : ''}
               </span>
               {proposal.location && (
                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
