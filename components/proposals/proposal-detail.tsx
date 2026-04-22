@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, ParticipationFormat, ProposalDiscussion, DiscussionResponse, ProposalPoll, PollResponse, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS } from '@/types';
@@ -1467,7 +1468,7 @@ export function ProposalDetail({ proposalId }: Props) {
                 <h3 className="text-sm font-semibold text-blue-900 mb-2">
                   📋 {locale === 'vi' ? 'Chương trình / Agenda' : 'Agenda'}
                 </h3>
-                <div className="prose prose-sm max-w-none text-blue-800"><ReactMarkdown remarkPlugins={[remarkGfm]}>{proposal.agenda}</ReactMarkdown></div>
+                <div className="prose prose-sm max-w-none text-blue-800"><ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{proposal.agenda}</ReactMarkdown></div>
               </div>
             )}
             {proposal.requirements && (
@@ -1475,7 +1476,7 @@ export function ProposalDetail({ proposalId }: Props) {
                 <h3 className="text-sm font-semibold text-amber-900 mb-2">
                   📝 {locale === 'vi' ? 'Yêu cầu đối với người tham gia' : 'Requirements'}
                 </h3>
-                <div className="prose prose-sm max-w-none text-amber-800"><ReactMarkdown remarkPlugins={[remarkGfm]}>{proposal.requirements}</ReactMarkdown></div>
+                <div className="prose prose-sm max-w-none text-amber-800"><ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{proposal.requirements}</ReactMarkdown></div>
               </div>
             )}
             {proposal.registration_info && (
@@ -1483,7 +1484,7 @@ export function ProposalDetail({ proposalId }: Props) {
                 <h3 className="text-sm font-semibold text-green-900 mb-2">
                   ✍️ {locale === 'vi' ? 'Cách đăng ký' : 'How to register'}
                 </h3>
-                <div className="prose prose-sm max-w-none text-green-800"><ReactMarkdown remarkPlugins={[remarkGfm]}>{proposal.registration_info}</ReactMarkdown></div>
+                <div className="prose prose-sm max-w-none text-green-800"><ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{proposal.registration_info}</ReactMarkdown></div>
               </div>
             )}
           </div>
