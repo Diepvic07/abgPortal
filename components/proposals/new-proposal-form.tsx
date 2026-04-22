@@ -208,6 +208,7 @@ export function NewProposalForm() {
           description: what,
           location: location === '__custom__' ? customLocation : location,
           duration: duration === '__custom__' ? customDuration : duration,
+          timeSlots: hasDiscussion ? discussionOptions.filter(o => o.date && o.startTime && o.endTime) : [],
         }),
       });
       const data = await res.json();

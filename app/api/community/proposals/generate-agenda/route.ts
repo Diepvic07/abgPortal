@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   try {
     await requireAuth(request);
 
-    const { title, category, description, location, duration } = await request.json();
+    const { title, category, description, location, duration, timeSlots } = await request.json();
 
     if (!title || !description) {
       return errorResponse('Title and description are required', 400);
@@ -35,10 +35,12 @@ Tên hoạt động: ${title}
 Mô tả: ${description}
 ${location ? `Địa điểm: ${location}` : ''}
 ${duration ? `Thời lượng: ${duration}` : ''}
+${timeSlots && timeSlots.length > 0 ? `Các khung giờ đề xuất từ poll:\n${timeSlots.map((s: { date: string; startTime: string; endTime: string }) => `- ${s.date}: ${s.startTime} - ${s.endTime}`).join('\n')}` : ''}
 
 Yêu cầu:
 - LUÔN viết bằng tiếng Việt
 - Tạo chương trình chi tiết với các mốc thời gian cụ thể
+- Nếu có khung giờ từ poll, SỬ DỤNG CHÍNH XÁC các khung giờ đó (startTime-endTime) để chia agenda thành các phần tương ứng
 - Sử dụng format rõ ràng, dễ đọc
 - Phù hợp với loại hoạt động "${categoryLabel}"
 - Nếu là fieldtrip/dã ngoại: bao gồm các điểm dừng, hoạt động tại mỗi điểm

@@ -918,6 +918,7 @@ export function ProposalDetail({ proposalId }: Props) {
                               description: editDescription,
                               location: editLocation === '__custom__' ? editCustomLocation : editLocation,
                               duration: editDuration === '__custom__' ? editCustomDuration : editDuration,
+                              timeSlots: editHasDiscussion ? editDiscussionOptions.filter(o => o.date && o.startTime && o.endTime) : [],
                             }),
                           });
                           const data = await res.json();
