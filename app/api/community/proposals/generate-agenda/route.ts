@@ -50,10 +50,11 @@ Yêu cầu:
 - Giữ ngắn gọn nhưng đầy đủ thông tin
 - MỖI bullet point TỐI ĐA 5-7 từ, viết cô đọng kiểu gạch đầu dòng, KHÔNG viết câu dài
 - KHÔNG thêm tiêu đề "Chương trình" hay "Agenda" ở đầu, chỉ viết nội dung
-- Sử dụng emoji phù hợp để dễ đọc`;
+- Sử dụng emoji phù hợp để dễ đọc
+- QUAN TRỌNG: Dùng cú pháp Markdown chuẩn cho danh sách (dùng "* " hoặc "- " ở đầu dòng), KHÔNG dùng ký tự "•"`;
 
     const result = await model.generateContent(prompt);
-    const agenda = result.response.text().trim();
+    const agenda = result.response.text().trim().replace(/^• /gm, '* ');
 
     return successResponse({ agenda });
   } catch (error) {
