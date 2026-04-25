@@ -7,7 +7,7 @@ import { generateId, formatDate } from '@/lib/utils';
 import { ProposalDiscussion, DiscussionResponse } from '@/types';
 import { sendPushToMember, getPushMessage } from '@/lib/push-notification';
 import { createInAppNotifications } from '@/lib/in-app-notifications';
-import { sendDiscussionInvitationEmail, sendDiscussionReminderEmail, sendDiscussionCancellationEmail } from '@/lib/resend';
+import { sendDiscussionInvitationEmail, sendDiscussionDateChangeEmail, sendDiscussionReminderEmail, sendDiscussionCancellationEmail } from '@/lib/resend';
 
 function mapRowToDiscussion(row: Record<string, unknown>): ProposalDiscussion {
   return {
@@ -281,6 +281,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               meeting_link,
               `/proposals/${proposal.slug || proposal.id}`,
               locale as 'vi' | 'en',
+              discussion.id,
             );
           } catch (err) {
             console.error(`[email] Discussion invitation failed for ${email}:`, err);
@@ -401,11 +402,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       if (error) throw new Error('Failed to update meeting');
 
-      // Send updated invitation emails to all invited members
+      // Send date change emails to all invited members
+      const oldMeetingDate = discussion.meeting_date;
       after(async () => {
         const supabaseAfter = createServerSupabaseClient();
         const invitedEmails: string[] = discussion.invited_emails || [];
-        const newMeetingDate = body.meeting_date || discussion.meeting_date;
+        const newMeetingDate = body.meeting_date || oldMeetingDate;
         const newMeetingLink = body.meeting_link || discussion.meeting_link;
 
         for (const email of invitedEmails) {
@@ -417,14 +419,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           if (!memberRow) continue;
 
           try {
-            await sendDiscussionInvitationEmail(
+            await sendDiscussionDateChangeEmail(
               email,
               memberRow.name as string,
               proposal.title,
+              oldMeetingDate,
               newMeetingDate,
               newMeetingLink,
               `/proposals/${proposal.slug || proposal.id}`,
               (memberRow.locale as string as 'vi' | 'en') || 'vi',
+              discussion.id,
             );
           } catch (err) {
             console.error(`[email] Date change notification failed for ${email}:`, err);

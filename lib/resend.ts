@@ -15,20 +15,24 @@ const TEST_MODE_EMAILS = [
 ];
 
 /** Escape HTML special characters to prevent XSS in email templates */
-function generateIcsInvite(
-  title: string,
-  meetingDate: string,
-  meetingLink: string,
-  proposalUrl: string,
-  durationMinutes = 60,
-): string {
+function generateIcsInvite(opts: {
+  title: string;
+  meetingDate: string;
+  meetingLink: string;
+  proposalUrl: string;
+  discussionId: string;
+  sequence?: number;
+  durationMinutes?: number;
+}): string {
+  const { title, meetingDate, meetingLink, proposalUrl, discussionId, sequence = 0, durationMinutes = 60 } = opts;
   const start = new Date(meetingDate);
   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
 
   const fmt = (d: Date) =>
     d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 
-  const uid = `discussion-${start.getTime()}@abgalumni.vn`;
+  // Stable UID based on discussion ID so updates replace the original event
+  const uid = `discussion-${discussionId}@abgalumni.vn`;
 
   return [
     'BEGIN:VCALENDAR',
@@ -37,6 +41,7 @@ function generateIcsInvite(
     'METHOD:REQUEST',
     'BEGIN:VEVENT',
     `UID:${uid}`,
+    `SEQUENCE:${sequence}`,
     `DTSTAMP:${fmt(new Date())}`,
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,
@@ -1481,6 +1486,7 @@ export async function sendDiscussionInvitationEmail(
   meetingLink: string,
   proposalUrl: string,
   locale: Locale = 'vi',
+  discussionId?: string,
 ): Promise<void> {
   const resend = getResendClient();
   const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
@@ -1543,7 +1549,13 @@ export async function sendDiscussionInvitationEmail(
 </body></html>`;
 
   // Generate .ics calendar invite with 10-minute reminder
-  const icsContent = generateIcsInvite(proposalTitle, meetingDate, meetingLink, appUrl + proposalUrl);
+  const icsContent = generateIcsInvite({
+    title: proposalTitle,
+    meetingDate,
+    meetingLink,
+    proposalUrl: appUrl + proposalUrl,
+    discussionId: discussionId || `fallback-${new Date(meetingDate).getTime()}`,
+  });
 
   const emailPayload: Parameters<typeof resend.emails.send>[0] = {
     from: FROM_EMAIL,
@@ -1569,6 +1581,122 @@ export async function sendDiscussionInvitationEmail(
       return;
     }
     console.error('Failed to send discussion invitation email:', error);
+  }
+}
+
+/**
+ * Send discussion date change email with updated .ics
+ */
+export async function sendDiscussionDateChangeEmail(
+  to: string,
+  name: string,
+  proposalTitle: string,
+  oldMeetingDate: string,
+  newMeetingDate: string,
+  meetingLink: string,
+  proposalUrl: string,
+  locale: Locale = 'vi',
+  discussionId?: string,
+): Promise<void> {
+  const resend = getResendClient();
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
+  const dateFmtOpts: Intl.DateTimeFormatOptions = {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh',
+  };
+  const localeStr = locale === 'vi' ? 'vi-VN' : 'en-US';
+  const formattedOld = new Date(oldMeetingDate).toLocaleString(localeStr, dateFmtOpts);
+  const formattedNew = new Date(newMeetingDate).toLocaleString(localeStr, dateFmtOpts);
+
+  const isVi = locale === 'vi';
+  const subject = isVi
+    ? `Thay đổi lịch thảo luận: ${proposalTitle}`
+    : `Schedule Changed: ${proposalTitle}`;
+
+  const emailHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#f59e0b;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">${isVi ? 'Thay đổi lịch thảo luận' : 'Schedule Changed'}</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1f2937;">${isVi ? `Xin chào ${escapeHtml(name)}!` : `Hello ${escapeHtml(name)}!`}</p>
+
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${isVi
+    ? `Lịch buổi thảo luận cho đề xuất sau đã được thay đổi:`
+    : `The schedule for the following discussion has been changed:`}</p>
+
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <p style="margin:0 0 12px;font-size:16px;font-weight:600;color:#92400e;">${escapeHtml(proposalTitle)}</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#1f2937;">
+              <tr>
+                <td style="padding:4px 0;font-weight:600;width:120px;vertical-align:top;">${isVi ? 'Lịch cũ:' : 'Old schedule:'}</td>
+                <td style="padding:4px 0;text-decoration:line-through;color:#9ca3af;">${escapeHtml(formattedOld)}</td>
+              </tr>
+              <tr>
+                <td style="padding:8px 0 4px;font-weight:600;vertical-align:top;color:#16a34a;">${isVi ? 'Lịch mới:' : 'New schedule:'}</td>
+                <td style="padding:8px 0 4px;font-weight:600;color:#16a34a;">${escapeHtml(formattedNew)}</td>
+              </tr>
+              <tr><td style="padding:4px 0;font-weight:600;">${isVi ? 'Nền tảng:' : 'Platform:'}</td><td style="padding:4px 0;">Google Meet</td></tr>
+            </table>
+          </div>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;"><tr><td>
+            <a href="${escapeHtml(meetingLink)}" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${isVi ? 'Tham gia Google Meet' : 'Join Google Meet'}</a>
+          </td></tr></table>
+
+          <p style="margin:0 0 12px;font-size:14px;color:#6b7280;">${isVi
+    ? 'Xem chi tiết đề xuất:'
+    : 'View the proposal details:'} <a href="${appUrl}${proposalUrl}" style="color:#2563eb;text-decoration:underline;">${isVi ? 'Xem đề xuất' : 'View proposal'}</a></p>
+
+          <p style="margin:0;font-size:15px;color:#374151;">${isVi ? 'Trân trọng,' : 'Best regards,'}<br><strong>ABG Alumni Connect</strong></p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Connect &mdash; ${isVi ? 'Kết nối cựu học viên ABG' : 'Connecting ABG Alumni'}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  // Generate updated .ics with sequence=1 so calendar apps treat it as an update
+  const icsContent = generateIcsInvite({
+    title: proposalTitle,
+    meetingDate: newMeetingDate,
+    meetingLink,
+    proposalUrl: appUrl + proposalUrl,
+    discussionId: discussionId || `fallback-${new Date(oldMeetingDate).getTime()}`,
+    sequence: 1,
+  });
+
+  const emailPayload: Parameters<typeof resend.emails.send>[0] = {
+    from: FROM_EMAIL,
+    to,
+    subject,
+    html: emailHtml,
+    attachments: [
+      {
+        filename: 'invite.ics',
+        content: Buffer.from(icsContent).toString('base64'),
+        contentType: 'text/calendar; method=REQUEST',
+      },
+    ],
+  };
+
+  const { error } = await resend.emails.send(emailPayload);
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      if (TEST_MODE_EMAILS.includes(to)) {
+        await resend.emails.send({ ...emailPayload, to, subject: `[TEST] ${subject}` }).catch(e => console.warn('Resend test fallback failed:', e));
+      }
+      return;
+    }
+    console.error('Failed to send discussion date change email:', error);
   }
 }
 
