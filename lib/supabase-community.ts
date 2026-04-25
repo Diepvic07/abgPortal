@@ -60,6 +60,7 @@ function mapRowToCommitment(row: Record<string, unknown>): CommunityCommitment {
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
     member_name: nullToUndefined(row.member_name as string | null),
+    member_email: nullToUndefined(row.member_email as string | null),
     member_avatar_url: nullToUndefined(row.member_avatar_url as string | null),
     member_abg_class: nullToUndefined(row.member_abg_class as string | null),
   };
@@ -383,7 +384,7 @@ export async function getCommitmentsByProposal(proposalId: string): Promise<Comm
 
   const { data: rows, error } = await supabase
     .from('community_commitments')
-    .select('*, members!community_commitments_member_id_fkey(name, avatar_url, abg_class)')
+    .select('*, members!community_commitments_member_id_fkey(name, email, avatar_url, abg_class)')
     .eq('proposal_id', proposalId)
     .order('created_at', { ascending: true });
 
@@ -397,6 +398,7 @@ export async function getCommitmentsByProposal(proposalId: string): Promise<Comm
     return mapRowToCommitment({
       ...row,
       member_name: members?.name || null,
+      member_email: members?.email || null,
       member_avatar_url: members?.avatar_url || null,
       member_abg_class: members?.abg_class || null,
     });

@@ -1606,6 +1606,7 @@ export function ProposalDetail({ proposalId }: Props) {
           proposalSlug={proposal.slug}
           discussion={discussion}
           responses={discussionResponses}
+          commitments={commitments}
           currentMemberId={currentMemberId}
           isCreator={currentMemberId === proposal.created_by_member_id}
           isAdmin={currentMemberIsAdmin}

@@ -382,6 +382,7 @@ export interface CommunityCommitment {
   updated_at: string;
   // Joined fields
   member_name?: string;
+  member_email?: string;
   member_avatar_url?: string;
   member_abg_class?: string;
 }

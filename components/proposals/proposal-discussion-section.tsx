@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ProposalDiscussion, DiscussionResponse } from '@/types';
+import { ProposalDiscussion, DiscussionResponse, CommunityCommitment } from '@/types';
 
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
@@ -21,6 +21,7 @@ interface Props {
   proposalSlug: string;
   discussion: ProposalDiscussion | null;
   responses: DiscussionResponse[];
+  commitments?: CommunityCommitment[];
   currentMemberId: string | null;
   isCreator: boolean;
   isAdmin?: boolean;
@@ -32,6 +33,7 @@ export function ProposalDiscussionSection({
   proposalId,
   discussion,
   responses,
+  commitments = [],
   currentMemberId,
   isCreator,
   isAdmin = false,
@@ -476,11 +478,14 @@ export function ProposalDiscussionSection({
                 } else {
                   setMeetingDate(mostVotedDate);
                 }
-                // Pre-select all respondent emails
-                const emails = responses
+                // Pre-select all participant emails (from both responses and commitments)
+                const responseEmails = responses
                   .filter(r => r.member_email)
                   .map(r => r.member_email!);
-                setSelectedEmails([...new Set(emails)]);
+                const commitmentEmails = commitments
+                  .filter(c => c.member_email)
+                  .map(c => c.member_email!);
+                setSelectedEmails([...new Set([...responseEmails, ...commitmentEmails])]);
               }}
               disabled={responses.length === 0}
               className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 text-sm"
@@ -545,34 +550,48 @@ export function ProposalDiscussionSection({
                 </div>
               </div>
 
-              {/* Invite list */}
-              {responses.filter(r => r.member_email).length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {vi ? 'Mời tham gia:' : 'Invite:'}
-                  </label>
-                  <div className="space-y-1.5">
-                    {responses.filter(r => r.member_email).map((r) => (
-                      <label key={r.id} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selectedEmails.includes(r.member_email!)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedEmails(prev => [...prev, r.member_email!]);
-                            } else {
-                              setSelectedEmails(prev => prev.filter(em => em !== r.member_email));
-                            }
-                          }}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-gray-700">{r.member_name}</span>
-                        <span className="text-gray-400 text-xs">{r.member_email}</span>
-                      </label>
-                    ))}
+              {/* Invite list — all participants from commitments and responses */}
+              {(() => {
+                // Build deduplicated participant list from commitments + responses
+                const participantMap = new Map<string, { name: string; email: string }>();
+                commitments.forEach(c => {
+                  if (c.member_email) participantMap.set(c.member_email, { name: c.member_name || '', email: c.member_email });
+                });
+                responses.forEach(r => {
+                  if (r.member_email && !participantMap.has(r.member_email)) {
+                    participantMap.set(r.member_email, { name: r.member_name || '', email: r.member_email });
+                  }
+                });
+                const participants = Array.from(participantMap.values());
+                if (participants.length === 0) return null;
+                return (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {vi ? 'Mời tham gia:' : 'Invite:'}
+                    </label>
+                    <div className="space-y-1.5">
+                      {participants.map((p) => (
+                        <label key={p.email} className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={selectedEmails.includes(p.email)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedEmails(prev => [...prev, p.email]);
+                              } else {
+                                setSelectedEmails(prev => prev.filter(em => em !== p.email));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-gray-700">{p.name}</span>
+                          <span className="text-gray-400 text-xs">{p.email}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               <div className="flex gap-2">
                 <button
