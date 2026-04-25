@@ -7,7 +7,7 @@ import { generateId, formatDate } from '@/lib/utils';
 import { ProposalDiscussion, DiscussionResponse } from '@/types';
 import { sendPushToMember, getPushMessage } from '@/lib/push-notification';
 import { createInAppNotifications } from '@/lib/in-app-notifications';
-import { sendDiscussionInvitationEmail, sendDiscussionReminderEmail } from '@/lib/resend';
+import { sendDiscussionInvitationEmail, sendDiscussionReminderEmail, sendDiscussionCancellationEmail } from '@/lib/resend';
 
 function mapRowToDiscussion(row: Record<string, unknown>): ProposalDiscussion {
   return {
@@ -452,6 +452,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // Cancel discussion
     if (body.status === 'cancelled') {
+      const cancelReason = body.reason || '';
+
       const { data: updated, error } = await (supabase.from('proposal_discussions') as any)
         .update({ status: 'cancelled', updated_at: now })
         .eq('id', discussion.id)
@@ -459,6 +461,38 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .single();
 
       if (error) throw new Error('Failed to cancel discussion');
+
+      // Send cancellation emails to all invited members
+      if (discussion.invited_emails?.length > 0 && cancelReason && discussion.meeting_date) {
+        after(async () => {
+          const supabaseAfter = createServerSupabaseClient();
+          const invitedEmails: string[] = discussion.invited_emails || [];
+
+          for (const email of invitedEmails) {
+            const { data: memberRow } = await (supabaseAfter.from('members') as any)
+              .select('id, name, email, locale')
+              .eq('email', email)
+              .single();
+
+            if (!memberRow) continue;
+
+            try {
+              await sendDiscussionCancellationEmail(
+                email,
+                memberRow.name as string,
+                proposal.title,
+                discussion.meeting_date,
+                cancelReason,
+                `/proposals/${proposal.slug || proposal.id}`,
+                (memberRow.locale as string as 'vi' | 'en') || 'vi',
+              );
+            } catch (err) {
+              console.error(`[email] Cancellation email failed for ${email}:`, err);
+            }
+          }
+        });
+      }
+
       return successResponse({ discussion: mapRowToDiscussion(updated as Record<string, unknown>) });
     }
 

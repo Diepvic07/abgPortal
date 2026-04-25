@@ -1635,3 +1635,88 @@ export async function sendDiscussionReminderEmail(
     console.error('Failed to send discussion reminder email:', error);
   }
 }
+
+/**
+ * Send discussion cancellation email
+ */
+export async function sendDiscussionCancellationEmail(
+  to: string,
+  name: string,
+  proposalTitle: string,
+  meetingDate: string,
+  reason: string,
+  proposalUrl: string,
+  locale: Locale = 'vi',
+): Promise<void> {
+  const resend = getResendClient();
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
+  const formattedDate = new Date(meetingDate).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Ho_Chi_Minh',
+  });
+
+  const isVi = locale === 'vi';
+  const subject = isVi
+    ? `Hủy buổi thảo luận: ${proposalTitle}`
+    : `Discussion Cancelled: ${proposalTitle}`;
+
+  const emailHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#dc2626;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">${isVi ? 'Buổi thảo luận đã bị hủy' : 'Discussion Cancelled'}</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1f2937;">${isVi ? `Xin chào ${escapeHtml(name)}!` : `Hello ${escapeHtml(name)}!`}</p>
+
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${isVi
+    ? `Buổi thảo luận trực tuyến cho đề xuất sau đã bị hủy:`
+    : `The online discussion for the following proposal has been cancelled:`}</p>
+
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#991b1b;">${escapeHtml(proposalTitle)}</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#1f2937;">
+              <tr><td style="padding:4px 0;font-weight:600;width:120px;">${isVi ? 'Thời gian dự kiến:' : 'Scheduled time:'}</td><td style="padding:4px 0;text-decoration:line-through;color:#6b7280;">${escapeHtml(formattedDate)}</td></tr>
+            </table>
+          </div>
+
+          <div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#92400e;">${isVi ? 'Lý do hủy:' : 'Reason for cancellation:'}</p>
+            <p style="margin:0;font-size:14px;color:#78350f;line-height:1.5;">${escapeHtml(reason)}</p>
+          </div>
+
+          <p style="margin:0 0 12px;font-size:14px;color:#6b7280;">${isVi
+    ? 'Xem chi tiết đề xuất:'
+    : 'View the proposal details:'} <a href="${appUrl}${proposalUrl}" style="color:#2563eb;text-decoration:underline;">${isVi ? 'Xem đề xuất' : 'View proposal'}</a></p>
+
+          <p style="margin:0;font-size:15px;color:#374151;">${isVi ? 'Trân trọng,' : 'Best regards,'}<br><strong>ABG Alumni Connect</strong></p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Connect &mdash; ${isVi ? 'Kết nối cựu học viên ABG' : 'Connecting ABG Alumni'}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to, subject, html: emailHtml });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      if (TEST_MODE_EMAILS.includes(to)) {
+        await resend.emails.send({ from: FROM_EMAIL, to, subject: `[TEST] ${subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+      }
+      return;
+    }
+    console.error('Failed to send discussion cancellation email:', error);
+  }
+}

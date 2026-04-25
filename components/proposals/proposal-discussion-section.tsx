@@ -570,8 +570,8 @@ export function ProposalDiscussionSection({
               onClick={() => {
                 const confirmed = window.confirm(
                   vi
-                    ? 'Bạn có chắc chắn muốn hủy buổi thảo luận này? Hành động này không thể hoàn tác.'
-                    : 'Are you sure you want to cancel this discussion? This action cannot be undone.'
+                    ? 'Bạn có chắc chắn muốn hủy phiên bỏ phiếu này? Tất cả phiếu bầu sẽ bị xóa và không thể hoàn tác.'
+                    : 'Are you sure you want to cancel this vote? All votes will be lost and this cannot be undone.'
                 );
                 if (confirmed) handleUpdateStatus('cancelled');
               }}
@@ -637,6 +637,9 @@ function ScheduledView({
   });
   const [newLink, setNewLink] = useState(discussion.meeting_link || '');
   const [reminderSent, setReminderSent] = useState(false);
+  const [showCancelFlow, setShowCancelFlow] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [showCancelPreview, setShowCancelPreview] = useState(false);
 
   const canManage = isCreator || isAdmin;
 
@@ -681,6 +684,31 @@ function ScheduledView({
       setSubmitting(false);
     }
   }
+
+  async function handleCancelWithReason() {
+    if (!cancelReason.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/community/proposals/${proposalId}/discussion`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled', reason: cancelReason.trim() }),
+      });
+      if (!res.ok) throw new Error();
+      onRefresh();
+    } catch {
+      setError(vi ? 'Có lỗi xảy ra' : 'Something went wrong');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const formattedMeetingDate = discussion.meeting_date
+    ? new Date(discussion.meeting_date).toLocaleString(vi ? 'vi-VN' : 'en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh',
+      })
+    : '';
 
   return (
     <div className="mt-8">
@@ -771,16 +799,8 @@ function ScheduledView({
               {vi ? 'Đánh dấu hoàn thành' : 'Mark Completed'}
             </button>
             <button
-              onClick={() => {
-                const confirmed = window.confirm(
-                  vi
-                    ? 'Bạn có chắc chắn muốn hủy buổi thảo luận này? Hành động này không thể hoàn tác.'
-                    : 'Are you sure you want to cancel this discussion? This action cannot be undone.'
-                );
-                if (confirmed) handleUpdateStatus('cancelled');
-              }}
-              disabled={submitting}
-              className="text-sm px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              onClick={() => { setShowCancelFlow(!showCancelFlow); setShowCancelPreview(false); setCancelReason(''); }}
+              className="text-sm px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50"
             >
               {vi ? 'Hủy buổi thảo luận' : 'Cancel Discussion'}
             </button>
@@ -791,6 +811,131 @@ function ScheduledView({
               <p className="text-sm text-green-800 flex items-center gap-2">
                 <span>✓</span> {vi ? 'Đã gửi nhắc nhở cho tất cả người được mời' : 'Reminder sent to all invited members'}
               </p>
+            </div>
+          )}
+
+          {/* Cancel discussion flow */}
+          {showCancelFlow && !showCancelPreview && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <span className="text-red-500 text-lg mt-0.5">⚠</span>
+                <div>
+                  <p className="text-sm font-semibold text-red-800">
+                    {vi ? 'Hủy buổi thảo luận' : 'Cancel Discussion'}
+                  </p>
+                  <p className="text-sm text-red-700 mt-1">
+                    {vi
+                      ? `Hành động này không thể hoàn tác. Email thông báo hủy sẽ được gửi đến ${discussion.invited_emails?.length || 0} người được mời.`
+                      : `This action cannot be undone. A cancellation email will be sent to ${discussion.invited_emails?.length || 0} invited member(s).`}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-red-800 mb-1">
+                  {vi ? 'Lý do hủy *' : 'Reason for cancellation *'}
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder={vi ? 'Vui lòng nêu rõ lý do hủy buổi thảo luận...' : 'Please explain why this discussion is being cancelled...'}
+                  rows={3}
+                  className="w-full border border-red-300 rounded-lg px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { if (cancelReason.trim()) setShowCancelPreview(true); }}
+                  disabled={!cancelReason.trim()}
+                  className="text-sm px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {vi ? 'Xem trước email' : 'Preview Email'}
+                </button>
+                <button
+                  onClick={() => { setShowCancelFlow(false); setCancelReason(''); }}
+                  className="text-sm px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  {vi ? 'Quay lại' : 'Go Back'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Cancel email preview */}
+          {showCancelFlow && showCancelPreview && (
+            <div className="bg-white border border-red-200 rounded-xl p-4 space-y-4">
+              <p className="text-sm font-semibold text-gray-800">
+                {vi ? 'Xem trước email sẽ gửi cho người được mời:' : 'Preview of email to be sent to invited members:'}
+              </p>
+
+              {/* Email preview */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                {/* Email header */}
+                <div className="bg-red-600 px-5 py-3">
+                  <p className="text-white font-semibold text-sm">
+                    {vi ? 'Buổi thảo luận đã bị hủy' : 'Discussion Cancelled'}
+                  </p>
+                </div>
+                {/* Email body */}
+                <div className="px-5 py-4 space-y-3 text-sm">
+                  <p className="font-bold text-gray-900">
+                    {vi ? 'Xin chào [Tên người nhận]!' : 'Hello [Recipient Name]!'}
+                  </p>
+                  <p className="text-gray-700">
+                    {vi
+                      ? 'Buổi thảo luận trực tuyến cho đề xuất sau đã bị hủy:'
+                      : 'The online discussion for the following proposal has been cancelled:'}
+                  </p>
+
+                  {/* Proposal info */}
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="font-semibold text-red-800 text-sm">[{vi ? 'Tên đề xuất' : 'Proposal Title'}]</p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      <span className="font-medium">{vi ? 'Thời gian dự kiến:' : 'Scheduled time:'}</span>{' '}
+                      <span className="line-through">{formattedMeetingDate}</span>
+                    </p>
+                  </div>
+
+                  {/* Reason */}
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p className="font-semibold text-yellow-800 text-xs mb-1">{vi ? 'Lý do hủy:' : 'Reason for cancellation:'}</p>
+                    <p className="text-yellow-900 text-sm">{cancelReason}</p>
+                  </div>
+                </div>
+                {/* Email footer */}
+                <div className="px-5 py-3 bg-gray-50 border-t border-gray-200">
+                  <p className="text-xs text-gray-400 text-center">ABG Alumni Connect</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                {vi
+                  ? `Email này sẽ được gửi đến ${discussion.invited_emails?.length || 0} người: ${discussion.invited_emails?.join(', ')}`
+                  : `This email will be sent to ${discussion.invited_emails?.length || 0} people: ${discussion.invited_emails?.join(', ')}`}
+              </p>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCancelWithReason}
+                  disabled={submitting}
+                  className="text-sm px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {submitting
+                    ? (vi ? 'Đang hủy...' : 'Cancelling...')
+                    : (vi ? 'Xác nhận hủy & Gửi email' : 'Confirm Cancel & Send Email')}
+                </button>
+                <button
+                  onClick={() => setShowCancelPreview(false)}
+                  className="text-sm px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  {vi ? 'Sửa lý do' : 'Edit Reason'}
+                </button>
+                <button
+                  onClick={() => { setShowCancelFlow(false); setShowCancelPreview(false); setCancelReason(''); }}
+                  className="text-sm px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  {vi ? 'Quay lại' : 'Go Back'}
+                </button>
+              </div>
             </div>
           )}
 
