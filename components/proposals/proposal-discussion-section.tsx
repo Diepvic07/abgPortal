@@ -567,7 +567,14 @@ export function ProposalDiscussionSection({
           {/* Cancel discussion */}
           <div className="mt-3">
             <button
-              onClick={() => handleUpdateStatus('cancelled')}
+              onClick={() => {
+                const confirmed = window.confirm(
+                  vi
+                    ? 'Bạn có chắc chắn muốn hủy buổi thảo luận này? Hành động này không thể hoàn tác.'
+                    : 'Are you sure you want to cancel this discussion? This action cannot be undone.'
+                );
+                if (confirmed) handleUpdateStatus('cancelled');
+              }}
               disabled={submitting}
               className="text-sm text-gray-500 hover:text-red-600 transition-colors"
             >
@@ -764,7 +771,14 @@ function ScheduledView({
               {vi ? 'Đánh dấu hoàn thành' : 'Mark Completed'}
             </button>
             <button
-              onClick={() => handleUpdateStatus('cancelled')}
+              onClick={() => {
+                const confirmed = window.confirm(
+                  vi
+                    ? 'Bạn có chắc chắn muốn hủy buổi thảo luận này? Hành động này không thể hoàn tác.'
+                    : 'Are you sure you want to cancel this discussion? This action cannot be undone.'
+                );
+                if (confirmed) handleUpdateStatus('cancelled');
+              }}
               disabled={submitting}
               className="text-sm px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
             >
