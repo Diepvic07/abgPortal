@@ -15,6 +15,45 @@ const TEST_MODE_EMAILS = [
 ];
 
 /** Escape HTML special characters to prevent XSS in email templates */
+function generateIcsInvite(
+  title: string,
+  meetingDate: string,
+  meetingLink: string,
+  proposalUrl: string,
+  durationMinutes = 60,
+): string {
+  const start = new Date(meetingDate);
+  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+
+  const fmt = (d: Date) =>
+    d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+  const uid = `discussion-${start.getTime()}@abgalumni.vn`;
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//ABG Alumni Connect//Discussion//EN',
+    'METHOD:REQUEST',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${fmt(new Date())}`,
+    `DTSTART:${fmt(start)}`,
+    `DTEND:${fmt(end)}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:Join Google Meet: ${meetingLink}\\nView proposal: ${proposalUrl}`,
+    `URL:${meetingLink}`,
+    `LOCATION:${meetingLink}`,
+    'BEGIN:VALARM',
+    'TRIGGER:-PT10M',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Reminder',
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -1503,12 +1542,29 @@ export async function sendDiscussionInvitationEmail(
   </table>
 </body></html>`;
 
-  const { error } = await resend.emails.send({ from: FROM_EMAIL, to, subject, html: emailHtml });
+  // Generate .ics calendar invite with 10-minute reminder
+  const icsContent = generateIcsInvite(proposalTitle, meetingDate, meetingLink, appUrl + proposalUrl);
+
+  const emailPayload: Parameters<typeof resend.emails.send>[0] = {
+    from: FROM_EMAIL,
+    to,
+    subject,
+    html: emailHtml,
+    attachments: [
+      {
+        filename: 'invite.ics',
+        content: Buffer.from(icsContent).toString('base64'),
+        contentType: 'text/calendar; method=REQUEST',
+      },
+    ],
+  };
+
+  const { error } = await resend.emails.send(emailPayload);
 
   if (error) {
     if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
       if (TEST_MODE_EMAILS.includes(to)) {
-        await resend.emails.send({ from: FROM_EMAIL, to, subject: `[TEST] ${subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+        await resend.emails.send({ ...emailPayload, to, subject: `[TEST] ${subject}` }).catch(e => console.warn('Resend test fallback failed:', e));
       }
       return;
     }
