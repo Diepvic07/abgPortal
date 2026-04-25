@@ -23,6 +23,7 @@ interface Props {
   responses: DiscussionResponse[];
   currentMemberId: string | null;
   isCreator: boolean;
+  isAdmin?: boolean;
   locale: string;
   onRefresh: () => void;
 }
@@ -33,6 +34,7 @@ export function ProposalDiscussionSection({
   responses,
   currentMemberId,
   isCreator,
+  isAdmin = false,
   locale,
   onRefresh,
 }: Props) {
@@ -451,8 +453,8 @@ export function ProposalDiscussionSection({
         </div>
       )}
 
-      {/* Creator view: schedule button */}
-      {isCreator && (
+      {/* Creator or admin view: schedule button */}
+      {(isCreator || isAdmin) && (
         <>
           {/* Response summary */}
           <div className="bg-gray-50 rounded-xl p-5 mb-4">

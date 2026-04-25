@@ -203,7 +203,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const proposal = await getProposalById(id);
     if (!proposal) return errorResponse('Proposal not found', 404);
-    if (proposal.created_by_member_id !== member.id) return errorResponse('Only the proposal creator can manage this discussion', 403);
+    if (proposal.created_by_member_id !== member.id && !member.is_admin) return errorResponse('Only the proposal creator or admin can manage this discussion', 403);
 
     const supabase = createServerSupabaseClient();
 

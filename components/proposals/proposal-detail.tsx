@@ -1608,6 +1608,7 @@ export function ProposalDetail({ proposalId }: Props) {
           responses={discussionResponses}
           currentMemberId={currentMemberId}
           isCreator={currentMemberId === proposal.created_by_member_id}
+          isAdmin={currentMemberIsAdmin}
           locale={locale}
           onRefresh={() => fetchProposal(true)}
         />
