@@ -7,7 +7,7 @@ import { generateId, formatDate } from '@/lib/utils';
 import { ProposalDiscussion, DiscussionResponse } from '@/types';
 import { sendPushToMember, getPushMessage } from '@/lib/push-notification';
 import { createInAppNotifications } from '@/lib/in-app-notifications';
-import { sendDiscussionInvitationEmail } from '@/lib/resend';
+import { sendDiscussionInvitationEmail, sendDiscussionReminderEmail } from '@/lib/resend';
 
 function mapRowToDiscussion(row: Record<string, unknown>): ProposalDiscussion {
   return {
@@ -317,6 +317,117 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             });
           } catch (err) {
             console.error(`[push] Discussion push failed for ${memberId}:`, err);
+          }
+        }
+      });
+
+      return successResponse({ discussion: mapRowToDiscussion(updated as Record<string, unknown>) });
+    }
+
+    // Send reminder to all invited members
+    if (body.action === 'send_reminder') {
+      if (discussion.status !== 'scheduled') return errorResponse('Can only send reminders for scheduled discussions', 400);
+
+      after(async () => {
+        const supabaseAfter = createServerSupabaseClient();
+        const invitedEmails: string[] = discussion.invited_emails || [];
+
+        // Get member info for each invited email
+        for (const email of invitedEmails) {
+          const { data: memberRow } = await (supabaseAfter.from('members') as any)
+            .select('id, name, email, locale')
+            .eq('email', email)
+            .single();
+
+          if (!memberRow) continue;
+
+          const mLocale = (memberRow.locale as string) || 'vi';
+
+          try {
+            await sendDiscussionReminderEmail(
+              email,
+              memberRow.name as string,
+              proposal.title,
+              discussion.meeting_date,
+              discussion.meeting_link,
+              `/proposals/${proposal.slug || proposal.id}`,
+              mLocale as 'vi' | 'en',
+            );
+          } catch (err) {
+            console.error(`[email] Manual reminder failed for ${email}:`, err);
+          }
+
+          try {
+            const message = getPushMessage('discussion_meeting', {
+              proposalTitle: proposal.title,
+              meetingDate: discussion.meeting_date,
+              isReminder: 'true',
+            }, mLocale as 'vi' | 'en');
+
+            await createInAppNotifications({
+              type: 'discussion_meeting',
+              title: message.title,
+              body: message.body,
+              url: `/proposals/${proposal.slug || proposal.id}`,
+              targetMemberId: memberRow.id as string,
+            });
+          } catch (err) {
+            console.error(`[notif] Manual reminder notification failed:`, err);
+          }
+        }
+      });
+
+      return successResponse({ message: 'Reminders are being sent' });
+    }
+
+    // Update meeting date/time (reschedule)
+    if (body.action === 'update_meeting') {
+      if (discussion.status !== 'scheduled') return errorResponse('Can only update scheduled discussions', 400);
+
+      const updates: Record<string, unknown> = { updated_at: now };
+      if (body.meeting_date) updates.meeting_date = body.meeting_date;
+      if (body.meeting_link) {
+        if (!body.meeting_link.startsWith('https://meet.google.com/')) {
+          return errorResponse('Please provide a valid Google Meet link', 400);
+        }
+        updates.meeting_link = body.meeting_link;
+      }
+
+      const { data: updated, error } = await (supabase.from('proposal_discussions') as any)
+        .update(updates)
+        .eq('id', discussion.id)
+        .select()
+        .single();
+
+      if (error) throw new Error('Failed to update meeting');
+
+      // Send updated invitation emails to all invited members
+      after(async () => {
+        const supabaseAfter = createServerSupabaseClient();
+        const invitedEmails: string[] = discussion.invited_emails || [];
+        const newMeetingDate = body.meeting_date || discussion.meeting_date;
+        const newMeetingLink = body.meeting_link || discussion.meeting_link;
+
+        for (const email of invitedEmails) {
+          const { data: memberRow } = await (supabaseAfter.from('members') as any)
+            .select('id, name, email, locale')
+            .eq('email', email)
+            .single();
+
+          if (!memberRow) continue;
+
+          try {
+            await sendDiscussionInvitationEmail(
+              email,
+              memberRow.name as string,
+              proposal.title,
+              newMeetingDate,
+              newMeetingLink,
+              `/proposals/${proposal.slug || proposal.id}`,
+              (memberRow.locale as string as 'vi' | 'en') || 'vi',
+            );
+          } catch (err) {
+            console.error(`[email] Date change notification failed for ${email}:`, err);
           }
         }
       });

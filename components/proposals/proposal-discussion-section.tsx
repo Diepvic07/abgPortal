@@ -260,7 +260,7 @@ export function ProposalDiscussionSection({
               ? (vi ? 'Đã hoàn thành' : 'Completed')
               : (vi ? 'Đã hủy' : 'Cancelled')}
           </div>
-          {isCreator && (
+          {(isCreator || isAdmin) && (
             <button
               onClick={() => handleUpdateStatus('open' as any)}
               disabled={submitting}
@@ -277,68 +277,19 @@ export function ProposalDiscussionSection({
   // Status: scheduled
   if (discussion.status === 'scheduled') {
     return (
-      <div className="mt-8">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          💬 {discussion.title || (vi ? 'Thảo luận trực tuyến' : 'Online Discussion')}
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-            {vi ? 'Đã lên lịch' : 'Scheduled'}
-          </span>
-        </h3>
-
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 space-y-3">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">📅</span>
-            <div>
-              <p className="font-semibold text-gray-900">
-                {discussion.meeting_date ? formatMeetingDateTime(discussion.meeting_date) : ''}
-              </p>
-              <p className="text-sm text-gray-500">{vi ? 'Giờ Việt Nam (GMT+7)' : 'Vietnam Time (GMT+7)'}</p>
-            </div>
-          </div>
-
-          {discussion.meeting_link && (
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🔗</span>
-              <a
-                href={discussion.meeting_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-700 font-medium underline"
-              >
-                {vi ? 'Tham gia Google Meet' : 'Join Google Meet'}
-              </a>
-            </div>
-          )}
-
-          {discussion.invited_emails && discussion.invited_emails.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-1">
-                {vi ? `${discussion.invited_emails.length} người được mời` : `${discussion.invited_emails.length} invited`}
-              </p>
-            </div>
-          )}
-
-        </div>
-
-        {isCreator && (
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={() => handleUpdateStatus('completed')}
-              disabled={submitting}
-              className="text-sm px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-            >
-              {vi ? 'Đánh dấu hoàn thành' : 'Mark Completed'}
-            </button>
-            <button
-              onClick={() => handleUpdateStatus('cancelled')}
-              disabled={submitting}
-              className="text-sm px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-            >
-              {vi ? 'Hủy buổi thảo luận' : 'Cancel Discussion'}
-            </button>
-          </div>
-        )}
-      </div>
+      <ScheduledView
+        discussion={discussion}
+        isCreator={isCreator}
+        isAdmin={isAdmin}
+        submitting={submitting}
+        vi={vi}
+        proposalId={proposalId}
+        formatMeetingDateTime={formatMeetingDateTime}
+        handleUpdateStatus={handleUpdateStatus}
+        setSubmitting={setSubmitting}
+        setError={setError}
+        onRefresh={onRefresh}
+      />
     );
   }
 
@@ -637,6 +588,248 @@ export function ProposalDiscussionSection({
       {error && (
         <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
           <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== Scheduled View ====================
+
+function ScheduledView({
+  discussion,
+  isCreator,
+  isAdmin,
+  submitting,
+  vi,
+  proposalId,
+  formatMeetingDateTime,
+  handleUpdateStatus,
+  setSubmitting,
+  setError,
+  onRefresh,
+}: {
+  discussion: ProposalDiscussion;
+  isCreator: boolean;
+  isAdmin: boolean;
+  submitting: boolean;
+  vi: boolean;
+  proposalId: string;
+  formatMeetingDateTime: (d: string) => string;
+  handleUpdateStatus: (status: 'completed' | 'cancelled' | 'open') => void;
+  setSubmitting: (v: boolean) => void;
+  setError: (v: string) => void;
+  onRefresh: () => void;
+}) {
+  const [showEmails, setShowEmails] = useState(false);
+  const [showDateChange, setShowDateChange] = useState(false);
+  const [newDate, setNewDate] = useState(discussion.meeting_date?.split('T')[0] || '');
+  const [newTime, setNewTime] = useState(() => {
+    const match = discussion.meeting_date?.match(/T(\d{2}:\d{2})/);
+    return match ? match[1] : '20:00';
+  });
+  const [newLink, setNewLink] = useState(discussion.meeting_link || '');
+  const [reminderSent, setReminderSent] = useState(false);
+
+  const canManage = isCreator || isAdmin;
+
+  async function handleSendReminder() {
+    setSubmitting(true);
+    setReminderSent(false);
+    try {
+      const res = await fetch(`/api/community/proposals/${proposalId}/discussion`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send_reminder' }),
+      });
+      if (!res.ok) throw new Error();
+      setReminderSent(true);
+    } catch {
+      setError(vi ? 'Không thể gửi nhắc nhở' : 'Failed to send reminder');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleUpdateMeeting() {
+    if (!newDate || !newTime) return;
+    setSubmitting(true);
+    try {
+      const meeting_date = `${newDate}T${newTime}:00+07:00`;
+      const res = await fetch(`/api/community/proposals/${proposalId}/discussion`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_meeting',
+          meeting_date,
+          ...(newLink !== discussion.meeting_link ? { meeting_link: newLink } : {}),
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setShowDateChange(false);
+      onRefresh();
+    } catch {
+      setError(vi ? 'Không thể cập nhật lịch' : 'Failed to update schedule');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="mt-8">
+      <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+        💬 {discussion.title || (vi ? 'Thảo luận trực tuyến' : 'Online Discussion')}
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+          {vi ? 'Đã lên lịch' : 'Scheduled'}
+        </span>
+      </h3>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 space-y-3">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">📅</span>
+          <div>
+            <p className="font-semibold text-gray-900">
+              {discussion.meeting_date ? formatMeetingDateTime(discussion.meeting_date) : ''}
+            </p>
+            <p className="text-sm text-gray-500">{vi ? 'Giờ Việt Nam (GMT+7)' : 'Vietnam Time (GMT+7)'}</p>
+          </div>
+        </div>
+
+        {discussion.meeting_link && (
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔗</span>
+            <a
+              href={discussion.meeting_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-700 font-medium underline"
+            >
+              {vi ? 'Tham gia Google Meet' : 'Join Google Meet'}
+            </a>
+          </div>
+        )}
+
+        {/* Invited emails — clickable for admin/creator */}
+        {discussion.invited_emails && discussion.invited_emails.length > 0 && (
+          <div>
+            <button
+              onClick={() => canManage && setShowEmails(!showEmails)}
+              className={`text-sm font-medium mb-1 ${canManage ? 'text-blue-600 hover:text-blue-700 cursor-pointer' : 'text-gray-700 cursor-default'}`}
+            >
+              {vi ? `${discussion.invited_emails.length} người được mời` : `${discussion.invited_emails.length} invited`}
+              {canManage && (
+                <span className="ml-1">{showEmails ? '▲' : '▼'}</span>
+              )}
+            </button>
+            {showEmails && canManage && (
+              <div className="mt-2 bg-white border border-gray-200 rounded-lg p-3 space-y-1.5">
+                {discussion.invited_emails.map((email) => (
+                  <div key={email} className="flex items-center gap-2 text-sm">
+                    <a
+                      href={`mailto:${email}`}
+                      className="text-blue-600 hover:text-blue-700 hover:underline"
+                    >
+                      {email}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Admin/Creator actions */}
+      {canManage && (
+        <div className="mt-3 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleSendReminder}
+              disabled={submitting}
+              className="text-sm px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50"
+            >
+              {submitting ? (vi ? 'Đang gửi...' : 'Sending...') : (vi ? 'Gửi nhắc nhở' : 'Send Reminder')}
+            </button>
+            <button
+              onClick={() => setShowDateChange(!showDateChange)}
+              className="text-sm px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50"
+            >
+              {vi ? 'Đổi ngày' : 'Change Date'}
+            </button>
+            <button
+              onClick={() => handleUpdateStatus('completed')}
+              disabled={submitting}
+              className="text-sm px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              {vi ? 'Đánh dấu hoàn thành' : 'Mark Completed'}
+            </button>
+            <button
+              onClick={() => handleUpdateStatus('cancelled')}
+              disabled={submitting}
+              className="text-sm px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              {vi ? 'Hủy buổi thảo luận' : 'Cancel Discussion'}
+            </button>
+          </div>
+
+          {reminderSent && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-sm text-green-800 flex items-center gap-2">
+                <span>✓</span> {vi ? 'Đã gửi nhắc nhở cho tất cả người được mời' : 'Reminder sent to all invited members'}
+              </p>
+            </div>
+          )}
+
+          {/* Date change form */}
+          {showDateChange && (
+            <div className="bg-white border border-blue-200 rounded-xl p-4 space-y-3">
+              <p className="text-sm font-semibold text-gray-800">{vi ? 'Đổi ngày & giờ' : 'Change Date & Time'}</p>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{vi ? 'Ngày' : 'Date'} *</label>
+                  <input
+                    type="date"
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{vi ? 'Giờ' : 'Time'} *</label>
+                  <input
+                    type="time"
+                    value={newTime}
+                    onChange={(e) => setNewTime(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Google Meet Link</label>
+                <input
+                  type="url"
+                  value={newLink}
+                  onChange={(e) => setNewLink(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleUpdateMeeting}
+                  disabled={submitting}
+                  className="text-sm px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {submitting ? (vi ? 'Đang cập nhật...' : 'Updating...') : (vi ? 'Cập nhật & Gửi thông báo' : 'Update & Notify')}
+                </button>
+                <button
+                  onClick={() => setShowDateChange(false)}
+                  className="text-sm px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  {vi ? 'Hủy' : 'Cancel'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
