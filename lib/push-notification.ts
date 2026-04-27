@@ -1,6 +1,7 @@
 import webPush from 'web-push';
 import { createServerSupabaseClient } from './supabase/server';
 import { getTranslations, interpolate, type Locale } from '@/lib/i18n/utils';
+import { sendPushFallbackEmail } from './resend';
 
 // --- Types ---
 
@@ -98,10 +99,10 @@ export async function sendPushToMember(
       .eq('member_id', memberId)
       .single();
 
-    // Fetch member locale
+    // Fetch member locale and email
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: member } = await (supabase.from('members') as any)
-      .select('locale')
+      .select('locale, email, full_name')
       .eq('id', memberId)
       .single();
 
@@ -125,6 +126,16 @@ export async function sendPushToMember(
 
     // Check preferences (same for all devices of this member)
     if (!isNotificationEnabled(subscriptions[0], type)) {
+      return;
+    }
+
+    // If ALL subscriptions are dead, send email fallback instead of push
+    const allDead = subscriptions.every((sub) => sub.fail_count >= SKIP_AFTER_FAILURES);
+    if (allDead && member?.email) {
+      const locale = (member.locale as Locale) || 'vi';
+      const localizedPayload = { ...payload, ...getPushMessage(type, extractMessageData(payload), locale) };
+      console.log(`[push] All subscriptions dead for member ${memberId}, sending email fallback to ${member.email}`);
+      await sendPushFallbackEmail(member.email, member.full_name || '', localizedPayload.title, localizedPayload.body, localizedPayload.url, locale);
       return;
     }
 
@@ -182,15 +193,16 @@ export async function sendPushToAllMembers(
       .select('member_id, connection_request, new_event, new_proposal, proposal_comment, discussion_meeting, news_comment, news_tagged')
       .in('member_id', memberIds);
 
-    // Fetch member locales
+    // Fetch member locales and emails
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: members } = await (supabase.from('members') as any)
-      .select('id, locale')
+      .select('id, locale, email, full_name')
       .in('id', memberIds);
 
     // Build lookup maps
     const prefsMap = new Map((allPrefs || []).map((p: Record<string, unknown>) => [p.member_id, p]));
     const localeMap = new Map((members || []).map((m: Record<string, unknown>) => [m.id, m.locale]));
+    const memberMap = new Map((members || []).map((m: Record<string, unknown>) => [m.id, m]));
 
     // Build subscription objects and filter by preferences
     const subscriptions: SubscriptionWithPrefs[] = subs
@@ -222,13 +234,35 @@ export async function sendPushToAllMembers(
 
     console.log(`[push] Broadcast type=${type}: sending to ${subscriptions.length} subscription(s) after preference filter`);
 
-    // Send to all in parallel
-    const sendPromises = subscriptions.map((sub) => {
-      const localizedPayload = sub.locale
-        ? { ...payload, ...getPushMessage(type, extractMessageData(payload), sub.locale as Locale) }
-        : payload;
-      return sendToEndpoint(sub, localizedPayload, supabase);
-    });
+    // Group subscriptions by member to detect members with all-dead endpoints
+    const subsByMember = new Map<string, SubscriptionWithPrefs[]>();
+    for (const sub of subscriptions) {
+      const existing = subsByMember.get(sub.member_id) || [];
+      existing.push(sub);
+      subsByMember.set(sub.member_id, existing);
+    }
+
+    // Send push to members with live endpoints, email fallback to members with all-dead endpoints
+    const sendPromises: Promise<void>[] = [];
+    for (const [mid, memberSubs] of subsByMember) {
+      const allDead = memberSubs.every((s) => s.fail_count >= SKIP_AFTER_FAILURES);
+      if (allDead) {
+        const m = memberMap.get(mid) as Record<string, unknown> | undefined;
+        if (m?.email) {
+          const locale = (m.locale as Locale) || 'vi';
+          const localizedPayload = { ...payload, ...getPushMessage(type, extractMessageData(payload), locale) };
+          console.log(`[push] Broadcast: all subscriptions dead for member ${mid}, sending email fallback`);
+          sendPromises.push(sendPushFallbackEmail(m.email as string, (m.full_name as string) || '', localizedPayload.title, localizedPayload.body, localizedPayload.url, locale));
+        }
+      } else {
+        for (const sub of memberSubs) {
+          const localizedPayload = sub.locale
+            ? { ...payload, ...getPushMessage(type, extractMessageData(payload), sub.locale as Locale) }
+            : payload;
+          sendPromises.push(sendToEndpoint(sub, localizedPayload, supabase));
+        }
+      }
+    }
 
     await Promise.allSettled(sendPromises);
   } catch (err) {

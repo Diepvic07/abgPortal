@@ -1848,3 +1848,63 @@ export async function sendDiscussionCancellationEmail(
     console.error('Failed to send discussion cancellation email:', error);
   }
 }
+
+/**
+ * Fallback email when push notification cannot be delivered
+ * (all subscriptions have failed too many times).
+ */
+export async function sendPushFallbackEmail(
+  to: string,
+  name: string,
+  title: string,
+  body: string,
+  url: string | undefined,
+  locale: Locale = 'vi'
+): Promise<void> {
+  const resend = getResendClient();
+  const isVi = locale === 'vi';
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+  const fullUrl = url ? `${appUrl}${url.startsWith('/') ? url : `/${url}`}` : appUrl;
+
+  const subject = title;
+  const emailHtml = `<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#1e293b;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">ABG Alumni Connect</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#1f2937;">${title}</p>
+          <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">${body}</p>
+
+          ${url ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td>
+            <a href="${fullUrl}" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${isVi ? 'Xem chi tiết' : 'View details'}</a>
+          </td></tr></table>` : ''}
+
+          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 16px;margin:0 0 20px;">
+            <p style="margin:0;font-size:13px;color:#0369a1;">${isVi
+              ? 'Bạn nhận email này vì thông báo đẩy trên điện thoại không hoạt động. Mở ứng dụng ABG Connect từ màn hình chính để khôi phục thông báo đẩy.'
+              : 'You received this email because push notifications on your phone are not working. Open ABG Connect from your Home Screen to restore push notifications.'}</p>
+          </div>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Connect &mdash; ${isVi ? 'Kết nối cựu học viên ABG' : 'Connecting ABG Alumni'}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>`;
+
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to, subject, html: emailHtml });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      if (TEST_MODE_EMAILS.includes(to)) {
+        await resend.emails.send({ from: FROM_EMAIL, to, subject: `[TEST] ${subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+      }
+      return;
+    }
+    console.error('[push] Failed to send fallback email:', error);
+  }
+}
