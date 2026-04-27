@@ -21,6 +21,7 @@ interface SubscriptionWithPrefs {
   endpoint: string;
   p256dh: string;
   auth: string;
+  fail_count: number;
   connection_request: boolean | null;
   new_event: boolean | null;
   new_proposal: boolean | null;
@@ -30,6 +31,10 @@ interface SubscriptionWithPrefs {
   news_tagged: boolean | null;
   locale: string | null;
 }
+
+// Subscriptions with fail_count >= this are skipped (likely dead endpoint).
+// Auto-repair in PushNotificationProvider resets fail_count when user reopens the app.
+const SKIP_AFTER_FAILURES = 3;
 
 // --- VAPID initialization ---
 
@@ -78,7 +83,7 @@ export async function sendPushToMember(
     // Fetch subscriptions for this member
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: subs, error: subErr } = await (supabase.from('push_subscriptions') as any)
-      .select('id, member_id, endpoint, p256dh, auth')
+      .select('id, member_id, endpoint, p256dh, auth, fail_count')
       .eq('member_id', memberId);
 
     if (subErr || !subs || subs.length === 0) {
@@ -107,6 +112,7 @@ export async function sendPushToMember(
       endpoint: row.endpoint as string,
       p256dh: row.p256dh as string,
       auth: row.auth as string,
+      fail_count: (row.fail_count as number) || 0,
       connection_request: prefs?.connection_request ?? null,
       new_event: prefs?.new_event ?? null,
       new_proposal: prefs?.new_proposal ?? null,
@@ -151,7 +157,7 @@ export async function sendPushToAllMembers(
     // Fetch all subscriptions
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query = (supabase.from('push_subscriptions') as any)
-      .select('id, member_id, endpoint, p256dh, auth');
+      .select('id, member_id, endpoint, p256dh, auth, fail_count');
 
     if (excludeMemberId) {
       query = query.neq('member_id', excludeMemberId);
@@ -196,6 +202,7 @@ export async function sendPushToAllMembers(
           endpoint: row.endpoint as string,
           p256dh: row.p256dh as string,
           auth: row.auth as string,
+          fail_count: (row.fail_count as number) || 0,
           connection_request: prefs?.connection_request as boolean | null ?? null,
           new_event: prefs?.new_event as boolean | null ?? null,
           new_proposal: prefs?.new_proposal as boolean | null ?? null,
@@ -236,6 +243,13 @@ async function sendToEndpoint(
   payload: PushPayload,
   supabase: ReturnType<typeof createServerSupabaseClient>
 ): Promise<void> {
+  // Skip subscriptions that have failed too many times (likely dead endpoint).
+  // We keep them in the DB so auto-repair can resurrect them when the user
+  // reopens the app — but don't waste push calls on them in the meantime.
+  if (sub.fail_count >= SKIP_AFTER_FAILURES) {
+    return;
+  }
+
   const pushSubscription = {
     endpoint: sub.endpoint,
     keys: { p256dh: sub.p256dh, auth: sub.auth },
@@ -255,10 +269,11 @@ async function sendToEndpoint(
     const statusCode = (err as { statusCode?: number })?.statusCode;
 
     if (statusCode === 410 || statusCode === 404) {
-      // Increment fail_count — only delete after 3 consecutive failures.
-      // iOS PWA subscriptions can return transient 410/404 errors and recover
-      // when the user reopens the app, so we avoid premature cleanup.
-      const MAX_FAIL_COUNT = 3;
+      // Increment fail_count but NEVER delete. iOS kills PWAs aggressively and
+      // Apple's push service returns 410, but the subscription can recover when
+      // the user reopens the app. The auto-repair in PushNotificationProvider
+      // resets fail_count to 0 on next app open. Subscriptions with high
+      // fail_count are skipped in sendToEndpoint to avoid wasting push calls.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: current } = await (supabase.from('push_subscriptions') as any)
         .select('fail_count')
@@ -266,18 +281,11 @@ async function sendToEndpoint(
         .single();
 
       const newFailCount = ((current?.fail_count as number) || 0) + 1;
-
-      if (newFailCount >= MAX_FAIL_COUNT) {
-        console.log(`[push] Removing subscription ${sub.id} after ${newFailCount} consecutive failures (${statusCode})`);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('push_subscriptions') as any).delete().eq('id', sub.id);
-      } else {
-        console.log(`[push] Subscription ${sub.id} failed (${statusCode}), fail_count=${newFailCount}/${MAX_FAIL_COUNT}`);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('push_subscriptions') as any)
-          .update({ fail_count: newFailCount })
-          .eq('id', sub.id);
-      }
+      console.log(`[push] Subscription ${sub.id} failed (${statusCode}), fail_count=${newFailCount}`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('push_subscriptions') as any)
+        .update({ fail_count: newFailCount })
+        .eq('id', sub.id);
     } else {
       console.error(`[push] Failed to send to endpoint ${sub.endpoint.slice(0, 50)}...`, statusCode || err);
     }
