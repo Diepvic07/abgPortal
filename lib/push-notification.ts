@@ -246,19 +246,38 @@ async function sendToEndpoint(
     const { _data: _, ...sendPayload } = payload;
     await webPush.sendNotification(pushSubscription, JSON.stringify(sendPayload));
 
-    // Update last_used_at on success
+    // Update last_used_at on success, reset fail_count
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase.from('push_subscriptions') as any)
-      .update({ last_used_at: new Date().toISOString() })
+      .update({ last_used_at: new Date().toISOString(), fail_count: 0 })
       .eq('id', sub.id);
   } catch (err: unknown) {
     const statusCode = (err as { statusCode?: number })?.statusCode;
 
     if (statusCode === 410 || statusCode === 404) {
-      // Subscription expired — clean up
-      console.log(`[push] Removing expired subscription ${sub.id} (${statusCode})`);
+      // Increment fail_count — only delete after 3 consecutive failures.
+      // iOS PWA subscriptions can return transient 410/404 errors and recover
+      // when the user reopens the app, so we avoid premature cleanup.
+      const MAX_FAIL_COUNT = 3;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from('push_subscriptions') as any).delete().eq('id', sub.id);
+      const { data: current } = await (supabase.from('push_subscriptions') as any)
+        .select('fail_count')
+        .eq('id', sub.id)
+        .single();
+
+      const newFailCount = ((current?.fail_count as number) || 0) + 1;
+
+      if (newFailCount >= MAX_FAIL_COUNT) {
+        console.log(`[push] Removing subscription ${sub.id} after ${newFailCount} consecutive failures (${statusCode})`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('push_subscriptions') as any).delete().eq('id', sub.id);
+      } else {
+        console.log(`[push] Subscription ${sub.id} failed (${statusCode}), fail_count=${newFailCount}/${MAX_FAIL_COUNT}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('push_subscriptions') as any)
+          .update({ fail_count: newFailCount })
+          .eq('id', sub.id);
+      }
     } else {
       console.error(`[push] Failed to send to endpoint ${sub.endpoint.slice(0, 50)}...`, statusCode || err);
     }

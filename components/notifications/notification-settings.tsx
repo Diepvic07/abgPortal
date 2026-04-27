@@ -47,10 +47,13 @@ export function NotificationSettings() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [guideStep, setGuideStep] = useState(0);
+  const [guidePlatform, setGuidePlatform] = useState<'ios' | 'android'>('ios');
 
   const platform = useMemo(() => detectPlatform(), []);
   const isPwa = useMemo(() => isStandalone(), []);
   const needsInstall = (platform === 'ios' || platform === 'android') && !isPwa;
+  const showMobileGuide = needsInstall || platform === 'desktop';
+  const effectivePlatform = platform === 'desktop' ? guidePlatform : platform as 'ios' | 'android';
 
   // Fetch preferences on mount
   useEffect(() => {
@@ -154,11 +157,35 @@ export function NotificationSettings() {
         )}
       </div>
 
-      {/* Notification Preview + PWA Install Guide — shown when on mobile browser (not installed) */}
-      {needsInstall && (
+      {/* Notification Preview + PWA Install Guide — shown on mobile browser or desktop */}
+      {showMobileGuide && (
         <>
-          <NotiPreview platform={platform} t={t} />
-          <PwaInstallGuide platform={platform} guideStep={guideStep} setGuideStep={setGuideStep} t={t} />
+          {platform === 'desktop' && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setGuidePlatform('ios'); setGuideStep(0); }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  guidePlatform === 'ios'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                iPhone / iPad
+              </button>
+              <button
+                onClick={() => { setGuidePlatform('android'); setGuideStep(0); }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  guidePlatform === 'android'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Android
+              </button>
+            </div>
+          )}
+          <NotiPreview platform={effectivePlatform} t={t} />
+          <PwaInstallGuide platform={effectivePlatform} guideStep={guideStep} setGuideStep={setGuideStep} t={t} />
         </>
       )}
 
