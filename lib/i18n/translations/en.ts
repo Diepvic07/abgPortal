@@ -1375,7 +1375,8 @@ export const en = {
     // PWA install guide
     installGuideTitle: 'Get notifications on your phone',
     installGuideDescription: 'Install the app on your home screen to receive push notifications on mobile.',
-    installGuideStep1iOS: 'Tap the Share button',
+    installGuideStep0iOS: 'Open the website in Safari (not Chrome or other browsers)',
+    installGuideStep1iOS: 'Tap the Share button at the bottom',
     installGuideStep2iOS: 'Scroll down and tap "Add to Home Screen"',
     installGuideStep3iOS: 'Tap "Add" to confirm',
     installGuideStep1Android: 'Tap the menu button (⋮)',

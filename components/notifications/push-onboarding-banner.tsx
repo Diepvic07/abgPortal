@@ -161,6 +161,7 @@ export function PushOnboardingBanner() {
 
   const guideSteps = platform === 'ios'
     ? [
+        { text: t.pushOnboarding.installGuideStep0iOS, image: '/images/pwa-guide/ios-step0-safari.svg' },
         { text: t.pushOnboarding.installGuideStep1iOS, image: '/images/pwa-guide/ios-step1.svg' },
         { text: t.pushOnboarding.installGuideStep2iOS, image: '/images/pwa-guide/ios-step2.svg' },
         { text: t.pushOnboarding.installGuideStep3iOS, image: '/images/pwa-guide/ios-step3.svg' },

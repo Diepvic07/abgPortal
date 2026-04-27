@@ -1354,7 +1354,8 @@ export const vi: Translations = {
     // PWA install guide
     installGuideTitle: 'Nhận thông báo trên điện thoại',
     installGuideDescription: 'Cài ứng dụng vào màn hình chính để nhận thông báo đẩy trên di động.',
-    installGuideStep1iOS: 'Nhấn nút Chia sẻ',
+    installGuideStep0iOS: 'Mở trang web bằng Safari (không dùng Chrome hay trình duyệt khác)',
+    installGuideStep1iOS: 'Nhấn nút Chia sẻ ở thanh dưới cùng',
     installGuideStep2iOS: 'Cuộn xuống và nhấn "Thêm vào MH chính"',
     installGuideStep3iOS: 'Nhấn "Thêm" để xác nhận',
     installGuideStep1Android: 'Nhấn nút menu (⋮)',
