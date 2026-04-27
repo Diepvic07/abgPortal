@@ -317,11 +317,13 @@ function PwaInstallGuide({ platform, guideStep, setGuideStep, t }: { platform: s
         { text: t.pushOnboarding.installGuideStep1iOS, image: '/images/pwa-guide/ios-step1.svg' },
         { text: t.pushOnboarding.installGuideStep2iOS, image: '/images/pwa-guide/ios-step2.svg' },
         { text: t.pushOnboarding.installGuideStep3iOS, image: '/images/pwa-guide/ios-step3.svg' },
+        { text: t.pushOnboarding.installGuideStep4iOS, image: '/images/pwa-guide/ios-step4-open-pwa.svg' },
       ]
     : [
         { text: t.pushOnboarding.installGuideStep1Android, image: '/images/pwa-guide/android-step1.svg' },
         { text: t.pushOnboarding.installGuideStep2Android, image: '/images/pwa-guide/android-step2.svg' },
         { text: t.pushOnboarding.installGuideStep3Android, image: '/images/pwa-guide/android-step3.svg' },
+        { text: t.pushOnboarding.installGuideStep4Android, image: '/images/pwa-guide/android-step4-open-pwa.svg' },
       ];
 
   return (
