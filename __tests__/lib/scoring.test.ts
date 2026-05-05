@@ -188,7 +188,12 @@ vi.mock('@/lib/utils', () => ({
 
 // ==================== Import Module Under Test ====================
 
-import { computePeriodBounds, writeScoreEvent, writeReversalEvent } from '@/lib/scoring';
+import {
+  computePeriodBounds,
+  scoreEventCompletion,
+  scoreRsvpAttendance,
+  writeScoreEvent,
+} from '@/lib/scoring';
 
 // ==================== Tests ====================
 
@@ -453,6 +458,61 @@ describe('Scoring System', () => {
 
       expect(scoreEventsStore[0].score).toBe(10);
       expect(scoreEventsStore[0].member_id).toBe('target-1');
+    });
+
+    it('event completion uses event date for organizer score timing', async () => {
+      mockEventData = {
+        id: 'event-1',
+        status: 'completed',
+        created_by_member_id: 'creator-1',
+        organizer_member_id: 'organizer-1',
+        event_date: '2026-04-20T13:00:00+07:00',
+        completed_at: '2026-05-05T12:00:00.000Z',
+        title: 'April Event',
+      };
+
+      await scoreEventCompletion('event-1');
+
+      expect(scoreEventsStore[0]).toMatchObject({
+        member_id: 'organizer-1',
+        rule_key: 'event.organizer.completed',
+        effective_at: '2026-04-20T13:00:00+07:00',
+      });
+      expect(memberScorePeriodsStore.find(row => row.period_type === 'month')).toMatchObject({
+        period_start: '2026-04-01T00:00:00+07:00',
+      });
+    });
+
+    it('RSVP attendance uses event date for attendee score timing', async () => {
+      mockRsvpData = {
+        id: 'rsvp-1',
+        event_id: 'event-1',
+        member_id: 'attendee-1',
+        actual_attendance: true,
+        verified_event_role: 'attendee',
+        attendance_mode: 'offline',
+      };
+      mockEventData = {
+        id: 'event-1',
+        status: 'completed',
+        created_by_member_id: 'creator-1',
+        organizer_member_id: 'organizer-1',
+        event_mode: 'offline',
+        event_date: '2026-04-20T13:00:00+07:00',
+        completed_at: '2026-05-05T12:00:00.000Z',
+        title: 'April Event',
+      };
+
+      await scoreRsvpAttendance('rsvp-1');
+
+      expect(scoreEventsStore[0]).toMatchObject({
+        member_id: 'attendee-1',
+        rule_key: 'event.attendee.offline.completed',
+        effective_at: '2026-04-20T13:00:00+07:00',
+      });
+      expect(memberScorePeriodsStore.find(row => row.period_type === 'month')).toMatchObject({
+        period_start: '2026-04-01T00:00:00+07:00',
+      });
     });
 
     it('qualified comment scores +5 as engagement', async () => {

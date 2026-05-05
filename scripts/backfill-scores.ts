@@ -133,7 +133,7 @@ async function backfillCompletedEvents() {
 
   const { data: events } = await supabase
     .from('community_events')
-    .select('id, created_by_member_id, completed_at, title, event_mode, status')
+    .select('id, created_by_member_id, event_date, completed_at, title, event_mode, status')
     .eq('status', 'completed');
 
   if (!events || events.length === 0) {
@@ -147,7 +147,7 @@ async function backfillCompletedEvents() {
     const e = event as Record<string, unknown>;
     const eventId = e.id as string;
     const creatorId = e.created_by_member_id as string;
-    const effectiveAt = (e.completed_at as string) || new Date().toISOString();
+    const effectiveAt = (e.event_date as string) || (e.completed_at as string) || new Date().toISOString();
 
     // Score organizer
     await writeScore({

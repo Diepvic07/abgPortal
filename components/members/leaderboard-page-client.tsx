@@ -40,6 +40,12 @@ interface LeaderboardData {
   };
   rankings: RankingEntry[];
   current_member: RankingEntry | null;
+  available_periods: Array<{
+    label: string;
+    anchor: string;
+    start: string;
+    end: string;
+  }>;
 }
 
 const PERIOD_LABELS: Record<PeriodType, string> = {
@@ -51,15 +57,19 @@ const PERIOD_LABELS: Record<PeriodType, string> = {
 export function LeaderboardPageClient() {
   const { data: session, status: authStatus } = useSession();
   const [period, setPeriod] = useState<PeriodType>("month");
+  const [anchor, setAnchor] = useState<string | null>(null);
   const [data, setData] = useState<LeaderboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLeaderboard = useCallback(async (periodType: PeriodType) => {
+  const fetchLeaderboard = useCallback(async (periodType: PeriodType, anchorDate: string | null) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/leaderboard?period=${periodType}`);
+      const params = new URLSearchParams({ period: periodType });
+      if (anchorDate) params.set("anchor", anchorDate);
+
+      const res = await fetch(`/api/leaderboard?${params.toString()}`);
       const json = await res.json();
       if (!res.ok) {
         setError(json.error || "Failed to load leaderboard");
@@ -75,9 +85,17 @@ export function LeaderboardPageClient() {
 
   useEffect(() => {
     if (authStatus === "authenticated") {
-      fetchLeaderboard(period);
+      fetchLeaderboard(period, anchor);
     }
-  }, [authStatus, period, fetchLeaderboard]);
+  }, [authStatus, period, anchor, fetchLeaderboard]);
+
+  const switchPeriod = (nextPeriod: PeriodType) => {
+    setPeriod(nextPeriod);
+    setAnchor(null);
+  };
+
+  const selectedAnchor = anchor ?? data?.period.start.slice(0, 10) ?? "";
+  const hasCurrentPeriodOption = !!data?.available_periods.some((option) => option.anchor === selectedAnchor);
 
   if (authStatus === "loading") {
     return (
@@ -102,7 +120,7 @@ export function LeaderboardPageClient() {
         {(["month", "quarter", "year"] as PeriodType[]).map((p) => (
           <button
             key={p}
-            onClick={() => setPeriod(p)}
+            onClick={() => switchPeriod(p)}
             className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
               period === p
                 ? "bg-white text-gray-900 shadow-sm"
@@ -114,11 +132,33 @@ export function LeaderboardPageClient() {
         ))}
       </div>
 
-      {/* Period Label */}
+      {/* Period Picker */}
       {data?.period && (
-        <p className="text-sm text-gray-500 mb-4 font-medium">
-          {data.period.label}
-        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <p className="text-sm text-gray-500 font-medium">
+            {data.period.label}
+          </p>
+          <div className="flex items-center gap-2">
+            <label htmlFor="leaderboard-period-anchor" className="text-xs font-medium text-gray-500">
+              View
+            </label>
+            <select
+              id="leaderboard-period-anchor"
+              value={selectedAnchor}
+              onChange={(event) => setAnchor(event.target.value)}
+              className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 shadow-sm outline-none transition-colors hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              {!hasCurrentPeriodOption && (
+                <option value={selectedAnchor}>{data.period.label}</option>
+              )}
+              {data.available_periods.map((option) => (
+                <option key={option.start} value={option.anchor}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       )}
 
       {/* Loading */}
