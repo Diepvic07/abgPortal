@@ -789,6 +789,25 @@ export async function updateRsvpAttendance(rsvpId: string, data: {
   }
 }
 
+export async function addMemberToEventAttendance(data: {
+  event_id: string;
+  member_id: string;
+  verified_event_role?: 'attendee' | 'lead';
+  attendance_mode?: 'offline' | 'online';
+}): Promise<void> {
+  const rsvp = await upsertRsvp({
+    event_id: data.event_id,
+    member_id: data.member_id,
+    commitment_level: 'will_participate',
+  });
+
+  await updateRsvpAttendance(rsvp.id, {
+    actual_attendance: true,
+    verified_event_role: data.verified_event_role || 'attendee',
+    attendance_mode: data.attendance_mode || 'offline',
+  });
+}
+
 // ==================== Admin: Get All Events ====================
 
 export async function getAllEvents(options?: {

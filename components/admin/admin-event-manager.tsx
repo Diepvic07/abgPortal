@@ -100,6 +100,8 @@ interface OrganizerOption {
   abg_class?: string | null;
 }
 
+type AttendanceMemberOption = OrganizerOption;
+
 const emptyForm: EventForm = {
   title: '',
   description: '',
@@ -163,6 +165,12 @@ export function AdminEventManager() {
   const [attendanceRows, setAttendanceRows] = useState<EventRsvp[]>([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [attendanceSaving, setAttendanceSaving] = useState(false);
+  const [attendanceMemberQuery, setAttendanceMemberQuery] = useState('');
+  const [attendanceClassFilter, setAttendanceClassFilter] = useState('');
+  const [attendanceClassOptions, setAttendanceClassOptions] = useState<string[]>([]);
+  const [attendanceMemberResults, setAttendanceMemberResults] = useState<AttendanceMemberOption[]>([]);
+  const [attendanceMemberSearchLoading, setAttendanceMemberSearchLoading] = useState(false);
+  const [attendanceAddingMemberId, setAttendanceAddingMemberId] = useState<string | null>(null);
   const { t, locale } = useTranslation();
 
   useEffect(() => {
@@ -340,9 +348,16 @@ export function AdminEventManager() {
   async function openAttendance(event: CommunityEvent) {
     setViewingAttendance(event);
     setAttendanceRows([]);
+    setAttendanceMemberQuery('');
+    setAttendanceClassFilter('');
+    setAttendanceMemberResults([]);
+    setAttendanceAddingMemberId(null);
     setAttendanceLoading(true);
     try {
-      const res = await fetch(`/api/admin/community/events/${event.id}/attendance`);
+      const [res, classesRes] = await Promise.all([
+        fetch(`/api/admin/community/events/${event.id}/attendance`),
+        fetch('/api/classes'),
+      ]);
       const data = await res.json();
       if (res.ok) {
         setViewingAttendance(data.event || event);
@@ -350,10 +365,79 @@ export function AdminEventManager() {
       } else {
         setMessage({ text: data.error || (locale === 'vi' ? 'Không tải được danh sách điểm danh' : 'Failed to load attendance'), type: 'error' });
       }
+      if (classesRes.ok) {
+        const classesData = await classesRes.json();
+        setAttendanceClassOptions(classesData.classes || []);
+      }
     } catch {
       setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
     } finally {
       setAttendanceLoading(false);
+    }
+  }
+
+  async function searchAttendanceMembers(queryValue: string, classValue: string) {
+    const query = queryValue.trim();
+    if (query.length < 2 && !classValue) {
+      setAttendanceMemberResults([]);
+      return;
+    }
+
+    setAttendanceMemberSearchLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (query) params.set('name', query);
+      if (classValue) params.set('abg_class', classValue);
+
+      const res = await fetch(`/api/admin/members/search?${params.toString()}`);
+      const data = await res.json();
+      setAttendanceMemberResults((data.members || []).slice(0, 8));
+    } catch {
+      setAttendanceMemberResults([]);
+    } finally {
+      setAttendanceMemberSearchLoading(false);
+    }
+  }
+
+  function handleAttendanceMemberSearch(value: string) {
+    setAttendanceMemberQuery(value);
+    searchAttendanceMembers(value, attendanceClassFilter);
+  }
+
+  function handleAttendanceClassFilter(value: string) {
+    setAttendanceClassFilter(value);
+    searchAttendanceMembers(attendanceMemberQuery, value);
+  }
+
+  async function addAttendanceMember(member: AttendanceMemberOption) {
+    if (!viewingAttendance) return;
+
+    setAttendanceAddingMemberId(member.id);
+    try {
+      const res = await fetch(`/api/admin/community/events/${viewingAttendance.id}/attendance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          member_id: member.id,
+          verified_event_role: 'attendee',
+          attendance_mode: 'offline',
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAttendanceRows(data.rsvps || []);
+        setViewingAttendance(data.event || viewingAttendance);
+        setAttendanceMemberQuery('');
+        setAttendanceMemberResults([]);
+        setMessage({ text: locale === 'vi' ? 'Đã thêm thành viên vào danh sách điểm danh' : 'Member added to attendance', type: 'success' });
+        await fetchEvents();
+      } else {
+        setMessage({ text: data.error || (locale === 'vi' ? 'Không thêm được thành viên' : 'Failed to add member'), type: 'error' });
+      }
+    } catch {
+      setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
+    } finally {
+      setAttendanceAddingMemberId(null);
     }
   }
 
@@ -1282,6 +1366,69 @@ export function AdminEventManager() {
                       ? 'Điểm danh được lưu ngay. Điểm leaderboard chỉ hiển thị sau khi sự kiện ở trạng thái completed.'
                       : 'Attendance is saved immediately. Leaderboard scores only appear after the event status is completed.')}
                 </p>
+              </div>
+
+              <div className="mb-4 border border-gray-200 rounded-lg overflow-hidden">
+                <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                  <p className="text-sm font-medium text-gray-900">
+                    {locale === 'vi' ? 'Thêm thành viên có mặt' : 'Add Attending Member'}
+                  </p>
+                </div>
+                <div className="p-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_180px] gap-2">
+                    <input
+                      type="text"
+                      value={attendanceMemberQuery}
+                      onChange={(e) => handleAttendanceMemberSearch(e.target.value)}
+                      placeholder={locale === 'vi' ? 'Tìm theo tên thành viên...' : 'Search member name...'}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <select
+                      value={attendanceClassFilter}
+                      onChange={(e) => handleAttendanceClassFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">{locale === 'vi' ? 'Tất cả lớp' : 'All classes'}</option>
+                      {attendanceClassOptions.map((className) => (
+                        <option key={className} value={className}>{className}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {attendanceMemberSearchLoading && (
+                    <p className="mt-2 text-xs text-gray-500">{locale === 'vi' ? 'Đang tìm...' : 'Searching...'}</p>
+                  )}
+
+                  {!attendanceMemberSearchLoading && attendanceMemberResults.length > 0 && (
+                    <div className="mt-3 divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden">
+                      {attendanceMemberResults.map((member) => {
+                        const alreadyListed = attendanceRows.some((row) => row.member_id === member.id);
+                        const adding = attendanceAddingMemberId === member.id;
+
+                        return (
+                          <div key={member.id} className="flex items-center justify-between gap-3 px-3 py-2 bg-white">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{member.name}</p>
+                              <p className="text-xs text-gray-500 truncate">{member.abg_class || (locale === 'vi' ? 'Chưa có lớp' : 'No class')}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => addAttendanceMember(member)}
+                              disabled={alreadyListed || adding || attendanceSaving}
+                              className="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:bg-gray-200 disabled:text-gray-500"
+                            >
+                              {alreadyListed
+                                ? (locale === 'vi' ? 'Đã có' : 'Added')
+                                : adding
+                                  ? (locale === 'vi' ? 'Đang thêm' : 'Adding')
+                                  : (locale === 'vi' ? 'Thêm' : 'Add')}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {attendanceLoading ? (

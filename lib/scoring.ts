@@ -21,6 +21,13 @@ interface PeriodBounds {
   periodEnd: string;
 }
 
+interface LeaderboardPeriodOption {
+  label: string;
+  anchor: string;
+  start: string;
+  end: string;
+}
+
 // ==================== Constants ====================
 
 const TIMEZONE = 'Asia/Ho_Chi_Minh';
@@ -115,6 +122,50 @@ export function computePeriodBounds(effectiveAt: string): PeriodBounds[] {
       periodEnd: formatPeriodDate(year + 1, 1, 1),
     },
   ];
+}
+
+function getPeriodLabel(periodType: 'month' | 'quarter' | 'year', anchorIso: string): string {
+  const local = toTimezoneDate(anchorIso);
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  if (periodType === 'month') {
+    return `${monthNames[local.getMonth()]} ${local.getFullYear()}`;
+  }
+
+  if (periodType === 'quarter') {
+    const q = Math.floor(local.getMonth() / 3) + 1;
+    return `Q${q} ${local.getFullYear()}`;
+  }
+
+  return `${local.getFullYear()}`;
+}
+
+async function getAvailableLeaderboardPeriods(periodType: 'month' | 'quarter' | 'year'): Promise<LeaderboardPeriodOption[]> {
+  const supabase = createServerSupabaseClient();
+  const { data: rows } = await (supabase.from('member_score_periods') as any)
+    .select('period_start, period_end')
+    .eq('period_type', periodType)
+    .gt('total_score', 0)
+    .order('period_start', { ascending: false })
+    .limit(1000);
+
+  const periods = new Map<string, LeaderboardPeriodOption>();
+
+  for (const row of (rows || []) as Array<Record<string, unknown>>) {
+    const start = row.period_start as string;
+    const end = row.period_end as string;
+    if (!start || periods.has(start)) continue;
+
+    const anchor = start.slice(0, 10);
+    periods.set(start, {
+      label: getPeriodLabel(periodType, start),
+      anchor,
+      start,
+      end,
+    });
+  }
+
+  return [...periods.values()];
 }
 
 // ==================== Core Write ====================
@@ -311,7 +362,7 @@ export async function scoreEventCompletion(eventId: string): Promise<void> {
   // Fetch event
   const { data: event } = await supabase
     .from('community_events')
-    .select('id, status, created_by_member_id, organizer_member_id, completed_at, title')
+    .select('id, status, created_by_member_id, organizer_member_id, event_date, completed_at, title')
     .eq('id', eventId)
     .single();
 
@@ -321,7 +372,7 @@ export async function scoreEventCompletion(eventId: string): Promise<void> {
   const memberId = ((e.organizer_member_id as string | null) || e.created_by_member_id) as string;
   if (!memberId) return;
 
-  const effectiveAt = (e.completed_at as string) || formatDate();
+  const effectiveAt = (e.event_date as string) || (e.completed_at as string) || formatDate();
 
   // Score organizer
   await writeScoreEvent({
@@ -364,14 +415,14 @@ export async function scoreRsvpAttendance(rsvpId: string): Promise<void> {
   // Fetch event to check status and mode
   const { data: event } = await supabase
     .from('community_events')
-    .select('id, status, created_by_member_id, organizer_member_id, event_mode, completed_at, title')
+    .select('id, status, created_by_member_id, organizer_member_id, event_mode, event_date, completed_at, title')
     .eq('id', eventId)
     .single();
 
   if (!event || (event as Record<string, unknown>).status !== 'completed') return;
 
   const e = event as Record<string, unknown>;
-  const effectiveAt = (e.completed_at as string) || formatDate();
+  const effectiveAt = (e.event_date as string) || (e.completed_at as string) || formatDate();
 
   // If attendance was removed, reverse any existing scores for this member+event
   if (!r.actual_attendance) {
@@ -848,6 +899,7 @@ export async function getLeaderboardData(options: {
     };
     last_scored_at?: string;
   } | null;
+  available_periods: LeaderboardPeriodOption[];
 }> {
   const supabase = createServerSupabaseClient();
   const limit = Math.min(options.limit || 50, 100);
@@ -861,19 +913,7 @@ export async function getLeaderboardData(options: {
   const periods = computePeriodBounds(anchorIso);
   const targetPeriod = periods.find(p => p.periodType === options.period)!;
 
-  // Format period label
-  const local = toTimezoneDate(anchorIso);
-  let periodLabel: string;
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-  if (options.period === 'month') {
-    periodLabel = `${monthNames[local.getMonth()]} ${local.getFullYear()}`;
-  } else if (options.period === 'quarter') {
-    const q = Math.floor(local.getMonth() / 3) + 1;
-    periodLabel = `Q${q} ${local.getFullYear()}`;
-  } else {
-    periodLabel = `${local.getFullYear()}`;
-  }
+  const periodLabel = getPeriodLabel(options.period, anchorIso);
 
   // Query rankings: member_score_periods joined with members
   const { data: rows } = await (supabase.from('member_score_periods') as any)
@@ -932,5 +972,6 @@ export async function getLeaderboardData(options: {
     },
     rankings: topRankings,
     current_member: currentMember,
+    available_periods: await getAvailableLeaderboardPeriods(options.period),
   };
 }

@@ -3,7 +3,8 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api-respon
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { isAdminAsync } from '@/lib/admin-utils-server';
-import { getEventById, getRsvpsByEvent, updateRsvpAttendance } from '@/lib/supabase-events';
+import { getMemberById } from '@/lib/supabase-db';
+import { addMemberToEventAttendance, getEventById, getRsvpsByEvent, updateRsvpAttendance } from '@/lib/supabase-events';
 import { z } from 'zod';
 
 const AttendanceUpdateSchema = z.object({
@@ -14,6 +15,12 @@ const AttendanceUpdateSchema = z.object({
     verified_event_role: z.enum(['attendee', 'lead']).nullable().optional(),
     attendance_mode: z.enum(['offline', 'online']).nullable().optional(),
   })).max(300),
+});
+
+const AttendanceAddMemberSchema = z.object({
+  member_id: z.string().min(1),
+  verified_event_role: z.enum(['attendee', 'lead']).optional(),
+  attendance_mode: z.enum(['offline', 'online']).optional(),
 });
 
 async function requireAdmin() {
@@ -82,6 +89,42 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         attendance_mode: rsvp.actual_attendance ? (rsvp.attendance_mode || 'offline') : null,
       });
     }
+
+    const rsvps = await getRsvpsByEvent(id);
+    return successResponse({ event, rsvps });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const admin = await requireAdmin();
+    if (admin.error) return admin.error;
+
+    const { id } = await params;
+    const event = await getEventById(id);
+    if (!event) {
+      return errorResponse('Event not found', 404);
+    }
+
+    const body = await request.json();
+    const parsed = AttendanceAddMemberSchema.safeParse(body);
+    if (!parsed.success) {
+      return errorResponse(parsed.error.issues.map((e) => e.message).join(', '), 400);
+    }
+
+    const member = await getMemberById(parsed.data.member_id);
+    if (!member) {
+      return errorResponse('Member not found', 404);
+    }
+
+    await addMemberToEventAttendance({
+      event_id: id,
+      member_id: parsed.data.member_id,
+      verified_event_role: parsed.data.verified_event_role || 'attendee',
+      attendance_mode: parsed.data.attendance_mode || 'offline',
+    });
 
     const rsvps = await getRsvpsByEvent(id);
     return successResponse({ event, rsvps });
