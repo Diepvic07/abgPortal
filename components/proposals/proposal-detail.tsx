@@ -136,6 +136,8 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editEstimatedFee, setEditEstimatedFee] = useState('');
   const [editRequirements, setEditRequirements] = useState('');
   const [editRegistrationInfo, setEditRegistrationInfo] = useState('');
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [editImageUploading, setEditImageUploading] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [rerunningAI, setRerunningAI] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -520,6 +522,7 @@ export function ProposalDetail({ proposalId }: Props) {
     setEditEstimatedFee(proposal.estimated_fee || '');
     setEditRequirements(proposal.requirements || '');
     setEditRegistrationInfo(proposal.registration_info || '');
+    setEditImageUrl(proposal.image_url || '');
     setEditError(null);
     setIsEditing(true);
   }
@@ -539,6 +542,32 @@ export function ProposalDetail({ proposalId }: Props) {
     const opts = editPollOptions.filter(o => o.trim()).map(o => o.trim().toLowerCase());
     return opts.length !== new Set(opts).size;
   })();
+
+  async function handleEditImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setEditError(locale === 'vi' ? 'Ảnh quá lớn. Tối đa 5MB.' : 'Image too large. Maximum 5MB.');
+      return;
+    }
+    setEditImageUploading(true);
+    setEditError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/community/proposals/upload-image', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setEditImageUrl(data.url);
+      } else {
+        setEditError(data.error || (locale === 'vi' ? 'Không thể tải ảnh lên' : 'Failed to upload image'));
+      }
+    } catch {
+      setEditError(locale === 'vi' ? 'Lỗi tải ảnh' : 'Image upload error');
+    } finally {
+      setEditImageUploading(false);
+    }
+  }
 
   async function handleSaveEdit() {
     if (!proposal) return;
@@ -590,6 +619,7 @@ export function ProposalDetail({ proposalId }: Props) {
           estimated_fee: editEstimatedFee.trim() || null,
           requirements: editRequirements.trim() || null,
           registration_info: editRegistrationInfo.trim() || null,
+          image_url: editImageUrl || null,
         }),
       });
       if (!res.ok) {
@@ -827,6 +857,49 @@ export function ProposalDetail({ proposalId }: Props) {
                   ))}
                 </select>
               </label>
+            </div>
+
+            {/* Image upload */}
+            <div className="mt-3">
+              <label className="text-sm text-gray-600 block mb-1">
+                {locale === 'vi' ? 'Ảnh minh họa (tùy chọn)' : 'Cover image (optional)'}
+              </label>
+              {editImageUrl ? (
+                <div className="relative inline-block">
+                  <img src={editImageUrl} alt="Cover" className="max-h-48 rounded-lg object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setEditImageUrl('')}
+                    className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-black/80"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${editImageUploading ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'}`}>
+                  <div className="flex flex-col items-center gap-1 text-gray-500">
+                    {editImageUploading ? (
+                      <>
+                        <svg className="animate-spin h-6 w-6 text-blue-500" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        <span className="text-sm text-blue-600">{locale === 'vi' ? 'Đang tải...' : 'Uploading...'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-2xl">📷</span>
+                        <span className="text-sm">{locale === 'vi' ? 'Nhấn để chọn ảnh' : 'Click to select image'}</span>
+                        <span className="text-xs text-gray-400">JPG, PNG, WebP, GIF · Max 5MB</span>
+                      </>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={handleEditImageUpload}
+                    disabled={editImageUploading}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
 
             {/* Activity-type-specific fields */}
@@ -1379,6 +1452,13 @@ export function ProposalDetail({ proposalId }: Props) {
           </>
         )}
       </div>
+
+      {/* Cover image */}
+      {!isEditing && proposal.image_url && (
+        <div className="rounded-xl overflow-hidden">
+          <img src={proposal.image_url} alt={proposal.title} className="w-full max-h-80 object-cover" />
+        </div>
+      )}
 
       {/* Recap Section — read-only display when recap exists and not editing */}
       {!isEditing && (proposal.recap_text || (proposal.recap_images && proposal.recap_images.length > 0)) && (

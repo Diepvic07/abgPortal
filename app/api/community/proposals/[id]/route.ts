@@ -159,7 +159,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return successResponse({ proposal: latest || updated });
     }
 
-    const { title, description, category, genre, target_date, location, participation_format, tags, duration, agenda, has_fee, estimated_fee, requirements, registration_info } = body;
+    const { title, description, category, genre, target_date, location, participation_format, tags, duration, agenda, has_fee, estimated_fee, requirements, registration_info, image_url } = body;
 
     const updates: Record<string, unknown> = {};
     if (title !== undefined) {
@@ -183,6 +183,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (estimated_fee !== undefined) updates.estimated_fee = typeof estimated_fee === 'string' ? estimated_fee.trim().slice(0, 200) || null : null;
     if (requirements !== undefined) updates.requirements = typeof requirements === 'string' ? requirements.trim().slice(0, 2000) || null : null;
     if (registration_info !== undefined) updates.registration_info = typeof registration_info === 'string' ? registration_info.trim().slice(0, 2000) || null : null;
+    if (image_url !== undefined) updates.image_url = typeof image_url === 'string' && image_url.trim() ? image_url.trim() : null;
 
     // Update proposal fields first (without has_discussion to avoid schema cache issues)
     const updated = await updateProposal(id, updates);
