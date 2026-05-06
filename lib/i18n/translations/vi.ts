@@ -1126,6 +1126,17 @@ export const vi: Translations = {
       score: 'Điểm:',
       committed: 'cam kết',
       comments: 'bình luận',
+      createEvent: 'Tạo sự kiện',
+      createEventFrom: 'Tạo sự kiện từ đề xuất',
+      eventDate: 'Ngày & giờ sự kiện',
+      eventEndDate: 'Ngày kết thúc (tùy chọn)',
+      eventMode: 'Hình thức',
+      location: 'Địa điểm',
+      locationUrl: 'URL địa điểm (tùy chọn)',
+      capacity: 'Số lượng (tùy chọn)',
+      creating: 'Đang tạo...',
+      eventCreated: 'Đã tạo sự kiện! Sự kiện đang ở trạng thái nháp.',
+      eventCreateFailed: 'Không thể tạo sự kiện',
     },
 
     references: {

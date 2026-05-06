@@ -20,12 +20,167 @@ const STATUS_COLORS: Record<string, string> = {
 
 const ALL_STATUSES: ProposalStatus[] = ['published', 'selected', 'in_progress', 'completed', 'archived', 'removed'];
 
+function CreateEventModal({ proposal, t, onClose, onCreated }: {
+  proposal: CommunityProposal;
+  t: ReturnType<typeof useTranslation>['t'];
+  onClose: () => void;
+  onCreated: (msg: string) => void;
+}) {
+  const [eventDate, setEventDate] = useState('');
+  const [eventEndDate, setEventEndDate] = useState('');
+  const [eventMode, setEventMode] = useState<'offline' | 'online' | 'hybrid'>('offline');
+  const [location, setLocation] = useState('');
+  const [locationUrl, setLocationUrl] = useState('');
+  const [capacity, setCapacity] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!eventDate) return;
+
+    setCreating(true);
+    setError('');
+    try {
+      const body: Record<string, unknown> = {
+        event_mode: eventMode,
+        event_date: new Date(eventDate).toISOString(),
+      };
+      if (eventEndDate) body.event_end_date = new Date(eventEndDate).toISOString();
+      if (location) body.location = location;
+      if (locationUrl) body.location_url = locationUrl;
+      if (capacity) body.capacity = parseInt(capacity, 10);
+
+      const res = await fetch(`/api/admin/community/events/from-proposal/${proposal.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        onCreated(t.admin.proposals.eventCreated);
+        onClose();
+      } else {
+        const data = await res.json();
+        setError(data.error || t.admin.proposals.eventCreateFailed);
+      }
+    } catch {
+      setError(t.admin.proposals.eventCreateFailed);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-1">{t.admin.proposals.createEventFrom}</h3>
+          <p className="text-sm text-gray-500 mb-4 line-clamp-1">{proposal.title}</p>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.eventDate} *</label>
+              <input
+                type="datetime-local"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                required
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.eventEndDate}</label>
+              <input
+                type="datetime-local"
+                value={eventEndDate}
+                onChange={(e) => setEventEndDate(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.eventMode}</label>
+              <select
+                value={eventMode}
+                onChange={(e) => setEventMode(e.target.value as 'offline' | 'online' | 'hybrid')}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="offline">Offline</option>
+                <option value="online">Online</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.location}</label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g. Read Station, Ha Noi"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.locationUrl}</label>
+              <input
+                type="url"
+                value={locationUrl}
+                onChange={(e) => setLocationUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.capacity}</label>
+              <input
+                type="number"
+                value={capacity}
+                onChange={(e) => setCapacity(e.target.value)}
+                min="1"
+                placeholder="50"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                {t.admin.actions.cancel}
+              </button>
+              <button
+                type="submit"
+                disabled={creating || !eventDate}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                {creating ? t.admin.proposals.creating : t.admin.proposals.createEvent}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AdminProposalManager() {
   const { t } = useTranslation();
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [createEventProposal, setCreateEventProposal] = useState<CommunityProposal | null>(null);
 
   useEffect(() => {
     fetchProposals();
@@ -150,6 +305,16 @@ export function AdminProposalManager() {
                     {proposal.is_pinned ? `📌 ${t.admin.proposals.unpin}` : `📌 ${t.admin.proposals.pin}`}
                   </button>
 
+                  {/* Create Event - show for published/selected proposals */}
+                  {(proposal.status === 'published' || proposal.status === 'selected') && (
+                    <button
+                      onClick={() => setCreateEventProposal(proposal)}
+                      className="text-xs px-3 py-1.5 border border-green-200 text-green-700 rounded-lg hover:bg-green-50 font-medium"
+                    >
+                      🎉 {t.admin.proposals.createEvent}
+                    </button>
+                  )}
+
                   {/* Status dropdown */}
                   <select
                     value={proposal.status}
@@ -181,6 +346,18 @@ export function AdminProposalManager() {
             </div>
           ))}
         </div>
+      )}
+
+      {createEventProposal && (
+        <CreateEventModal
+          proposal={createEventProposal}
+          t={t}
+          onClose={() => setCreateEventProposal(null)}
+          onCreated={(msg) => {
+            setMessage(msg);
+            fetchProposals();
+          }}
+        />
       )}
     </div>
   );

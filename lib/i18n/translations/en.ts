@@ -1138,6 +1138,17 @@ export const en = {
       score: 'Score:',
       committed: 'committed',
       comments: 'comments',
+      createEvent: 'Create Event',
+      createEventFrom: 'Create Event from Proposal',
+      eventDate: 'Event Date & Time',
+      eventEndDate: 'End Date & Time (optional)',
+      eventMode: 'Mode',
+      location: 'Location',
+      locationUrl: 'Location URL (optional)',
+      capacity: 'Capacity (optional)',
+      creating: 'Creating...',
+      eventCreated: 'Event created successfully! It is in draft status.',
+      eventCreateFailed: 'Failed to create event',
     },
 
     // References
