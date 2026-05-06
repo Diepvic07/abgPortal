@@ -1457,7 +1457,7 @@ export function ProposalDetail({ proposalId }: Props) {
             placeholder={locale === 'vi' ? 'Mô tả hoạt động (hỗ trợ Markdown)' : 'Proposal description (Markdown supported)'}
           />
         ) : (
-          <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ p: ({ children }) => <p className="mb-3">{children}</p>, a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{linkifyText(proposal.description)}</ReactMarkdown></div>
+          <div className="prose prose-sm max-w-none text-gray-700"><ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={{ p: ({ children }) => <p className="mb-3">{children}</p>, a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800 break-all" target="_blank" rel="noopener noreferrer">{children}</a> }}>{linkifyText(proposal.description)}</ReactMarkdown></div>
         )}
 
         {/* Activity-type-specific details */}
