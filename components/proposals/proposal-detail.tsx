@@ -11,6 +11,7 @@ import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, ParticipationFormat, ProposalDiscussion, DiscussionResponse, ProposalPoll, PollResponse, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS } from '@/types';
 import { ProposalDiscussionSection } from '@/components/proposals/proposal-discussion-section';
+import { ProposalEmailInviteSection } from '@/components/proposals/proposal-email-invite-section';
 import { ProposalPollSection } from '@/components/proposals/proposal-poll-section';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 import { MentionTextarea, renderMentions, encodementions, decodeMentions } from '@/components/ui/mention-textarea';
@@ -1688,6 +1689,19 @@ export function ProposalDetail({ proposalId }: Props) {
           responses={discussionResponses}
           commitments={commitments}
           currentMemberId={currentMemberId}
+          isCreator={currentMemberId === proposal.created_by_member_id}
+          isAdmin={currentMemberIsAdmin}
+          locale={locale}
+          onRefresh={() => fetchProposal(true)}
+        />
+      )}
+
+      {/* Email Invite */}
+      {(currentMemberId === proposal.created_by_member_id || currentMemberIsAdmin) && (
+        <ProposalEmailInviteSection
+          proposalId={proposalId}
+          proposalTitle={proposal.title}
+          commitments={commitments}
           isCreator={currentMemberId === proposal.created_by_member_id}
           isAdmin={currentMemberIsAdmin}
           locale={locale}

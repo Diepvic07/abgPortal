@@ -59,6 +59,8 @@ export async function GET(request: NextRequest) {
         my_payment_status: myPayment?.status || null,
         member_phone: member.phone || null,
         tier_counts: { premium: premiumCount, basic: basicCount },
+        currentMemberId: member.id,
+        currentMemberIsAdmin: !!member.is_admin,
       });
     }
 

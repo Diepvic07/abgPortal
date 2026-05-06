@@ -26,6 +26,7 @@ import {
   EVENT_STATUS_LABELS,
 } from '@/types';
 import { EventPaymentFlow } from './event-payment-flow';
+import { EventEmailInviteSection } from './event-email-invite-section';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 
 const RSVP_ACTIONS: Array<{
@@ -195,6 +196,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [tierCounts, setTierCounts] = useState<{ premium: number; basic: number }>({ premium: 0, basic: 0 });
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [currentMemberIsAdmin, setCurrentMemberIsAdmin] = useState(false);
   const fetchEventDataRef = useRef<() => Promise<void>>(async () => {});
   const fetchCommentsDataRef = useRef<() => Promise<void>>(async () => {});
 
@@ -219,6 +221,8 @@ export function EventDetail({ eventId }: { eventId: string }) {
         if (data.membership_status) setMembershipStatus(data.membership_status);
         if (data.member_phone) setMemberPhone(data.member_phone);
         if (data.tier_counts) setTierCounts(data.tier_counts);
+        if (data.currentMemberId) setCurrentMemberId(data.currentMemberId);
+        if (data.currentMemberIsAdmin) setCurrentMemberIsAdmin(true);
       } else {
         setEvent(null);
         setRsvps([]);
@@ -1130,6 +1134,22 @@ export function EventDetail({ eventId }: { eventId: string }) {
                 );
               })}
           </div>
+        </section>
+      )}
+
+      {/* Email Invite — for creator or admin */}
+      {(currentMemberId === event.created_by_member_id || currentMemberIsAdmin) && (
+        <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {locale === 'vi' ? 'Gửi lời mời' : 'Send Invitations'}
+          </h3>
+          <EventEmailInviteSection
+            eventId={eventId}
+            eventTitle={event.title}
+            eventDate={event.event_date}
+            locale={locale}
+            onSuccess={() => fetchEventDataRef.current()}
+          />
         </section>
       )}
 

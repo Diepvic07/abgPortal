@@ -23,16 +23,17 @@ function generateIcsInvite(opts: {
   discussionId: string;
   sequence?: number;
   durationMinutes?: number;
+  uidPrefix?: string;
 }): string {
-  const { title, meetingDate, meetingLink, proposalUrl, discussionId, sequence = 0, durationMinutes = 60 } = opts;
+  const { title, meetingDate, meetingLink, proposalUrl, discussionId, sequence = 0, durationMinutes = 60, uidPrefix = 'discussion' } = opts;
   const start = new Date(meetingDate);
   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
 
   const fmt = (d: Date) =>
     d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 
-  // Stable UID based on discussion ID so updates replace the original event
-  const uid = `discussion-${discussionId}@abgalumni.vn`;
+  // Stable UID so updates replace the original event
+  const uid = `${uidPrefix}-${discussionId}@abgalumni.vn`;
 
   return [
     'BEGIN:VCALENDAR',
@@ -50,9 +51,14 @@ function generateIcsInvite(opts: {
     `URL:${meetingLink}`,
     `LOCATION:${meetingLink}`,
     'BEGIN:VALARM',
+    'TRIGGER:-PT30M',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Reminder: 30 minutes before',
+    'END:VALARM',
+    'BEGIN:VALARM',
     'TRIGGER:-PT10M',
     'ACTION:DISPLAY',
-    'DESCRIPTION:Reminder',
+    'DESCRIPTION:Reminder: 10 minutes before',
     'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',
@@ -1548,7 +1554,7 @@ export async function sendDiscussionInvitationEmail(
   </table>
 </body></html>`;
 
-  // Generate .ics calendar invite with 10-minute reminder
+  // Generate .ics calendar invite with 30-minute and 10-minute reminders
   const icsContent = generateIcsInvite({
     title: proposalTitle,
     meetingDate,
