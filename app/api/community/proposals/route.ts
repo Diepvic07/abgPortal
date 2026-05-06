@@ -3,7 +3,7 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api-respon
 import { requireAuth } from '@/lib/auth-middleware';
 import { createProposal, getProposals, upsertCommitment } from '@/lib/supabase-community';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { ProposalCategory, ProposalGenre, CommitmentLevel, ParticipationFormat, PROPOSAL_GENRES } from '@/types';
+import { ProposalCategory, ProposalGenre, ProposalStatus, CommitmentLevel, ParticipationFormat, PROPOSAL_GENRES } from '@/types';
 import { sendPushToAllMembers, getPushMessage } from '@/lib/push-notification';
 import { createInAppNotifications } from '@/lib/in-app-notifications';
 
@@ -18,12 +18,23 @@ export async function GET(request: NextRequest) {
     // No auth required for browsing proposals — anyone can view
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category') as ProposalCategory | null;
+    const statusParam = searchParams.get('status');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
+    // status=all → show everything except removed (for admin)
+    // status=<valid> → filter by specific status
+    // default → show published, selected, in_progress (public view)
+    const VALID_STATUSES: ProposalStatus[] = ['published', 'selected', 'in_progress', 'completed', 'archived', 'removed'];
+    const status: ProposalStatus | ProposalStatus[] | undefined = statusParam === 'all'
+      ? undefined
+      : statusParam && VALID_STATUSES.includes(statusParam as ProposalStatus)
+        ? statusParam as ProposalStatus
+        : ['published', 'selected', 'in_progress'];
+
     const result = await getProposals({
       category: category && VALID_CATEGORIES.includes(category) ? category : undefined,
-      status: 'published',
+      status,
       page,
       limit,
     });

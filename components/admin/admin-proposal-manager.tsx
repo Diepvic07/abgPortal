@@ -189,7 +189,7 @@ export function AdminProposalManager() {
   async function fetchProposals() {
     setLoading(true);
     try {
-      const res = await fetch('/api/community/proposals?limit=100');
+      const res = await fetch('/api/community/proposals?limit=100&status=all');
       if (res.ok) {
         const data = await res.json();
         setProposals(data.proposals || []);

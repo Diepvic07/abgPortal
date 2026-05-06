@@ -46,6 +46,7 @@ export function EventsHub() {
     : (isAuthenticated ? 'proposals' : 'events');
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [events, setEvents] = useState<CommunityEvent[]>([]);
+  const [selectedProposals, setSelectedProposals] = useState<CommunityProposal[]>([]);
   const [pastEvents, setPastEvents] = useState<CommunityEvent[]>([]);
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,13 +62,21 @@ export function EventsHub() {
   async function fetchEvents() {
     setLoading(true);
     try {
-      const url = isAuthenticated
+      const eventsUrl = isAuthenticated
         ? '/api/community/events?upcoming=true'
         : '/api/public/events?upcoming=true';
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
+      // Also fetch "selected" proposals — these are approved to become events
+      const [eventsRes, proposalsRes] = await Promise.all([
+        fetch(eventsUrl),
+        fetch('/api/community/proposals?status=selected'),
+      ]);
+      if (eventsRes.ok) {
+        const data = await eventsRes.json();
         setEvents(data.events || []);
+      }
+      if (proposalsRes.ok) {
+        const data = await proposalsRes.json();
+        setSelectedProposals(data.proposals || []);
       }
     } catch (error) {
       console.error('Failed to fetch events:', error);
@@ -151,7 +160,7 @@ export function EventsHub() {
       {/* Tab content */}
       <div className="mt-6">
         {activeTab === 'events' && (
-          <EventsTabContent events={events} loading={loading} locale={locale} session={session} />
+          <EventsTabContent events={events} selectedProposals={selectedProposals} loading={loading} locale={locale} session={session} />
         )}
         {activeTab === 'proposals' && (
           <ProposalsTabContent proposals={proposals} loading={loading} locale={locale} session={session} />
@@ -195,11 +204,13 @@ function EmptyState({ message, cta, href }: { message: string; cta?: string; hre
 
 function EventsTabContent({
   events,
+  selectedProposals,
   loading,
   locale,
   session,
 }: {
   events: CommunityEvent[];
+  selectedProposals: CommunityProposal[];
   loading: boolean;
   locale: string;
   session: ReturnType<typeof useSession>['data'];
@@ -207,7 +218,9 @@ function EventsTabContent({
   const isAuthenticated = !!session;
   if (loading) return <SkeletonRows />;
 
-  if (events.length === 0) {
+  const hasContent = events.length > 0 || selectedProposals.length > 0;
+
+  if (!hasContent) {
     return (
       <EmptyState
         message={locale === 'vi' ? 'Chưa có hoạt động sắp tới. Hãy đề xuất một hoạt động!' : 'No upcoming activities. Propose one!'}
@@ -223,6 +236,9 @@ function EventsTabContent({
         {locale === 'vi' ? 'HOẠT ĐỘNG SẮP TỚI' : 'UPCOMING ACTIVITIES'}
       </h2>
       <div className="divide-y divide-gray-100">
+        {selectedProposals.map((proposal) => (
+          <SelectedProposalRow key={proposal.id} proposal={proposal} locale={locale} isAuthenticated={isAuthenticated} />
+        ))}
         {events.map((event) => (
           <EventRow key={event.id} event={event} locale={locale} isAuthenticated={isAuthenticated} />
         ))}
@@ -428,6 +444,56 @@ function ProposalRow({ proposal, locale, isAuthenticated }: { proposal: Communit
           <h3 className="font-semibold text-gray-900 text-base truncate">{proposal.title}</h3>
           <p className="text-sm text-gray-500 mt-0.5">
             {proposal.author_name || 'Unknown'}{proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
+            {proposal.location && <span> · 📍 {proposal.location}</span>}
+            {proposal.participation_format && (
+              <span> · {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.icon} {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.participation_format}</span>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-4 ml-4 flex-shrink-0">
+          <span className="text-sm text-gray-500 flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-1.053M18 6.75a3 3 0 11-6 0 3 3 0 016 0zM6.75 9.75a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            {proposal.commitment_count}
+          </span>
+          {isAuthenticated && (
+            <span className="text-sm text-gray-500 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
+              {proposal.comment_count}
+            </span>
+          )}
+          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${colors.bg} ${colors.text}`}>
+            {categoryLabel}
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function SelectedProposalRow({ proposal, locale, isAuthenticated }: { proposal: CommunityProposal; locale: string; isAuthenticated?: boolean }) {
+  const categoryColors: Record<string, { bg: string; text: string }> = {
+    charity: { bg: 'bg-rose-50', text: 'text-rose-600' },
+    event: { bg: 'bg-amber-50', text: 'text-amber-600' },
+    learning: { bg: 'bg-blue-50', text: 'text-blue-600' },
+    community_support: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
+    other: { bg: 'bg-violet-50', text: 'text-violet-600' },
+  };
+  const colors = categoryColors[proposal.category] || categoryColors.other;
+  const categoryLabel = PROPOSAL_CATEGORY_LABELS[proposal.category]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.category;
+
+  return (
+    <Link href={`/proposals/${proposal.slug}`} className="block">
+      <div className="py-4 flex items-center justify-between hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-lg">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-gray-900 text-base truncate">{proposal.title}</h3>
+            <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-700">
+              {locale === 'vi' ? 'Đã chọn' : 'Selected'}
+            </span>
+          </div>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {proposal.author_name || 'Unknown'}{proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
+            {proposal.target_date && ` · ${formatEventDate(proposal.target_date, locale)}`}
             {proposal.location && <span> · 📍 {proposal.location}</span>}
             {proposal.participation_format && (
               <span> · {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.icon} {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.participation_format}</span>

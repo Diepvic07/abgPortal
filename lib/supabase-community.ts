@@ -151,7 +151,7 @@ export async function createProposal(data: {
 
 export async function getProposals(options: {
   category?: ProposalCategory;
-  status?: ProposalStatus;
+  status?: ProposalStatus | ProposalStatus[];
   page?: number;
   limit?: number;
 }): Promise<{ proposals: CommunityProposal[]; total: number }> {
@@ -168,7 +168,11 @@ export async function getProposals(options: {
     query = query.eq('category', options.category);
   }
   if (options.status) {
-    query = query.eq('status', options.status);
+    if (Array.isArray(options.status)) {
+      query = query.in('status', options.status);
+    } else {
+      query = query.eq('status', options.status);
+    }
   } else {
     query = query.neq('status', 'removed');
   }
