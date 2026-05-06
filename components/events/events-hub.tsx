@@ -76,7 +76,13 @@ export function EventsHub() {
       }
       if (proposalsRes.ok) {
         const data = await proposalsRes.json();
-        setSelectedProposals(data.proposals || []);
+        // Only show selected proposals with a future target_date in upcoming tab
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const upcoming = (data.proposals || []).filter((p: CommunityProposal) =>
+          p.target_date && new Date(p.target_date) >= now
+        );
+        setSelectedProposals(upcoming);
       }
     } catch (error) {
       console.error('Failed to fetch events:', error);
