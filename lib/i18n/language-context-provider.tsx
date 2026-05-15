@@ -23,7 +23,7 @@ interface LanguageProviderProps {
   defaultLocale?: Locale;
 }
 
-// Get initial locale from localStorage, browser language, or default
+// Get initial locale from localStorage or default
 function getInitialLocale(defaultLocale: Locale): Locale {
   if (typeof window === 'undefined') return defaultLocale;
 
@@ -36,10 +36,6 @@ function getInitialLocale(defaultLocale: Locale): Locale {
   } catch {
     // localStorage not available
   }
-
-  // 2. Detect from browser language
-  const browserLang = navigator.language || '';
-  if (browserLang.startsWith('en')) return 'en';
 
   return defaultLocale;
 }
@@ -100,4 +96,3 @@ export function useTranslation() {
 }
 
 // Server-side translation helper (for emails/API)
-

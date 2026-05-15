@@ -154,7 +154,7 @@ export function HeaderNavigation() {
             <Link href="/faq" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
               {t.nav.faq}
             </Link>
-            <LanguageSwitcherDropdown />
+            {status === 'unauthenticated' && <LanguageSwitcherDropdown />}
             {status === 'authenticated' && <NotificationBell />}
             <div className="h-6 w-px bg-white/20 mx-2" />
             {status === 'authenticated' ? (

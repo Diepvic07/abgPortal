@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
-import { useTranslation } from '@/lib/i18n';
+import { useTranslation, type Locale } from '@/lib/i18n';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { MembershipBadge } from '@/components/ui/membership-badge';
 import type { Member, MembershipStatus } from '@/types';
@@ -17,7 +17,7 @@ interface HeaderUserMenuProps {
 }
 
 export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps) {
-  const { t } = useTranslation();
+  const { locale, setLanguage, t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -43,6 +43,10 @@ export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps
 
   const isPendingPayment = membershipStatus === 'pending';
   const showPaymentCta = (membershipStatus === 'basic' || membershipStatus === 'expired') && !isPendingPayment;
+  const languageOptions: Array<{ locale: Locale; label: string }> = [
+    { locale: 'en', label: t.language.en },
+    { locale: 'vi', label: t.language.vi },
+  ];
 
   return (
     <>
@@ -117,6 +121,35 @@ export function HeaderUserMenu({ member, membershipStatus }: HeaderUserMenuProps
               )}
             </div>
           )}
+
+          <div className="border-b border-gray-200 px-3 py-2">
+            <div className="grid grid-cols-2 gap-1" aria-label="Select language">
+              {languageOptions.map((option) => {
+                const isSelected = locale === option.locale;
+
+                return (
+                  <button
+                    key={option.locale}
+                    type="button"
+                    onClick={() => setLanguage(option.locale)}
+                    className={`flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                      isSelected
+                        ? 'bg-blue-50 font-semibold text-brand'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    aria-pressed={isSelected}
+                  >
+                    <span>{option.label}</span>
+                    {isSelected && (
+                      <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="py-1">
             <Link
