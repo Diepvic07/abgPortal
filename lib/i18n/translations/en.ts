@@ -1056,6 +1056,7 @@ export const en = {
       selectValue: 'Select value to keep',
       conflictingFields: 'Conflicting Fields',
       autoFilled: 'Auto-filled from other profile',
+      mergeBoth: 'Merge both',
     },
 
     // News

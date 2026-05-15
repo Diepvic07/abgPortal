@@ -15,6 +15,11 @@ interface DuplicateReviewCardProps {
   t?: Record<string, unknown>;
 }
 
+/** Fields where "merge both" makes sense (free-text / list-like) */
+const COMBINABLE_FIELDS: Set<string> = new Set([
+  'bio', 'can_help_with', 'looking_for', 'expertise',
+]);
+
 /** All detail fields to display for each member side-by-side */
 const DETAIL_FIELDS: { key: keyof Member; label: string }[] = [
   { key: 'email', label: 'Email' },
@@ -278,6 +283,8 @@ function MergePreviewModal({
                 {conflicts.map(({ key, label }) => {
                   const aVal = String(memberA[key] || '');
                   const bVal = String(memberB[key] || '');
+                  const combinedVal = `${aVal}\n---\n${bVal}`;
+                  const canCombine = COMBINABLE_FIELDS.has(key);
                   return (
                     <div key={key} className="border border-gray-200 rounded-lg p-3">
                       <p className="text-xs font-medium text-gray-500 mb-2">{label}</p>
@@ -297,6 +304,20 @@ function MergePreviewModal({
                             </span>
                           </label>
                         ))}
+                        {canCombine && (
+                          <label className="flex items-start gap-2 cursor-pointer mt-1 pt-1 border-t border-gray-100">
+                            <input
+                              type="radio"
+                              name={`merge-${key}`}
+                              checked={selections[key] === combinedVal}
+                              onChange={() => setSelections((prev) => ({ ...prev, [key]: combinedVal }))}
+                              className="mt-0.5"
+                            />
+                            <span className="text-sm text-blue-700 font-medium">
+                              {merge.mergeBoth || 'Merge both'}
+                            </span>
+                          </label>
+                        )}
                       </div>
                     </div>
                   );

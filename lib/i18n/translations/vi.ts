@@ -1048,6 +1048,7 @@ export const vi: Translations = {
       selectValue: 'Chọn giá trị giữ lại',
       conflictingFields: 'Trường xung đột',
       autoFilled: 'Tự điền từ hồ sơ kia',
+      mergeBoth: 'Gộp cả hai',
     },
 
     news: {
