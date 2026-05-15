@@ -14,7 +14,7 @@ const EventMode = z.enum(['offline', 'online', 'hybrid']);
 
 const UpdateEventSchema = z.object({
   title: z.string().min(5).max(200).optional(),
-  description: z.string().min(20).max(5000).optional(),
+  description: z.string().min(20).max(10000).optional(),
   category: EventCategory.optional(),
   event_mode: EventMode.nullable().optional(),
   status: EventStatus.optional(),
@@ -38,7 +38,7 @@ const UpdateEventSchema = z.object({
   payment_instructions: z.string().nullable().optional(),
   require_question: z.boolean().optional(),
   question_prompt: z.string().max(500).nullable().optional(),
-  recap_text: z.string().max(5000).nullable().optional(),
+  recap_text: z.string().max(10000).nullable().optional(),
   recap_images: z.array(z.string()).max(20).nullable().optional(),
   organizer_member_id: z.string().nullable().optional(),
 });

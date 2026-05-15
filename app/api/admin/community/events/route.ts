@@ -13,7 +13,7 @@ const EventMode = z.enum(['offline', 'online', 'hybrid']);
 
 const CreateEventSchema = z.object({
   title: z.string().min(5).max(200),
-  description: z.string().min(20).max(5000),
+  description: z.string().min(20).max(10000),
   category: EventCategory,
   event_mode: EventMode.optional().default('offline'),
   status: EventStatus.optional().default('draft'),

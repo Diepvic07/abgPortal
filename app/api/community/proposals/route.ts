@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
     if (!title || title.length < 5 || title.length > 200) {
       return errorResponse('Title must be between 5 and 200 characters', 400);
     }
-    if (!description || description.length < 20 || description.length > 5000) {
-      return errorResponse('Description must be between 20 and 5000 characters', 400);
+    if (!description || description.length < 20 || description.length > 10000) {
+      return errorResponse('Description must be between 20 and 10000 characters', 400);
     }
     if (!category || !VALID_CATEGORIES.includes(category)) {
       return errorResponse('Invalid category', 400);
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       location: typeof location === 'string' ? location.trim().slice(0, 100) : undefined,
       participation_format: participation_format && VALID_FORMATS.includes(participation_format) ? participation_format : 'offline',
       duration: typeof duration === 'string' ? duration.trim().slice(0, 100) : undefined,
-      agenda: typeof agenda === 'string' ? agenda.trim().slice(0, 5000) : undefined,
+      agenda: typeof agenda === 'string' ? agenda.trim().slice(0, 10000) : undefined,
       has_fee: typeof has_fee === 'boolean' ? has_fee : undefined,
       estimated_fee: typeof estimated_fee === 'string' ? estimated_fee.trim().slice(0, 200) : undefined,
       requirements: typeof requirements === 'string' ? requirements.trim().slice(0, 2000) : undefined,

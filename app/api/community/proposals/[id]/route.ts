@@ -141,7 +141,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.recap_text !== undefined || body.recap_images !== undefined) {
       const recapUpdates: Record<string, unknown> = {};
       if (body.recap_text !== undefined) {
-        recapUpdates.recap_text = body.recap_text ? String(body.recap_text).trim().slice(0, 5000) : null;
+        recapUpdates.recap_text = body.recap_text ? String(body.recap_text).trim().slice(0, 10000) : null;
       }
       if (body.recap_images !== undefined) {
         recapUpdates.recap_images = Array.isArray(body.recap_images) ? body.recap_images.slice(0, 20) : [];
@@ -167,7 +167,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       updates.title = title;
     }
     if (description !== undefined) {
-      if (description.length < 20 || description.length > 5000) return errorResponse('Description must be between 20 and 5000 characters', 400);
+      if (description.length < 20 || description.length > 10000) return errorResponse('Description must be between 20 and 10000 characters', 400);
       updates.description = description;
     }
     if (category !== undefined) updates.category = category;
@@ -178,7 +178,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags.filter((t: string) => typeof t === 'string' && t.trim()).map((t: string) => t.trim()).slice(0, 10) : [];
     // Activity-type-specific fields
     if (duration !== undefined) updates.duration = typeof duration === 'string' ? duration.trim().slice(0, 100) || null : null;
-    if (agenda !== undefined) updates.agenda = typeof agenda === 'string' ? agenda.trim().slice(0, 5000) || null : null;
+    if (agenda !== undefined) updates.agenda = typeof agenda === 'string' ? agenda.trim().slice(0, 10000) || null : null;
     if (has_fee !== undefined) updates.has_fee = typeof has_fee === 'boolean' ? has_fee : null;
     if (estimated_fee !== undefined) updates.estimated_fee = typeof estimated_fee === 'string' ? estimated_fee.trim().slice(0, 200) || null : null;
     if (requirements !== undefined) updates.requirements = typeof requirements === 'string' ? requirements.trim().slice(0, 2000) || null : null;

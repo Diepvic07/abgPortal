@@ -1366,7 +1366,7 @@ export function ProposalDetail({ proposalId }: Props) {
                 rows={4}
                 className="w-full border border-purple-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono mb-3"
                 placeholder={locale === 'vi' ? 'Viết recap cho hoạt động này (hỗ trợ Markdown)...' : 'Write a recap for this event (Markdown supported)...'}
-                maxLength={5000}
+                maxLength={10000}
               />
               {recapImages.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">

@@ -949,7 +949,7 @@ export function AdminEventManager() {
                   <textarea
                     required
                     minLength={20}
-                    maxLength={5000}
+                    maxLength={10000}
                     rows={8}
                     value={form.description}
                     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -1213,7 +1213,7 @@ export function AdminEventManager() {
                         onChange={(e) => setForm((f) => ({ ...f, recap_text: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-vertical"
                         placeholder={locale === 'vi' ? 'Viết recap cho sự kiện (hỗ trợ Markdown)...' : 'Write event recap (Markdown supported)...'}
-                        maxLength={5000}
+                        maxLength={10000}
                       />
                     </div>
                     {form.recap_images.length > 0 && (
