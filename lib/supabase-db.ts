@@ -71,6 +71,7 @@ function mapRowToMember(row: Record<string, unknown>): Member {
     locale: (nullToUndefined(row.locale as string | null) as 'en' | 'vi' | undefined) ?? 'vi',
     public_profile_slug: nullToUndefined(row.public_profile_slug as string | null),
     public_profile_enabled: (row.public_profile_enabled as boolean) || false,
+    secondary_emails: Array.isArray(row.secondary_emails) ? row.secondary_emails as string[] : [],
   };
 }
 
@@ -183,9 +184,10 @@ export async function getMemberByPublicProfileSlug(slug: string): Promise<Member
 
 export async function getMemberByEmail(email: string): Promise<Member | null> {
   const db = createServerSupabaseClient();
-  // Use .select() (not .maybeSingle()) to handle potential duplicate rows gracefully.
-  // If duplicates exist, pick the "best" row: approved > pending > rejected, then active > inactive.
-  const { data, error } = await db.from('members').select('*').ilike('email', email);
+  // Check both primary email and secondary_emails array.
+  // Use .or() to match either the primary email or the secondary_emails array containing this email.
+  const normalizedEmail = email.trim().toLowerCase();
+  const { data, error } = await db.from('members').select('*').or(`email.ilike.${normalizedEmail},secondary_emails.cs.{${normalizedEmail}}`);
   if (error) {
     console.error('[SupabaseDB] getMemberByEmail error:', error);
     throw new Error(`Failed to get member by email: ${error.message}`);

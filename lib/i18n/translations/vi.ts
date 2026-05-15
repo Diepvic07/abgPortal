@@ -1030,6 +1030,24 @@ export const vi: Translations = {
       lookingFor: 'Đang tìm',
       relationshipStatus: 'Tình trạng quan hệ',
       company: 'Công ty',
+      secondaryEmails: 'Email phụ',
+      addEmail: 'Thêm email',
+    },
+
+    merge: {
+      mergeProfiles: 'Gộp hồ sơ',
+      mergeMembers: 'Gộp thành viên',
+      keepProfile: 'Giữ hồ sơ này',
+      discardProfile: 'Sẽ bị xóa',
+      transferPremium: 'Chuyển Premium',
+      emailBecomeSecondary: 'sẽ trở thành email phụ',
+      confirmMerge: 'Xác nhận gộp',
+      merging: 'Đang gộp...',
+      mergeFailed: 'Gộp thành viên thất bại',
+      mergeSuccess: 'Gộp thành viên thành công',
+      selectValue: 'Chọn giá trị giữ lại',
+      conflictingFields: 'Trường xung đột',
+      autoFilled: 'Tự điền từ hồ sơ kia',
     },
 
     news: {

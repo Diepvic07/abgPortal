@@ -70,6 +70,8 @@ export interface Member {
   // Public profile metadata
   public_profile_slug?: string;
   public_profile_enabled?: boolean;
+  // Secondary contact emails
+  secondary_emails?: string[];
 }
 
 export interface PublicProfileMember {

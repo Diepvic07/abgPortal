@@ -38,6 +38,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Handle secondary_emails separately (array field)
+    let secondaryEmailsUpdated = false;
+    if (Array.isArray(updates.secondary_emails)) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const validatedEmails = updates.secondary_emails
+        .map((e: string) => (typeof e === 'string' ? e.trim().toLowerCase() : ''))
+        .filter((e: string) => e && emailRegex.test(e));
+      safeUpdates.secondary_emails = validatedEmails;
+      secondaryEmailsUpdated = true;
+    }
+
     // Handle email separately (not in ALLOWED_FIELDS due to type constraint)
     let emailUpdated = false;
     if (typeof updates.email === 'string') {
@@ -55,7 +66,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (Object.keys(safeUpdates).length === 0 && !emailUpdated) {
+    if (Object.keys(safeUpdates).length === 0 && !emailUpdated && !secondaryEmailsUpdated) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 

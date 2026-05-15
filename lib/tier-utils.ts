@@ -112,6 +112,7 @@ export function filterProfileByTier(
   const {
     phone,
     linkedin_url,
+    secondary_emails,
     ...limitedProfile
   } = profile;
 
@@ -119,6 +120,7 @@ export function filterProfileByTier(
     ...limitedProfile,
     phone: undefined,
     linkedin_url: undefined,
+    secondary_emails: undefined,
   };
 }
 

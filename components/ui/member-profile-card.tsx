@@ -172,6 +172,17 @@ export function MemberProfileCard({ member }: MemberProfileCardProps) {
                                             </div>
                                         </div>
                                     )}
+                                    {member.secondary_emails && member.secondary_emails.length > 0 && member.secondary_emails.map((se, idx) => (
+                                        <div key={idx} className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+                                                {Icons.Email}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Email</p>
+                                                <a href={`mailto:${se}`} className="text-sm font-medium text-brand hover:underline truncate block w-full">{se}</a>
+                                            </div>
+                                        </div>
+                                    ))}
                                     {member.phone && (
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm flex-shrink-0">

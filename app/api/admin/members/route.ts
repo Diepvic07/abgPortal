@@ -35,6 +35,17 @@ export async function GET() {
       phone: m.phone,
       expertise: m.expertise,
       bio: m.bio,
+      country: m.country,
+      gender: m.gender,
+      birth_year: m.birth_year,
+      nickname: m.nickname,
+      facebook_url: m.facebook_url,
+      linkedin_url: m.linkedin_url,
+      company_website: m.company_website,
+      can_help_with: m.can_help_with,
+      looking_for: m.looking_for,
+      relationship_status: m.relationship_status,
+      secondary_emails: m.secondary_emails || [],
     }));
 
     // Deduplicate by email, keeping the entry with most recent created_at

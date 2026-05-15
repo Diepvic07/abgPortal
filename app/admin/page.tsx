@@ -48,6 +48,7 @@ interface AdminMember {
   can_help_with?: string;
   looking_for?: string;
   relationship_status?: string;
+  secondary_emails?: string[];
 }
 
 export default function AdminPage() {
@@ -65,6 +66,8 @@ export default function AdminPage() {
   const [upgradeTarget, setUpgradeTarget] = useState<{ id: string; name: string } | null>(null);
   const [editingMember, setEditingMember] = useState<AdminMember | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const [editSecondaryEmails, setEditSecondaryEmails] = useState<string[]>([]);
+  const [newSecondaryEmail, setNewSecondaryEmail] = useState("");
   const { toasts, showToast, dismissToast } = useToasts();
   const [pendingPaymentCount, setPendingPaymentCount] = useState(0);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -263,6 +266,8 @@ export default function AdminPage() {
 
   const handleEditMember = (member: AdminMember) => {
     setEditingMember(member);
+    setEditSecondaryEmails(member.secondary_emails || []);
+    setNewSecondaryEmail("");
     setEditForm({
       email: member.email || "",
       name: member.name || "",
@@ -291,7 +296,7 @@ export default function AdminPage() {
       const res = await fetch("/api/admin/update-member", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: editingMember.id, updates: editForm }),
+        body: JSON.stringify({ memberId: editingMember.id, updates: { ...editForm, secondary_emails: editSecondaryEmails } }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -302,6 +307,24 @@ export default function AdminPage() {
       await fetchMembers();
     } catch (err) {
       showToast(err instanceof Error ? err.message : t.admin.members.updateFailed);
+    }
+  };
+
+  const handleMergeMembers = async (keepId: string, deleteId: string, mergedFields: Record<string, unknown>) => {
+    try {
+      const res = await fetch("/api/admin/merge-members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keepId, deleteId, mergedFields }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to merge");
+      }
+      showToast(t.admin.merge.mergeSuccess, "success");
+      await fetchMembers();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t.admin.merge.mergeFailed);
     }
   };
 
@@ -503,6 +526,8 @@ export default function AdminPage() {
                     onClearFlag={handleClearDuplicateFlag}
                     onDelete={handleDeleteMember}
                     onEdit={(m) => handleEditMember(m as unknown as AdminMember)}
+                    onMerge={handleMergeMembers}
+                    t={t as unknown as Record<string, unknown>}
                     onConfirmDelete={(member, proceed) => {
                       showConfirm({
                         title: t.admin.members.deleteMember,
@@ -830,6 +855,54 @@ export default function AdminPage() {
                     Member must log in with this new email after the change.
                   </p>
                 )}
+              </div>
+              {/* Secondary Emails */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.form.secondaryEmails}</label>
+                {editSecondaryEmails.map((se, idx) => (
+                  <div key={idx} className="flex items-center gap-2 mb-1">
+                    <span className="flex-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">{se}</span>
+                    <button
+                      type="button"
+                      onClick={() => setEditSecondaryEmails((prev) => prev.filter((_, i) => i !== idx))}
+                      className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                <div className="flex items-center gap-2 mt-1">
+                  <input
+                    type="email"
+                    value={newSecondaryEmail}
+                    onChange={(e) => setNewSecondaryEmail(e.target.value)}
+                    placeholder="email@example.com"
+                    className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const email = newSecondaryEmail.trim().toLowerCase();
+                        if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !editSecondaryEmails.includes(email) && email !== editForm.email?.toLowerCase()) {
+                          setEditSecondaryEmails((prev) => [...prev, email]);
+                          setNewSecondaryEmail("");
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const email = newSecondaryEmail.trim().toLowerCase();
+                      if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !editSecondaryEmails.includes(email) && email !== editForm.email?.toLowerCase()) {
+                        setEditSecondaryEmails((prev) => [...prev, email]);
+                        setNewSecondaryEmail("");
+                      }
+                    }}
+                    className="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg"
+                  >
+                    {t.admin.form.addEmail}
+                  </button>
+                </div>
               </div>
               {([
                 { key: "name", label: t.admin.labels.name },

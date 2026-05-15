@@ -1037,6 +1037,25 @@ export const en = {
       lookingFor: 'Looking For',
       relationshipStatus: 'Relationship Status',
       company: 'Company',
+      secondaryEmails: 'Secondary Emails',
+      addEmail: 'Add Email',
+    },
+
+    // Merge duplicates
+    merge: {
+      mergeProfiles: 'Merge Profiles',
+      mergeMembers: 'Merge Members',
+      keepProfile: 'Keep this profile',
+      discardProfile: 'Will be deleted',
+      transferPremium: 'Transfer Premium status',
+      emailBecomeSecondary: 'will become a secondary email',
+      confirmMerge: 'Confirm Merge',
+      merging: 'Merging...',
+      mergeFailed: 'Failed to merge members',
+      mergeSuccess: 'Members merged successfully',
+      selectValue: 'Select value to keep',
+      conflictingFields: 'Conflicting Fields',
+      autoFilled: 'Auto-filled from other profile',
     },
 
     // News
