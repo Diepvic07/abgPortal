@@ -10,6 +10,7 @@ import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityEvent, EVENT_CATEGORY_LABELS, EVENT_MODE_LABELS, EventMode } from '@/types';
 import { GuestRsvpModal } from './guest-rsvp-modal';
+import { ShareButtons } from '@/components/ui/share-buttons';
 
 function formatDateTime(dateStr: string, locale: string): string {
   try {
@@ -108,7 +109,10 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
             <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">{vi ? 'Sự kiện công khai' : 'Public Event'}</span>
           )}
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{event.title}</h1>
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{event.title}</h1>
+          <ShareButtons title={event.title} />
+        </div>
       </div>
 
       {/* Event Info */}

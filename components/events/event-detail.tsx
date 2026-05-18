@@ -28,6 +28,7 @@ import {
 import { EventPaymentFlow } from './event-payment-flow';
 import { EventEmailInviteSection } from './event-email-invite-section';
 import { CommentReactions } from '@/components/ui/comment-reactions';
+import { ShareButtons } from '@/components/ui/share-buttons';
 
 const RSVP_ACTIONS: Array<{
   level: EventRegistrationLevel;
@@ -638,7 +639,10 @@ export function EventDetail({ eventId }: { eventId: string }) {
           )}
         </div>
 
-        <h1 className="text-3xl font-semibold tracking-tight text-gray-900">{event.title}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-3xl font-semibold tracking-tight text-gray-900">{event.title}</h1>
+          <ShareButtons title={event.title} />
+        </div>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-600">
           {locale === 'vi'
             ? 'Thông tin tham gia được tóm tắt bên dưới để bạn biết rõ hình thức, địa điểm và cách đăng ký trước khi xác nhận.'

@@ -15,6 +15,7 @@ import { ProposalEmailInviteSection } from '@/components/proposals/proposal-emai
 import { ProposalPollSection } from '@/components/proposals/proposal-poll-section';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 import { MentionTextarea, renderMentions, encodementions, decodeMentions } from '@/components/ui/mention-textarea';
+import { ShareButtons } from '@/components/ui/share-buttons';
 
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
@@ -1442,7 +1443,10 @@ export function ProposalDetail({ proposalId }: Props) {
           </>
         ) : (
           <>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{proposal.title}</h1>
+            <div className="flex items-start justify-between gap-4 mb-2">
+              <h1 className="text-3xl font-bold text-gray-900">{proposal.title}</h1>
+              <ShareButtons title={proposal.title} />
+            </div>
             <div className="flex flex-wrap items-center gap-2 text-gray-600">
               <span>
                 {locale === 'vi' ? 'bởi' : 'by'} {proposal.author_name || 'Unknown'}

@@ -774,6 +774,9 @@ export const en = {
     shareArticle: 'Share this article',
     shareTwitter: 'Share on Twitter',
     shareLinkedIn: 'Share on LinkedIn',
+    shareFacebook: 'Share on Facebook',
+    shareMessenger: 'Send via Messenger',
+    shareZalo: 'Share on Zalo',
     copyLink: 'Copy link',
     linkCopied: 'Link copied!',
     // Article navigation

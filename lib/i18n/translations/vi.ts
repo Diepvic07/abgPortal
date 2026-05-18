@@ -776,6 +776,9 @@ export const vi: Translations = {
     shareArticle: 'Chia sẻ bài viết',
     shareTwitter: 'Chia sẻ lên Twitter',
     shareLinkedIn: 'Chia sẻ lên LinkedIn',
+    shareFacebook: 'Chia sẻ lên Facebook',
+    shareMessenger: 'Gửi qua Messenger',
+    shareZalo: 'Chia sẻ qua Zalo',
     copyLink: 'Sao chép liên kết',
     linkCopied: 'Đã sao chép!',
     // Article navigation
