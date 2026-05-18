@@ -344,6 +344,7 @@ export interface CommunityProposal {
   commitment_count: number;
   comment_count: number;
   target_date?: string;
+  target_time?: string;
   created_at: string;
   updated_at: string;
   published_at?: string;
@@ -354,6 +355,7 @@ export interface CommunityProposal {
   image_url?: string;
   tags?: string[];
   location?: string;
+  map_url?: string;
   participation_format?: ParticipationFormat;
   has_discussion?: boolean;
   has_poll?: boolean;

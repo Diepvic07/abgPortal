@@ -159,7 +159,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return successResponse({ proposal: latest || updated });
     }
 
-    const { title, description, category, genre, target_date, location, participation_format, tags, duration, agenda, has_fee, estimated_fee, requirements, registration_info, image_url } = body;
+    const { title, description, category, genre, target_date, target_time, location, map_url, participation_format, tags, duration, agenda, has_fee, estimated_fee, requirements, registration_info, image_url } = body;
 
     const updates: Record<string, unknown> = {};
     if (title !== undefined) {
@@ -173,7 +173,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (category !== undefined) updates.category = category;
     if (genre !== undefined) updates.genre = genre;
     if (target_date !== undefined) updates.target_date = target_date || null;
+    if (target_time !== undefined) updates.target_time = typeof target_time === 'string' ? target_time.trim().slice(0, 10) || null : null;
     if (location !== undefined) updates.location = location || null;
+    if (map_url !== undefined) updates.map_url = typeof map_url === 'string' ? map_url.trim().slice(0, 500) || null : null;
     if (participation_format !== undefined) updates.participation_format = participation_format;
     if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags.filter((t: string) => typeof t === 'string' && t.trim()).map((t: string) => t.trim()).slice(0, 10) : [];
     // Activity-type-specific fields

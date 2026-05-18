@@ -111,8 +111,10 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editCategory, setEditCategory] = useState('');
   const [editGenre, setEditGenre] = useState('');
   const [editTargetDate, setEditTargetDate] = useState('');
+  const [editTargetTime, setEditTargetTime] = useState('');
   const [editLocation, setEditLocation] = useState('');
   const [editCustomLocation, setEditCustomLocation] = useState('');
+  const [editMapUrl, setEditMapUrl] = useState('');
   const [editParticipationFormat, setEditParticipationFormat] = useState<ParticipationFormat>('offline');
   const [editTags, setEditTags] = useState<string[]>([]);
   const [editTagInput, setEditTagInput] = useState('');
@@ -472,7 +474,9 @@ export function ProposalDetail({ proposalId }: Props) {
     setEditCategory(proposal.category);
     setEditGenre(proposal.genre || 'other');
     setEditTargetDate(proposal.target_date || '');
+    setEditTargetTime(proposal.target_time || '');
     const loc = proposal.location || '';
+    setEditMapUrl(proposal.map_url || '');
     if (loc === 'Hà Nội' || loc === 'HCM' || loc === '') {
       setEditLocation(loc);
       setEditCustomLocation('');
@@ -598,7 +602,9 @@ export function ProposalDetail({ proposalId }: Props) {
           category: editCategory,
           genre: editGenre,
           target_date: editTargetDate || null,
+          target_time: editTargetTime || null,
           location: editLocation === '__custom__' ? editCustomLocation.trim() : editLocation || null,
+          map_url: editMapUrl.trim() || null,
           participation_format: editParticipationFormat,
           tags: editTags,
           has_discussion: editHasDiscussion,
@@ -819,6 +825,15 @@ export function ProposalDetail({ proposalId }: Props) {
                   className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </label>
+              <label className="text-sm text-gray-600 flex items-center gap-1">
+                {locale === 'vi' ? 'Giờ' : 'Time'}:
+                <input
+                  type="time"
+                  value={editTargetTime}
+                  onChange={e => setEditTargetTime(e.target.value)}
+                  className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
             </div>
 
             {/* Location + Format row */}
@@ -857,6 +872,21 @@ export function ProposalDetail({ proposalId }: Props) {
                     <option key={fmt} value={fmt}>{PARTICIPATION_FORMAT_LABELS[fmt].icon} {PARTICIPATION_FORMAT_LABELS[fmt][locale === 'vi' ? 'vi' : 'en']}</option>
                   ))}
                 </select>
+              </label>
+            </div>
+
+            {/* Map URL */}
+            <div className="flex flex-wrap items-center gap-4 mt-3">
+              <label className="text-sm text-gray-600 flex items-center gap-1 flex-1">
+                {locale === 'vi' ? '🗺️ Link Google Maps' : '🗺️ Google Maps link'}:
+                <input
+                  type="url"
+                  value={editMapUrl}
+                  onChange={e => setEditMapUrl(e.target.value)}
+                  placeholder="https://maps.google.com/..."
+                  className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1"
+                  maxLength={500}
+                />
               </label>
             </div>
 
@@ -1417,12 +1447,22 @@ export function ProposalDetail({ proposalId }: Props) {
               <span>
                 {locale === 'vi' ? 'bởi' : 'by'} {proposal.author_name || 'Unknown'}
                 {proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
-                {proposal.target_date ? ` · ${locale === 'vi' ? 'Ngày dự kiến' : 'Target date'}: ${proposal.target_date}` : ''}
+                {proposal.target_date ? ` · ${locale === 'vi' ? 'Ngày dự kiến' : 'Target date'}: ${proposal.target_date}${proposal.target_time ? ` ${locale === 'vi' ? 'lúc' : 'at'} ${proposal.target_time}` : ''}` : ''}
               </span>
               {proposal.location && (
                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
                   📍 {proposal.location}
                 </span>
+              )}
+              {proposal.map_url && (
+                <a
+                  href={proposal.map_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                >
+                  🗺️ {locale === 'vi' ? 'Xem bản đồ' : 'View map'}
+                </a>
               )}
               {proposal.participation_format && (
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${

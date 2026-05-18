@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const member = await requireAuth(request);
 
     const body = await request.json();
-    const { title, description, category, genre, target_date, commitment_level, image_url, tags, location, participation_format, has_discussion, discussion_date_options, discussion_title, discussion_description, has_poll, poll_title, poll_description, poll_options, poll_allow_multiple, duration, agenda, has_fee, estimated_fee, requirements, registration_info } = body;
+    const { title, description, category, genre, target_date, target_time, commitment_level, image_url, tags, location, map_url, participation_format, has_discussion, discussion_date_options, discussion_title, discussion_description, has_poll, poll_title, poll_description, poll_options, poll_allow_multiple, duration, agenda, has_fee, estimated_fee, requirements, registration_info } = body;
 
     if (!title || title.length < 5 || title.length > 200) {
       return errorResponse('Title must be between 5 and 200 characters', 400);
@@ -122,9 +122,11 @@ export async function POST(request: NextRequest) {
       category,
       genre: validGenre,
       target_date: target_date || undefined,
+      target_time: typeof target_time === 'string' ? target_time.trim().slice(0, 10) : undefined,
       image_url: image_url || undefined,
       tags: Array.isArray(tags) ? tags.filter((t: string) => typeof t === 'string' && t.trim()).map((t: string) => t.trim()).slice(0, 10) : [],
       location: typeof location === 'string' ? location.trim().slice(0, 100) : undefined,
+      map_url: typeof map_url === 'string' ? map_url.trim().slice(0, 500) : undefined,
       participation_format: participation_format && VALID_FORMATS.includes(participation_format) ? participation_format : 'offline',
       duration: typeof duration === 'string' ? duration.trim().slice(0, 100) : undefined,
       agenda: typeof agenda === 'string' ? agenda.trim().slice(0, 10000) : undefined,

@@ -42,6 +42,7 @@ export function NewProposalForm() {
   const [genre, setGenre] = useState<ProposalGenre>('other');
   const [location, setLocation] = useState('');
   const [customLocation, setCustomLocation] = useState('');
+  const [mapUrl, setMapUrl] = useState('');
   const [participationFormat, setParticipationFormat] = useState<ParticipationFormat>('offline');
   const [what, setWhat] = useState('');
   const [why, setWhy] = useState('');
@@ -50,6 +51,7 @@ export function NewProposalForm() {
   const [resources, setResources] = useState('');
   const [extra, setExtra] = useState('');
   const [targetDate, setTargetDate] = useState('');
+  const [targetTime, setTargetTime] = useState('');
   const [commitmentLevel, setCommitmentLevel] = useState<CommitmentLevel>('will_lead');
   const [tags, setTags] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -307,10 +309,12 @@ export function NewProposalForm() {
         body: JSON.stringify({
           title, description, category, genre,
           target_date: targetDate || undefined,
+          target_time: targetTime || undefined,
           commitment_level: commitmentLevel,
           image_url: imageUrl || undefined,
           tags,
           location: location === '__custom__' ? customLocation.trim() : location || undefined,
+          map_url: mapUrl.trim() || undefined,
           participation_format: participationFormat,
           has_discussion: hasDiscussion,
           discussion_title: hasDiscussion ? discussionTitle.trim() || undefined : undefined,
@@ -479,6 +483,18 @@ export function NewProposalForm() {
                     min={new Date().toISOString().split('T')[0]}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                   />
+                  <div className="mt-3">
+                    <label htmlFor="targetTime" className="block text-sm font-medium text-gray-700 mb-1">
+                      {vi ? 'Giờ bắt đầu' : 'Start time'}
+                    </label>
+                    <input
+                      id="targetTime"
+                      type="time"
+                      value={targetTime}
+                      onChange={(e) => setTargetTime(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    />
+                  </div>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-5">
                   <label className="block text-base font-semibold text-gray-900 mb-1">
@@ -568,6 +584,20 @@ export function NewProposalForm() {
                     maxLength={100}
                   />
                 )}
+                <div className="mt-3">
+                  <label htmlFor="mapUrl" className="block text-sm font-medium text-gray-700 mb-1">
+                    {vi ? '🗺️ Link Google Maps (tùy chọn)' : '🗺️ Google Maps link (optional)'}
+                  </label>
+                  <input
+                    id="mapUrl"
+                    type="url"
+                    value={mapUrl}
+                    onChange={(e) => setMapUrl(e.target.value)}
+                    placeholder={vi ? 'https://maps.google.com/...' : 'https://maps.google.com/...'}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                    maxLength={500}
+                  />
+                </div>
               </div>
             )}
 
