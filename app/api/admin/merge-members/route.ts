@@ -111,14 +111,18 @@ export async function POST(request: NextRequest) {
     await db.from('comment_reactions').delete().eq('member_id', deleteId);
 
     // Transfer proposal discussions & poll votes
-    await db.from('proposal_discussion_replies').update({ member_id: keepId }).eq('member_id', deleteId);
-    await db.from('proposal_poll_votes').delete().eq('member_id', deleteId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db.from('proposal_discussion_replies') as any).update({ member_id: keepId }).eq('member_id', deleteId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db.from('proposal_poll_votes') as any).delete().eq('member_id', deleteId);
 
     // Transfer news comments
-    await db.from('news_comments').update({ member_id: keepId }).eq('member_id', deleteId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db.from('news_comments') as any).update({ member_id: keepId }).eq('member_id', deleteId);
 
     // Nullify organizer references
-    await db.from('community_events').update({ organizer_member_id: null }).eq('organizer_member_id', deleteId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db.from('community_events') as any).update({ organizer_member_id: null }).eq('organizer_member_id', deleteId);
 
     // Transfer proposals created by deleted member
     await db.from('community_proposals').update({ created_by_member_id: keepId }).eq('created_by_member_id', deleteId);
@@ -128,7 +132,8 @@ export async function POST(request: NextRequest) {
     await db.from('community_events').update({ created_by_member_id: keepId }).eq('created_by_member_id', deleteId);
 
     // Transfer guest RSVPs
-    await db.from('event_guest_rsvps').update({ member_id: keepId }).eq('member_id', deleteId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db.from('event_guest_rsvps') as any).update({ member_id: keepId }).eq('member_id', deleteId);
 
     // Transfer score records
     await db.from('member_scores').delete().eq('member_id', deleteId);
