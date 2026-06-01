@@ -36,6 +36,31 @@ body {
   color: var(--text-primary);
 }
 
+/* Consistent desktop affordance for enabled interactive elements.
+   Kept at zero specificity so Tailwind cursor utilities still win. */
+:where(
+  button,
+  a[href],
+  summary,
+  label[for],
+  label:has(input),
+  select,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"],
+  [role="button"],
+  [role="link"],
+  [role="menuitem"],
+  [role="tab"],
+  [role="switch"],
+  [role="checkbox"]
+):where(:not(:disabled)):where(:not([aria-disabled="true"])) {
+  cursor: pointer;
+}
+
 h1, h2, h3, .font-heading {
   font-family: var(--font-outfit), sans-serif;
 }
