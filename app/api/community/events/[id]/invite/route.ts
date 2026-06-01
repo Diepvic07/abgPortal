@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { sendDiscussionInvitationEmail } from '@/lib/resend';
 import { sendPushToMember, getPushMessage } from '@/lib/push-notification';
 import { createInAppNotifications } from '@/lib/in-app-notifications';
+import { normalizeMeetingLink } from '@/lib/meeting-link';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -61,11 +62,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const body = await request.json();
     const { meeting_date, meeting_link, invited_emails } = body;
+    const normalizedMeetingLink = normalizeMeetingLink(meeting_link);
 
     if (!meeting_date) return errorResponse('Meeting date is required', 400);
     if (!meeting_link) return errorResponse('Meeting link is required', 400);
-    if (!meeting_link.startsWith('https://meet.google.com/')) {
-      return errorResponse('Please provide a valid Google Meet link', 400);
+    if (!normalizedMeetingLink) {
+      return errorResponse('Please provide a valid HTTPS meeting link', 400);
     }
     if (!invited_emails || !Array.isArray(invited_emails) || invited_emails.length === 0) {
       return errorResponse('At least one email is required', 400);
@@ -91,10 +93,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             recipientName,
             event.title,
             meeting_date,
-            meeting_link,
+            normalizedMeetingLink,
             `/events/${event.slug || event.id}`,
             recipientLocale,
             `event-${id}`,
+            {
+              meetingPlatformLabel: recipientLocale === 'vi' ? 'Link tham gia' : 'Meeting link',
+              joinButtonLabel: recipientLocale === 'vi' ? 'Tham gia buổi họp' : 'Join meeting',
+              calendarDescriptionLabel: recipientLocale === 'vi' ? 'Link tham gia' : 'Join meeting',
+              calendarDetailsLabel: recipientLocale === 'vi' ? 'Chi tiết sự kiện' : 'View event',
+            },
           );
         } catch (err) {
           console.error(`[email] Event invite failed for ${email}:`, err);

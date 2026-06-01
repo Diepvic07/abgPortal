@@ -48,3 +48,4 @@ plans/
 .env*.local
 .env.local
 .gstack/
+AGENTS.md
