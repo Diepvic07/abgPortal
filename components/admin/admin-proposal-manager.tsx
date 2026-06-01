@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityProposal, ProposalStatus, PROPOSAL_CATEGORY_LABELS } from '@/types';
+import type { CommunityProposal, ProposalStatus, EventMode } from '@/types';
+import { EVENT_MODE_LABELS, PROPOSAL_CATEGORY_LABELS } from '@/types';
 
 const CATEGORY_ICONS: Record<string, string> = {
   charity: '❤️', event: '🎉', learning: '📚', community_support: '🤝', other: '💡',
@@ -19,6 +20,17 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const ALL_STATUSES: ProposalStatus[] = ['published', 'selected', 'in_progress', 'completed', 'archived', 'removed'];
+const ALL_EVENT_MODES: EventMode[] = ['offline', 'online', 'hybrid'];
+
+function isEventMode(value: unknown): value is EventMode {
+  return typeof value === 'string' && ALL_EVENT_MODES.includes(value as EventMode);
+}
+
+function getProposalEventModeDefault(proposal: CommunityProposal): EventMode {
+  return isEventMode(proposal.participation_format)
+    ? proposal.participation_format
+    : 'offline';
+}
 
 function CreateEventModal({ proposal, t, onClose, onCreated }: {
   proposal: CommunityProposal;
@@ -26,9 +38,10 @@ function CreateEventModal({ proposal, t, onClose, onCreated }: {
   onClose: () => void;
   onCreated: (msg: string) => void;
 }) {
+  const { locale } = useTranslation();
   const [eventDate, setEventDate] = useState('');
   const [eventEndDate, setEventEndDate] = useState('');
-  const [eventMode, setEventMode] = useState<'offline' | 'online' | 'hybrid'>('offline');
+  const [eventMode, setEventMode] = useState<EventMode>(() => getProposalEventModeDefault(proposal));
   const [location, setLocation] = useState('');
   const [locationUrl, setLocationUrl] = useState('');
   const [capacity, setCapacity] = useState('');
@@ -108,12 +121,12 @@ function CreateEventModal({ proposal, t, onClose, onCreated }: {
               <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.eventMode}</label>
               <select
                 value={eventMode}
-                onChange={(e) => setEventMode(e.target.value as 'offline' | 'online' | 'hybrid')}
+                onChange={(e) => setEventMode(e.target.value as EventMode)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="offline">Offline</option>
-                <option value="online">Online</option>
-                <option value="hybrid">Hybrid</option>
+                {ALL_EVENT_MODES.map((mode) => (
+                  <option key={mode} value={mode}>{EVENT_MODE_LABELS[mode][locale === 'vi' ? 'vi' : 'en']}</option>
+                ))}
               </select>
             </div>
 

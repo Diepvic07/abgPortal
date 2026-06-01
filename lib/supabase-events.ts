@@ -674,7 +674,7 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
   // Fetch the proposal
   const { data: proposal, error: proposalError } = await supabase
     .from('community_proposals')
-    .select('id, title, description, category')
+    .select('id, title, description, category, participation_format')
     .eq('id', proposalId)
     .single();
 
@@ -683,13 +683,16 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
   }
 
   const p = proposal as Record<string, unknown>;
+  const proposalEventMode = typeof p.participation_format === 'string' && ['offline', 'online', 'hybrid'].includes(p.participation_format)
+    ? p.participation_format as EventMode
+    : undefined;
 
   // Create event
   const event = await createEvent({
     title: p.title as string,
     description: p.description as string,
     category: (p.category as EventCategory) || 'event',
-    event_mode: eventData.event_mode || 'offline',
+    event_mode: eventData.event_mode || proposalEventMode || 'offline',
     event_date: eventData.event_date,
     event_end_date: eventData.event_end_date,
     location: eventData.location,
