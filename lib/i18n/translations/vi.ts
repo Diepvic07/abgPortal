@@ -1197,6 +1197,7 @@ export const vi: Translations = {
 
       formTitle: 'Tiêu đề *',
       formCategory: 'Danh mục *',
+      formEventMode: 'Hình thức',
       formStatus: 'Trạng thái',
       formDescription: 'Mô tả *',
       formStartDate: 'Ngày & giờ bắt đầu *',

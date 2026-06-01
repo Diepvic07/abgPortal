@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { CommunityEvent, EventRsvp, EventStatus, EventCategory, EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS } from '@/types';
+import type { CommunityEvent, EventRsvp, EventStatus, EventCategory, EventMode } from '@/types';
+import { EVENT_CATEGORY_LABELS, EVENT_STATUS_LABELS, EVENT_MODE_LABELS } from '@/types';
 import { AdminImageUpload } from './admin-article-image-upload';
 import { AdminEventPayments } from './admin-event-payments';
 import { useTranslation } from '@/lib/i18n';
@@ -20,6 +21,7 @@ const STATUS_COLORS: Record<EventStatus, string> = {
 
 const ALL_STATUSES: EventStatus[] = ['draft', 'published', 'cancelled', 'completed'];
 const ALL_CATEGORIES: EventCategory[] = ['abg_talks', 'fieldtrip', 'networking', 'learning', 'webinar', 'event', 'community_support', 'abg_business_connect', 'other'];
+const ALL_EVENT_MODES: EventMode[] = ['offline', 'online', 'hybrid'];
 
 type EventPreset = 'custom' | 'premium_free' | 'premium_paid' | 'all_members_free' | 'all_members_paid' | 'public_paid';
 
@@ -67,6 +69,7 @@ interface EventForm {
   title: string;
   description: string;
   category: EventCategory;
+  event_mode: EventMode;
   status: EventStatus;
   organizer_member_id: string;
   organizer_name: string;
@@ -106,6 +109,7 @@ const emptyForm: EventForm = {
   title: '',
   description: '',
   category: 'event',
+  event_mode: 'offline',
   status: 'draft',
   organizer_member_id: '',
   organizer_name: '',
@@ -245,6 +249,14 @@ export function AdminEventManager() {
     setPresetMessage(true);
   }
 
+  function handleCategoryChange(category: EventCategory) {
+    setForm((f) => ({
+      ...f,
+      category,
+      event_mode: category === 'webinar' ? 'online' : f.event_mode,
+    }));
+  }
+
   function openEditForm(event: CommunityEvent) {
     setEditingEvent(event);
     const organizerId = event.organizer_member_id || event.created_by_member_id;
@@ -253,6 +265,7 @@ export function AdminEventManager() {
       title: event.title,
       description: event.description,
       category: event.category,
+      event_mode: event.event_mode || 'offline',
       status: event.status,
       organizer_member_id: organizerId,
       organizer_name: organizerName,
@@ -510,6 +523,7 @@ export function AdminEventManager() {
       title: form.title,
       description: form.description,
       category: form.category,
+      event_mode: form.event_mode,
       status: form.status,
       organizer_member_id: form.organizer_member_id,
       event_date: new Date(form.event_date).toISOString(),
@@ -877,17 +891,29 @@ export function AdminEventManager() {
                   />
                 </div>
 
-                {/* Category & Status */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* Category, Mode & Status */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formCategory}</label>
                     <select
                       value={form.category}
-                      onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as EventCategory }))}
+                      onChange={(e) => handleCategoryChange(e.target.value as EventCategory)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       {ALL_CATEGORIES.map((c) => (
                         <option key={c} value={c}>{EVENT_CATEGORY_LABELS[c].en}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.events.formEventMode}</label>
+                    <select
+                      value={form.event_mode}
+                      onChange={(e) => setForm((f) => ({ ...f, event_mode: e.target.value as EventMode }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {ALL_EVENT_MODES.map((mode) => (
+                        <option key={mode} value={mode}>{EVENT_MODE_LABELS[mode][locale === 'vi' ? 'vi' : 'en']}</option>
                       ))}
                     </select>
                   </div>

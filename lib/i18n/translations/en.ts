@@ -1214,6 +1214,7 @@ export const en = {
       // Form
       formTitle: 'Title *',
       formCategory: 'Category *',
+      formEventMode: 'Mode',
       formStatus: 'Status',
       formDescription: 'Description *',
       formStartDate: 'Start Date & Time *',
