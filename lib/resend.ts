@@ -24,8 +24,10 @@ function generateIcsInvite(opts: {
   sequence?: number;
   durationMinutes?: number;
   uidPrefix?: string;
+  meetingLabel?: string;
+  detailsLabel?: string;
 }): string {
-  const { title, meetingDate, meetingLink, proposalUrl, discussionId, sequence = 0, durationMinutes = 60, uidPrefix = 'discussion' } = opts;
+  const { title, meetingDate, meetingLink, proposalUrl, discussionId, sequence = 0, durationMinutes = 60, uidPrefix = 'discussion', meetingLabel = 'Join Google Meet', detailsLabel = 'View proposal' } = opts;
   const start = new Date(meetingDate);
   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
 
@@ -47,7 +49,7 @@ function generateIcsInvite(opts: {
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,
     `SUMMARY:${title}`,
-    `DESCRIPTION:Join Google Meet: ${meetingLink}\\nView proposal: ${proposalUrl}`,
+    `DESCRIPTION:${meetingLabel}: ${meetingLink}\\n${detailsLabel}: ${proposalUrl}`,
     `URL:${meetingLink}`,
     `LOCATION:${meetingLink}`,
     'BEGIN:VALARM',
@@ -1493,6 +1495,12 @@ export async function sendDiscussionInvitationEmail(
   proposalUrl: string,
   locale: Locale = 'vi',
   discussionId?: string,
+  options?: {
+    meetingPlatformLabel?: string;
+    joinButtonLabel?: string;
+    calendarDescriptionLabel?: string;
+    calendarDetailsLabel?: string;
+  },
 ): Promise<void> {
   const resend = getResendClient();
   const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
@@ -1511,6 +1519,10 @@ export async function sendDiscussionInvitationEmail(
   const subject = isVi
     ? `Lời mời thảo luận: ${proposalTitle}`
     : `Discussion Invitation: ${proposalTitle}`;
+  const meetingPlatformLabel = options?.meetingPlatformLabel || 'Google Meet';
+  const joinButtonLabel = options?.joinButtonLabel || (isVi ? 'Tham gia Google Meet' : 'Join Google Meet');
+  const calendarDescriptionLabel = options?.calendarDescriptionLabel || 'Join Google Meet';
+  const calendarDetailsLabel = options?.calendarDetailsLabel || 'View proposal';
 
   const emailHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
@@ -1532,12 +1544,12 @@ export async function sendDiscussionInvitationEmail(
             <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#166534;">${escapeHtml(proposalTitle)}</p>
             <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#1f2937;">
               <tr><td style="padding:4px 0;font-weight:600;width:100px;">${isVi ? 'Thời gian:' : 'Date/Time:'}</td><td style="padding:4px 0;">${escapeHtml(formattedDate)}</td></tr>
-              <tr><td style="padding:4px 0;font-weight:600;">${isVi ? 'Nền tảng:' : 'Platform:'}</td><td style="padding:4px 0;">Google Meet</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">${isVi ? 'Nền tảng:' : 'Platform:'}</td><td style="padding:4px 0;">${escapeHtml(meetingPlatformLabel)}</td></tr>
             </table>
           </div>
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;"><tr><td>
-            <a href="${escapeHtml(meetingLink)}" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${isVi ? 'Tham gia Google Meet' : 'Join Google Meet'}</a>
+            <a href="${escapeHtml(meetingLink)}" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${escapeHtml(joinButtonLabel)}</a>
           </td></tr></table>
 
           <p style="margin:0 0 12px;font-size:14px;color:#6b7280;">${isVi
@@ -1561,6 +1573,8 @@ export async function sendDiscussionInvitationEmail(
     meetingLink,
     proposalUrl: appUrl + proposalUrl,
     discussionId: discussionId || `fallback-${new Date(meetingDate).getTime()}`,
+    meetingLabel: calendarDescriptionLabel,
+    detailsLabel: calendarDetailsLabel,
   });
 
   const emailPayload: Parameters<typeof resend.emails.send>[0] = {

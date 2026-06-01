@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { normalizeMeetingLink } from '@/lib/meeting-link';
 
 interface Props {
   eventId: string;
@@ -65,11 +66,12 @@ export function EventEmailInviteSection({
       return;
     }
     if (!meetingLink) {
-      setError(vi ? 'Vui l\u00f2ng nh\u1eadp link Google Meet' : 'Please enter Google Meet link');
+      setError(vi ? 'Vui l\u00f2ng nh\u1eadp link tham gia' : 'Please enter a meeting link');
       return;
     }
-    if (!meetingLink.startsWith('https://meet.google.com/')) {
-      setError(vi ? 'Vui l\u00f2ng nh\u1eadp link Google Meet h\u1ee3p l\u1ec7' : 'Please enter a valid Google Meet link');
+    const normalizedMeetingLink = normalizeMeetingLink(meetingLink);
+    if (!normalizedMeetingLink) {
+      setError(vi ? 'Vui l\u00f2ng nh\u1eadp link HTTPS h\u1ee3p l\u1ec7' : 'Please enter a valid HTTPS meeting link');
       return;
     }
     if (selectedEmails.length === 0) {
@@ -88,7 +90,7 @@ export function EventEmailInviteSection({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           meeting_date: meetingDateTime,
-          meeting_link: meetingLink,
+          meeting_link: normalizedMeetingLink,
           invited_emails: selectedEmails,
         }),
       });
@@ -172,17 +174,17 @@ export function EventEmailInviteSection({
             </div>
           </div>
 
-          {/* Google Meet Link */}
+          {/* Meeting Link */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Google Meet Link *
+              {vi ? 'Link tham gia' : 'Meeting link'} *
             </label>
             <div className="flex gap-2">
               <input
                 type="url"
                 value={meetingLink}
                 onChange={(e) => setMeetingLink(e.target.value)}
-                placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                placeholder="https://zoom.us/... or https://teams.microsoft.com/..."
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
               />
               <a
@@ -191,9 +193,14 @@ export function EventEmailInviteSection({
                 rel="noopener noreferrer"
                 className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium whitespace-nowrap border border-gray-300"
               >
-                {vi ? 'T\u1ea1o Meet' : 'Create Meet'}
+                {vi ? 'T\u1ea1o Google Meet' : 'Create Google Meet'}
               </a>
             </div>
+            <p className="mt-1 text-xs text-gray-500">
+              {vi
+                ? 'H\u1ed7 tr\u1ee3 Zoom, Google Meet, Microsoft Teams ho\u1eb7c b\u1ea5t k\u1ef3 link h\u1ecdp HTTPS n\u00e0o.'
+                : 'Supports Zoom, Google Meet, Microsoft Teams, or any HTTPS meeting link.'}
+            </p>
           </div>
 
           {/* Reminders info */}
