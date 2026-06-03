@@ -672,8 +672,8 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
   const supabase = createServerSupabaseClient();
 
   // Fetch the proposal
-  const { data: proposal, error: proposalError } = await supabase
-    .from('community_proposals')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: proposal, error: proposalError } = await (supabase.from('community_proposals') as any)
     .select('id, title, description, category, participation_format')
     .eq('id', proposalId)
     .single();
