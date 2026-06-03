@@ -799,6 +799,20 @@ function ScheduledView({
               {vi ? 'Đánh dấu hoàn thành' : 'Mark Completed'}
             </button>
             <button
+              onClick={() => {
+                const ok = window.confirm(
+                  vi
+                    ? 'Xóa lịch họp này và quay lại bình chọn ngày? Mọi người sẽ có thể vote lại.'
+                    : 'Remove this meeting and revert to the date poll? Members will be able to vote again.'
+                );
+                if (ok) handleUpdateStatus('open');
+              }}
+              disabled={submitting}
+              className="text-sm px-4 py-2 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 disabled:opacity-50"
+            >
+              {vi ? 'Quay lại bình chọn ngày' : 'Revert to Date Poll'}
+            </button>
+            <button
               onClick={() => { setShowCancelFlow(!showCancelFlow); setShowCancelPreview(false); setCancelReason(''); }}
               className="text-sm px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50"
             >

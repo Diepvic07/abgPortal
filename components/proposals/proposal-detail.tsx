@@ -143,6 +143,7 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editImageUrl, setEditImageUrl] = useState('');
   const [editImageUploading, setEditImageUploading] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [revertingDiscussionToPoll, setRevertingDiscussionToPoll] = useState(false);
   const [rerunningAI, setRerunningAI] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [replyImageFile, setReplyImageFile] = useState<File | null>(null);
@@ -1161,17 +1162,62 @@ export function ProposalDetail({ proposalId }: Props) {
                     className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     maxLength={1000}
                   />
-                  {proposal.has_discussion && discussionResponses.length > 0 && (
+                  {discussion?.status === 'scheduled' && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                      <p className="text-sm font-semibold text-blue-900">
+                        {locale === 'vi' ? '📅 Buổi họp đã được lên lịch' : '📅 Meeting is scheduled'}
+                      </p>
+                      <p className="text-xs text-blue-700">
+                        {locale === 'vi'
+                          ? 'Để chỉnh sửa các ngày bình chọn, hãy xóa lịch họp hiện tại và quay lại bình chọn để mọi người vote lại.'
+                          : 'To edit the date options, remove the current meeting and revert to the poll so members can vote again.'}
+                      </p>
+                      <button
+                        type="button"
+                        disabled={revertingDiscussionToPoll}
+                        onClick={async () => {
+                          const ok = window.confirm(
+                            locale === 'vi'
+                              ? 'Xóa lịch họp này và quay lại bình chọn ngày? Mọi người sẽ có thể vote lại.'
+                              : 'Remove this meeting and revert to the date poll? Members will be able to vote again.'
+                          );
+                          if (!ok) return;
+                          setRevertingDiscussionToPoll(true);
+                          try {
+                            const res = await fetch(`/api/community/proposals/${proposal.id}/discussion`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: 'open' }),
+                            });
+                            if (!res.ok) throw new Error();
+                            await fetchProposal(true);
+                          } catch {
+                            alert(locale === 'vi' ? 'Không thể quay lại bình chọn' : 'Failed to revert to poll');
+                          } finally {
+                            setRevertingDiscussionToPoll(false);
+                          }
+                        }}
+                        className="text-sm px-3 py-1.5 border border-purple-300 text-purple-700 bg-white rounded-lg hover:bg-purple-50 disabled:opacity-50"
+                      >
+                        {revertingDiscussionToPoll
+                          ? (locale === 'vi' ? 'Đang xử lý...' : 'Processing...')
+                          : (locale === 'vi' ? 'Xóa lịch họp & quay lại bình chọn' : 'Remove meeting & revert to poll')}
+                      </button>
+                    </div>
+                  )}
+                  {discussion?.status !== 'scheduled' && proposal.has_discussion && discussionResponses.length > 0 && (
                     <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                       {locale === 'vi'
                         ? `⚠️ Đã có ${discussionResponses.length} phản hồi. Thay đổi lựa chọn sẽ xóa tất cả phiếu bầu hiện tại.`
                         : `⚠️ ${discussionResponses.length} response(s) exist. Changing options will erase all current votes.`}
                     </p>
                   )}
+                  {discussion?.status !== 'scheduled' && (
                   <p className="text-xs text-gray-500">
                     {locale === 'vi' ? 'Đề xuất 2-10 lựa chọn ngày/giờ để mọi người bình chọn:' : 'Propose 2-10 date/time options for members to vote:'}
                   </p>
-                  {editDiscussionOptions.map((opt, i) => (
+                  )}
+                  {discussion?.status !== 'scheduled' && editDiscussionOptions.map((opt, i) => (
                     <div key={i} className="flex items-center gap-2 flex-wrap">
                       <div className="flex flex-col gap-0.5 mr-1">
                         <button
@@ -1242,7 +1288,7 @@ export function ProposalDetail({ proposalId }: Props) {
                       )}
                     </div>
                   ))}
-                  {editDiscussionOptions.length < 10 && (
+                  {discussion?.status !== 'scheduled' && editDiscussionOptions.length < 10 && (
                     <button
                       type="button"
                       onClick={() => setEditDiscussionOptions([...editDiscussionOptions, { date: '', startTime: '', endTime: '' }])}
@@ -1251,7 +1297,7 @@ export function ProposalDetail({ proposalId }: Props) {
                       + {locale === 'vi' ? 'Thêm lựa chọn' : 'Add option'}
                     </button>
                   )}
-                  {discussionDuplicates && (
+                  {discussion?.status !== 'scheduled' && discussionDuplicates && (
                     <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                       {locale === 'vi' ? '⚠️ Có lựa chọn ngày/giờ bị trùng lặp.' : '⚠️ Duplicate date/time options found.'}
                     </p>

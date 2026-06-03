@@ -439,10 +439,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return successResponse({ discussion: mapRowToDiscussion(updated as Record<string, unknown>) });
     }
 
-    // Reopen discussion (from completed or cancelled)
+    // Reopen discussion (from completed, cancelled, or scheduled)
     if (body.status === 'open') {
-      if (discussion.status !== 'completed' && discussion.status !== 'cancelled') {
-        return errorResponse('Can only reopen from completed or cancelled status', 400);
+      if (discussion.status !== 'completed' && discussion.status !== 'cancelled' && discussion.status !== 'scheduled') {
+        return errorResponse('Can only reopen from completed, cancelled, or scheduled status', 400);
       }
       const { data: updated, error } = await (supabase.from('proposal_discussions') as any)
         .update({ status: 'open', meeting_date: null, meeting_link: null, invited_emails: '{}', updated_at: now })
