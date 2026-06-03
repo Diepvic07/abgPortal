@@ -44,6 +44,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (existing) {
+      // If the member clears all date votes and has no question, treat it as
+      // "remove my response" — delete the row so they go back to the not-voted state.
+      const datesEmpty = Array.isArray(available_dates) && available_dates.length === 0;
+      const questionEmpty = !question || (typeof question === 'string' && !question.trim());
+      if (datesEmpty && questionEmpty) {
+        const { error } = await (supabase.from('proposal_discussion_responses') as any)
+          .delete()
+          .eq('id', existing.id);
+        if (error) throw new Error('Failed to remove response');
+        return successResponse({ message: 'Response removed' });
+      }
+
       const { error } = await (supabase.from('proposal_discussion_responses') as any)
         .update({
           available_dates: available_dates || [],

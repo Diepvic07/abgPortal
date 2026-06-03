@@ -380,17 +380,31 @@ export function ProposalDiscussionSection({
         <div className="mb-4 flex gap-2">
           <button
             onClick={async () => {
+              if (myResponse && selectedDates.length === 0) {
+                const ok = window.confirm(
+                  vi
+                    ? 'Xóa toàn bộ phiếu bầu của bạn? Bạn sẽ trở lại trạng thái chưa bỏ phiếu.'
+                    : 'Remove all your votes? You will return to the not-voted state.'
+                );
+                if (!ok) return;
+              }
               await handleSubmitResponse();
               setIsEditing(false);
             }}
-            disabled={submitting || selectedDates.length === 0}
-            className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 text-sm"
+            disabled={submitting || (!myResponse && selectedDates.length === 0)}
+            className={`text-white px-6 py-2.5 rounded-lg transition-colors font-medium disabled:opacity-50 text-sm ${
+              myResponse && selectedDates.length === 0
+                ? 'bg-red-600 hover:bg-red-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
           >
             {submitting
               ? (vi ? 'Đang gửi...' : 'Submitting...')
-              : myResponse
-                ? (vi ? 'Cập nhật phản hồi' : 'Update Response')
-                : (vi ? 'Gửi phản hồi' : 'Submit Response')}
+              : myResponse && selectedDates.length === 0
+                ? (vi ? 'Xóa phản hồi' : 'Remove Response')
+                : myResponse
+                  ? (vi ? 'Cập nhật phản hồi' : 'Update Response')
+                  : (vi ? 'Gửi phản hồi' : 'Submit Response')}
           </button>
           {isEditing && (
             <button
