@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { ProposalDiscussion, DiscussionResponse, CommunityCommitment } from '@/types';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
 
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
@@ -56,6 +57,8 @@ export function ProposalDiscussionSection({
   const [meetingTime, setMeetingTime] = useState('');
   const [meetingLink, setMeetingLink] = useState('');
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+  const [confirmClearVotesOpen, setConfirmClearVotesOpen] = useState(false);
+  const [confirmCancelDiscussionOpen, setConfirmCancelDiscussionOpen] = useState(false);
 
   // Pre-fill from existing response
   const myResponse = useMemo(
@@ -381,12 +384,8 @@ export function ProposalDiscussionSection({
           <button
             onClick={async () => {
               if (myResponse && selectedDates.length === 0) {
-                const ok = window.confirm(
-                  vi
-                    ? 'Xóa toàn bộ phiếu bầu của bạn? Bạn sẽ trở lại trạng thái chưa bỏ phiếu.'
-                    : 'Remove all your votes? You will return to the not-voted state.'
-                );
-                if (!ok) return;
+                setConfirmClearVotesOpen(true);
+                return;
               }
               await handleSubmitResponse();
               setIsEditing(false);
@@ -581,14 +580,7 @@ export function ProposalDiscussionSection({
           {/* Cancel discussion */}
           <div className="mt-3">
             <button
-              onClick={() => {
-                const confirmed = window.confirm(
-                  vi
-                    ? 'Bạn có chắc chắn muốn hủy phiên bỏ phiếu này? Tất cả phiếu bầu sẽ bị xóa và không thể hoàn tác.'
-                    : 'Are you sure you want to cancel this vote? All votes will be lost and this cannot be undone.'
-                );
-                if (confirmed) handleUpdateStatus('cancelled');
-              }}
+              onClick={() => setConfirmCancelDiscussionOpen(true)}
               disabled={submitting}
               className="text-sm text-gray-500 hover:text-red-600 transition-colors"
             >
@@ -611,6 +603,43 @@ export function ProposalDiscussionSection({
           <p className="text-sm text-red-800">{error}</p>
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmClearVotesOpen}
+        title={vi ? 'Xóa phản hồi?' : 'Remove your response?'}
+        message={
+          vi
+            ? 'Toàn bộ phiếu bầu của bạn sẽ bị xóa và bạn sẽ trở lại trạng thái chưa bỏ phiếu.'
+            : 'All your votes will be removed and you will return to the not-voted state.'
+        }
+        confirmLabel={vi ? 'Xóa phản hồi' : 'Remove Response'}
+        cancelLabel={vi ? 'Hủy' : 'Cancel'}
+        variant="danger"
+        onConfirm={async () => {
+          setConfirmClearVotesOpen(false);
+          await handleSubmitResponse();
+          setIsEditing(false);
+        }}
+        onCancel={() => setConfirmClearVotesOpen(false)}
+      />
+
+      <ConfirmModal
+        open={confirmCancelDiscussionOpen}
+        title={vi ? 'Hủy phiên bỏ phiếu?' : 'Cancel this vote?'}
+        message={
+          vi
+            ? 'Tất cả phiếu bầu sẽ bị xóa và không thể hoàn tác.'
+            : 'All votes will be lost and this cannot be undone.'
+        }
+        confirmLabel={vi ? 'Hủy phiên bỏ phiếu' : 'Cancel Vote'}
+        cancelLabel={vi ? 'Quay lại' : 'Go Back'}
+        variant="danger"
+        onConfirm={() => {
+          setConfirmCancelDiscussionOpen(false);
+          handleUpdateStatus('cancelled');
+        }}
+        onCancel={() => setConfirmCancelDiscussionOpen(false)}
+      />
     </div>
   );
 }
@@ -654,6 +683,7 @@ function ScheduledView({
   const [showCancelFlow, setShowCancelFlow] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [showCancelPreview, setShowCancelPreview] = useState(false);
+  const [confirmRevertOpen, setConfirmRevertOpen] = useState(false);
 
   const canManage = isCreator || isAdmin;
 
@@ -813,14 +843,7 @@ function ScheduledView({
               {vi ? 'Đánh dấu hoàn thành' : 'Mark Completed'}
             </button>
             <button
-              onClick={() => {
-                const ok = window.confirm(
-                  vi
-                    ? 'Xóa lịch họp này và quay lại bình chọn ngày? Mọi người sẽ có thể vote lại.'
-                    : 'Remove this meeting and revert to the date poll? Members will be able to vote again.'
-                );
-                if (ok) handleUpdateStatus('open');
-              }}
+              onClick={() => setConfirmRevertOpen(true)}
               disabled={submitting}
               className="text-sm px-4 py-2 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 disabled:opacity-50"
             >
@@ -1019,6 +1042,24 @@ function ScheduledView({
           )}
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmRevertOpen}
+        title={vi ? 'Quay lại bình chọn ngày?' : 'Revert to date poll?'}
+        message={
+          vi
+            ? 'Lịch họp hiện tại sẽ bị xóa và mọi người sẽ có thể bỏ phiếu lại cho các ngày đề xuất.'
+            : 'The current scheduled meeting will be removed and members will be able to vote on the date options again.'
+        }
+        confirmLabel={vi ? 'Quay lại bình chọn' : 'Revert to Poll'}
+        cancelLabel={vi ? 'Hủy' : 'Cancel'}
+        variant="warning"
+        onConfirm={() => {
+          setConfirmRevertOpen(false);
+          handleUpdateStatus('open');
+        }}
+        onCancel={() => setConfirmRevertOpen(false)}
+      />
     </div>
   );
 }

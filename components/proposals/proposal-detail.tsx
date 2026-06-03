@@ -16,6 +16,7 @@ import { ProposalPollSection } from '@/components/proposals/proposal-poll-sectio
 import { CommentReactions } from '@/components/ui/comment-reactions';
 import { MentionTextarea, renderMentions, encodementions, decodeMentions } from '@/components/ui/mention-textarea';
 import { ShareButtons } from '@/components/ui/share-buttons';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
 
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
@@ -144,6 +145,7 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editImageUploading, setEditImageUploading] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [revertingDiscussionToPoll, setRevertingDiscussionToPoll] = useState(false);
+  const [confirmRevertDiscussionOpen, setConfirmRevertDiscussionOpen] = useState(false);
   const [rerunningAI, setRerunningAI] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [replyImageFile, setReplyImageFile] = useState<File | null>(null);
@@ -1175,28 +1177,7 @@ export function ProposalDetail({ proposalId }: Props) {
                       <button
                         type="button"
                         disabled={revertingDiscussionToPoll}
-                        onClick={async () => {
-                          const ok = window.confirm(
-                            locale === 'vi'
-                              ? 'Xóa lịch họp này và quay lại bình chọn ngày? Mọi người sẽ có thể vote lại.'
-                              : 'Remove this meeting and revert to the date poll? Members will be able to vote again.'
-                          );
-                          if (!ok) return;
-                          setRevertingDiscussionToPoll(true);
-                          try {
-                            const res = await fetch(`/api/community/proposals/${proposal.id}/discussion`, {
-                              method: 'PATCH',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ status: 'open' }),
-                            });
-                            if (!res.ok) throw new Error();
-                            await fetchProposal(true);
-                          } catch {
-                            alert(locale === 'vi' ? 'Không thể quay lại bình chọn' : 'Failed to revert to poll');
-                          } finally {
-                            setRevertingDiscussionToPoll(false);
-                          }
-                        }}
+                        onClick={() => setConfirmRevertDiscussionOpen(true)}
                         className="text-sm px-3 py-1.5 border border-purple-300 text-purple-700 bg-white rounded-lg hover:bg-purple-50 disabled:opacity-50"
                       >
                         {revertingDiscussionToPoll
@@ -2098,6 +2079,37 @@ export function ProposalDetail({ proposalId }: Props) {
           </button>
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmRevertDiscussionOpen}
+        title={locale === 'vi' ? 'Xóa lịch họp & quay lại bình chọn?' : 'Remove meeting & revert to poll?'}
+        message={
+          locale === 'vi'
+            ? 'Lịch họp hiện tại sẽ bị xóa và mọi người sẽ có thể bỏ phiếu lại cho các ngày đề xuất.'
+            : 'The current scheduled meeting will be removed and members will be able to vote on the date options again.'
+        }
+        confirmLabel={locale === 'vi' ? 'Xóa lịch họp' : 'Remove Meeting'}
+        cancelLabel={locale === 'vi' ? 'Hủy' : 'Cancel'}
+        variant="warning"
+        onConfirm={async () => {
+          setConfirmRevertDiscussionOpen(false);
+          setRevertingDiscussionToPoll(true);
+          try {
+            const res = await fetch(`/api/community/proposals/${proposal.id}/discussion`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'open' }),
+            });
+            if (!res.ok) throw new Error();
+            await fetchProposal(true);
+          } catch {
+            alert(locale === 'vi' ? 'Không thể quay lại bình chọn' : 'Failed to revert to poll');
+          } finally {
+            setRevertingDiscussionToPoll(false);
+          }
+        }}
+        onCancel={() => setConfirmRevertDiscussionOpen(false)}
+      />
     </div>
   );
 }
