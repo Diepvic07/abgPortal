@@ -558,6 +558,38 @@ export interface CommunityEvent {
   my_rsvp?: CommitmentLevel;
 }
 
+export type LibraryItemStatus = 'draft' | 'published' | 'archived';
+export type LibraryItemVisibility = 'premium';
+
+export interface LibraryResourceLink {
+  label: string;
+  url: string;
+}
+
+export interface LibraryItem {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  event_id?: string;
+  drive_file_id?: string;
+  drive_preview_url?: string;
+  thumbnail_url?: string;
+  resource_links: LibraryResourceLink[];
+  duration_text?: string;
+  speaker_name?: string;
+  recorded_at?: string;
+  status: LibraryItemStatus;
+  visibility: LibraryItemVisibility;
+  created_by_member_id: string;
+  created_at: string;
+  updated_at: string;
+  published_at?: string;
+  event_title?: string;
+  event_slug?: string;
+  can_watch?: boolean;
+}
+
 export interface EventRsvp {
   id: string;
   event_id: string;

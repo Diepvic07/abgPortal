@@ -901,6 +901,7 @@ export const en = {
       proposals: 'Proposals',
       references: 'References',
       events: 'Events',
+      library: 'Library',
       finance: 'Finance',
       premium: 'Premium',
       classes: 'Classes',

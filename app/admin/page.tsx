@@ -13,6 +13,7 @@ import { AdminProposalManager } from "@/components/admin/admin-proposal-manager"
 import { AdminReferenceManager } from "@/components/admin/admin-reference-manager";
 import { AdminEventManager } from "@/components/admin/admin-event-manager";
 import { AdminFinanceDashboard } from "@/components/admin/admin-finance-dashboard";
+import { AdminLibraryManager } from "@/components/admin/admin-library-manager";
 import { AdminPremiumManager } from "@/components/admin/admin-premium-manager";
 import { PaymentUpgradeModal } from "@/components/admin/payment-upgrade-modal";
 import { DuplicateReviewCard } from "@/components/admin/duplicate-review-card";
@@ -56,7 +57,7 @@ export default function AdminPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const [members, setMembers] = useState<AdminMember[]>([]);
-  const [activeTab, setActiveTab] = useState<"pending" | "duplicates" | "status" | "directory" | "news" | "payments" | "premium" | "classes" | "proposals" | "references" | "events" | "finance">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "duplicates" | "status" | "directory" | "news" | "payments" | "premium" | "classes" | "proposals" | "references" | "events" | "library" | "finance">("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -476,6 +477,15 @@ export default function AdminPage() {
             {t.admin.tabs.events}
           </button>
           <button
+            onClick={() => setActiveTab("library")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === "library"
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+          >
+            {t.admin.tabs.library}
+          </button>
+          <button
             onClick={() => setActiveTab("finance")}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === "finance"
               ? "bg-blue-600 text-white"
@@ -495,7 +505,7 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {activeTab !== "directory" && activeTab !== "news" && activeTab !== "payments" && activeTab !== "premium" && activeTab !== "classes" && activeTab !== "duplicates" && activeTab !== "proposals" && activeTab !== "references" && activeTab !== "events" && (
+        {activeTab !== "directory" && activeTab !== "news" && activeTab !== "payments" && activeTab !== "premium" && activeTab !== "classes" && activeTab !== "duplicates" && activeTab !== "proposals" && activeTab !== "references" && activeTab !== "events" && activeTab !== "library" && (
           <div className="mb-4">
             <input
               type="text"
@@ -557,6 +567,10 @@ export default function AdminPage() {
         ) : activeTab === "events" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">
             <AdminEventManager />
+          </div>
+        ) : activeTab === "library" ? (
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <AdminLibraryManager />
           </div>
         ) : activeTab === "finance" ? (
           <div className="bg-white rounded-xl shadow-sm p-6">

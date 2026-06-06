@@ -112,7 +112,11 @@ npm install
 
 ### 2. Create `.env.local`
 
-This repository does not currently ship an `.env.example`, so create `.env.local` manually.
+Copy the tracked example file, then fill in the real values locally:
+
+```bash
+cp .env.example .env.local
+```
 
 Main application variables:
 
@@ -141,6 +145,7 @@ Legacy migration scripts may also require:
 - `GOOGLE_PRIVATE_KEY`
 
 See [docs/requirements/setup-guide.md](docs/requirements/setup-guide.md) for provider setup details that still apply to the current stack.
+See [docs/operations.md](docs/operations.md) for project-specific validation, deployment, Supabase, and production-change rules.
 
 ### 3. Apply the Supabase schema
 
@@ -188,6 +193,7 @@ Historical or one-off migration scripts also exist under `scripts/`. Review them
 - The runtime application uses Supabase, not Google Sheets
 - `README.md` should reflect the runtime architecture, not legacy migration tooling
 - If you update quotas, auth behavior, or admin flows, update this file and the operational docs together
+- Local full-app tests are not the default validation path for this project; see [docs/operations.md](docs/operations.md)
 
 ## License
 

@@ -29,6 +29,7 @@ import { EventPaymentFlow } from './event-payment-flow';
 import { EventEmailInviteSection } from './event-email-invite-section';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 import { ShareButtons } from '@/components/ui/share-buttons';
+import { EventRecordingsSection } from '@/components/library/event-recordings-section';
 
 const RSVP_ACTIONS: Array<{
   level: EventRegistrationLevel;
@@ -737,6 +738,8 @@ export function EventDetail({ eventId }: { eventId: string }) {
           </div>
         </section>
       </div>
+
+      <EventRecordingsSection eventId={event.id} locale={locale} />
 
       {/* Recap Section */}
       {(event.recap_text || (event.recap_images && event.recap_images.length > 0)) && (

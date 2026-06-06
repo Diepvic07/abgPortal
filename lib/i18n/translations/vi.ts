@@ -902,6 +902,7 @@ export const vi: Translations = {
       proposals: 'Đề xuất',
       references: 'Giới thiệu',
       events: 'Sự kiện',
+      library: 'Thư viện',
       finance: 'Tài chính',
       premium: 'Premium',
       classes: 'Lớp',

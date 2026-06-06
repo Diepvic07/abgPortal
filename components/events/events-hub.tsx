@@ -5,9 +5,9 @@ import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
-import { CommunityEvent, CommunityProposal, EventCategory, EVENT_CATEGORY_LABELS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS, ParticipationFormat, ProposalCategory, ProposalGenre } from '@/types';
+import { CommunityEvent, CommunityProposal, EventCategory, EVENT_CATEGORY_LABELS, LibraryItem, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS, ParticipationFormat, ProposalCategory, ProposalGenre } from '@/types';
 
-type TabKey = 'events' | 'proposals' | 'past';
+type TabKey = 'events' | 'proposals' | 'past' | 'library';
 
 const EVENT_CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   charity: { bg: 'bg-rose-50', text: 'text-rose-600' },
@@ -40,7 +40,7 @@ export function EventsHub() {
   const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = !!session;
   const searchParams = useSearchParams();
-  const validTabs = ['events', 'proposals', 'past'] as TabKey[];
+  const validTabs = ['events', 'proposals', 'past', 'library'] as TabKey[];
   const initialTab = validTabs.includes(searchParams.get('tab') as TabKey)
     ? (searchParams.get('tab') as TabKey)
     : (isAuthenticated ? 'proposals' : 'events');
@@ -49,6 +49,8 @@ export function EventsHub() {
   const [selectedProposals, setSelectedProposals] = useState<CommunityProposal[]>([]);
   const [pastEvents, setPastEvents] = useState<CommunityEvent[]>([]);
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
+  const [canWatchLibrary, setCanWatchLibrary] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,6 +59,7 @@ export function EventsHub() {
     if (activeTab === 'events') fetchEvents();
     else if (activeTab === 'proposals') fetchProposals();
     else if (activeTab === 'past') fetchPastEvents();
+    else if (activeTab === 'library') fetchLibrary();
   }, [activeTab, sessionStatus]);
 
   async function fetchEvents() {
@@ -127,10 +130,33 @@ export function EventsHub() {
     }
   }
 
+  async function fetchLibrary() {
+    setLoading(true);
+    try {
+      if (!isAuthenticated) {
+        setLibraryItems([]);
+        setCanWatchLibrary(false);
+        return;
+      }
+
+      const res = await fetch('/api/library');
+      if (res.ok) {
+        const data = await res.json();
+        setLibraryItems(data.library_items || []);
+        setCanWatchLibrary(!!data.can_watch);
+      }
+    } catch (error) {
+      console.error('Failed to fetch library:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const allTabs: { key: TabKey; label: { en: string; vi: string }; authOnly?: boolean }[] = [
     { key: 'events', label: { en: 'Official Activities', vi: 'Hoạt động chính thức' } },
     { key: 'proposals', label: { en: 'Proposals', vi: 'Đề xuất' } },
     { key: 'past', label: { en: 'Past Activities', vi: 'Hoạt động đã qua' } },
+    { key: 'library', label: { en: 'Library', vi: 'Thư viện' } },
   ];
   const tabs = allTabs;
 
@@ -173,6 +199,9 @@ export function EventsHub() {
         )}
         {activeTab === 'past' && (
           <PastEventsTabContent events={pastEvents} loading={loading} locale={locale} />
+        )}
+        {activeTab === 'library' && (
+          <LibraryTabContent items={libraryItems} canWatch={canWatchLibrary} loading={loading} locale={locale} session={session} />
         )}
       </div>
     </div>
@@ -381,6 +410,90 @@ function PastEventsTabContent({
         ))}
       </div>
     </div>
+  );
+}
+
+function LibraryTabContent({
+  items,
+  canWatch,
+  loading,
+  locale,
+  session,
+}: {
+  items: LibraryItem[];
+  canWatch: boolean;
+  loading: boolean;
+  locale: string;
+  session: ReturnType<typeof useSession>['data'];
+}) {
+  if (loading) return <SkeletonRows />;
+
+  if (!session) {
+    return (
+      <EmptyState
+        message={locale === 'vi' ? 'Đăng nhập để xem Thư viện workshop.' : 'Sign in to view the workshop Library.'}
+        cta={locale === 'vi' ? 'Đăng nhập' : 'Sign in'}
+        href="/login"
+      />
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        message={locale === 'vi' ? 'Chưa có bản ghi workshop trong Thư viện.' : 'No workshop recordings in the Library yet.'}
+      />
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold text-gray-900">
+          {locale === 'vi' ? 'THƯ VIỆN WORKSHOP' : 'WORKSHOP LIBRARY'}
+        </h2>
+        {!canWatch && (
+          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+            {locale === 'vi' ? 'Video dành cho Premium' : 'Videos are Premium only'}
+          </span>
+        )}
+      </div>
+      <div className="divide-y divide-gray-100">
+        {items.map((item) => (
+          <LibraryRow key={item.id} item={item} canWatch={canWatch} locale={locale} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LibraryRow({ item, canWatch, locale }: { item: LibraryItem; canWatch: boolean; locale: string }) {
+  return (
+    <Link href={`/library/${item.slug}`} className="block">
+      <div className="py-4 flex items-center justify-between hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-lg">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold text-gray-900 text-base truncate">{item.title}</h3>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {item.speaker_name || (locale === 'vi' ? 'ABG Alumni' : 'ABG Alumni')}
+            {item.duration_text ? ` · ${item.duration_text}` : ''}
+            {item.event_title ? ` · ${item.event_title}` : ''}
+          </p>
+          {item.description && (
+            <p className="mt-1 line-clamp-1 text-sm text-gray-600">{item.description}</p>
+          )}
+        </div>
+        <div className="ml-4 flex shrink-0 items-center gap-2">
+          {item.resource_links.length > 0 && (
+            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              {item.resource_links.length} {locale === 'vi' ? 'tài nguyên' : 'resources'}
+            </span>
+          )}
+          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${canWatch ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+            {canWatch ? (locale === 'vi' ? 'Xem video' : 'Watch') : (locale === 'vi' ? 'Premium' : 'Premium')}
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }
 
