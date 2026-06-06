@@ -23,6 +23,7 @@ Welcome to the ABG Alumni Connect documentation. Choose the guide that best fits
 
 ### I'm Deploying
 - **Configure environment variables?** See [setup-guide.md](./setup-guide.md)
+- **Project-specific operations rules?** See [operations.md](./operations.md)
 - **Deployment checklist?** See [admin-operations-guide.md](./admin-operations-guide.md#deployment-checklist)
 - **Post-deployment testing?** See [authentication-guide.md](./authentication-guide.md#testing-authentication-locally)
 
@@ -37,6 +38,7 @@ Welcome to the ABG Alumni Connect documentation. Choose the guide that best fits
 | [tier-system-guide.md](./tier-system-guide.md) | Membership tiers, limits, enforcement | Developers, Product | 14 KB |
 | [admin-operations-guide.md](./admin-operations-guide.md) | Admin dashboard, member management, CSV import | Administrators, DevOps | 15 KB |
 | [setup-guide.md](./setup-guide.md) | Environment configuration, API key setup | DevOps, Developers | 6.3 KB |
+| [operations.md](./operations.md) | Validation, deployment ownership, Supabase auth paths, production-change rules | Developers, Agents, DevOps | TBD |
 
 ### Sample Data
 
