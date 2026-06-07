@@ -146,7 +146,7 @@ export async function createLibraryItem(data: {
       created_at: now,
       updated_at: now,
       published_at: status === 'published' ? now : null,
-    })
+    } as never)
     .select(LIBRARY_SELECT)
     .single();
 
@@ -194,7 +194,7 @@ export async function updateLibraryItem(
 
   const { data: row, error } = await supabase
     .from('library_items')
-    .update(updateData)
+    .update(updateData as never)
     .eq('id', id)
     .select(LIBRARY_SELECT)
     .single();
