@@ -13,6 +13,7 @@ import { CommunityProposal, CommunityCommitment, CommunityProposalComment, Commi
 import { ProposalDiscussionSection } from '@/components/proposals/proposal-discussion-section';
 import { ProposalEmailInviteSection } from '@/components/proposals/proposal-email-invite-section';
 import { ProposalPollSection } from '@/components/proposals/proposal-poll-section';
+import { ProposalProjectSection } from '@/components/proposals/proposal-project-section';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 import { MentionTextarea, renderMentions, encodementions, decodeMentions } from '@/components/ui/mention-textarea';
 import { ShareButtons } from '@/components/ui/share-buttons';
@@ -1793,6 +1794,17 @@ export function ProposalDetail({ proposalId }: Props) {
           onRefresh={() => fetchProposal(true)}
         />
       )}
+
+      {/* Project lifecycle: pre-decision controls (creator/admin) +
+          active-project section (everyone) */}
+      <ProposalProjectSection
+        proposal={proposal}
+        currentMemberId={currentMemberId}
+        isCreator={currentMemberId === proposal.created_by_member_id}
+        isAdmin={currentMemberIsAdmin}
+        locale={locale}
+        onRefresh={() => fetchProposal(true)}
+      />
 
       {/* Freestyle Poll */}
       {proposal.has_poll && (

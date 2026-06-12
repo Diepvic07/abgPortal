@@ -50,6 +50,9 @@ function mapRowToProposal(row: Record<string, unknown>): CommunityProposal {
     estimated_fee: nullToUndefined(row.estimated_fee as string | null),
     requirements: nullToUndefined(row.requirements as string | null),
     registration_info: nullToUndefined(row.registration_info as string | null),
+    project_chat_url: nullToUndefined(row.project_chat_url as string | null),
+    project_status_note: nullToUndefined(row.project_status_note as string | null),
+    project_started_at: nullToUndefined(row.project_started_at as string | null),
   };
 }
 
