@@ -273,6 +273,17 @@ export function ProposalDiscussionSection({
             </button>
           )}
         </div>
+
+        {discussion.status === 'completed' && (isCreator || isAdmin) && (
+          <div className="mt-5">
+            <SendUpdateSection
+              proposalId={proposalId}
+              discussion={discussion}
+              vi={vi}
+              onError={setError}
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -1060,6 +1071,215 @@ function ScheduledView({
         }}
         onCancel={() => setConfirmRevertOpen(false)}
       />
+    </div>
+  );
+}
+
+// ==================== Send Update Section ====================
+
+function SendUpdateSection({
+  proposalId,
+  discussion,
+  vi,
+  onError,
+}: {
+  proposalId: string;
+  discussion: ProposalDiscussion;
+  vi: boolean;
+  onError: (msg: string) => void;
+}) {
+  const invitedEmails = discussion.invited_emails || [];
+  const invitedCount = invitedEmails.length;
+
+  const [showFlow, setShowFlow] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [sentCount, setSentCount] = useState<number | null>(null);
+
+  if (invitedCount === 0) return null;
+
+  async function handleSend() {
+    if (!message.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/community/proposals/${proposalId}/discussion`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_update',
+          subject: subject.trim() || undefined,
+          message: message.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setSentCount(invitedCount);
+      setShowFlow(false);
+      setShowPreview(false);
+      setSubject('');
+      setMessage('');
+    } catch {
+      onError(vi ? 'Không thể gửi cập nhật' : 'Failed to send update');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (!showFlow) {
+    return (
+      <div className="space-y-3">
+        <div>
+          <button
+            onClick={() => { setShowFlow(true); setSentCount(null); }}
+            className="inline-flex items-center gap-2 text-sm px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 font-medium"
+          >
+            <span>📨</span>
+            {vi ? `Gửi cập nhật (${invitedCount} người)` : `Send Update (${invitedCount} people)`}
+          </button>
+          <p className="mt-1 text-xs text-gray-500">
+            {vi
+              ? 'Soạn email tùy chỉnh gửi đến tất cả người được mời.'
+              : 'Compose a custom email to all invited members.'}
+          </p>
+        </div>
+        {sentCount !== null && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <p className="text-sm text-green-800 flex items-center gap-2">
+              <span>✓</span>
+              {vi
+                ? `Đã gửi email cập nhật đến ${sentCount} người được mời`
+                : `Update email sent to ${sentCount} invited member(s)`}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (!showPreview) {
+    return (
+      <div className="bg-white border border-blue-200 rounded-xl p-4 space-y-3">
+        <div className="flex items-start gap-2">
+          <span className="text-blue-500 text-lg mt-0.5">📨</span>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">
+              {vi ? 'Soạn email cập nhật' : 'Compose update email'}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {vi
+                ? `Email sẽ được gửi đến ${invitedCount} người được mời.`
+                : `Email will be sent to ${invitedCount} invited member(s).`}
+            </p>
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {vi ? 'Tiêu đề (tùy chọn)' : 'Subject (optional)'}
+          </label>
+          <input
+            type="text"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            maxLength={200}
+            placeholder={vi ? 'VD: Tóm tắt buổi thảo luận' : 'e.g. Discussion recap'}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {vi ? 'Nội dung *' : 'Message *'}
+          </label>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={vi ? 'Nhập nội dung cập nhật...' : 'Write your update...'}
+            rows={6}
+            maxLength={5000}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+          <p className="mt-1 text-xs text-gray-400 text-right">{message.length}/5000</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => { if (message.trim()) setShowPreview(true); }}
+            disabled={!message.trim()}
+            className="text-sm px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            {vi ? 'Xem trước email' : 'Preview Email'}
+          </button>
+          <button
+            onClick={() => { setShowFlow(false); setSubject(''); setMessage(''); }}
+            className="text-sm px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            {vi ? 'Hủy' : 'Cancel'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white border border-blue-200 rounded-xl p-4 space-y-4">
+      <p className="text-sm font-semibold text-gray-800">
+        {vi ? 'Xem trước email sẽ gửi cho người được mời:' : 'Preview of email to be sent to invited members:'}
+      </p>
+      <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-blue-600 px-5 py-3">
+          <p className="text-white font-semibold text-sm">
+            {vi ? 'Cập nhật từ người tổ chức' : 'Update from the organizer'}
+          </p>
+        </div>
+        <div className="px-5 py-4 space-y-3 text-sm">
+          <p className="font-bold text-gray-900">
+            {vi ? 'Xin chào [Tên người nhận]!' : 'Hello [Recipient Name]!'}
+          </p>
+          <p className="text-gray-700">
+            {vi
+              ? 'Bạn có một cập nhật về buổi thảo luận cho đề xuất:'
+              : 'You have an update about the discussion for the proposal:'}
+          </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="font-semibold text-blue-800 text-sm">[{vi ? 'Tên đề xuất' : 'Proposal Title'}]</p>
+          </div>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <p className="text-gray-900 text-sm whitespace-pre-wrap">{message}</p>
+          </div>
+        </div>
+        <div className="px-5 py-3 bg-gray-50 border-t border-gray-200">
+          <p className="text-xs text-gray-400 text-center">ABG Alumni Connect</p>
+        </div>
+      </div>
+      <p className="text-xs text-gray-500">
+        {vi
+          ? `Email này sẽ được gửi đến ${invitedCount} người: ${invitedEmails.join(', ')}`
+          : `This email will be sent to ${invitedCount} people: ${invitedEmails.join(', ')}`}
+      </p>
+      <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={handleSend}
+          disabled={submitting}
+          className="text-sm px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        >
+          {submitting
+            ? (vi ? 'Đang gửi...' : 'Sending...')
+            : (vi ? 'Xác nhận & Gửi email' : 'Confirm & Send Email')}
+        </button>
+        <button
+          onClick={() => setShowPreview(false)}
+          disabled={submitting}
+          className="text-sm px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+        >
+          {vi ? 'Sửa nội dung' : 'Edit Message'}
+        </button>
+        <button
+          onClick={() => { setShowFlow(false); setShowPreview(false); setSubject(''); setMessage(''); }}
+          disabled={submitting}
+          className="text-sm px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+        >
+          {vi ? 'Quay lại' : 'Go Back'}
+        </button>
+      </div>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { generateId, formatDate } from '@/lib/utils';
 import { ProposalDiscussion, DiscussionResponse } from '@/types';
 import { sendPushToMember, getPushMessage } from '@/lib/push-notification';
 import { createInAppNotifications } from '@/lib/in-app-notifications';
-import { sendDiscussionInvitationEmail, sendDiscussionDateChangeEmail, sendDiscussionReminderEmail, sendDiscussionCancellationEmail } from '@/lib/resend';
+import { sendDiscussionInvitationEmail, sendDiscussionDateChangeEmail, sendDiscussionReminderEmail, sendDiscussionCancellationEmail, sendDiscussionUpdateEmail } from '@/lib/resend';
 
 function mapRowToDiscussion(row: Record<string, unknown>): ProposalDiscussion {
   return {
@@ -379,6 +379,68 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       });
 
       return successResponse({ message: 'Reminders are being sent' });
+    }
+
+    // Send a custom update email to all invited members
+    if (body.action === 'send_update') {
+      if (discussion.status !== 'scheduled' && discussion.status !== 'completed') {
+        return errorResponse('Can only send updates for scheduled or completed discussions', 400);
+      }
+
+      const message = typeof body.message === 'string' ? body.message.trim() : '';
+      if (!message) return errorResponse('Update message is required', 400);
+      if (message.length > 5000) return errorResponse('Message too long (max 5000 characters)', 400);
+      const customSubject = typeof body.subject === 'string' ? body.subject.trim().slice(0, 200) : '';
+
+      const invitedEmails: string[] = discussion.invited_emails || [];
+      if (invitedEmails.length === 0) return errorResponse('No invited members to update', 400);
+
+      after(async () => {
+        const supabaseAfter = createServerSupabaseClient();
+
+        for (const email of invitedEmails) {
+          const { data: memberRow } = await (supabaseAfter.from('members') as any)
+            .select('id, name, email, locale')
+            .eq('email', email)
+            .single();
+
+          if (!memberRow) continue;
+
+          const mLocale = ((memberRow.locale as string) || 'vi') as 'vi' | 'en';
+
+          try {
+            await sendDiscussionUpdateEmail(
+              email,
+              memberRow.name as string,
+              proposal.title,
+              customSubject,
+              message,
+              `/proposals/${proposal.slug || proposal.id}`,
+              mLocale,
+            );
+          } catch (err) {
+            console.error(`[email] Discussion update failed for ${email}:`, err);
+          }
+
+          try {
+            const inAppTitle = mLocale === 'vi'
+              ? `Cập nhật: ${proposal.title}`
+              : `Update: ${proposal.title}`;
+            const inAppBody = message.length > 140 ? `${message.slice(0, 137)}...` : message;
+            await createInAppNotifications({
+              type: 'discussion_meeting',
+              title: inAppTitle,
+              body: inAppBody,
+              url: `/proposals/${proposal.slug || proposal.id}`,
+              targetMemberId: memberRow.id as string,
+            });
+          } catch (err) {
+            console.error(`[notif] Discussion update notification failed:`, err);
+          }
+        }
+      });
+
+      return successResponse({ message: 'Updates are being sent', count: invitedEmails.length });
     }
 
     // Update meeting date/time (reschedule)
