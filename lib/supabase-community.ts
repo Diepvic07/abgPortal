@@ -729,7 +729,7 @@ export async function getPublicProposals(): Promise<CommunityProposal[]> {
   const { data: rows, error } = await supabase
     .from('community_proposals')
     .select('*, members!community_proposals_created_by_member_id_fkey(name, avatar_url, abg_class)')
-    .in('status', ['published', 'selected', 'in_progress'])
+    .in('status', ['published', 'upcoming'])
     .order('is_pinned', { ascending: false })
     .limit(20);
 

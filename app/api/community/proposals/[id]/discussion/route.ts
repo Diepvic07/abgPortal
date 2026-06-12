@@ -244,6 +244,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       if (error) throw new Error('Failed to schedule meeting');
 
+      // Once a meeting is scheduled the proposal moves to 'upcoming'.
+      // Only advance from 'published' so we don't clobber later lifecycle
+      // states (completed / project_*).
+      if (proposal.status === 'published') {
+        await (supabase.from('community_proposals') as any)
+          .update({ status: 'upcoming', updated_at: now })
+          .eq('id', id);
+      }
+
       // Send email invitations and notifications (non-blocking)
       after(async () => {
         const supabaseAfter = createServerSupabaseClient();

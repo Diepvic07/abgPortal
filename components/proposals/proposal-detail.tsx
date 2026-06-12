@@ -39,19 +39,25 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   published: 'bg-green-100 text-green-800',
-  selected: 'bg-blue-100 text-blue-800',
-  in_progress: 'bg-yellow-100 text-yellow-800',
+  upcoming: 'bg-blue-100 text-blue-800',
   completed: 'bg-purple-100 text-purple-800',
   archived: 'bg-gray-100 text-gray-600',
+  project_active: 'bg-indigo-100 text-indigo-800',
+  project_completed: 'bg-emerald-100 text-emerald-800',
+  project_discontinued: 'bg-orange-100 text-orange-800',
+  project_closed: 'bg-amber-100 text-amber-800',
   removed: 'bg-red-100 text-red-800',
 };
 
 const STATUS_LABELS: Record<string, { en: string; vi: string }> = {
   published: { en: 'Open', vi: 'Đang mở' },
-  selected: { en: 'Selected', vi: 'Đã chọn' },
-  in_progress: { en: 'In Progress', vi: 'Đang thực hiện' },
+  upcoming: { en: 'Upcoming', vi: 'Sắp diễn ra' },
   completed: { en: 'Completed', vi: 'Hoàn thành' },
   archived: { en: 'Archived', vi: 'Lưu trữ' },
+  project_active: { en: 'Active Project', vi: 'Dự án đang hoạt động' },
+  project_completed: { en: 'Project Completed', vi: 'Dự án hoàn thành' },
+  project_discontinued: { en: 'Project Discontinued', vi: 'Dự án đã dừng' },
+  project_closed: { en: 'Project Closed Phase', vi: 'Dự án chuyển giai đoạn' },
   removed: { en: 'Removed', vi: 'Đã xóa' },
 };
 
@@ -717,7 +723,15 @@ export function ProposalDetail({ proposalId }: Props) {
 
   if (!proposal) return null;
 
-  const isTerminal = ['completed', 'archived', 'removed'].includes(proposal.status);
+  const isTerminal = [
+    'completed',
+    'archived',
+    'removed',
+    'project_active',
+    'project_completed',
+    'project_discontinued',
+    'project_closed',
+  ].includes(proposal.status);
   const isAuthor = currentMemberId === proposal.created_by_member_id;
   const canEdit = (isAuthor && (proposal.commitment_count || 0) <= 1 && !isTerminal) || currentMemberIsAdmin;
 

@@ -37,11 +37,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     switch (action) {
       case 'status': {
         const { status } = body as { status: ProposalStatus };
-        const updates: Record<string, unknown> = { status };
-        if (status === 'selected') {
-          updates.selected_at = formatDate();
-          updates.selected_by_member_id = body.admin_member_id || null;
+        // Admins cannot drop into project_active from the dropdown — that
+        // transition requires the project-creation flow (captures chat URL
+        // and the initial public note). Use a dedicated project endpoint.
+        if (status === 'project_active') {
+          return errorResponse(
+            'Use the project-creation flow to move a proposal into project_active.',
+            400,
+          );
         }
+        const updates: Record<string, unknown> = { status };
         if (status === 'completed') {
           updates.completed_at = formatDate();
         }

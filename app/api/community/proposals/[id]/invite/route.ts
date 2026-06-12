@@ -80,6 +80,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         .eq('id', id);
     }
 
+    // Flip proposal status to 'upcoming' once a meeting is on the calendar.
+    // Only advance from 'published' so we don't clobber later lifecycle states
+    // (completed / project_*).
+    if (proposal.status === 'published') {
+      await (supabase.from('community_proposals') as any)
+        .update({ status: 'upcoming', updated_at: now })
+        .eq('id', id);
+    }
+
     const actualDiscussionId = existing?.id || discussionId;
 
     // Send email invitations (non-blocking)

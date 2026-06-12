@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
-import type { CommunityProposal, ProposalStatus, EventMode } from '@/types';
-import { EVENT_MODE_LABELS, PROPOSAL_CATEGORY_LABELS } from '@/types';
+import type { CommunityProposal, ProposalStatus } from '@/types';
 
 const CATEGORY_ICONS: Record<string, string> = {
   charity: '❤️', event: '🎉', learning: '📚', community_support: '🤝', other: '💡',
@@ -12,180 +11,29 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   published: 'bg-green-100 text-green-800',
-  selected: 'bg-blue-100 text-blue-800',
-  in_progress: 'bg-yellow-100 text-yellow-800',
+  upcoming: 'bg-blue-100 text-blue-800',
   completed: 'bg-purple-100 text-purple-800',
   archived: 'bg-gray-100 text-gray-600',
+  project_active: 'bg-indigo-100 text-indigo-800',
+  project_completed: 'bg-emerald-100 text-emerald-800',
+  project_discontinued: 'bg-orange-100 text-orange-800',
+  project_closed: 'bg-amber-100 text-amber-800',
   removed: 'bg-red-100 text-red-800',
 };
 
-const ALL_STATUSES: ProposalStatus[] = ['published', 'selected', 'in_progress', 'completed', 'archived', 'removed'];
-const ALL_EVENT_MODES: EventMode[] = ['offline', 'online', 'hybrid'];
-
-function isEventMode(value: unknown): value is EventMode {
-  return typeof value === 'string' && ALL_EVENT_MODES.includes(value as EventMode);
-}
-
-function getProposalEventModeDefault(proposal: CommunityProposal): EventMode {
-  return isEventMode(proposal.participation_format)
-    ? proposal.participation_format
-    : 'offline';
-}
-
-function CreateEventModal({ proposal, t, onClose, onCreated }: {
-  proposal: CommunityProposal;
-  t: ReturnType<typeof useTranslation>['t'];
-  onClose: () => void;
-  onCreated: (msg: string) => void;
-}) {
-  const { locale } = useTranslation();
-  const [eventDate, setEventDate] = useState('');
-  const [eventEndDate, setEventEndDate] = useState('');
-  const [eventMode, setEventMode] = useState<EventMode>(() => getProposalEventModeDefault(proposal));
-  const [location, setLocation] = useState('');
-  const [locationUrl, setLocationUrl] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState('');
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!eventDate) return;
-
-    setCreating(true);
-    setError('');
-    try {
-      const body: Record<string, unknown> = {
-        event_mode: eventMode,
-        event_date: new Date(eventDate).toISOString(),
-      };
-      if (eventEndDate) body.event_end_date = new Date(eventEndDate).toISOString();
-      if (location) body.location = location;
-      if (locationUrl) body.location_url = locationUrl;
-      if (capacity) body.capacity = parseInt(capacity, 10);
-
-      const res = await fetch(`/api/admin/community/events/from-proposal/${proposal.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (res.ok) {
-        onCreated(t.admin.proposals.eventCreated);
-        onClose();
-      } else {
-        const data = await res.json();
-        setError(data.error || t.admin.proposals.eventCreateFailed);
-      }
-    } catch {
-      setError(t.admin.proposals.eventCreateFailed);
-    } finally {
-      setCreating(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-1">{t.admin.proposals.createEventFrom}</h3>
-          <p className="text-sm text-gray-500 mb-4 line-clamp-1">{proposal.title}</p>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.eventDate} *</label>
-              <input
-                type="datetime-local"
-                value={eventDate}
-                onChange={(e) => setEventDate(e.target.value)}
-                required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.eventEndDate}</label>
-              <input
-                type="datetime-local"
-                value={eventEndDate}
-                onChange={(e) => setEventEndDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.eventMode}</label>
-              <select
-                value={eventMode}
-                onChange={(e) => setEventMode(e.target.value as EventMode)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {ALL_EVENT_MODES.map((mode) => (
-                  <option key={mode} value={mode}>{EVENT_MODE_LABELS[mode][locale === 'vi' ? 'vi' : 'en']}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.location}</label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Read Station, Ha Noi"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.locationUrl}</label>
-              <input
-                type="url"
-                value={locationUrl}
-                onChange={(e) => setLocationUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.capacity}</label>
-              <input
-                type="number"
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-                min="1"
-                placeholder="50"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                {t.admin.actions.cancel}
-              </button>
-              <button
-                type="submit"
-                disabled={creating || !eventDate}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-              >
-                {creating ? t.admin.proposals.creating : t.admin.proposals.createEvent}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-}
+// Dropdown excludes 'project_active' on purpose — moving INTO project_active
+// requires the chat-URL + public-note flow on the proposal page. The other
+// project_* end-states are reachable here so admins can record the outcome.
+const DROPDOWN_STATUSES: ProposalStatus[] = [
+  'published',
+  'upcoming',
+  'completed',
+  'archived',
+  'project_completed',
+  'project_discontinued',
+  'project_closed',
+  'removed',
+];
 
 export function AdminProposalManager() {
   const { t } = useTranslation();
@@ -193,7 +41,6 @@ export function AdminProposalManager() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState('');
-  const [createEventProposal, setCreateEventProposal] = useState<CommunityProposal | null>(null);
 
   useEffect(() => {
     fetchProposals();
@@ -318,24 +165,19 @@ export function AdminProposalManager() {
                     {proposal.is_pinned ? `📌 ${t.admin.proposals.unpin}` : `📌 ${t.admin.proposals.pin}`}
                   </button>
 
-                  {/* Create Event - show for published/selected proposals */}
-                  {(proposal.status === 'published' || proposal.status === 'selected') && (
-                    <button
-                      onClick={() => setCreateEventProposal(proposal)}
-                      className="text-xs px-3 py-1.5 border border-green-200 text-green-700 rounded-lg hover:bg-green-50 font-medium"
-                    >
-                      🎉 {t.admin.proposals.createEvent}
-                    </button>
-                  )}
-
-                  {/* Status dropdown */}
+                  {/* Status dropdown — does not include project_active.
+                      Moving into project_active happens on the proposal page
+                      where the chat URL / public note can be captured. */}
                   <select
                     value={proposal.status}
                     onChange={(e) => handleAction(proposal.id, 'status', { status: e.target.value })}
-                    disabled={actionLoading === proposal.id}
+                    disabled={actionLoading === proposal.id || proposal.status === 'project_active'}
                     className="text-xs px-3 py-1.5 border rounded-lg bg-white disabled:opacity-50"
                   >
-                    {ALL_STATUSES.map((s) => (
+                    {proposal.status === 'project_active' && (
+                      <option value="project_active">project_active</option>
+                    )}
+                    {DROPDOWN_STATUSES.map((s) => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
@@ -361,17 +203,6 @@ export function AdminProposalManager() {
         </div>
       )}
 
-      {createEventProposal && (
-        <CreateEventModal
-          proposal={createEventProposal}
-          t={t}
-          onClose={() => setCreateEventProposal(null)}
-          onCreated={(msg) => {
-            setMessage(msg);
-            fetchProposals();
-          }}
-        />
-      )}
     </div>
   );
 }

@@ -732,12 +732,15 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
     }
   }
 
-  // Update proposal status to selected
+  // Update proposal status to completed (the 'selected' bucket is gone).
+  // This codepath is dormant — the admin UI button that called it was removed
+  // along with the status redesign — but we keep it writing a valid status in
+  // case any tooling still hits the endpoint.
   await supabase
     .from('community_proposals')
     .update({
-      status: 'selected',
-      selected_at: formatDate(),
+      status: 'completed',
+      completed_at: formatDate(),
       selected_by_member_id: adminMemberId,
       updated_at: formatDate(),
     })

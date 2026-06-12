@@ -252,7 +252,27 @@ export interface BugReport {
 export type ProposalCategory = 'talk' | 'learning' | 'fieldtrip' | 'coffee' | 'meeting' | 'sports' | 'community_support' | 'charity' | 'event' | 'other';
 export type ParticipationFormat = 'online' | 'offline' | 'hybrid';
 export type ProposalGenre = 'education' | 'health' | 'finance' | 'technology' | 'business' | 'culture' | 'environment' | 'other';
-export type ProposalStatus = 'published' | 'selected' | 'in_progress' | 'completed' | 'archived' | 'removed';
+export type ProposalStatus =
+  | 'published'
+  | 'upcoming'
+  | 'completed'
+  | 'archived'
+  | 'project_active'
+  | 'project_completed'
+  | 'project_discontinued'
+  | 'project_closed'
+  | 'removed';
+
+export const PROJECT_STATUSES: ProposalStatus[] = [
+  'project_active',
+  'project_completed',
+  'project_discontinued',
+  'project_closed',
+];
+
+export function isProjectStatus(status: ProposalStatus): boolean {
+  return PROJECT_STATUSES.includes(status);
+}
 export type CommitmentLevel = 'interested' | 'will_participate' | 'will_lead';
 export type CommentStatus = 'visible' | 'hidden' | 'removed';
 
@@ -370,6 +390,10 @@ export interface CommunityProposal {
   recap_text?: string;
   recap_images?: string[];
   recap_created_at?: string;
+  // Project lifecycle fields (populated when status is project_*)
+  project_chat_url?: string;
+  project_status_note?: string;
+  project_started_at?: string;
   // Joined fields
   author_name?: string;
   author_avatar_url?: string;

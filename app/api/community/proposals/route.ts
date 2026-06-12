@@ -24,13 +24,23 @@ export async function GET(request: NextRequest) {
 
     // status=all → show everything except removed (for admin)
     // status=<valid> → filter by specific status
-    // default → show published, selected, in_progress (public view)
-    const VALID_STATUSES: ProposalStatus[] = ['published', 'selected', 'in_progress', 'completed', 'archived', 'removed'];
+    // default → show active proposals (public view): published + upcoming
+    const VALID_STATUSES: ProposalStatus[] = [
+      'published',
+      'upcoming',
+      'completed',
+      'archived',
+      'project_active',
+      'project_completed',
+      'project_discontinued',
+      'project_closed',
+      'removed',
+    ];
     const status: ProposalStatus | ProposalStatus[] | undefined = statusParam === 'all'
       ? undefined
       : statusParam && VALID_STATUSES.includes(statusParam as ProposalStatus)
         ? statusParam as ProposalStatus
-        : ['published', 'selected', 'in_progress'];
+        : ['published', 'upcoming'];
 
     const result = await getProposals({
       category: category && VALID_CATEGORIES.includes(category) ? category : undefined,
