@@ -244,14 +244,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       if (error) throw new Error('Failed to schedule meeting');
 
-      // Once a meeting is scheduled the proposal moves to 'upcoming'.
+      // Once a meeting is scheduled the proposal moves to 'upcoming' and
+      // we record the meeting date so listings can sort by "soonest".
       // Only advance from 'published' so we don't clobber later lifecycle
-      // states (completed / project_*).
+      // states (completed / project_*); next_event_date is always refreshed.
+      const propUpdates: Record<string, unknown> = {
+        next_event_date: meeting_date,
+        updated_at: now,
+      };
       if (proposal.status === 'published') {
-        await (supabase.from('community_proposals') as any)
-          .update({ status: 'upcoming', updated_at: now })
-          .eq('id', id);
+        propUpdates.status = 'upcoming';
       }
+      await (supabase.from('community_proposals') as any)
+        .update(propUpdates)
+        .eq('id', id);
 
       // Send email invitations and notifications (non-blocking)
       after(async () => {
@@ -473,6 +479,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       if (error) throw new Error('Failed to update meeting');
 
+      // Sync the denormalized next_event_date on the proposal row.
+      if (body.meeting_date) {
+        await (supabase.from('community_proposals') as any)
+          .update({ next_event_date: body.meeting_date, updated_at: now })
+          .eq('id', id);
+      }
+
       // Send date change emails to all invited members
       const oldMeetingDate = discussion.meeting_date;
       after(async () => {
@@ -522,6 +535,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .single();
 
       if (error) throw new Error('Failed to reopen discussion');
+
+      // Reopening drops the calendar entry — clear next_event_date and roll
+      // 'upcoming' back to 'published'. We do not touch later lifecycle
+      // states (completed / project_*).
+      const reopenUpdates: Record<string, unknown> = {
+        next_event_date: proposal.target_date || null,
+        updated_at: now,
+      };
+      if (proposal.status === 'upcoming') {
+        reopenUpdates.status = 'published';
+      }
+      await (supabase.from('community_proposals') as any)
+        .update(reopenUpdates)
+        .eq('id', id);
+
       return successResponse({ discussion: mapRowToDiscussion(updated as Record<string, unknown>) });
     }
 
@@ -536,6 +564,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .single();
 
       if (error) throw new Error('Failed to cancel discussion');
+
+      // Cancellation drops the scheduled meeting — fall back to target_date
+      // (which can also be null) and roll 'upcoming' back to 'published'.
+      const cancelUpdates: Record<string, unknown> = {
+        next_event_date: proposal.target_date || null,
+        updated_at: now,
+      };
+      if (proposal.status === 'upcoming') {
+        cancelUpdates.status = 'published';
+      }
+      await (supabase.from('community_proposals') as any)
+        .update(cancelUpdates)
+        .eq('id', id);
 
       // Send cancellation emails to all invited members
       if (discussion.invited_emails?.length > 0 && cancelReason && discussion.meeting_date) {

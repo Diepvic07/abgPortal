@@ -365,6 +365,9 @@ export interface CommunityProposal {
   comment_count: number;
   target_date?: string;
   target_time?: string;
+  /** Denormalized "next event date" for listing sort/display.
+   *  Tracks scheduled meeting_date when status='upcoming', else target_date. */
+  next_event_date?: string;
   created_at: string;
   updated_at: string;
   published_at?: string;

@@ -172,7 +172,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     if (category !== undefined) updates.category = category;
     if (genre !== undefined) updates.genre = genre;
-    if (target_date !== undefined) updates.target_date = target_date || null;
+    if (target_date !== undefined) {
+      updates.target_date = target_date || null;
+      // Keep next_event_date in sync with target_date while no meeting has
+      // been scheduled. Once status='upcoming' (a real meeting is on the
+      // calendar) we let the discussion's meeting_date drive next_event_date.
+      if (proposal.status === 'published') {
+        updates.next_event_date = target_date || null;
+      }
+    }
     if (target_time !== undefined) updates.target_time = typeof target_time === 'string' ? target_time.trim().slice(0, 10) || null : null;
     if (location !== undefined) updates.location = location || null;
     if (map_url !== undefined) updates.map_url = typeof map_url === 'string' ? map_url.trim().slice(0, 500) || null : null;

@@ -1,7 +1,7 @@
 import { NextRequest, after } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth-middleware';
-import { createProposal, getProposals, upsertCommitment } from '@/lib/supabase-community';
+import { createProposal, getProposals, upsertCommitment, type ProposalSort } from '@/lib/supabase-community';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { ProposalCategory, ProposalGenre, ProposalStatus, CommitmentLevel, ParticipationFormat, PROPOSAL_GENRES } from '@/types';
 import { sendPushToAllMembers, getPushMessage } from '@/lib/push-notification';
@@ -42,11 +42,18 @@ export async function GET(request: NextRequest) {
         ? statusParam as ProposalStatus
         : ['published', 'upcoming'];
 
+    const VALID_SORTS: ProposalSort[] = ['active', 'newest', 'participants', 'soonest'];
+    const sortParam = searchParams.get('sort');
+    const sort: ProposalSort = sortParam && (VALID_SORTS as string[]).includes(sortParam)
+      ? (sortParam as ProposalSort)
+      : 'active';
+
     const result = await getProposals({
       category: category && VALID_CATEGORIES.includes(category) ? category : undefined,
       status,
       page,
       limit,
+      sort,
     });
 
     return successResponse({ proposals: result.proposals, total: result.total, page, limit });

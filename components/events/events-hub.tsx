@@ -11,6 +11,40 @@ type TabKey = 'events' | 'proposals' | 'projects' | 'past' | 'library';
 
 type ProposalsFilter = 'active' | 'completed' | 'archived';
 type ProjectsFilter = 'project_active' | 'project_completed' | 'project_discontinued' | 'project_closed';
+type ProposalsSort = 'active' | 'newest' | 'participants' | 'soonest';
+
+function timeAgo(dateStr: string, vi: boolean): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const sec = Math.max(0, Math.floor((now - then) / 1000));
+  const min = Math.floor(sec / 60);
+  const hr = Math.floor(min / 60);
+  const day = Math.floor(hr / 24);
+  const week = Math.floor(day / 7);
+  // Beyond 30 days, render an absolute date so old proposals don't drown
+  // their context behind "5 tháng trước".
+  if (day > 30) {
+    try {
+      return new Date(dateStr).toLocaleDateString(vi ? 'vi-VN' : 'en-US', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+      });
+    } catch {
+      return dateStr;
+    }
+  }
+  if (vi) {
+    if (week > 0) return `${week} tuần trước`;
+    if (day > 0) return `${day} ngày trước`;
+    if (hr > 0) return `${hr} giờ trước`;
+    if (min > 0) return `${min} phút trước`;
+    return 'vừa xong';
+  }
+  if (week > 0) return `${week}w ago`;
+  if (day > 0) return `${day}d ago`;
+  if (hr > 0) return `${hr}h ago`;
+  if (min > 0) return `${min}m ago`;
+  return 'just now';
+}
 
 const EVENT_CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   charity: { bg: 'bg-rose-50', text: 'text-rose-600' },
@@ -52,6 +86,8 @@ export function EventsHub() {
   const [pastEvents, setPastEvents] = useState<CommunityEvent[]>([]);
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);
   const [proposalsFilter, setProposalsFilter] = useState<ProposalsFilter>('active');
+  const [proposalsSort, setProposalsSort] = useState<ProposalsSort>('active');
+  const [upcomingProposals, setUpcomingProposals] = useState<CommunityProposal[]>([]);
   const [projects, setProjects] = useState<CommunityProposal[]>([]);
   const [projectsFilter, setProjectsFilter] = useState<ProjectsFilter>('project_active');
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
@@ -62,11 +98,11 @@ export function EventsHub() {
     // Wait until session status is resolved before fetching
     if (sessionStatus === 'loading') return;
     if (activeTab === 'events') fetchEvents();
-    else if (activeTab === 'proposals') fetchProposals(proposalsFilter);
+    else if (activeTab === 'proposals') fetchProposals(proposalsFilter, proposalsSort);
     else if (activeTab === 'projects') fetchProjects(projectsFilter);
     else if (activeTab === 'past') fetchPastEvents();
     else if (activeTab === 'library') fetchLibrary();
-  }, [activeTab, sessionStatus, proposalsFilter, projectsFilter]);
+  }, [activeTab, sessionStatus, proposalsFilter, proposalsSort, projectsFilter]);
 
   async function fetchEvents() {
     setLoading(true);
@@ -74,10 +110,20 @@ export function EventsHub() {
       const eventsUrl = isAuthenticated
         ? '/api/community/events?upcoming=true'
         : '/api/public/events?upcoming=true';
-      const eventsRes = await fetch(eventsUrl);
+      // Run in parallel: admin-created events + upcoming proposals (those
+      // with status='upcoming', sorted soonest first). Both share this tab
+      // and are merged by date in EventsTabContent.
+      const [eventsRes, upcomingRes] = await Promise.all([
+        fetch(eventsUrl),
+        fetch('/api/community/proposals?status=upcoming&sort=soonest&limit=100'),
+      ]);
       if (eventsRes.ok) {
         const data = await eventsRes.json();
         setEvents(data.events || []);
+      }
+      if (upcomingRes.ok) {
+        const data = await upcomingRes.json();
+        setUpcomingProposals(data.proposals || []);
       }
     } catch (error) {
       console.error('Failed to fetch events:', error);
@@ -104,16 +150,20 @@ export function EventsHub() {
     }
   }
 
-  async function fetchProposals(filter: ProposalsFilter) {
+  async function fetchProposals(filter: ProposalsFilter, sort: ProposalsSort) {
     setLoading(true);
     try {
-      // 'active' = the API default (published + upcoming). Single-status
-      // filters use status=<value> directly. Public/auth use the same
-      // endpoint since GET is auth-optional.
-      const url = filter === 'active'
-        ? '/api/community/proposals?limit=100'
-        : `/api/community/proposals?limit=100&status=${filter}`;
-      const res = await fetch(url);
+      // 'active' filter → API default (published + upcoming) + chosen sort.
+      // Completed / archived → server-side single-status + always 'newest'
+      // (sort dropdown is hidden in those buckets, see ProposalsTabContent).
+      const params = new URLSearchParams({ limit: '100' });
+      if (filter === 'active') {
+        params.set('sort', sort);
+      } else {
+        params.set('status', filter);
+        params.set('sort', 'newest');
+      }
+      const res = await fetch(`/api/community/proposals?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setProposals(data.proposals || []);
@@ -204,7 +254,13 @@ export function EventsHub() {
       {/* Tab content */}
       <div className="mt-6">
         {activeTab === 'events' && (
-          <EventsTabContent events={events} loading={loading} locale={locale} session={session} />
+          <EventsTabContent
+            events={events}
+            upcomingProposals={upcomingProposals}
+            loading={loading}
+            locale={locale}
+            session={session}
+          />
         )}
         {activeTab === 'proposals' && (
           <ProposalsTabContent
@@ -213,7 +269,13 @@ export function EventsHub() {
             locale={locale}
             session={session}
             filter={proposalsFilter}
-            onFilterChange={setProposalsFilter}
+            onFilterChange={(f) => {
+              setProposalsFilter(f);
+              // Switching away from 'active' implies "newest" semantics; reset.
+              if (f !== 'active' && proposalsSort !== 'active') setProposalsSort('active');
+            }}
+            sort={proposalsSort}
+            onSortChange={setProposalsSort}
           />
         )}
         {activeTab === 'projects' && (
@@ -267,11 +329,13 @@ function EmptyState({ message, cta, href }: { message: string; cta?: string; hre
 
 function EventsTabContent({
   events,
+  upcomingProposals,
   loading,
   locale,
   session,
 }: {
   events: CommunityEvent[];
+  upcomingProposals: CommunityProposal[];
   loading: boolean;
   locale: string;
   session: ReturnType<typeof useSession>['data'];
@@ -279,7 +343,7 @@ function EventsTabContent({
   const isAuthenticated = !!session;
   if (loading) return <SkeletonRows />;
 
-  if (events.length === 0) {
+  if (events.length === 0 && upcomingProposals.length === 0) {
     return (
       <EmptyState
         message={locale === 'vi' ? 'Chưa có hoạt động sắp tới. Hãy đề xuất một hoạt động!' : 'No upcoming activities. Propose one!'}
@@ -289,15 +353,49 @@ function EventsTabContent({
     );
   }
 
+  // Merge events and upcoming proposals on a single date axis. Same-day ties
+  // → events first (they're admin-confirmed, higher signal).
+  type MergedItem =
+    | { kind: 'event'; date: number; event: CommunityEvent }
+    | { kind: 'proposal'; date: number; proposal: CommunityProposal };
+  const merged: MergedItem[] = [
+    ...events.map((event) => ({
+      kind: 'event' as const,
+      date: event.event_date ? new Date(event.event_date).getTime() : Number.POSITIVE_INFINITY,
+      event,
+    })),
+    ...upcomingProposals.map((proposal) => ({
+      kind: 'proposal' as const,
+      date: proposal.next_event_date ? new Date(proposal.next_event_date).getTime() : Number.POSITIVE_INFINITY,
+      proposal,
+    })),
+  ];
+  merged.sort((a, b) => {
+    if (a.date !== b.date) return a.date - b.date;
+    // Same date → events before proposals.
+    if (a.kind !== b.kind) return a.kind === 'event' ? -1 : 1;
+    return 0;
+  });
+
   return (
     <div>
       <h2 className="text-lg font-semibold text-gray-900 mb-4">
         {locale === 'vi' ? 'HOẠT ĐỘNG SẮP TỚI' : 'UPCOMING ACTIVITIES'}
       </h2>
       <div className="divide-y divide-gray-100">
-        {events.map((event) => (
-          <EventRow key={event.id} event={event} locale={locale} isAuthenticated={isAuthenticated} />
-        ))}
+        {merged.map((item) =>
+          item.kind === 'event' ? (
+            <EventRow key={`e-${item.event.id}`} event={item.event} locale={locale} isAuthenticated={isAuthenticated} />
+          ) : (
+            <ProposalRow
+              key={`p-${item.proposal.id}`}
+              proposal={item.proposal}
+              locale={locale}
+              isAuthenticated={isAuthenticated}
+              showUpcomingBadge
+            />
+          ),
+        )}
       </div>
     </div>
   );
@@ -310,6 +408,8 @@ function ProposalsTabContent({
   session,
   filter,
   onFilterChange,
+  sort,
+  onSortChange,
 }: {
   proposals: CommunityProposal[];
   loading: boolean;
@@ -317,6 +417,8 @@ function ProposalsTabContent({
   session: ReturnType<typeof useSession>['data'];
   filter: ProposalsFilter;
   onFilterChange: (f: ProposalsFilter) => void;
+  sort: ProposalsSort;
+  onSortChange: (s: ProposalsSort) => void;
 }) {
   const [activeGenre, setActiveGenre] = useState<string | null>(null);
 
@@ -326,22 +428,44 @@ function ProposalsTabContent({
     { key: 'completed', label: vi ? 'Đã hoàn thành' : 'Completed' },
     { key: 'archived', label: vi ? 'Đã lưu trữ' : 'Archived' },
   ];
+  const sortOptions: { key: ProposalsSort; label: string }[] = [
+    { key: 'active', label: vi ? 'Hoạt động nhất' : 'Most active' },
+    { key: 'newest', label: vi ? 'Mới nhất' : 'Newest' },
+    { key: 'participants', label: vi ? 'Nhiều người tham gia' : 'Most participants' },
+    { key: 'soonest', label: vi ? 'Sắp diễn ra' : 'Soonest' },
+  ];
 
   const statusFilterRow = (
-    <div className="flex gap-2 mb-3 flex-wrap">
-      {statusChips.map((chip) => (
-        <button
-          key={chip.key}
-          onClick={() => onFilterChange(chip.key)}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
-            filter === chip.key
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-          }`}
-        >
-          {chip.label}
-        </button>
-      ))}
+    <div className="flex gap-2 mb-3 flex-wrap items-center justify-between">
+      <div className="flex gap-2 flex-wrap">
+        {statusChips.map((chip) => (
+          <button
+            key={chip.key}
+            onClick={() => onFilterChange(chip.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+              filter === chip.key
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+            }`}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+      {filter === 'active' && (
+        <label className="flex items-center gap-2 text-xs text-gray-600">
+          <span className="hidden sm:inline">{vi ? 'Sắp xếp:' : 'Sort:'}</span>
+          <select
+            value={sort}
+            onChange={(e) => onSortChange(e.target.value as ProposalsSort)}
+            className="border border-gray-300 rounded-lg px-2 py-1.5 bg-white text-xs focus:ring-blue-500 focus:border-blue-500"
+          >
+            {sortOptions.map((opt) => (
+              <option key={opt.key} value={opt.key}>{opt.label}</option>
+            ))}
+          </select>
+        </label>
+      )}
     </div>
   );
 
@@ -390,13 +514,17 @@ function ProposalsTabContent({
     return (genreCounts.get(b) || 0) - (genreCounts.get(a) || 0);
   });
 
-  // Sort by activity: pinned first, then by engagement (participants + comments)
-  const sorted = [...proposals].sort((a, b) => {
-    if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
-    const activityA = (a.commitment_count || 0) + (a.comment_count || 0);
-    const activityB = (b.commitment_count || 0) + (b.comment_count || 0);
-    return activityB - activityA;
-  });
+  // For the legacy 'active' sort, re-apply engagement ordering client-side
+  // (the server already pins-first). Other sorts come pre-ordered from the
+  // server and we trust that order.
+  const sorted = sort === 'active'
+    ? [...proposals].sort((a, b) => {
+        if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+        const activityA = (a.commitment_count || 0) + (a.comment_count || 0);
+        const activityB = (b.commitment_count || 0) + (b.comment_count || 0);
+        return activityB - activityA;
+      })
+    : proposals;
 
   const filtered = activeGenre
     ? sorted.filter(p => (p.genre || 'other') === activeGenre)
@@ -767,7 +895,18 @@ function EventRow({ event, locale, isAuthenticated }: { event: CommunityEvent; l
   );
 }
 
-function ProposalRow({ proposal, locale, isAuthenticated }: { proposal: CommunityProposal; locale: string; isAuthenticated?: boolean }) {
+function ProposalRow({
+  proposal,
+  locale,
+  isAuthenticated,
+  showUpcomingBadge = false,
+}: {
+  proposal: CommunityProposal;
+  locale: string;
+  isAuthenticated?: boolean;
+  showUpcomingBadge?: boolean;
+}) {
+  const vi = locale === 'vi';
   const categoryColors: Record<string, { bg: string; text: string }> = {
     charity: { bg: 'bg-rose-50', text: 'text-rose-600' },
     event: { bg: 'bg-amber-50', text: 'text-amber-600' },
@@ -776,22 +915,39 @@ function ProposalRow({ proposal, locale, isAuthenticated }: { proposal: Communit
     other: { bg: 'bg-violet-50', text: 'text-violet-600' },
   };
   const colors = categoryColors[proposal.category] || categoryColors.other;
-  const categoryLabel = PROPOSAL_CATEGORY_LABELS[proposal.category]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.category;
+  const categoryLabel = PROPOSAL_CATEGORY_LABELS[proposal.category]?.[vi ? 'vi' : 'en'] || proposal.category;
+  const posted = proposal.created_at ? timeAgo(proposal.created_at, vi) : '';
+  const eventDate = proposal.next_event_date
+    ? formatEventDate(proposal.next_event_date, locale)
+    : null;
 
   return (
     <Link href={`/proposals/${proposal.slug}`} className="block">
       <div className="py-4 flex items-center justify-between hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-lg">
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-gray-900 text-base truncate">{proposal.title}</h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-gray-900 text-base truncate">{proposal.title}</h3>
+            {showUpcomingBadge && (
+              <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                💡 {vi ? 'Đề xuất' : 'Proposal'}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-500 mt-0.5">
             {proposal.author_name || 'Unknown'}{proposal.author_abg_class ? ` · ${proposal.author_abg_class}` : ''}
             {proposal.location && <span> · 📍 {proposal.location}</span>}
             {proposal.participation_format && (
-              <span> · {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.icon} {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.[locale === 'vi' ? 'vi' : 'en'] || proposal.participation_format}</span>
+              <span> · {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.icon} {PARTICIPATION_FORMAT_LABELS[proposal.participation_format as ParticipationFormat]?.[vi ? 'vi' : 'en'] || proposal.participation_format}</span>
             )}
+            {posted && <span> · {posted}</span>}
           </p>
         </div>
-        <div className="flex items-center gap-4 ml-4 flex-shrink-0">
+        <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+          {eventDate && (
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-blue-50 text-blue-700 flex items-center gap-1">
+              📅 {eventDate}
+            </span>
+          )}
           <span className="text-sm text-gray-500 flex items-center gap-1">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-1.053M18 6.75a3 3 0 11-6 0 3 3 0 016 0zM6.75 9.75a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             {proposal.commitment_count}

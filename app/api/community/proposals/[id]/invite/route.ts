@@ -80,14 +80,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         .eq('id', id);
     }
 
-    // Flip proposal status to 'upcoming' once a meeting is on the calendar.
-    // Only advance from 'published' so we don't clobber later lifecycle states
-    // (completed / project_*).
+    // Flip proposal status to 'upcoming' once a meeting is on the calendar
+    // and record the meeting date so listings can sort by "soonest".
+    // Only advance from 'published' so we don't clobber later lifecycle
+    // states (completed / project_*); always refresh next_event_date though.
+    const proposalUpdates: Record<string, unknown> = {
+      next_event_date: meeting_date,
+      updated_at: now,
+    };
     if (proposal.status === 'published') {
-      await (supabase.from('community_proposals') as any)
-        .update({ status: 'upcoming', updated_at: now })
-        .eq('id', id);
+      proposalUpdates.status = 'upcoming';
     }
+    await (supabase.from('community_proposals') as any)
+      .update(proposalUpdates)
+      .eq('id', id);
 
     const actualDiscussionId = existing?.id || discussionId;
 

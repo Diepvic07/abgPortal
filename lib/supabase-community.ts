@@ -24,6 +24,7 @@ function mapRowToProposal(row: Record<string, unknown>): CommunityProposal {
     comment_count: (row.comment_count as number) || 0,
     target_date: nullToUndefined(row.target_date as string | null),
     target_time: nullToUndefined(row.target_time as string | null),
+    next_event_date: nullToUndefined(row.next_event_date as string | null),
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
     published_at: nullToUndefined(row.published_at as string | null),
@@ -127,6 +128,7 @@ export async function createProposal(data: {
       category: data.category,
       genre: data.genre || 'other',
       target_date: data.target_date || null,
+      next_event_date: data.target_date || null,
       ...(data.target_time ? { target_time: data.target_time } : {}),
       ...(data.image_url ? { image_url: data.image_url } : {}),
       ...(data.tags && data.tags.length > 0 ? { tags: data.tags } : {}),
@@ -159,16 +161,20 @@ export async function createProposal(data: {
   return mapRowToProposal(row as Record<string, unknown>);
 }
 
+export type ProposalSort = 'active' | 'newest' | 'participants' | 'soonest';
+
 export async function getProposals(options: {
   category?: ProposalCategory;
   status?: ProposalStatus | ProposalStatus[];
   page?: number;
   limit?: number;
+  sort?: ProposalSort;
 }): Promise<{ proposals: CommunityProposal[]; total: number }> {
   const supabase = createServerSupabaseClient();
   const page = options.page || 1;
   const limit = options.limit || 20;
   const offset = (page - 1) * limit;
+  const sort: ProposalSort = options.sort || 'active';
 
   let query = supabase
     .from('community_proposals')
@@ -187,10 +193,26 @@ export async function getProposals(options: {
     query = query.neq('status', 'removed');
   }
 
-  // Pinned first, then fetch enough rows for client-side activity sorting
-  query = query
-    .order('is_pinned', { ascending: false })
-    .range(offset, offset + limit - 1);
+  // Server-side ordering. 'active' keeps the legacy behavior (client also
+  // applies engagement sort below). Other sorts are pushed to the DB so
+  // pagination works correctly.
+  switch (sort) {
+    case 'newest':
+      query = query.order('created_at', { ascending: false });
+      break;
+    case 'participants':
+      query = query.order('commitment_count', { ascending: false });
+      break;
+    case 'soonest':
+      query = query.order('next_event_date', { ascending: true, nullsFirst: false });
+      break;
+    case 'active':
+    default:
+      query = query.order('is_pinned', { ascending: false });
+      break;
+  }
+
+  query = query.range(offset, offset + limit - 1);
 
   const { data: rows, error, count } = await query;
 
@@ -209,13 +231,16 @@ export async function getProposals(options: {
     });
   });
 
-  // Sort by activity: pinned first, then by total engagement (participants + comments)
-  proposals.sort((a, b) => {
-    if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
-    const activityA = a.commitment_count + a.comment_count;
-    const activityB = b.commitment_count + b.comment_count;
-    return activityB - activityA;
-  });
+  // For 'active', refine ordering client-side: pinned first, then engagement.
+  // Other sorts trust the DB ordering exactly.
+  if (sort === 'active') {
+    proposals.sort((a, b) => {
+      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+      const activityA = a.commitment_count + a.comment_count;
+      const activityB = b.commitment_count + b.comment_count;
+      return activityB - activityA;
+    });
+  }
 
   return { proposals, total: count || 0 };
 }
@@ -276,6 +301,7 @@ export async function updateProposal(id: string, data: Partial<{
   category: ProposalCategory;
   genre: string;
   target_date: string | null;
+  next_event_date: string | null;
   status: ProposalStatus;
   is_pinned: boolean;
   selected_at: string | null;
