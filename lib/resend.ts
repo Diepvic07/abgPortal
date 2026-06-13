@@ -1947,6 +1947,82 @@ export async function sendDiscussionUpdateEmail(
 }
 
 /**
+ * Send a custom update email written by the project creator or admin
+ * to all joined project members.
+ */
+export async function sendProjectUpdateEmail(
+  to: string,
+  name: string,
+  proposalTitle: string,
+  customSubject: string,
+  message: string,
+  proposalUrl: string,
+  locale: Locale = 'vi',
+): Promise<void> {
+  const resend = getResendClient();
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+
+  const isVi = locale === 'vi';
+  const subject = customSubject
+    ? `${customSubject} — ${proposalTitle}`
+    : isVi
+      ? `Cập nhật dự án: ${proposalTitle}`
+      : `Project update: ${proposalTitle}`;
+
+  const messageHtml = escapeHtml(message).replace(/\n/g, '<br>');
+
+  const emailHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#4f46e5;padding:28px 40px;">
+          <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">${isVi ? '🚀 Cập nhật dự án' : '🚀 Project update'}</h1>
+        </td></tr>
+        <tr><td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1f2937;">${isVi ? `Xin chào ${escapeHtml(name)}!` : `Hello ${escapeHtml(name)}!`}</p>
+
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${isVi
+    ? 'Bạn có một cập nhật từ dự án bạn đang tham gia:'
+    : 'You have an update from a project you joined:'}</p>
+
+          <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <p style="margin:0;font-size:16px;font-weight:600;color:#3730a3;">${escapeHtml(proposalTitle)}</p>
+          </div>
+
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:0 0 20px;">
+            <p style="margin:0;font-size:14px;color:#1f2937;line-height:1.6;">${messageHtml}</p>
+          </div>
+
+          <p style="margin:0 0 12px;font-size:14px;color:#6b7280;">${isVi
+    ? 'Xem chi tiết dự án:'
+    : 'View the project:'} <a href="${appUrl}${proposalUrl}" style="color:#4f46e5;text-decoration:underline;">${isVi ? 'Mở trang dự án' : 'Open project page'}</a></p>
+
+          <p style="margin:0;font-size:15px;color:#374151;">${isVi ? 'Trân trọng,' : 'Best regards,'}<br><strong>ABG Alumni Connect</strong></p>
+        </td></tr>
+        <tr><td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">ABG Alumni Connect &mdash; ${isVi ? 'Kết nối cựu học viên ABG' : 'Connecting ABG Alumni'}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to, subject, html: emailHtml });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      if (TEST_MODE_EMAILS.includes(to)) {
+        await resend.emails.send({ from: FROM_EMAIL, to, subject: `[TEST] ${subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+      }
+      return;
+    }
+    console.error('Failed to send project update email:', error);
+  }
+}
+
+/**
  * Fallback email when push notification cannot be delivered
  * (all subscriptions have failed too many times).
  */
