@@ -871,7 +871,7 @@ function ScheduledView({
           {reminderSent && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
               <p className="text-sm text-green-800 flex items-center gap-2">
-                <span>✓</span> {vi ? 'Đã gửi nhắc nhở cho những người đã cam kết tham gia hoặc dẫn dắt' : 'Reminder sent to participants who committed to participate or lead'}
+                <span>✓</span> {vi ? 'Đã gửi nhắc nhở cho tất cả thành viên đã cam kết' : 'Reminder sent to every committed member'}
               </p>
             </div>
           )}
@@ -1088,14 +1088,12 @@ function SendUpdateSection({
   vi: boolean;
   onError: (msg: string) => void;
 }) {
-  // Active participants only: people who said "Sẽ tham gia" or "Sẽ dẫn dắt".
-  // Commenters and "Quan tâm" commitments are excluded — they didn't commit
-  // to doing the work.
-  const activeCommitments = commitments.filter(
-    (c) => c.commitment_level === 'will_participate' || c.commitment_level === 'will_lead',
-  );
-  const recipientCount = activeCommitments.length;
-  const recipientEmails = activeCommitments
+  // Recipients: everyone with a commitment row (Quan tâm / Sẽ tham gia /
+  // Sẽ dẫn dắt). Commenters are excluded — they never registered a
+  // commitment level. Only the project formation flow narrows further
+  // to participate/lead.
+  const recipientCount = commitments.length;
+  const recipientEmails = commitments
     .map((c) => c.member_email)
     .filter((e): e is string => !!e);
 
@@ -1148,8 +1146,8 @@ function SendUpdateSection({
           </button>
           <p className="mt-1 text-xs text-gray-500">
             {vi
-              ? 'Soạn email tùy chỉnh gửi đến những người đã cam kết tham gia hoặc dẫn dắt.'
-              : 'Compose a custom email to people who committed to participate or lead.'}
+              ? 'Soạn email tùy chỉnh gửi đến tất cả thành viên đã cam kết (Quan tâm, Sẽ tham gia, Sẽ dẫn dắt).'
+              : 'Compose a custom email to every member who committed (Interested, Will Participate, Will Lead).'}
           </p>
         </div>
         {sentCount !== null && (
@@ -1177,8 +1175,8 @@ function SendUpdateSection({
             </p>
             <p className="text-xs text-gray-500 mt-0.5">
               {vi
-                ? `Email sẽ được gửi đến ${recipientCount} người đã cam kết tham gia/dẫn dắt.`
-                : `Email will be sent to ${recipientCount} member(s) who committed to participate or lead.`}
+                ? `Email sẽ được gửi đến ${recipientCount} thành viên đã cam kết.`
+                : `Email will be sent to ${recipientCount} committed member(s).`}
             </p>
           </div>
         </div>
@@ -1231,7 +1229,7 @@ function SendUpdateSection({
   return (
     <div className="bg-white border border-blue-200 rounded-xl p-4 space-y-4">
       <p className="text-sm font-semibold text-gray-800">
-        {vi ? 'Xem trước email sẽ gửi cho người đã cam kết:' : 'Preview of email to be sent to committed participants:'}
+        {vi ? 'Xem trước email sẽ gửi cho thành viên đã cam kết:' : 'Preview of email to be sent to committed members:'}
       </p>
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <div className="bg-blue-600 px-5 py-3">
@@ -1261,8 +1259,8 @@ function SendUpdateSection({
       </div>
       <p className="text-xs text-gray-500">
         {vi
-          ? `Email này sẽ được gửi đến ${recipientCount} người đã cam kết tham gia/dẫn dắt: ${recipientEmails.join(', ')}`
-          : `This email will be sent to ${recipientCount} member(s) who committed to participate or lead: ${recipientEmails.join(', ')}`}
+          ? `Email này sẽ được gửi đến ${recipientCount} thành viên đã cam kết: ${recipientEmails.join(', ')}`
+          : `This email will be sent to ${recipientCount} committed member(s): ${recipientEmails.join(', ')}`}
       </p>
       <div className="flex gap-2 flex-wrap">
         <button

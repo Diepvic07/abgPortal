@@ -136,14 +136,30 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       changed_at: now,
     });
 
-    // Auto-join the proposal creator (whichever of creator/admin pressed the
-    // button — we always join the proposal's *creator*, not whoever triggered).
+    // Auto-join: the proposal creator (whether they pressed the button or
+    // an admin did) plus every member whose commitment_level is
+    // will_participate or will_lead. We deliberately skip 'interested'
+    // commitments — those people can opt in via the Join button if they
+    // decide to actually do the work.
+    const memberIdsToJoin = new Set<string>([proposal.created_by_member_id]);
+
+    const { data: commitmentRows } = await (supabase.from('community_commitments') as any)
+      .select('member_id')
+      .eq('proposal_id', id)
+      .in('commitment_level', ['will_participate', 'will_lead']);
+
+    for (const row of (commitmentRows as { member_id: string }[] | null) || []) {
+      memberIdsToJoin.add(row.member_id);
+    }
+
+    const memberRows = Array.from(memberIdsToJoin).map((mid) => ({
+      proposal_id: id,
+      member_id: mid,
+      joined_at: now,
+    }));
+
     await (supabase.from('proposal_project_members') as any)
-      .upsert({
-        proposal_id: id,
-        member_id: proposal.created_by_member_id,
-        joined_at: now,
-      }, { onConflict: 'proposal_id,member_id', ignoreDuplicates: true });
+      .upsert(memberRows, { onConflict: 'proposal_id,member_id', ignoreDuplicates: true });
 
     const updated = await getProposalById(id);
     return successResponse({ proposal: updated });

@@ -344,14 +344,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.action === 'send_reminder') {
       if (discussion.status !== 'scheduled') return errorResponse('Can only send reminders for scheduled discussions', 400);
 
-      // Recipients: members with active commitments only (will_participate
-      // or will_lead). Same rule as send_update — we don't ping commenters
-      // or people who only signaled interest, and we don't fall back to
+      // Recipients: every member with a commitment row (interested,
+      // will_participate, will_lead). Commenters are still excluded — they
+      // never registered any commitment level. We do NOT fall back to
       // discussion.invited_emails.
       const { data: commitmentRows } = await (supabase.from('community_commitments') as any)
         .select('member_id, members:member_id(id, name, email, locale)')
-        .eq('proposal_id', id)
-        .in('commitment_level', ['will_participate', 'will_lead']);
+        .eq('proposal_id', id);
 
       type CommitmentRow = {
         member_id: string;
@@ -362,7 +361,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .filter((m): m is { id: string; name: string; email: string; locale: string | null } => !!m && !!m.email);
 
       if (recipients.length === 0) {
-        return errorResponse('No active participants (will_participate / will_lead) to remind', 400);
+        return errorResponse('No committed members to remind', 400);
       }
 
       after(async () => {
@@ -417,14 +416,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (message.length > 5000) return errorResponse('Message too long (max 5000 characters)', 400);
       const customSubject = typeof body.subject === 'string' ? body.subject.trim().slice(0, 200) : '';
 
-      // Recipients: members with an active commitment (will_participate or
-      // will_lead). We deliberately skip 'interested' commitments, anyone
-      // who only commented, and anyone who was on the original meeting
-      // invite list but did not commit.
+      // Recipients: every member with a commitment row, regardless of
+      // level (interested / will_participate / will_lead). Commenters are
+      // still excluded because they never registered any commitment.
+      // We do NOT fall back to discussion.invited_emails.
       const { data: commitmentRows } = await (supabase.from('community_commitments') as any)
         .select('member_id, members:member_id(id, name, email, locale)')
-        .eq('proposal_id', id)
-        .in('commitment_level', ['will_participate', 'will_lead']);
+        .eq('proposal_id', id);
 
       type CommitmentRow = {
         member_id: string;
@@ -435,7 +433,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .filter((m): m is { id: string; name: string; email: string; locale: string | null } => !!m && !!m.email);
 
       if (recipients.length === 0) {
-        return errorResponse('No active participants (will_participate / will_lead) to update', 400);
+        return errorResponse('No committed members to update', 400);
       }
 
       after(async () => {
