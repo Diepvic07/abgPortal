@@ -18,6 +18,7 @@ const CATEGORY_COLORS: Record<ProposalCategory, { border: string; bg: string; ac
   community_support: { border: 'border-l-amber-400', bg: 'bg-amber-50/40', accent: 'text-amber-600' },
   charity: { border: 'border-l-rose-400', bg: 'bg-rose-50/40', accent: 'text-rose-600' },
   event: { border: 'border-l-purple-400', bg: 'bg-purple-50/40', accent: 'text-purple-600' },
+  project: { border: 'border-l-indigo-500', bg: 'bg-indigo-50/40', accent: 'text-indigo-700' },
   other: { border: 'border-l-violet-400', bg: 'bg-violet-50/40', accent: 'text-violet-600' },
 };
 

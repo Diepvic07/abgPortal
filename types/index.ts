@@ -249,7 +249,7 @@ export interface BugReport {
 }
 
 // Community Proposals
-export type ProposalCategory = 'talk' | 'learning' | 'fieldtrip' | 'coffee' | 'meeting' | 'sports' | 'community_support' | 'charity' | 'event' | 'other';
+export type ProposalCategory = 'talk' | 'learning' | 'fieldtrip' | 'coffee' | 'meeting' | 'sports' | 'community_support' | 'charity' | 'event' | 'project' | 'other';
 export type ParticipationFormat = 'online' | 'offline' | 'hybrid';
 export type ProposalGenre = 'education' | 'health' | 'finance' | 'technology' | 'business' | 'culture' | 'environment' | 'other';
 export type ProposalStatus =
@@ -328,6 +328,7 @@ export const PROPOSAL_CATEGORY_LABELS: Record<ProposalCategory, { en: string; vi
   community_support: { en: 'Community Support', vi: 'Hỗ trợ cộng đồng', icon: '💛' },
   charity: { en: 'Charity', vi: 'Từ thiện', icon: '❤️' },
   event: { en: 'Event', vi: 'Sự kiện', icon: '🎉' },
+  project: { en: 'Project', vi: 'Dự án', icon: '🚀' },
   other: { en: 'Other', vi: 'Khác', icon: '💡' },
 };
 

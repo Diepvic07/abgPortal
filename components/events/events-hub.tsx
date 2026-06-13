@@ -279,11 +279,7 @@ export function EventsHub() {
             locale={locale}
             session={session}
             filter={proposalsFilter}
-            onFilterChange={(f) => {
-              setProposalsFilter(f);
-              // Switching away from 'active' implies "newest" semantics; reset.
-              if (f !== 'active' && proposalsSort !== 'active') setProposalsSort('active');
-            }}
+            onFilterChange={setProposalsFilter}
             sort={proposalsSort}
             onSortChange={setProposalsSort}
           />
@@ -987,6 +983,7 @@ function ProposalRow({
     event: { bg: 'bg-amber-50', text: 'text-amber-600' },
     learning: { bg: 'bg-blue-50', text: 'text-blue-600' },
     community_support: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
+    project: { bg: 'bg-indigo-50', text: 'text-indigo-600' },
     other: { bg: 'bg-violet-50', text: 'text-violet-600' },
   };
   const colors = categoryColors[proposal.category] || categoryColors.other;

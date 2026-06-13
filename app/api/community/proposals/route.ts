@@ -9,7 +9,7 @@ import { createInAppNotifications } from '@/lib/in-app-notifications';
 
 const PROPOSAL_RATE_LIMIT_MINUTES = 1;
 
-const VALID_CATEGORIES: ProposalCategory[] = ['talk', 'learning', 'fieldtrip', 'coffee', 'meeting', 'sports', 'community_support', 'charity', 'event', 'other'];
+const VALID_CATEGORIES: ProposalCategory[] = ['talk', 'learning', 'fieldtrip', 'coffee', 'meeting', 'sports', 'community_support', 'charity', 'event', 'project', 'other'];
 const VALID_COMMITMENTS: CommitmentLevel[] = ['interested', 'will_participate', 'will_lead'];
 const VALID_FORMATS: ParticipationFormat[] = ['online', 'offline', 'hybrid'];
 

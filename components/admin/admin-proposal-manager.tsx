@@ -6,7 +6,7 @@ import { useTranslation } from '@/lib/i18n';
 import type { CommunityProposal, ProposalStatus } from '@/types';
 
 const CATEGORY_ICONS: Record<string, string> = {
-  charity: '❤️', event: '🎉', learning: '📚', community_support: '🤝', other: '💡',
+  charity: '❤️', event: '🎉', learning: '📚', community_support: '🤝', project: '🚀', other: '💡',
 };
 
 const STATUS_COLORS: Record<string, string> = {

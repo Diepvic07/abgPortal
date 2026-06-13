@@ -112,10 +112,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const supabase = createServerSupabaseClient();
     const now = formatDate();
 
-    // Flip proposal into project_active.
+    // Flip proposal into project_active. Also reclassify the category as
+    // 'project' so listings/dropdowns show "🚀 Dự án" instead of the
+    // original proposal category (Talk, Học tập, etc.) which no longer
+    // describes the activity.
     const { error: updateErr } = await (supabase.from('community_proposals') as any)
       .update({
         status: 'project_active' as ProposalStatus,
+        category: 'project',
         project_chat_url: chatUrl || null,
         project_status_note: note || null,
         project_started_at: now,
