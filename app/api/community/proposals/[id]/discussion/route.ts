@@ -407,26 +407,35 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (message.length > 5000) return errorResponse('Message too long (max 5000 characters)', 400);
       const customSubject = typeof body.subject === 'string' ? body.subject.trim().slice(0, 200) : '';
 
-      const invitedEmails: string[] = discussion.invited_emails || [];
-      if (invitedEmails.length === 0) return errorResponse('No invited members to update', 400);
+      // Recipients: members with an active commitment (will_participate or
+      // will_lead). We deliberately skip 'interested' commitments, anyone
+      // who only commented, and anyone who was on the original meeting
+      // invite list but did not commit.
+      const { data: commitmentRows } = await (supabase.from('community_commitments') as any)
+        .select('member_id, members:member_id(id, name, email, locale)')
+        .eq('proposal_id', id)
+        .in('commitment_level', ['will_participate', 'will_lead']);
+
+      type CommitmentRow = {
+        member_id: string;
+        members?: { id: string; name: string; email: string; locale: string | null } | null;
+      };
+      const recipients = (commitmentRows as CommitmentRow[] | null || [])
+        .map((r) => r.members)
+        .filter((m): m is { id: string; name: string; email: string; locale: string | null } => !!m && !!m.email);
+
+      if (recipients.length === 0) {
+        return errorResponse('No active participants (will_participate / will_lead) to update', 400);
+      }
 
       after(async () => {
-        const supabaseAfter = createServerSupabaseClient();
-
-        for (const email of invitedEmails) {
-          const { data: memberRow } = await (supabaseAfter.from('members') as any)
-            .select('id, name, email, locale')
-            .eq('email', email)
-            .single();
-
-          if (!memberRow) continue;
-
-          const mLocale = ((memberRow.locale as string) || 'vi') as 'vi' | 'en';
+        for (const r of recipients) {
+          const mLocale = ((r.locale as string) || 'vi') as 'vi' | 'en';
 
           try {
             await sendDiscussionUpdateEmail(
-              email,
-              memberRow.name as string,
+              r.email,
+              r.name,
               proposal.title,
               customSubject,
               message,
@@ -434,7 +443,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               mLocale,
             );
           } catch (err) {
-            console.error(`[email] Discussion update failed for ${email}:`, err);
+            console.error(`[email] Discussion update failed for ${r.email}:`, err);
           }
 
           try {
@@ -447,7 +456,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               title: inAppTitle,
               body: inAppBody,
               url: `/proposals/${proposal.slug || proposal.id}`,
-              targetMemberId: memberRow.id as string,
+              targetMemberId: r.id,
             });
           } catch (err) {
             console.error(`[notif] Discussion update notification failed:`, err);
@@ -455,7 +464,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         }
       });
 
-      return successResponse({ message: 'Updates are being sent', count: invitedEmails.length });
+      return successResponse({ message: 'Updates are being sent', count: recipients.length });
     }
 
     // Update meeting date/time (reschedule)

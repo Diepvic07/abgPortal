@@ -278,7 +278,7 @@ export function ProposalDiscussionSection({
           <div className="mt-5">
             <SendUpdateSection
               proposalId={proposalId}
-              discussion={discussion}
+              commitments={commitments}
               vi={vi}
               onError={setError}
             />
@@ -1079,17 +1079,25 @@ function ScheduledView({
 
 function SendUpdateSection({
   proposalId,
-  discussion,
+  commitments,
   vi,
   onError,
 }: {
   proposalId: string;
-  discussion: ProposalDiscussion;
+  commitments: CommunityCommitment[];
   vi: boolean;
   onError: (msg: string) => void;
 }) {
-  const invitedEmails = discussion.invited_emails || [];
-  const invitedCount = invitedEmails.length;
+  // Active participants only: people who said "Sẽ tham gia" or "Sẽ dẫn dắt".
+  // Commenters and "Quan tâm" commitments are excluded — they didn't commit
+  // to doing the work.
+  const activeCommitments = commitments.filter(
+    (c) => c.commitment_level === 'will_participate' || c.commitment_level === 'will_lead',
+  );
+  const recipientCount = activeCommitments.length;
+  const recipientEmails = activeCommitments
+    .map((c) => c.member_email)
+    .filter((e): e is string => !!e);
 
   const [showFlow, setShowFlow] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -1098,7 +1106,7 @@ function SendUpdateSection({
   const [submitting, setSubmitting] = useState(false);
   const [sentCount, setSentCount] = useState<number | null>(null);
 
-  if (invitedCount === 0) return null;
+  if (recipientCount === 0) return null;
 
   async function handleSend() {
     if (!message.trim()) return;
@@ -1114,7 +1122,8 @@ function SendUpdateSection({
         }),
       });
       if (!res.ok) throw new Error();
-      setSentCount(invitedCount);
+      const data = await res.json().catch(() => ({}));
+      setSentCount(typeof data.count === 'number' ? data.count : recipientCount);
       setShowFlow(false);
       setShowPreview(false);
       setSubject('');
@@ -1135,12 +1144,12 @@ function SendUpdateSection({
             className="inline-flex items-center gap-2 text-sm px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 font-medium"
           >
             <span>📨</span>
-            {vi ? `Gửi cập nhật (${invitedCount} người)` : `Send Update (${invitedCount} people)`}
+            {vi ? `Gửi cập nhật (${recipientCount} người)` : `Send Update (${recipientCount} people)`}
           </button>
           <p className="mt-1 text-xs text-gray-500">
             {vi
-              ? 'Soạn email tùy chỉnh gửi đến tất cả người được mời.'
-              : 'Compose a custom email to all invited members.'}
+              ? 'Soạn email tùy chỉnh gửi đến những người đã cam kết tham gia hoặc dẫn dắt.'
+              : 'Compose a custom email to people who committed to participate or lead.'}
           </p>
         </div>
         {sentCount !== null && (
@@ -1148,8 +1157,8 @@ function SendUpdateSection({
             <p className="text-sm text-green-800 flex items-center gap-2">
               <span>✓</span>
               {vi
-                ? `Đã gửi email cập nhật đến ${sentCount} người được mời`
-                : `Update email sent to ${sentCount} invited member(s)`}
+                ? `Đã gửi email cập nhật đến ${sentCount} người`
+                : `Update email sent to ${sentCount} participant(s)`}
             </p>
           </div>
         )}
@@ -1168,8 +1177,8 @@ function SendUpdateSection({
             </p>
             <p className="text-xs text-gray-500 mt-0.5">
               {vi
-                ? `Email sẽ được gửi đến ${invitedCount} người được mời.`
-                : `Email will be sent to ${invitedCount} invited member(s).`}
+                ? `Email sẽ được gửi đến ${recipientCount} người đã cam kết tham gia/dẫn dắt.`
+                : `Email will be sent to ${recipientCount} member(s) who committed to participate or lead.`}
             </p>
           </div>
         </div>
@@ -1222,7 +1231,7 @@ function SendUpdateSection({
   return (
     <div className="bg-white border border-blue-200 rounded-xl p-4 space-y-4">
       <p className="text-sm font-semibold text-gray-800">
-        {vi ? 'Xem trước email sẽ gửi cho người được mời:' : 'Preview of email to be sent to invited members:'}
+        {vi ? 'Xem trước email sẽ gửi cho người đã cam kết:' : 'Preview of email to be sent to committed participants:'}
       </p>
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <div className="bg-blue-600 px-5 py-3">
@@ -1252,8 +1261,8 @@ function SendUpdateSection({
       </div>
       <p className="text-xs text-gray-500">
         {vi
-          ? `Email này sẽ được gửi đến ${invitedCount} người: ${invitedEmails.join(', ')}`
-          : `This email will be sent to ${invitedCount} people: ${invitedEmails.join(', ')}`}
+          ? `Email này sẽ được gửi đến ${recipientCount} người đã cam kết tham gia/dẫn dắt: ${recipientEmails.join(', ')}`
+          : `This email will be sent to ${recipientCount} member(s) who committed to participate or lead: ${recipientEmails.join(', ')}`}
       </p>
       <div className="flex gap-2 flex-wrap">
         <button
