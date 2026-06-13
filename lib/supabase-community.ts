@@ -53,6 +53,7 @@ function mapRowToProposal(row: Record<string, unknown>): CommunityProposal {
     project_chat_url: nullToUndefined(row.project_chat_url as string | null),
     project_status_note: nullToUndefined(row.project_status_note as string | null),
     project_started_at: nullToUndefined(row.project_started_at as string | null),
+    project_member_count: typeof row.project_member_count === 'number' ? row.project_member_count : undefined,
   };
 }
 

@@ -5,7 +5,7 @@ import { sendPushFallbackEmail } from './resend';
 
 // --- Types ---
 
-export type NotificationType = 'connection_request' | 'new_event' | 'new_proposal' | 'proposal_comment' | 'discussion_meeting' | 'news_comment' | 'news_tagged';
+export type NotificationType = 'connection_request' | 'new_event' | 'new_proposal' | 'proposal_comment' | 'discussion_meeting' | 'project_update' | 'news_comment' | 'news_tagged';
 
 export interface PushPayload {
   title: string;
@@ -56,8 +56,12 @@ if (vapidConfigured) {
 // --- Preference check helper ---
 
 function isNotificationEnabled(row: SubscriptionWithPrefs, type: NotificationType): boolean {
-  // null means no preferences row exists — default to enabled
-  const value = row[type];
+  // Project updates piggyback on the discussion_meeting preference until a
+  // dedicated `project_update` column is added to notification_preferences.
+  // Both relate to proposal/project-page activity, so opting out of one
+  // covers the other.
+  const key: keyof SubscriptionWithPrefs = type === 'project_update' ? 'discussion_meeting' : type;
+  const value = row[key];
   return value === null || value === true;
 }
 
@@ -393,6 +397,18 @@ export function getPushMessage(
         body: locale === 'vi'
           ? `Bạn được mời tham gia thảo luận cho "${data.proposalTitle}"`
           : `You're invited to discuss "${data.proposalTitle}"`,
+        _data: data,
+      };
+    }
+    case 'project_update': {
+      const customSubject = (data.customSubject || '').trim();
+      return {
+        title: customSubject
+          ? customSubject
+          : locale === 'vi'
+            ? `Cập nhật dự án: ${data.proposalTitle}`
+            : `Project update: ${data.proposalTitle}`,
+        body: data.preview || '',
         _data: data,
       };
     }

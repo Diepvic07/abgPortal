@@ -5,6 +5,7 @@ import { getProposalById } from '@/lib/supabase-community';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { sendProjectUpdateEmail } from '@/lib/resend';
 import { createInAppNotifications } from '@/lib/in-app-notifications';
+import { sendPushToMember, getPushMessage } from '@/lib/push-notification';
 import { isProjectStatus } from '@/types';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -76,11 +77,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           console.error(`[email] Project update failed for ${r.email}:`, err);
         }
 
+        const inAppTitle = mLocale === 'vi'
+          ? `Cập nhật dự án: ${proposal.title}`
+          : `Project update: ${proposal.title}`;
+        const inAppBody = message.length > 140 ? `${message.slice(0, 137)}...` : message;
+
         try {
-          const inAppTitle = mLocale === 'vi'
-            ? `Cập nhật dự án: ${proposal.title}`
-            : `Project update: ${proposal.title}`;
-          const inAppBody = message.length > 140 ? `${message.slice(0, 137)}...` : message;
           await createInAppNotifications({
             type: 'discussion_meeting',
             title: inAppTitle,
@@ -90,6 +92,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           });
         } catch (err) {
           console.error(`[notif] Project update notification failed:`, err);
+        }
+
+        try {
+          const pushMessage = getPushMessage('project_update', {
+            proposalTitle: proposal.title,
+            customSubject,
+            preview: inAppBody,
+          }, mLocale);
+
+          await sendPushToMember(r.id, 'project_update', {
+            ...pushMessage,
+            url: proposalUrl,
+          });
+        } catch (err) {
+          console.error(`[push] Project update push failed for ${r.id}:`, err);
         }
       }
     });

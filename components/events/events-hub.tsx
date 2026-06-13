@@ -585,9 +585,17 @@ function ProjectRow({ project, locale }: { project: CommunityProposal; locale: s
               <p className="text-sm text-gray-600 mt-1 line-clamp-2">{project.project_status_note}</p>
             )}
           </div>
-          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 shrink-0">
-            {categoryLabel}
-          </span>
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-50 text-gray-600">
+              {categoryLabel}
+            </span>
+            {typeof project.project_member_count === 'number' && project.project_member_count > 0 && (
+              <span className="text-xs text-gray-500 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-1.053M18 6.75a3 3 0 11-6 0 3 3 0 016 0zM6.75 9.75a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                {project.project_member_count} {vi ? 'thành viên' : 'members'}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </Link>

@@ -394,6 +394,7 @@ export interface CommunityProposal {
   project_chat_url?: string;
   project_status_note?: string;
   project_started_at?: string;
+  project_member_count?: number;
   // Joined fields
   author_name?: string;
   author_avatar_url?: string;
