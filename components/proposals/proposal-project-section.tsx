@@ -79,9 +79,13 @@ export function ProposalProjectSection({
   const vi = locale === 'vi';
   const canManage = isCreator || isAdmin;
   const inProjectPhase = isProjectStatus(proposal.status);
-  const preDecisionPhase = proposal.status === 'published' || proposal.status === 'upcoming';
+  // Manageable states: anything that hasn't already become a project. We
+  // include 'completed' so admin/creator can revive a finished proposal
+  // into a project phase (e.g. after a successful first event).
+  const manageableStatuses: ProposalStatus[] = ['published', 'upcoming', 'completed'];
+  const preDecisionPhase = manageableStatuses.includes(proposal.status);
 
-  // Render nothing for archived / completed / removed / etc.
+  // Render nothing for archived / removed / project_* (handled separately).
   if (!inProjectPhase && !(preDecisionPhase && canManage)) {
     return null;
   }
@@ -142,6 +146,8 @@ function ManageProposalBlock({
     }
   }
 
+  const isAlreadyCompleted = proposal.status === 'completed';
+
   return (
     <div className="bg-white border-2 border-blue-100 rounded-2xl p-5 space-y-3">
       <div className="flex items-center gap-2">
@@ -151,29 +157,35 @@ function ManageProposalBlock({
         </h3>
       </div>
       <p className="text-sm text-gray-600">
-        {vi
-          ? 'Đề xuất này đang ở giai đoạn nào tiếp theo?'
-          : 'What is the next phase for this proposal?'}
+        {isAlreadyCompleted
+          ? (vi
+              ? 'Đề xuất đã hoàn thành. Bạn vẫn có thể hình thành dự án từ đây để tiếp tục triển khai.'
+              : 'Proposal is completed. You can still form a project from here to keep things moving.')
+          : (vi
+              ? 'Đề xuất này đang ở giai đoạn nào tiếp theo?'
+              : 'What is the next phase for this proposal?')}
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-        <button
-          onClick={() => setShowCompleteConfirm(true)}
-          disabled={submitting}
-          className="text-left bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-4 transition-colors disabled:opacity-50"
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg">✅</span>
-            <span className="font-semibold text-gray-900 text-sm">
-              {vi ? 'Đánh dấu hoàn thành' : 'Mark Complete'}
-            </span>
-          </div>
-          <p className="text-xs text-gray-500">
-            {vi
-              ? 'Không có giai đoạn dự án — kết thúc tại đây.'
-              : 'No project phase — wrap up here.'}
-          </p>
-        </button>
+      <div className={`grid grid-cols-1 ${isAlreadyCompleted ? '' : 'sm:grid-cols-2'} gap-3 pt-1`}>
+        {!isAlreadyCompleted && (
+          <button
+            onClick={() => setShowCompleteConfirm(true)}
+            disabled={submitting}
+            className="text-left bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-4 transition-colors disabled:opacity-50"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">✅</span>
+              <span className="font-semibold text-gray-900 text-sm">
+                {vi ? 'Đánh dấu hoàn thành' : 'Mark Complete'}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500">
+              {vi
+                ? 'Không có giai đoạn dự án — kết thúc tại đây.'
+                : 'No project phase — wrap up here.'}
+            </p>
+          </button>
+        )}
 
         <button
           onClick={() => setShowProjectModal(true)}
