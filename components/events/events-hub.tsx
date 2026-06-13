@@ -7,7 +7,10 @@ import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityEvent, CommunityProposal, EventCategory, EVENT_CATEGORY_LABELS, LibraryItem, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS, ParticipationFormat, ProposalCategory, ProposalGenre } from '@/types';
 
-type TabKey = 'events' | 'proposals' | 'past' | 'library';
+type TabKey = 'events' | 'proposals' | 'projects' | 'past' | 'library';
+
+type ProposalsFilter = 'active' | 'completed' | 'archived';
+type ProjectsFilter = 'project_active' | 'project_completed' | 'project_discontinued' | 'project_closed';
 
 const EVENT_CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   charity: { bg: 'bg-rose-50', text: 'text-rose-600' },
@@ -40,7 +43,7 @@ export function EventsHub() {
   const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = !!session;
   const searchParams = useSearchParams();
-  const validTabs = ['events', 'proposals', 'past', 'library'] as TabKey[];
+  const validTabs = ['events', 'proposals', 'projects', 'past', 'library'] as TabKey[];
   const initialTab = validTabs.includes(searchParams.get('tab') as TabKey)
     ? (searchParams.get('tab') as TabKey)
     : (isAuthenticated ? 'proposals' : 'events');
@@ -48,6 +51,9 @@ export function EventsHub() {
   const [events, setEvents] = useState<CommunityEvent[]>([]);
   const [pastEvents, setPastEvents] = useState<CommunityEvent[]>([]);
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);
+  const [proposalsFilter, setProposalsFilter] = useState<ProposalsFilter>('active');
+  const [projects, setProjects] = useState<CommunityProposal[]>([]);
+  const [projectsFilter, setProjectsFilter] = useState<ProjectsFilter>('project_active');
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
   const [canWatchLibrary, setCanWatchLibrary] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -56,10 +62,11 @@ export function EventsHub() {
     // Wait until session status is resolved before fetching
     if (sessionStatus === 'loading') return;
     if (activeTab === 'events') fetchEvents();
-    else if (activeTab === 'proposals') fetchProposals();
+    else if (activeTab === 'proposals') fetchProposals(proposalsFilter);
+    else if (activeTab === 'projects') fetchProjects(projectsFilter);
     else if (activeTab === 'past') fetchPastEvents();
     else if (activeTab === 'library') fetchLibrary();
-  }, [activeTab, sessionStatus]);
+  }, [activeTab, sessionStatus, proposalsFilter, projectsFilter]);
 
   async function fetchEvents() {
     setLoading(true);
@@ -97,12 +104,15 @@ export function EventsHub() {
     }
   }
 
-  async function fetchProposals() {
+  async function fetchProposals(filter: ProposalsFilter) {
     setLoading(true);
     try {
-      const url = isAuthenticated
-        ? '/api/community/proposals'
-        : '/api/community/proposals/public';
+      // 'active' = the API default (published + upcoming). Single-status
+      // filters use status=<value> directly. Public/auth use the same
+      // endpoint since GET is auth-optional.
+      const url = filter === 'active'
+        ? '/api/community/proposals?limit=100'
+        : `/api/community/proposals?limit=100&status=${filter}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -110,6 +120,22 @@ export function EventsHub() {
       }
     } catch (error) {
       console.error('Failed to fetch proposals:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchProjects(filter: ProjectsFilter) {
+    setLoading(true);
+    try {
+      const url = `/api/community/proposals?limit=100&status=${filter}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        setProjects(data.proposals || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch projects:', error);
     } finally {
       setLoading(false);
     }
@@ -140,6 +166,7 @@ export function EventsHub() {
   const allTabs: { key: TabKey; label: { en: string; vi: string }; authOnly?: boolean }[] = [
     { key: 'events', label: { en: 'Official Activities', vi: 'Hoạt động chính thức' } },
     { key: 'proposals', label: { en: 'Proposals', vi: 'Đề xuất' } },
+    { key: 'projects', label: { en: 'Projects', vi: 'Dự án' } },
     { key: 'past', label: { en: 'Past Activities', vi: 'Hoạt động đã qua' } },
     { key: 'library', label: { en: 'Library', vi: 'Thư viện' } },
   ];
@@ -180,7 +207,23 @@ export function EventsHub() {
           <EventsTabContent events={events} loading={loading} locale={locale} session={session} />
         )}
         {activeTab === 'proposals' && (
-          <ProposalsTabContent proposals={proposals} loading={loading} locale={locale} session={session} />
+          <ProposalsTabContent
+            proposals={proposals}
+            loading={loading}
+            locale={locale}
+            session={session}
+            filter={proposalsFilter}
+            onFilterChange={setProposalsFilter}
+          />
+        )}
+        {activeTab === 'projects' && (
+          <ProjectsTabContent
+            projects={projects}
+            loading={loading}
+            locale={locale}
+            filter={projectsFilter}
+            onFilterChange={setProjectsFilter}
+          />
         )}
         {activeTab === 'past' && (
           <PastEventsTabContent events={pastEvents} loading={loading} locale={locale} />
@@ -265,23 +308,73 @@ function ProposalsTabContent({
   loading,
   locale,
   session,
+  filter,
+  onFilterChange,
 }: {
   proposals: CommunityProposal[];
   loading: boolean;
   locale: string;
   session: ReturnType<typeof useSession>['data'];
+  filter: ProposalsFilter;
+  onFilterChange: (f: ProposalsFilter) => void;
 }) {
   const [activeGenre, setActiveGenre] = useState<string | null>(null);
 
-  if (loading) return <SkeletonRows />;
+  const vi = locale === 'vi';
+  const statusChips: { key: ProposalsFilter; label: string }[] = [
+    { key: 'active', label: vi ? 'Đang hoạt động' : 'Active' },
+    { key: 'completed', label: vi ? 'Đã hoàn thành' : 'Completed' },
+    { key: 'archived', label: vi ? 'Đã lưu trữ' : 'Archived' },
+  ];
+
+  const statusFilterRow = (
+    <div className="flex gap-2 mb-3 flex-wrap">
+      {statusChips.map((chip) => (
+        <button
+          key={chip.key}
+          onClick={() => onFilterChange(chip.key)}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+            filter === chip.key
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+          }`}
+        >
+          {chip.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          {vi ? 'ĐỀ XUẤT CỘNG ĐỒNG' : 'COMMUNITY PROPOSALS'}
+        </h2>
+        {statusFilterRow}
+        <SkeletonRows />
+      </div>
+    );
+  }
 
   if (proposals.length === 0) {
+    const emptyMessages: Record<ProposalsFilter, string> = {
+      active: vi ? 'Chưa có đề xuất nào đang hoạt động.' : 'No active proposals.',
+      completed: vi ? 'Chưa có đề xuất nào đã hoàn thành.' : 'No completed proposals yet.',
+      archived: vi ? 'Chưa có đề xuất nào đã lưu trữ.' : 'No archived proposals.',
+    };
     return (
-      <EmptyState
-        message={locale === 'vi' ? 'Chưa có đề xuất nào. Hãy là người đầu tiên!' : 'No proposals yet. Be the first!'}
-        cta={locale === 'vi' ? '+ Đề xuất ý tưởng' : '+ Propose an Idea'}
-        href={session ? '/proposals/new' : '/login'}
-      />
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          {vi ? 'ĐỀ XUẤT CỘNG ĐỒNG' : 'COMMUNITY PROPOSALS'}
+        </h2>
+        {statusFilterRow}
+        <EmptyState
+          message={emptyMessages[filter]}
+          cta={filter === 'active' ? (vi ? '+ Đề xuất ý tưởng' : '+ Propose an Idea') : undefined}
+          href={filter === 'active' ? (session ? '/proposals/new' : '/login') : undefined}
+        />
+      </div>
     );
   }
 
@@ -312,8 +405,10 @@ function ProposalsTabContent({
   return (
     <div>
       <h2 className="text-lg font-semibold text-gray-900 mb-3">
-        {locale === 'vi' ? 'ĐỀ XUẤT CỘNG ĐỒNG' : 'COMMUNITY PROPOSALS'}
+        {vi ? 'ĐỀ XUẤT CỘNG ĐỒNG' : 'COMMUNITY PROPOSALS'}
       </h2>
+
+      {statusFilterRow}
 
       {/* Genre filter tabs */}
       <div className="relative mb-4">
@@ -327,7 +422,7 @@ function ProposalsTabContent({
                 : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
             }`}
           >
-            {locale === 'vi' ? 'Tất cả' : 'All'}
+            {vi ? 'Tất cả' : 'All'}
           </button>
           {genres.map((genre) => {
             const genreInfo = PROPOSAL_GENRE_LABELS[genre as ProposalGenre] || PROPOSAL_GENRE_LABELS.other;
@@ -355,6 +450,147 @@ function ProposalsTabContent({
         ))}
       </div>
     </div>
+  );
+}
+
+function ProjectsTabContent({
+  projects,
+  loading,
+  locale,
+  filter,
+  onFilterChange,
+}: {
+  projects: CommunityProposal[];
+  loading: boolean;
+  locale: string;
+  filter: ProjectsFilter;
+  onFilterChange: (f: ProjectsFilter) => void;
+}) {
+  const vi = locale === 'vi';
+  const chips: { key: ProjectsFilter; label: string }[] = [
+    { key: 'project_active', label: vi ? 'Đang hoạt động' : 'Active' },
+    { key: 'project_completed', label: vi ? 'Đã hoàn thành' : 'Completed' },
+    { key: 'project_discontinued', label: vi ? 'Đã dừng' : 'Discontinued' },
+    { key: 'project_closed', label: vi ? 'Chuyển giai đoạn' : 'Closed Phase' },
+  ];
+
+  const filterRow = (
+    <div className="flex gap-2 mb-3 flex-wrap">
+      {chips.map((chip) => (
+        <button
+          key={chip.key}
+          onClick={() => onFilterChange(chip.key)}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+            filter === chip.key
+              ? 'bg-indigo-600 text-white border-indigo-600'
+              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+          }`}
+        >
+          {chip.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          {vi ? 'DỰ ÁN CỘNG ĐỒNG' : 'COMMUNITY PROJECTS'}
+        </h2>
+        {filterRow}
+        <SkeletonRows />
+      </div>
+    );
+  }
+
+  if (projects.length === 0) {
+    const emptyMessages: Record<ProjectsFilter, string> = {
+      project_active: vi ? 'Chưa có dự án nào đang hoạt động.' : 'No active projects.',
+      project_completed: vi ? 'Chưa có dự án nào đã hoàn thành.' : 'No completed projects yet.',
+      project_discontinued: vi ? 'Chưa có dự án nào đã dừng.' : 'No discontinued projects.',
+      project_closed: vi ? 'Chưa có dự án nào chuyển giai đoạn.' : 'No closed-phase projects.',
+    };
+    return (
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          {vi ? 'DỰ ÁN CỘNG ĐỒNG' : 'COMMUNITY PROJECTS'}
+        </h2>
+        {filterRow}
+        <EmptyState message={emptyMessages[filter]} />
+      </div>
+    );
+  }
+
+  // Sort by start date (newest first), then engagement
+  const sorted = [...projects].sort((a, b) => {
+    const startA = a.project_started_at ? new Date(a.project_started_at).getTime() : 0;
+    const startB = b.project_started_at ? new Date(b.project_started_at).getTime() : 0;
+    if (startA !== startB) return startB - startA;
+    const activityA = (a.commitment_count || 0) + (a.comment_count || 0);
+    const activityB = (b.commitment_count || 0) + (b.comment_count || 0);
+    return activityB - activityA;
+  });
+
+  return (
+    <div>
+      <h2 className="text-lg font-semibold text-gray-900 mb-3">
+        {vi ? 'DỰ ÁN CỘNG ĐỒNG' : 'COMMUNITY PROJECTS'}
+      </h2>
+      {filterRow}
+      <div className="divide-y divide-gray-100">
+        {sorted.map((project) => (
+          <ProjectRow key={project.id} project={project} locale={locale} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProjectRow({ project, locale }: { project: CommunityProposal; locale: string }) {
+  const vi = locale === 'vi';
+  const statusToneByKey: Record<string, { bg: string; text: string }> = {
+    project_active: { bg: 'bg-indigo-50', text: 'text-indigo-700' },
+    project_completed: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
+    project_discontinued: { bg: 'bg-orange-50', text: 'text-orange-700' },
+    project_closed: { bg: 'bg-amber-50', text: 'text-amber-700' },
+  };
+  const statusLabelByKey: Record<string, { vi: string; en: string }> = {
+    project_active: { vi: 'Đang hoạt động', en: 'Active' },
+    project_completed: { vi: 'Đã hoàn thành', en: 'Completed' },
+    project_discontinued: { vi: 'Đã dừng', en: 'Discontinued' },
+    project_closed: { vi: 'Chuyển giai đoạn', en: 'Closed Phase' },
+  };
+  const tone = statusToneByKey[project.status] || statusToneByKey.project_active;
+  const statusLabel = (statusLabelByKey[project.status] || statusLabelByKey.project_active)[vi ? 'vi' : 'en'];
+  const categoryLabel = PROPOSAL_CATEGORY_LABELS[project.category]?.[vi ? 'vi' : 'en'] || project.category;
+
+  return (
+    <Link href={`/proposals/${project.slug}`} className="block">
+      <div className="py-4 hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-lg">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-gray-900 text-base truncate">{project.title}</h3>
+              <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${tone.bg} ${tone.text}`}>
+                🚀 {statusLabel}
+              </span>
+            </div>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {project.author_name || 'Unknown'}
+              {project.author_abg_class ? ` · ${project.author_abg_class}` : ''}
+              {project.project_started_at && ` · ${vi ? 'Bắt đầu' : 'Started'} ${formatEventDate(project.project_started_at, locale)}`}
+            </p>
+            {project.project_status_note && (
+              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{project.project_status_note}</p>
+            )}
+          </div>
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 shrink-0">
+            {categoryLabel}
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }
 
