@@ -344,33 +344,43 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.action === 'send_reminder') {
       if (discussion.status !== 'scheduled') return errorResponse('Can only send reminders for scheduled discussions', 400);
 
+      // Recipients: members with active commitments only (will_participate
+      // or will_lead). Same rule as send_update — we don't ping commenters
+      // or people who only signaled interest, and we don't fall back to
+      // discussion.invited_emails.
+      const { data: commitmentRows } = await (supabase.from('community_commitments') as any)
+        .select('member_id, members:member_id(id, name, email, locale)')
+        .eq('proposal_id', id)
+        .in('commitment_level', ['will_participate', 'will_lead']);
+
+      type CommitmentRow = {
+        member_id: string;
+        members?: { id: string; name: string; email: string; locale: string | null } | null;
+      };
+      const recipients = (commitmentRows as CommitmentRow[] | null || [])
+        .map((r) => r.members)
+        .filter((m): m is { id: string; name: string; email: string; locale: string | null } => !!m && !!m.email);
+
+      if (recipients.length === 0) {
+        return errorResponse('No active participants (will_participate / will_lead) to remind', 400);
+      }
+
       after(async () => {
-        const supabaseAfter = createServerSupabaseClient();
-        const invitedEmails: string[] = discussion.invited_emails || [];
-
-        // Get member info for each invited email
-        for (const email of invitedEmails) {
-          const { data: memberRow } = await (supabaseAfter.from('members') as any)
-            .select('id, name, email, locale')
-            .eq('email', email)
-            .single();
-
-          if (!memberRow) continue;
-
-          const mLocale = (memberRow.locale as string) || 'vi';
+        for (const r of recipients) {
+          const mLocale = ((r.locale as string) || 'vi') as 'vi' | 'en';
 
           try {
             await sendDiscussionReminderEmail(
-              email,
-              memberRow.name as string,
+              r.email,
+              r.name,
               proposal.title,
               discussion.meeting_date,
               discussion.meeting_link,
               `/proposals/${proposal.slug || proposal.id}`,
-              mLocale as 'vi' | 'en',
+              mLocale,
             );
           } catch (err) {
-            console.error(`[email] Manual reminder failed for ${email}:`, err);
+            console.error(`[email] Manual reminder failed for ${r.email}:`, err);
           }
 
           try {
@@ -378,14 +388,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               proposalTitle: proposal.title,
               meetingDate: discussion.meeting_date,
               isReminder: 'true',
-            }, mLocale as 'vi' | 'en');
+            }, mLocale);
 
             await createInAppNotifications({
               type: 'discussion_meeting',
               title: message.title,
               body: message.body,
               url: `/proposals/${proposal.slug || proposal.id}`,
-              targetMemberId: memberRow.id as string,
+              targetMemberId: r.id,
             });
           } catch (err) {
             console.error(`[notif] Manual reminder notification failed:`, err);
@@ -393,7 +403,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         }
       });
 
-      return successResponse({ message: 'Reminders are being sent' });
+      return successResponse({ message: 'Reminders are being sent', count: recipients.length });
     }
 
     // Send a custom update email to all invited members

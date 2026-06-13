@@ -871,7 +871,7 @@ function ScheduledView({
           {reminderSent && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
               <p className="text-sm text-green-800 flex items-center gap-2">
-                <span>✓</span> {vi ? 'Đã gửi nhắc nhở cho tất cả người được mời' : 'Reminder sent to all invited members'}
+                <span>✓</span> {vi ? 'Đã gửi nhắc nhở cho những người đã cam kết tham gia hoặc dẫn dắt' : 'Reminder sent to participants who committed to participate or lead'}
               </p>
             </div>
           )}
