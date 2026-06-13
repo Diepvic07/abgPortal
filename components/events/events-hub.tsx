@@ -360,23 +360,34 @@ function EventsTabContent({
     { key: 'upcoming', label: vi ? 'Sắp diễn ra' : 'Upcoming' },
     { key: 'past', label: vi ? 'Đã qua' : 'Past' },
   ];
+  const viewDescriptions: Record<EventsView, string> = {
+    upcoming: vi
+      ? 'Sự kiện do BTC tổ chức và đề xuất đã có lịch họp sắp diễn ra.'
+      : 'Admin-organized events and proposals with an upcoming meeting.',
+    past: vi
+      ? 'Các sự kiện đã kết thúc.'
+      : 'Events that have already happened.',
+  };
 
   const viewToggle = (
-    <div className="flex gap-2 mb-3 flex-wrap">
-      {viewChips.map((chip) => (
-        <button
-          key={chip.key}
-          onClick={() => onViewChange(chip.key)}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
-            view === chip.key
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-          }`}
-        >
-          {chip.label}
-        </button>
-      ))}
-    </div>
+    <>
+      <div className="flex gap-2 mb-2 flex-wrap">
+        {viewChips.map((chip) => (
+          <button
+            key={chip.key}
+            onClick={() => onViewChange(chip.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+              view === chip.key
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+            }`}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-gray-500 italic mb-4">{viewDescriptions[view]}</p>
+    </>
   );
 
   // ---- Past view ----
@@ -512,38 +523,52 @@ function ProposalsTabContent({
     { key: 'participants', label: vi ? 'Nhiều người tham gia' : 'Most participants' },
     { key: 'soonest', label: vi ? 'Sắp diễn ra' : 'Soonest' },
   ];
+  const statusDescriptions: Record<ProposalsFilter, string> = {
+    active: vi
+      ? 'Đề xuất đang nhận cam kết hoặc đã có lịch họp sắp tới.'
+      : 'Proposals currently accepting commitments or with an upcoming meeting.',
+    completed: vi
+      ? 'Đề xuất đã được thực hiện và kết thúc, không chuyển sang giai đoạn dự án.'
+      : 'Proposals that were executed and finished, not moved to a project phase.',
+    archived: vi
+      ? 'Đề xuất chưa được creator thực hiện. Là ý tưởng cần thêm sự tham gia và dẫn dắt từ thành viên.'
+      : 'Proposals not yet executed by the creator. Ideas needing more member involvement and leadership.',
+  };
 
   const statusFilterRow = (
-    <div className="flex gap-2 mb-3 flex-wrap items-center justify-between">
-      <div className="flex gap-2 flex-wrap">
-        {statusChips.map((chip) => (
-          <button
-            key={chip.key}
-            onClick={() => onFilterChange(chip.key)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
-              filter === chip.key
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-            }`}
-          >
-            {chip.label}
-          </button>
-        ))}
+    <div>
+      <div className="flex gap-2 mb-2 flex-wrap items-center justify-between">
+        <div className="flex gap-2 flex-wrap">
+          {statusChips.map((chip) => (
+            <button
+              key={chip.key}
+              onClick={() => onFilterChange(chip.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                filter === chip.key
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+        {filter === 'active' && (
+          <label className="flex items-center gap-2 text-xs text-gray-600">
+            <span className="hidden sm:inline">{vi ? 'Sắp xếp:' : 'Sort:'}</span>
+            <select
+              value={sort}
+              onChange={(e) => onSortChange(e.target.value as ProposalsSort)}
+              className="border border-gray-300 rounded-lg px-2 py-1.5 bg-white text-xs focus:ring-blue-500 focus:border-blue-500"
+            >
+              {sortOptions.map((opt) => (
+                <option key={opt.key} value={opt.key}>{opt.label}</option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
-      {filter === 'active' && (
-        <label className="flex items-center gap-2 text-xs text-gray-600">
-          <span className="hidden sm:inline">{vi ? 'Sắp xếp:' : 'Sort:'}</span>
-          <select
-            value={sort}
-            onChange={(e) => onSortChange(e.target.value as ProposalsSort)}
-            className="border border-gray-300 rounded-lg px-2 py-1.5 bg-white text-xs focus:ring-blue-500 focus:border-blue-500"
-          >
-            {sortOptions.map((opt) => (
-              <option key={opt.key} value={opt.key}>{opt.label}</option>
-            ))}
-          </select>
-        </label>
-      )}
+      <p className="text-xs text-gray-500 italic mb-4">{statusDescriptions[filter]}</p>
     </div>
   );
 
@@ -616,37 +641,24 @@ function ProposalsTabContent({
 
       {statusFilterRow}
 
-      {/* Genre filter tabs */}
-      <div className="relative mb-4">
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none md:hidden" />
-        <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide snap-x snap-mandatory">
-          <button
-            onClick={() => setActiveGenre(null)}
-            className={`shrink-0 snap-start px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
-              activeGenre === null
-                ? 'bg-blue-50 text-blue-700 border-blue-100'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-            }`}
-          >
-            {vi ? 'Tất cả' : 'All'}
-          </button>
+      {/* Genre filter — collapsed into a dropdown to free up vertical space. */}
+      <div className="mb-4 flex items-center gap-2">
+        <label className="text-xs text-gray-600">{vi ? 'Thể loại:' : 'Topic:'}</label>
+        <select
+          value={activeGenre ?? ''}
+          onChange={(e) => setActiveGenre(e.target.value || null)}
+          className="border border-gray-300 rounded-lg px-2 py-1.5 bg-white text-xs focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">{vi ? 'Tất cả' : 'All'}</option>
           {genres.map((genre) => {
             const genreInfo = PROPOSAL_GENRE_LABELS[genre as ProposalGenre] || PROPOSAL_GENRE_LABELS.other;
             return (
-              <button
-                key={genre}
-                onClick={() => setActiveGenre(genre)}
-                className={`shrink-0 snap-start px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
-                  activeGenre === genre
-                    ? 'bg-blue-50 text-blue-700 border-blue-100'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                }`}
-              >
-                {genreInfo.icon} {genreInfo[locale === 'vi' ? 'vi' : 'en']}
-              </button>
+              <option key={genre} value={genre}>
+                {genreInfo.icon} {genreInfo[vi ? 'vi' : 'en']} ({genreCounts.get(genre) || 0})
+              </option>
             );
           })}
-        </div>
+        </select>
       </div>
 
       {/* Filtered proposals list */}
@@ -679,22 +691,39 @@ function ProjectsTabContent({
     { key: 'project_discontinued', label: vi ? 'Đã dừng' : 'Discontinued' },
     { key: 'project_closed', label: vi ? 'Chuyển giai đoạn' : 'Closed Phase' },
   ];
+  const descriptions: Record<ProjectsFilter, string> = {
+    project_active: vi
+      ? 'Dự án đang được triển khai bởi nhóm thành viên đã tham gia.'
+      : 'Projects actively run by the joined member team.',
+    project_completed: vi
+      ? 'Dự án đã hoàn thành mục tiêu và kết thúc thành công.'
+      : 'Projects that achieved their goals and finished successfully.',
+    project_discontinued: vi
+      ? 'Dự án đã dừng và không tiếp tục.'
+      : 'Projects that were stopped and will not continue.',
+    project_closed: vi
+      ? 'Dự án đã chuyển sang giai đoạn khép kín — liên hệ creator để biết thêm.'
+      : 'Projects in a closed phase — contact the creator for further participation.',
+  };
 
   const filterRow = (
-    <div className="flex gap-2 mb-3 flex-wrap">
-      {chips.map((chip) => (
-        <button
-          key={chip.key}
-          onClick={() => onFilterChange(chip.key)}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
-            filter === chip.key
-              ? 'bg-indigo-600 text-white border-indigo-600'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-          }`}
-        >
-          {chip.label}
-        </button>
-      ))}
+    <div>
+      <div className="flex gap-2 mb-2 flex-wrap">
+        {chips.map((chip) => (
+          <button
+            key={chip.key}
+            onClick={() => onFilterChange(chip.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+              filter === chip.key
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+            }`}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-gray-500 italic mb-4">{descriptions[filter]}</p>
     </div>
   );
 
