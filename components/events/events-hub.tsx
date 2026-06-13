@@ -92,7 +92,7 @@ export function EventsHub() {
   const [pastEvents, setPastEvents] = useState<CommunityEvent[]>([]);
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);
   const [proposalsFilter, setProposalsFilter] = useState<ProposalsFilter>('active');
-  const [proposalsSort, setProposalsSort] = useState<ProposalsSort>('active');
+  const [proposalsSort, setProposalsSort] = useState<ProposalsSort>('newest');
   const [upcomingProposals, setUpcomingProposals] = useState<CommunityProposal[]>([]);
   const [projects, setProjects] = useState<CommunityProposal[]>([]);
   const [projectsFilter, setProjectsFilter] = useState<ProjectsFilter>('project_active');
@@ -517,9 +517,10 @@ function ProposalsTabContent({
     { key: 'completed', label: vi ? 'Đã hoàn thành' : 'Completed' },
     { key: 'archived', label: vi ? 'Đã lưu trữ' : 'Archived' },
   ];
+  // First entry shown is also the default state, so list newest first.
   const sortOptions: { key: ProposalsSort; label: string }[] = [
-    { key: 'active', label: vi ? 'Hoạt động nhất' : 'Most active' },
     { key: 'newest', label: vi ? 'Mới nhất' : 'Newest' },
+    { key: 'active', label: vi ? 'Hoạt động nhất' : 'Most active' },
     { key: 'participants', label: vi ? 'Nhiều người tham gia' : 'Most participants' },
     { key: 'soonest', label: vi ? 'Sắp diễn ra' : 'Soonest' },
   ];
