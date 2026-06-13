@@ -7,7 +7,8 @@ import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityEvent, CommunityProposal, EventCategory, EVENT_CATEGORY_LABELS, LibraryItem, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS, ParticipationFormat, ProposalCategory, ProposalGenre } from '@/types';
 
-type TabKey = 'events' | 'proposals' | 'projects' | 'past' | 'library';
+type TabKey = 'events' | 'proposals' | 'projects' | 'library';
+type EventsView = 'upcoming' | 'past';
 
 type ProposalsFilter = 'active' | 'completed' | 'archived';
 type ProjectsFilter = 'project_active' | 'project_completed' | 'project_discontinued' | 'project_closed';
@@ -77,11 +78,16 @@ export function EventsHub() {
   const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = !!session;
   const searchParams = useSearchParams();
-  const validTabs = ['events', 'proposals', 'projects', 'past', 'library'] as TabKey[];
-  const initialTab = validTabs.includes(searchParams.get('tab') as TabKey)
-    ? (searchParams.get('tab') as TabKey)
-    : (isAuthenticated ? 'proposals' : 'events');
+  const validTabs = ['events', 'proposals', 'projects', 'library'] as TabKey[];
+  const tabParam = searchParams.get('tab');
+  // Legacy ?tab=past links land on Hoạt động chính thức with the past view.
+  const initialTab: TabKey = tabParam === 'past'
+    ? 'events'
+    : validTabs.includes(tabParam as TabKey)
+      ? (tabParam as TabKey)
+      : (isAuthenticated ? 'proposals' : 'events');
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
+  const [eventsView, setEventsView] = useState<EventsView>(tabParam === 'past' ? 'past' : 'upcoming');
   const [events, setEvents] = useState<CommunityEvent[]>([]);
   const [pastEvents, setPastEvents] = useState<CommunityEvent[]>([]);
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);
@@ -97,12 +103,14 @@ export function EventsHub() {
   useEffect(() => {
     // Wait until session status is resolved before fetching
     if (sessionStatus === 'loading') return;
-    if (activeTab === 'events') fetchEvents();
+    if (activeTab === 'events') {
+      if (eventsView === 'past') fetchPastEvents();
+      else fetchEvents();
+    }
     else if (activeTab === 'proposals') fetchProposals(proposalsFilter, proposalsSort);
     else if (activeTab === 'projects') fetchProjects(projectsFilter);
-    else if (activeTab === 'past') fetchPastEvents();
     else if (activeTab === 'library') fetchLibrary();
-  }, [activeTab, sessionStatus, proposalsFilter, proposalsSort, projectsFilter]);
+  }, [activeTab, eventsView, sessionStatus, proposalsFilter, proposalsSort, projectsFilter]);
 
   async function fetchEvents() {
     setLoading(true);
@@ -216,8 +224,7 @@ export function EventsHub() {
   const allTabs: { key: TabKey; label: { en: string; vi: string }; authOnly?: boolean }[] = [
     { key: 'events', label: { en: 'Official Activities', vi: 'Hoạt động chính thức' } },
     { key: 'proposals', label: { en: 'Proposals', vi: 'Đề xuất' } },
-    { key: 'projects', label: { en: 'Projects', vi: 'Dự án' } },
-    { key: 'past', label: { en: 'Past Activities', vi: 'Hoạt động đã qua' } },
+    { key: 'projects', label: { en: 'Active Projects', vi: 'Dự án đang triển khai' } },
     { key: 'library', label: { en: 'Library', vi: 'Thư viện' } },
   ];
   const tabs = allTabs;
@@ -256,10 +263,13 @@ export function EventsHub() {
         {activeTab === 'events' && (
           <EventsTabContent
             events={events}
+            pastEvents={pastEvents}
             upcomingProposals={upcomingProposals}
             loading={loading}
             locale={locale}
             session={session}
+            view={eventsView}
+            onViewChange={setEventsView}
           />
         )}
         {activeTab === 'proposals' && (
@@ -286,9 +296,6 @@ export function EventsHub() {
             filter={projectsFilter}
             onFilterChange={setProjectsFilter}
           />
-        )}
-        {activeTab === 'past' && (
-          <PastEventsTabContent events={pastEvents} loading={loading} locale={locale} />
         )}
         {activeTab === 'library' && (
           <LibraryTabContent items={libraryItems} canWatch={canWatchLibrary} loading={loading} locale={locale} session={session} />
@@ -329,27 +336,98 @@ function EmptyState({ message, cta, href }: { message: string; cta?: string; hre
 
 function EventsTabContent({
   events,
+  pastEvents,
   upcomingProposals,
   loading,
   locale,
   session,
+  view,
+  onViewChange,
 }: {
   events: CommunityEvent[];
+  pastEvents: CommunityEvent[];
   upcomingProposals: CommunityProposal[];
   loading: boolean;
   locale: string;
   session: ReturnType<typeof useSession>['data'];
+  view: EventsView;
+  onViewChange: (v: EventsView) => void;
 }) {
+  const vi = locale === 'vi';
   const isAuthenticated = !!session;
-  if (loading) return <SkeletonRows />;
+
+  const viewChips: { key: EventsView; label: string }[] = [
+    { key: 'upcoming', label: vi ? 'Sắp diễn ra' : 'Upcoming' },
+    { key: 'past', label: vi ? 'Đã qua' : 'Past' },
+  ];
+
+  const viewToggle = (
+    <div className="flex gap-2 mb-3 flex-wrap">
+      {viewChips.map((chip) => (
+        <button
+          key={chip.key}
+          onClick={() => onViewChange(chip.key)}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+            view === chip.key
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+          }`}
+        >
+          {chip.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  // ---- Past view ----
+  if (view === 'past') {
+    return (
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          {vi ? 'HOẠT ĐỘNG ĐÃ QUA' : 'PAST ACTIVITIES'}
+        </h2>
+        {viewToggle}
+        {loading ? (
+          <SkeletonRows />
+        ) : pastEvents.length === 0 ? (
+          <EmptyState message={vi ? 'Chưa có hoạt động đã qua.' : 'No past activities yet.'} />
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {pastEvents.map((event) => (
+              <PastEventRow key={event.id} event={event} locale={locale} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ---- Upcoming view (default) ----
+  if (loading) {
+    return (
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          {vi ? 'HOẠT ĐỘNG SẮP DIỄN RA' : 'UPCOMING ACTIVITIES'}
+        </h2>
+        {viewToggle}
+        <SkeletonRows />
+      </div>
+    );
+  }
 
   if (events.length === 0 && upcomingProposals.length === 0) {
     return (
-      <EmptyState
-        message={locale === 'vi' ? 'Chưa có hoạt động sắp tới. Hãy đề xuất một hoạt động!' : 'No upcoming activities. Propose one!'}
-        cta={locale === 'vi' ? 'Đề xuất ngay' : 'Propose Now'}
-        href={isAuthenticated ? '/proposals/new' : '/login'}
-      />
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          {vi ? 'HOẠT ĐỘNG SẮP DIỄN RA' : 'UPCOMING ACTIVITIES'}
+        </h2>
+        {viewToggle}
+        <EmptyState
+          message={vi ? 'Chưa có hoạt động sắp tới. Hãy đề xuất một hoạt động!' : 'No upcoming activities. Propose one!'}
+          cta={vi ? 'Đề xuất ngay' : 'Propose Now'}
+          href={isAuthenticated ? '/proposals/new' : '/login'}
+        />
+      </div>
     );
   }
 
@@ -372,16 +450,16 @@ function EventsTabContent({
   ];
   merged.sort((a, b) => {
     if (a.date !== b.date) return a.date - b.date;
-    // Same date → events before proposals.
     if (a.kind !== b.kind) return a.kind === 'event' ? -1 : 1;
     return 0;
   });
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
-        {locale === 'vi' ? 'HOẠT ĐỘNG SẮP TỚI' : 'UPCOMING ACTIVITIES'}
+      <h2 className="text-lg font-semibold text-gray-900 mb-3">
+        {vi ? 'HOẠT ĐỘNG SẮP DIỄN RA' : 'UPCOMING ACTIVITIES'}
       </h2>
+      {viewToggle}
       <div className="divide-y divide-gray-100">
         {merged.map((item) =>
           item.kind === 'event' ? (
@@ -727,39 +805,6 @@ function ProjectRow({ project, locale }: { project: CommunityProposal; locale: s
         </div>
       </div>
     </Link>
-  );
-}
-
-function PastEventsTabContent({
-  events,
-  loading,
-  locale,
-}: {
-  events: CommunityEvent[];
-  loading: boolean;
-  locale: string;
-}) {
-  if (loading) return <SkeletonRows />;
-
-  if (events.length === 0) {
-    return (
-      <EmptyState
-        message={locale === 'vi' ? 'Chưa có hoạt động đã qua.' : 'No past activities yet.'}
-      />
-    );
-  }
-
-  return (
-    <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
-        {locale === 'vi' ? 'HOẠT ĐỘNG ĐÃ QUA' : 'PAST ACTIVITIES'}
-      </h2>
-      <div className="divide-y divide-gray-100">
-        {events.map((event) => (
-          <PastEventRow key={event.id} event={event} locale={locale} />
-        ))}
-      </div>
-    </div>
   );
 }
 
