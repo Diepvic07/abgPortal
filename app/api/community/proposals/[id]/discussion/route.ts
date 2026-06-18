@@ -21,6 +21,8 @@ function mapRowToDiscussion(row: Record<string, unknown>): ProposalDiscussion {
     meeting_date: (row.meeting_date as string) || undefined,
     meeting_link: (row.meeting_link as string) || undefined,
     meeting_platform: (row.meeting_platform as MeetingPlatform) || undefined,
+    meeting_id: (row.meeting_id as string) || undefined,
+    meeting_passcode: (row.meeting_passcode as string) || undefined,
     invited_emails: (row.invited_emails as string[]) || [],
     reminder_sent: (row.reminder_sent as boolean) || false,
     created_at: row.created_at as string,
@@ -226,6 +228,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const { meeting_date, meeting_link, invited_emails } = body;
       const meeting_platform = normalizeMeetingPlatform(body.meeting_platform);
       const normalizedMeetingLink = normalizeMeetingLink(meeting_link);
+      const meeting_id = typeof body.meeting_id === 'string' ? body.meeting_id.trim().slice(0, 100) || null : null;
+      const meeting_passcode = typeof body.meeting_passcode === 'string' ? body.meeting_passcode.trim().slice(0, 100) || null : null;
 
       if (!meeting_date) return errorResponse('Meeting date is required', 400);
       if (!meeting_link) return errorResponse('Meeting link is required', 400);
@@ -239,6 +243,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           meeting_date,
           meeting_link: normalizedMeetingLink,
           meeting_platform,
+          meeting_id,
+          meeting_passcode,
           invited_emails: invited_emails || [],
           updated_at: now,
         })
@@ -302,7 +308,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               `/proposals/${proposal.slug || proposal.id}`,
               locale as 'vi' | 'en',
               discussion.id,
-              platformLabels,
+              {
+                ...platformLabels,
+                meetingId: meeting_id || undefined,
+                meetingPasscode: meeting_passcode || undefined,
+              },
             );
           } catch (err) {
             console.error(`[email] Discussion invitation failed for ${email}:`, err);
@@ -497,6 +507,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (body.meeting_platform !== undefined) {
         updates.meeting_platform = normalizeMeetingPlatform(body.meeting_platform);
       }
+      if (body.meeting_id !== undefined) {
+        updates.meeting_id = typeof body.meeting_id === 'string' ? body.meeting_id.trim().slice(0, 100) || null : null;
+      }
+      if (body.meeting_passcode !== undefined) {
+        updates.meeting_passcode = typeof body.meeting_passcode === 'string' ? body.meeting_passcode.trim().slice(0, 100) || null : null;
+      }
 
       const { data: updated, error } = await (supabase.from('proposal_discussions') as any)
         .update(updates)
@@ -518,6 +534,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const effectivePlatform = normalizeMeetingPlatform(
         body.meeting_platform ?? discussion.meeting_platform,
       );
+      const effectiveMeetingId = (updates.meeting_id as string | null | undefined) ?? (discussion.meeting_id as string | null | undefined);
+      const effectivePasscode = (updates.meeting_passcode as string | null | undefined) ?? (discussion.meeting_passcode as string | null | undefined);
       after(async () => {
         const supabaseAfter = createServerSupabaseClient();
         const invitedEmails: string[] = discussion.invited_emails || [];
@@ -545,7 +563,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               `/proposals/${proposal.slug || proposal.id}`,
               recipientLocale,
               discussion.id,
-              platformLabels,
+              {
+                ...platformLabels,
+                meetingId: effectiveMeetingId || undefined,
+                meetingPasscode: effectivePasscode || undefined,
+              },
             );
           } catch (err) {
             console.error(`[email] Date change notification failed for ${email}:`, err);
@@ -562,7 +584,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         return errorResponse('Can only reopen from completed, cancelled, or scheduled status', 400);
       }
       const { data: updated, error } = await (supabase.from('proposal_discussions') as any)
-        .update({ status: 'open', meeting_date: null, meeting_link: null, meeting_platform: null, invited_emails: '{}', updated_at: now })
+        .update({ status: 'open', meeting_date: null, meeting_link: null, meeting_platform: null, meeting_id: null, meeting_passcode: null, invited_emails: '{}', updated_at: now })
         .eq('id', discussion.id)
         .select()
         .single();

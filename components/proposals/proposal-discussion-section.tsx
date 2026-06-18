@@ -58,6 +58,8 @@ export function ProposalDiscussionSection({
   const [meetingTime, setMeetingTime] = useState('');
   const [meetingPlatform, setMeetingPlatform] = useState<MeetingPlatform>('meet');
   const [meetingLink, setMeetingLink] = useState('');
+  const [meetingId, setMeetingId] = useState('');
+  const [meetingPasscode, setMeetingPasscode] = useState('');
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [confirmClearVotesOpen, setConfirmClearVotesOpen] = useState(false);
   const [confirmCancelDiscussionOpen, setConfirmCancelDiscussionOpen] = useState(false);
@@ -223,6 +225,8 @@ export function ProposalDiscussionSection({
           meeting_date: meetingDateTime,
           meeting_link: normalizedLink,
           meeting_platform: meetingPlatform,
+          meeting_id: meetingPlatform === 'meet' ? '' : meetingId.trim(),
+          meeting_passcode: meetingPlatform === 'meet' ? '' : meetingPasscode.trim(),
           invited_emails: selectedEmails,
         }),
       });
@@ -585,6 +589,35 @@ export function ProposalDiscussionSection({
                     </a>
                   )}
                 </div>
+
+                {meetingPlatform !== 'meet' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Meeting ID <span className="text-gray-400">({vi ? 'tuỳ chọn' : 'optional'})</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={meetingId}
+                        onChange={(e) => setMeetingId(e.target.value)}
+                        placeholder="814 4269 2029"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        {vi ? 'Mật khẩu' : 'Passcode'} <span className="text-gray-400">({vi ? 'tuỳ chọn' : 'optional'})</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={meetingPasscode}
+                        onChange={(e) => setMeetingPasscode(e.target.value)}
+                        placeholder="421300"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm font-mono"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Invite list — all participants from commitments and responses */}
@@ -753,6 +786,8 @@ function ScheduledView({
   });
   const [newLink, setNewLink] = useState(discussion.meeting_link || '');
   const [newPlatform, setNewPlatform] = useState<MeetingPlatform>(discussion.meeting_platform || 'meet');
+  const [newMeetingId, setNewMeetingId] = useState(discussion.meeting_id || '');
+  const [newPasscode, setNewPasscode] = useState(discussion.meeting_passcode || '');
   const [reminderSent, setReminderSent] = useState(false);
   const [showCancelFlow, setShowCancelFlow] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
@@ -792,6 +827,8 @@ function ScheduledView({
           meeting_date,
           ...(newLink !== discussion.meeting_link ? { meeting_link: newLink } : {}),
           ...(newPlatform !== (discussion.meeting_platform || 'meet') ? { meeting_platform: newPlatform } : {}),
+          ...(newMeetingId !== (discussion.meeting_id || '') ? { meeting_id: newPlatform === 'meet' ? '' : newMeetingId.trim() } : {}),
+          ...(newPasscode !== (discussion.meeting_passcode || '') ? { meeting_passcode: newPlatform === 'meet' ? '' : newPasscode.trim() } : {}),
         }),
       });
       if (!res.ok) throw new Error();
@@ -1135,6 +1172,34 @@ function ScheduledView({
                   }
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                 />
+                {newPlatform !== 'meet' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Meeting ID <span className="text-gray-400">({vi ? 'tuỳ chọn' : 'optional'})</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={newMeetingId}
+                        onChange={(e) => setNewMeetingId(e.target.value)}
+                        placeholder="814 4269 2029"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        {vi ? 'Mật khẩu' : 'Passcode'} <span className="text-gray-400">({vi ? 'tuỳ chọn' : 'optional'})</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={newPasscode}
+                        onChange={(e) => setNewPasscode(e.target.value)}
+                        placeholder="421300"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex gap-2">
                 <button

@@ -26,8 +26,12 @@ function generateIcsInvite(opts: {
   uidPrefix?: string;
   meetingLabel?: string;
   detailsLabel?: string;
+  meetingId?: string;
+  meetingPasscode?: string;
+  meetingIdLabel?: string;
+  meetingPasscodeLabel?: string;
 }): string {
-  const { title, meetingDate, meetingLink, proposalUrl, discussionId, sequence = 0, durationMinutes = 60, uidPrefix = 'discussion', meetingLabel = 'Join Google Meet', detailsLabel = 'View proposal' } = opts;
+  const { title, meetingDate, meetingLink, proposalUrl, discussionId, sequence = 0, durationMinutes = 60, uidPrefix = 'discussion', meetingLabel = 'Join Google Meet', detailsLabel = 'View proposal', meetingId, meetingPasscode, meetingIdLabel = 'Meeting ID', meetingPasscodeLabel = 'Passcode' } = opts;
   const start = new Date(meetingDate);
   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
 
@@ -36,6 +40,11 @@ function generateIcsInvite(opts: {
 
   // Stable UID so updates replace the original event
   const uid = `${uidPrefix}-${discussionId}@abgalumni.vn`;
+
+  const descriptionParts: string[] = [`${meetingLabel}: ${meetingLink}`];
+  if (meetingId) descriptionParts.push(`${meetingIdLabel}: ${meetingId}`);
+  if (meetingPasscode) descriptionParts.push(`${meetingPasscodeLabel}: ${meetingPasscode}`);
+  descriptionParts.push(`${detailsLabel}: ${proposalUrl}`);
 
   return [
     'BEGIN:VCALENDAR',
@@ -49,7 +58,7 @@ function generateIcsInvite(opts: {
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,
     `SUMMARY:${title}`,
-    `DESCRIPTION:${meetingLabel}: ${meetingLink}\\n${detailsLabel}: ${proposalUrl}`,
+    `DESCRIPTION:${descriptionParts.join('\\n')}`,
     `URL:${meetingLink}`,
     `LOCATION:${meetingLink}`,
     'BEGIN:VALARM',
@@ -1500,6 +1509,8 @@ export async function sendDiscussionInvitationEmail(
     joinButtonLabel?: string;
     calendarDescriptionLabel?: string;
     calendarDetailsLabel?: string;
+    meetingId?: string;
+    meetingPasscode?: string;
   },
 ): Promise<void> {
   const resend = getResendClient();
@@ -1523,6 +1534,10 @@ export async function sendDiscussionInvitationEmail(
   const joinButtonLabel = options?.joinButtonLabel || (isVi ? 'Tham gia Google Meet' : 'Join Google Meet');
   const calendarDescriptionLabel = options?.calendarDescriptionLabel || 'Join Google Meet';
   const calendarDetailsLabel = options?.calendarDetailsLabel || 'View proposal';
+  const meetingIdLabelText = isVi ? 'Meeting ID:' : 'Meeting ID:';
+  const meetingPasscodeLabelText = isVi ? 'Mật khẩu:' : 'Passcode:';
+  const meetingId = options?.meetingId?.trim();
+  const meetingPasscode = options?.meetingPasscode?.trim();
 
   const emailHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
@@ -1545,6 +1560,8 @@ export async function sendDiscussionInvitationEmail(
             <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#1f2937;">
               <tr><td style="padding:4px 0;font-weight:600;width:100px;">${isVi ? 'Thời gian:' : 'Date/Time:'}</td><td style="padding:4px 0;">${escapeHtml(formattedDate)}</td></tr>
               <tr><td style="padding:4px 0;font-weight:600;">${isVi ? 'Nền tảng:' : 'Platform:'}</td><td style="padding:4px 0;">${escapeHtml(meetingPlatformLabel)}</td></tr>
+              ${meetingId ? `<tr><td style="padding:4px 0;font-weight:600;">${escapeHtml(meetingIdLabelText)}</td><td style="padding:4px 0;font-family:monospace;">${escapeHtml(meetingId)}</td></tr>` : ''}
+              ${meetingPasscode ? `<tr><td style="padding:4px 0;font-weight:600;">${escapeHtml(meetingPasscodeLabelText)}</td><td style="padding:4px 0;font-family:monospace;">${escapeHtml(meetingPasscode)}</td></tr>` : ''}
             </table>
           </div>
 
@@ -1575,6 +1592,10 @@ export async function sendDiscussionInvitationEmail(
     discussionId: discussionId || `fallback-${new Date(meetingDate).getTime()}`,
     meetingLabel: calendarDescriptionLabel,
     detailsLabel: calendarDetailsLabel,
+    meetingId,
+    meetingPasscode,
+    meetingIdLabel: meetingIdLabelText.replace(/:$/, ''),
+    meetingPasscodeLabel: meetingPasscodeLabelText.replace(/:$/, ''),
   });
 
   const emailPayload: Parameters<typeof resend.emails.send>[0] = {
@@ -1621,6 +1642,8 @@ export async function sendDiscussionDateChangeEmail(
     meetingPlatformLabel?: string;
     joinButtonLabel?: string;
     calendarDescriptionLabel?: string;
+    meetingId?: string;
+    meetingPasscode?: string;
   },
 ): Promise<void> {
   const resend = getResendClient();
@@ -1641,6 +1664,10 @@ export async function sendDiscussionDateChangeEmail(
   const meetingPlatformLabel = options?.meetingPlatformLabel || 'Google Meet';
   const joinButtonLabel = options?.joinButtonLabel || (isVi ? 'Tham gia Google Meet' : 'Join Google Meet');
   const calendarDescriptionLabel = options?.calendarDescriptionLabel || 'Join Google Meet';
+  const meetingIdLabelText = 'Meeting ID:';
+  const meetingPasscodeLabelText = isVi ? 'Mật khẩu:' : 'Passcode:';
+  const meetingId = options?.meetingId?.trim();
+  const meetingPasscode = options?.meetingPasscode?.trim();
 
   const emailHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
@@ -1670,6 +1697,8 @@ export async function sendDiscussionDateChangeEmail(
                 <td style="padding:8px 0 4px;font-weight:600;color:#16a34a;">${escapeHtml(formattedNew)}</td>
               </tr>
               <tr><td style="padding:4px 0;font-weight:600;">${isVi ? 'Nền tảng:' : 'Platform:'}</td><td style="padding:4px 0;">${escapeHtml(meetingPlatformLabel)}</td></tr>
+              ${meetingId ? `<tr><td style="padding:4px 0;font-weight:600;">${escapeHtml(meetingIdLabelText)}</td><td style="padding:4px 0;font-family:monospace;">${escapeHtml(meetingId)}</td></tr>` : ''}
+              ${meetingPasscode ? `<tr><td style="padding:4px 0;font-weight:600;">${escapeHtml(meetingPasscodeLabelText)}</td><td style="padding:4px 0;font-family:monospace;">${escapeHtml(meetingPasscode)}</td></tr>` : ''}
             </table>
           </div>
 
@@ -1700,6 +1729,10 @@ export async function sendDiscussionDateChangeEmail(
     discussionId: discussionId || `fallback-${new Date(oldMeetingDate).getTime()}`,
     sequence: 1,
     meetingLabel: calendarDescriptionLabel,
+    meetingId,
+    meetingPasscode,
+    meetingIdLabel: meetingIdLabelText.replace(/:$/, ''),
+    meetingPasscodeLabel: meetingPasscodeLabelText.replace(/:$/, ''),
   });
 
   const emailPayload: Parameters<typeof resend.emails.send>[0] = {

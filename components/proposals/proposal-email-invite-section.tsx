@@ -31,6 +31,8 @@ export function ProposalEmailInviteSection({
   const [meetingTime, setMeetingTime] = useState('20:00');
   const [meetingPlatform, setMeetingPlatform] = useState<MeetingPlatform>('meet');
   const [meetingLink, setMeetingLink] = useState('');
+  const [meetingId, setMeetingId] = useState('');
+  const [meetingPasscode, setMeetingPasscode] = useState('');
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -89,6 +91,8 @@ export function ProposalEmailInviteSection({
           meeting_date: meetingDateTime,
           meeting_link: normalizedLink,
           meeting_platform: meetingPlatform,
+          meeting_id: meetingPlatform === 'meet' ? '' : meetingId.trim(),
+          meeting_passcode: meetingPlatform === 'meet' ? '' : meetingPasscode.trim(),
           invited_emails: selectedEmails,
         }),
       });
@@ -250,6 +254,35 @@ export function ProposalEmailInviteSection({
                 </a>
               )}
             </div>
+
+            {meetingPlatform !== 'meet' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Meeting ID <span className="text-gray-400">({vi ? 'tu\u1ef3 ch\u1ecdn' : 'optional'})</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={meetingId}
+                    onChange={(e) => setMeetingId(e.target.value)}
+                    placeholder="814 4269 2029"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    {vi ? 'M\u1eadt kh\u1ea9u' : 'Passcode'} <span className="text-gray-400">({vi ? 'tu\u1ef3 ch\u1ecdn' : 'optional'})</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={meetingPasscode}
+                    onChange={(e) => setMeetingPasscode(e.target.value)}
+                    placeholder="421300"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm font-mono"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Reminders info */}

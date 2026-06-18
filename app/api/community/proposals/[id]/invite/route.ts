@@ -29,6 +29,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { meeting_date, meeting_link, invited_emails, duration_minutes } = body;
     const meeting_platform = normalizeMeetingPlatform(body.meeting_platform);
     const normalizedMeetingLink = normalizeMeetingLink(meeting_link);
+    const meeting_id = typeof body.meeting_id === 'string' ? body.meeting_id.trim().slice(0, 100) || null : null;
+    const meeting_passcode = typeof body.meeting_passcode === 'string' ? body.meeting_passcode.trim().slice(0, 100) || null : null;
 
     if (!meeting_date) return errorResponse('Meeting date is required', 400);
     if (!meeting_link) return errorResponse('Meeting link is required', 400);
@@ -59,6 +61,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           meeting_date,
           meeting_link: normalizedMeetingLink,
           meeting_platform,
+          meeting_id,
+          meeting_passcode,
           invited_emails,
           updated_at: now,
         })
@@ -74,6 +78,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           meeting_date,
           meeting_link: normalizedMeetingLink,
           meeting_platform,
+          meeting_id,
+          meeting_passcode,
           invited_emails,
           created_at: now,
           updated_at: now,
@@ -128,7 +134,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             `/proposals/${proposal.slug || proposal.id}`,
             recipientLocale,
             actualDiscussionId,
-            platformLabels,
+            {
+              ...platformLabels,
+              meetingId: meeting_id || undefined,
+              meetingPasscode: meeting_passcode || undefined,
+            },
           );
         } catch (err) {
           console.error(`[email] Direct invite failed for ${email}:`, err);
