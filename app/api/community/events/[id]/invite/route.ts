@@ -6,7 +6,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { sendDiscussionInvitationEmail } from '@/lib/resend';
 import { sendPushToMember, getPushMessage } from '@/lib/push-notification';
 import { createInAppNotifications } from '@/lib/in-app-notifications';
-import { normalizeMeetingLink } from '@/lib/meeting-link';
+import { normalizeMeetingLink, normalizeMeetingPlatform, getMeetingPlatformEmailLabels } from '@/lib/meeting-link';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -63,6 +63,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const body = await request.json();
     const { meeting_date, meeting_link, invited_emails } = body;
     const normalizedMeetingLink = normalizeMeetingLink(meeting_link);
+    const meeting_platform = normalizeMeetingPlatform(body.meeting_platform);
 
     if (!meeting_date) return errorResponse('Meeting date is required', 400);
     if (!meeting_link) return errorResponse('Meeting link is required', 400);
@@ -88,6 +89,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
         // Send email with .ics calendar invite
         try {
+          const platformLabels = getMeetingPlatformEmailLabels(meeting_platform, recipientLocale);
           await sendDiscussionInvitationEmail(
             email,
             recipientName,
@@ -98,9 +100,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             recipientLocale,
             `event-${id}`,
             {
-              meetingPlatformLabel: recipientLocale === 'vi' ? 'Link tham gia' : 'Meeting link',
-              joinButtonLabel: recipientLocale === 'vi' ? 'Tham gia buổi họp' : 'Join meeting',
-              calendarDescriptionLabel: recipientLocale === 'vi' ? 'Link tham gia' : 'Join meeting',
+              ...platformLabels,
               calendarDetailsLabel: recipientLocale === 'vi' ? 'Chi tiết sự kiện' : 'View event',
             },
           );

@@ -1617,6 +1617,11 @@ export async function sendDiscussionDateChangeEmail(
   proposalUrl: string,
   locale: Locale = 'vi',
   discussionId?: string,
+  options?: {
+    meetingPlatformLabel?: string;
+    joinButtonLabel?: string;
+    calendarDescriptionLabel?: string;
+  },
 ): Promise<void> {
   const resend = getResendClient();
   const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
@@ -1633,6 +1638,9 @@ export async function sendDiscussionDateChangeEmail(
   const subject = isVi
     ? `Thay đổi lịch thảo luận: ${proposalTitle}`
     : `Schedule Changed: ${proposalTitle}`;
+  const meetingPlatformLabel = options?.meetingPlatformLabel || 'Google Meet';
+  const joinButtonLabel = options?.joinButtonLabel || (isVi ? 'Tham gia Google Meet' : 'Join Google Meet');
+  const calendarDescriptionLabel = options?.calendarDescriptionLabel || 'Join Google Meet';
 
   const emailHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"></head>
@@ -1661,12 +1669,12 @@ export async function sendDiscussionDateChangeEmail(
                 <td style="padding:8px 0 4px;font-weight:600;vertical-align:top;color:#16a34a;">${isVi ? 'Lịch mới:' : 'New schedule:'}</td>
                 <td style="padding:8px 0 4px;font-weight:600;color:#16a34a;">${escapeHtml(formattedNew)}</td>
               </tr>
-              <tr><td style="padding:4px 0;font-weight:600;">${isVi ? 'Nền tảng:' : 'Platform:'}</td><td style="padding:4px 0;">Google Meet</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">${isVi ? 'Nền tảng:' : 'Platform:'}</td><td style="padding:4px 0;">${escapeHtml(meetingPlatformLabel)}</td></tr>
             </table>
           </div>
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;"><tr><td>
-            <a href="${escapeHtml(meetingLink)}" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${isVi ? 'Tham gia Google Meet' : 'Join Google Meet'}</a>
+            <a href="${escapeHtml(meetingLink)}" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${escapeHtml(joinButtonLabel)}</a>
           </td></tr></table>
 
           <p style="margin:0 0 12px;font-size:14px;color:#6b7280;">${isVi
@@ -1691,6 +1699,7 @@ export async function sendDiscussionDateChangeEmail(
     proposalUrl: appUrl + proposalUrl,
     discussionId: discussionId || `fallback-${new Date(oldMeetingDate).getTime()}`,
     sequence: 1,
+    meetingLabel: calendarDescriptionLabel,
   });
 
   const emailPayload: Parameters<typeof resend.emails.send>[0] = {

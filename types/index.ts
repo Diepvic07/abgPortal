@@ -451,6 +451,7 @@ export interface ProposalDiscussion {
   date_options: string[];
   meeting_date?: string;
   meeting_link?: string;
+  meeting_platform?: 'meet' | 'zoom' | 'other';
   invited_emails?: string[];
   reminder_sent: boolean;
   created_at: string;

@@ -7,6 +7,7 @@ import { generateId, formatDate } from '@/lib/utils';
 import { sendDiscussionInvitationEmail } from '@/lib/resend';
 import { sendPushToMember, getPushMessage } from '@/lib/push-notification';
 import { createInAppNotifications } from '@/lib/in-app-notifications';
+import { normalizeMeetingLink, normalizeMeetingPlatform, getMeetingPlatformEmailLabels } from '@/lib/meeting-link';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -26,11 +27,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const body = await request.json();
     const { meeting_date, meeting_link, invited_emails, duration_minutes } = body;
+    const meeting_platform = normalizeMeetingPlatform(body.meeting_platform);
+    const normalizedMeetingLink = normalizeMeetingLink(meeting_link);
 
     if (!meeting_date) return errorResponse('Meeting date is required', 400);
     if (!meeting_link) return errorResponse('Meeting link is required', 400);
-    if (!meeting_link.startsWith('https://meet.google.com/')) {
-      return errorResponse('Please provide a valid Google Meet link', 400);
+    if (!normalizedMeetingLink) {
+      return errorResponse('Please provide a valid HTTPS meeting link', 400);
     }
     if (!invited_emails || !Array.isArray(invited_emails) || invited_emails.length === 0) {
       return errorResponse('At least one email is required', 400);
@@ -54,7 +57,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         .update({
           status: 'scheduled',
           meeting_date,
-          meeting_link,
+          meeting_link: normalizedMeetingLink,
+          meeting_platform,
           invited_emails,
           updated_at: now,
         })
@@ -68,7 +72,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           status: 'scheduled',
           date_options: [],
           meeting_date,
-          meeting_link,
+          meeting_link: normalizedMeetingLink,
+          meeting_platform,
           invited_emails,
           created_at: now,
           updated_at: now,
@@ -113,15 +118,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
         // Send email with .ics calendar invite
         try {
+          const platformLabels = getMeetingPlatformEmailLabels(meeting_platform, recipientLocale);
           await sendDiscussionInvitationEmail(
             email,
             recipientName,
             proposal.title,
             meeting_date,
-            meeting_link,
+            normalizedMeetingLink,
             `/proposals/${proposal.slug || proposal.id}`,
             recipientLocale,
             actualDiscussionId,
+            platformLabels,
           );
         } catch (err) {
           console.error(`[email] Direct invite failed for ${email}:`, err);

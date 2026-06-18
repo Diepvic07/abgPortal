@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { ProposalDiscussion, DiscussionResponse, CommunityCommitment } from '@/types';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
+import { MeetingPlatform, normalizeMeetingLink } from '@/lib/meeting-link';
 
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
@@ -55,6 +56,7 @@ export function ProposalDiscussionSection({
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
   const [meetingDate, setMeetingDate] = useState('');
   const [meetingTime, setMeetingTime] = useState('');
+  const [meetingPlatform, setMeetingPlatform] = useState<MeetingPlatform>('meet');
   const [meetingLink, setMeetingLink] = useState('');
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [confirmClearVotesOpen, setConfirmClearVotesOpen] = useState(false);
@@ -195,8 +197,17 @@ export function ProposalDiscussionSection({
       setError(vi ? 'Vui lòng điền đầy đủ thông tin' : 'Please fill in all fields');
       return;
     }
-    if (!meetingLink.startsWith('https://meet.google.com/')) {
-      setError(vi ? 'Vui lòng nhập link Google Meet hợp lệ' : 'Please enter a valid Google Meet link');
+    const normalizedLink = normalizeMeetingLink(meetingLink);
+    if (!normalizedLink) {
+      setError(vi ? 'Vui lòng nhập link HTTPS hợp lệ' : 'Please enter a valid HTTPS meeting link');
+      return;
+    }
+    if (meetingPlatform === 'meet' && !normalizedLink.startsWith('https://meet.google.com/')) {
+      setError(vi ? 'Link không phải Google Meet. Vui lòng đổi nền tảng hoặc dán link Meet hợp lệ.' : 'Not a Google Meet link. Switch platform or paste a valid Meet link.');
+      return;
+    }
+    if (meetingPlatform === 'zoom' && !/zoom\.(us|com)/i.test(normalizedLink)) {
+      setError(vi ? 'Link không phải Zoom. Vui lòng đổi nền tảng hoặc dán link Zoom hợp lệ.' : 'Not a Zoom link. Switch platform or paste a valid Zoom link.');
       return;
     }
 
@@ -210,7 +221,8 @@ export function ProposalDiscussionSection({
         body: JSON.stringify({
           status: 'scheduled',
           meeting_date: meetingDateTime,
-          meeting_link: meetingLink,
+          meeting_link: normalizedLink,
+          meeting_platform: meetingPlatform,
           invited_emails: selectedEmails,
         }),
       });
@@ -503,25 +515,75 @@ export function ProposalDiscussionSection({
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {vi ? 'Nền tảng họp' : 'Meeting platform'} *
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {(['meet', 'zoom', 'other'] as MeetingPlatform[]).map((p) => (
+                    <label
+                      key={p}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm cursor-pointer transition-colors ${
+                        meetingPlatform === p
+                          ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="schedule-meeting-platform"
+                        value={p}
+                        checked={meetingPlatform === p}
+                        onChange={() => setMeetingPlatform(p)}
+                        className="sr-only"
+                      />
+                      {p === 'meet' && 'Google Meet'}
+                      {p === 'zoom' && 'Zoom'}
+                      {p === 'other' && (vi ? 'Khác' : 'Other')}
+                    </label>
+                  ))}
+                </div>
+
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Google Meet Link *
+                  {meetingPlatform === 'meet'
+                    ? 'Google Meet Link'
+                    : meetingPlatform === 'zoom'
+                      ? (vi ? 'Link Zoom' : 'Zoom Link')
+                      : (vi ? 'Link tham gia' : 'Meeting Link')} *
                 </label>
                 <div className="flex gap-2">
                   <input
                     type="url"
                     value={meetingLink}
                     onChange={(e) => setMeetingLink(e.target.value)}
-                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                    placeholder={
+                      meetingPlatform === 'meet'
+                        ? 'https://meet.google.com/xxx-xxxx-xxx'
+                        : meetingPlatform === 'zoom'
+                          ? 'https://us02web.zoom.us/j/...'
+                          : 'https://...'
+                    }
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
                   />
-                  <a
-                    href="https://meet.google.com/new"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium whitespace-nowrap border border-gray-300"
-                  >
-                    {vi ? 'Tạo Meet' : 'Create Meet'}
-                  </a>
+                  {meetingPlatform === 'meet' && (
+                    <a
+                      href="https://meet.google.com/new"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium whitespace-nowrap border border-gray-300"
+                    >
+                      {vi ? 'Tạo Meet' : 'Create Meet'}
+                    </a>
+                  )}
+                  {meetingPlatform === 'zoom' && (
+                    <a
+                      href="https://zoom.us/start/videomeeting"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium whitespace-nowrap border border-gray-300"
+                    >
+                      {vi ? 'Mở Zoom' : 'Open Zoom'}
+                    </a>
+                  )}
                 </div>
               </div>
 
@@ -690,6 +752,7 @@ function ScheduledView({
     return match ? match[1] : '20:00';
   });
   const [newLink, setNewLink] = useState(discussion.meeting_link || '');
+  const [newPlatform, setNewPlatform] = useState<MeetingPlatform>(discussion.meeting_platform || 'meet');
   const [reminderSent, setReminderSent] = useState(false);
   const [showCancelFlow, setShowCancelFlow] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
@@ -728,6 +791,7 @@ function ScheduledView({
           action: 'update_meeting',
           meeting_date,
           ...(newLink !== discussion.meeting_link ? { meeting_link: newLink } : {}),
+          ...(newPlatform !== (discussion.meeting_platform || 'meet') ? { meeting_platform: newPlatform } : {}),
         }),
       });
       if (!res.ok) throw new Error();
@@ -1026,11 +1090,49 @@ function ScheduledView({
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Google Meet Link</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{vi ? 'Nền tảng' : 'Platform'}</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {(['meet', 'zoom', 'other'] as MeetingPlatform[]).map((p) => (
+                    <label
+                      key={p}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs cursor-pointer transition-colors ${
+                        newPlatform === p
+                          ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="reschedule-platform"
+                        value={p}
+                        checked={newPlatform === p}
+                        onChange={() => setNewPlatform(p)}
+                        className="sr-only"
+                      />
+                      {p === 'meet' && 'Google Meet'}
+                      {p === 'zoom' && 'Zoom'}
+                      {p === 'other' && (vi ? 'Khác' : 'Other')}
+                    </label>
+                  ))}
+                </div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  {newPlatform === 'meet'
+                    ? 'Google Meet Link'
+                    : newPlatform === 'zoom'
+                      ? (vi ? 'Link Zoom' : 'Zoom Link')
+                      : (vi ? 'Link tham gia' : 'Meeting Link')}
+                </label>
                 <input
                   type="url"
                   value={newLink}
                   onChange={(e) => setNewLink(e.target.value)}
+                  placeholder={
+                    newPlatform === 'meet'
+                      ? 'https://meet.google.com/xxx-xxxx-xxx'
+                      : newPlatform === 'zoom'
+                        ? 'https://us02web.zoom.us/j/...'
+                        : 'https://...'
+                  }
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                 />
               </div>

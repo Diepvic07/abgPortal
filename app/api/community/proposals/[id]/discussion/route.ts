@@ -8,6 +8,7 @@ import { ProposalDiscussion, DiscussionResponse } from '@/types';
 import { sendPushToMember, getPushMessage } from '@/lib/push-notification';
 import { createInAppNotifications } from '@/lib/in-app-notifications';
 import { sendDiscussionInvitationEmail, sendDiscussionDateChangeEmail, sendDiscussionReminderEmail, sendDiscussionCancellationEmail, sendDiscussionUpdateEmail } from '@/lib/resend';
+import { normalizeMeetingLink, normalizeMeetingPlatform, getMeetingPlatformEmailLabels, MeetingPlatform } from '@/lib/meeting-link';
 
 function mapRowToDiscussion(row: Record<string, unknown>): ProposalDiscussion {
   return {
@@ -19,6 +20,7 @@ function mapRowToDiscussion(row: Record<string, unknown>): ProposalDiscussion {
     date_options: (row.date_options as string[]) || [],
     meeting_date: (row.meeting_date as string) || undefined,
     meeting_link: (row.meeting_link as string) || undefined,
+    meeting_platform: (row.meeting_platform as MeetingPlatform) || undefined,
     invited_emails: (row.invited_emails as string[]) || [],
     reminder_sent: (row.reminder_sent as boolean) || false,
     created_at: row.created_at as string,
@@ -222,19 +224,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (discussion.status !== 'open') return errorResponse('Can only schedule from open status', 400);
 
       const { meeting_date, meeting_link, invited_emails } = body;
+      const meeting_platform = normalizeMeetingPlatform(body.meeting_platform);
+      const normalizedMeetingLink = normalizeMeetingLink(meeting_link);
+
       if (!meeting_date) return errorResponse('Meeting date is required', 400);
       if (!meeting_link) return errorResponse('Meeting link is required', 400);
-
-      // Validate Google Meet link
-      if (!meeting_link.startsWith('https://meet.google.com/')) {
-        return errorResponse('Please provide a valid Google Meet link', 400);
+      if (!normalizedMeetingLink) {
+        return errorResponse('Please provide a valid HTTPS meeting link', 400);
       }
 
       const { data: updated, error } = await (supabase.from('proposal_discussions') as any)
         .update({
           status: 'scheduled',
           meeting_date,
-          meeting_link,
+          meeting_link: normalizedMeetingLink,
+          meeting_platform,
           invited_emails: invited_emails || [],
           updated_at: now,
         })
@@ -288,15 +292,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
           // Send email invitation
           try {
+            const platformLabels = getMeetingPlatformEmailLabels(meeting_platform, locale as 'vi' | 'en');
             await sendDiscussionInvitationEmail(
               email,
               name,
               proposal.title,
               meeting_date,
-              meeting_link,
+              normalizedMeetingLink,
               `/proposals/${proposal.slug || proposal.id}`,
               locale as 'vi' | 'en',
               discussion.id,
+              platformLabels,
             );
           } catch (err) {
             console.error(`[email] Discussion invitation failed for ${email}:`, err);
@@ -482,10 +488,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const updates: Record<string, unknown> = { updated_at: now };
       if (body.meeting_date) updates.meeting_date = body.meeting_date;
       if (body.meeting_link) {
-        if (!body.meeting_link.startsWith('https://meet.google.com/')) {
-          return errorResponse('Please provide a valid Google Meet link', 400);
+        const normalizedLink = normalizeMeetingLink(body.meeting_link);
+        if (!normalizedLink) {
+          return errorResponse('Please provide a valid HTTPS meeting link', 400);
         }
-        updates.meeting_link = body.meeting_link;
+        updates.meeting_link = normalizedLink;
+      }
+      if (body.meeting_platform !== undefined) {
+        updates.meeting_platform = normalizeMeetingPlatform(body.meeting_platform);
       }
 
       const { data: updated, error } = await (supabase.from('proposal_discussions') as any)
@@ -505,11 +515,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       // Send date change emails to all invited members
       const oldMeetingDate = discussion.meeting_date;
+      const effectivePlatform = normalizeMeetingPlatform(
+        body.meeting_platform ?? discussion.meeting_platform,
+      );
       after(async () => {
         const supabaseAfter = createServerSupabaseClient();
         const invitedEmails: string[] = discussion.invited_emails || [];
         const newMeetingDate = body.meeting_date || oldMeetingDate;
-        const newMeetingLink = body.meeting_link || discussion.meeting_link;
+        const newMeetingLink = (updates.meeting_link as string | undefined) || discussion.meeting_link;
 
         for (const email of invitedEmails) {
           const { data: memberRow } = await (supabaseAfter.from('members') as any)
@@ -520,6 +533,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           if (!memberRow) continue;
 
           try {
+            const recipientLocale = (memberRow.locale as string as 'vi' | 'en') || 'vi';
+            const platformLabels = getMeetingPlatformEmailLabels(effectivePlatform, recipientLocale);
             await sendDiscussionDateChangeEmail(
               email,
               memberRow.name as string,
@@ -528,8 +543,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               newMeetingDate,
               newMeetingLink,
               `/proposals/${proposal.slug || proposal.id}`,
-              (memberRow.locale as string as 'vi' | 'en') || 'vi',
+              recipientLocale,
               discussion.id,
+              platformLabels,
             );
           } catch (err) {
             console.error(`[email] Date change notification failed for ${email}:`, err);
@@ -546,7 +562,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         return errorResponse('Can only reopen from completed, cancelled, or scheduled status', 400);
       }
       const { data: updated, error } = await (supabase.from('proposal_discussions') as any)
-        .update({ status: 'open', meeting_date: null, meeting_link: null, invited_emails: '{}', updated_at: now })
+        .update({ status: 'open', meeting_date: null, meeting_link: null, meeting_platform: null, invited_emails: '{}', updated_at: now })
         .eq('id', discussion.id)
         .select()
         .single();

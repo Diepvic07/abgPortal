@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { normalizeMeetingLink } from '@/lib/meeting-link';
+import { normalizeMeetingLink, MeetingPlatform } from '@/lib/meeting-link';
 
 interface Props {
   eventId: string;
@@ -23,6 +23,7 @@ export function EventEmailInviteSection({
   const [showPanel, setShowPanel] = useState(false);
   const [meetingDate, setMeetingDate] = useState('');
   const [meetingTime, setMeetingTime] = useState('20:00');
+  const [meetingPlatform, setMeetingPlatform] = useState<MeetingPlatform>('meet');
   const [meetingLink, setMeetingLink] = useState('');
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [participants, setParticipants] = useState<{ name: string; email: string }[]>([]);
@@ -74,6 +75,14 @@ export function EventEmailInviteSection({
       setError(vi ? 'Vui l\u00f2ng nh\u1eadp link HTTPS h\u1ee3p l\u1ec7' : 'Please enter a valid HTTPS meeting link');
       return;
     }
+    if (meetingPlatform === 'meet' && !normalizedMeetingLink.startsWith('https://meet.google.com/')) {
+      setError(vi ? 'Link kh\u00f4ng ph\u1ea3i Google Meet. Vui l\u00f2ng \u0111\u1ed5i n\u1ec1n t\u1ea3ng ho\u1eb7c d\u00e1n link Meet h\u1ee3p l\u1ec7.' : 'Not a Google Meet link. Switch platform or paste a valid Meet link.');
+      return;
+    }
+    if (meetingPlatform === 'zoom' && !/zoom\.(us|com)/i.test(normalizedMeetingLink)) {
+      setError(vi ? 'Link kh\u00f4ng ph\u1ea3i Zoom. Vui l\u00f2ng \u0111\u1ed5i n\u1ec1n t\u1ea3ng ho\u1eb7c d\u00e1n link Zoom h\u1ee3p l\u1ec7.' : 'Not a Zoom link. Switch platform or paste a valid Zoom link.');
+      return;
+    }
     if (selectedEmails.length === 0) {
       setError(vi ? 'Vui l\u00f2ng ch\u1ecdn \u00edt nh\u1ea5t 1 ng\u01b0\u1eddi \u0111\u1ec3 m\u1eddi' : 'Please select at least 1 person to invite');
       return;
@@ -91,6 +100,7 @@ export function EventEmailInviteSection({
         body: JSON.stringify({
           meeting_date: meetingDateTime,
           meeting_link: normalizedMeetingLink,
+          meeting_platform: meetingPlatform,
           invited_emails: selectedEmails,
         }),
       });
@@ -174,33 +184,78 @@ export function EventEmailInviteSection({
             </div>
           </div>
 
-          {/* Meeting Link */}
+          {/* Platform + Meeting Link */}
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {vi ? 'N\u1ec1n t\u1ea3ng h\u1ecdp' : 'Meeting platform'} *
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {(['meet', 'zoom', 'other'] as MeetingPlatform[]).map((p) => (
+                <label
+                  key={p}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm cursor-pointer transition-colors ${
+                    meetingPlatform === p
+                      ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="event-meeting-platform"
+                    value={p}
+                    checked={meetingPlatform === p}
+                    onChange={() => setMeetingPlatform(p)}
+                    className="sr-only"
+                  />
+                  {p === 'meet' && 'Google Meet'}
+                  {p === 'zoom' && 'Zoom'}
+                  {p === 'other' && (vi ? 'Kh\u00e1c' : 'Other')}
+                </label>
+              ))}
+            </div>
+
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {vi ? 'Link tham gia' : 'Meeting link'} *
+              {meetingPlatform === 'meet'
+                ? 'Google Meet Link'
+                : meetingPlatform === 'zoom'
+                  ? (vi ? 'Link Zoom' : 'Zoom Link')
+                  : (vi ? 'Link tham gia' : 'Meeting Link')} *
             </label>
             <div className="flex gap-2">
               <input
                 type="url"
                 value={meetingLink}
                 onChange={(e) => setMeetingLink(e.target.value)}
-                placeholder="https://zoom.us/... or https://teams.microsoft.com/..."
+                placeholder={
+                  meetingPlatform === 'meet'
+                    ? 'https://meet.google.com/xxx-xxxx-xxx'
+                    : meetingPlatform === 'zoom'
+                      ? 'https://us02web.zoom.us/j/...'
+                      : 'https://...'
+                }
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
               />
-              <a
-                href="https://meet.google.com/new"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium whitespace-nowrap border border-gray-300"
-              >
-                {vi ? 'T\u1ea1o Google Meet' : 'Create Google Meet'}
-              </a>
+              {meetingPlatform === 'meet' && (
+                <a
+                  href="https://meet.google.com/new"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium whitespace-nowrap border border-gray-300"
+                >
+                  {vi ? 'T\u1ea1o Meet' : 'Create Meet'}
+                </a>
+              )}
+              {meetingPlatform === 'zoom' && (
+                <a
+                  href="https://zoom.us/start/videomeeting"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium whitespace-nowrap border border-gray-300"
+                >
+                  {vi ? 'M\u1edf Zoom' : 'Open Zoom'}
+                </a>
+              )}
             </div>
-            <p className="mt-1 text-xs text-gray-500">
-              {vi
-                ? 'H\u1ed7 tr\u1ee3 Zoom, Google Meet, Microsoft Teams ho\u1eb7c b\u1ea5t k\u1ef3 link h\u1ecdp HTTPS n\u00e0o.'
-                : 'Supports Zoom, Google Meet, Microsoft Teams, or any HTTPS meeting link.'}
-            </p>
           </div>
 
           {/* Reminders info */}
