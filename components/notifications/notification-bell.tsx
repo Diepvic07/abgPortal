@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 
 interface Notification {
@@ -16,6 +17,7 @@ interface Notification {
 
 export function NotificationBell() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -237,9 +239,8 @@ export function NotificationBell() {
               </div>
             ) : (
               notifications.map((n) => {
-                const content = (
+                const inner = (
                   <div
-                    key={n.id}
                     className={`flex gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
                       !n.is_read ? 'bg-blue-50/50' : ''
                     }`}
@@ -258,29 +259,42 @@ export function NotificationBell() {
                   </div>
                 );
 
-                return n.url ? (
-                  <Link
+                if (!n.url) {
+                  return (
+                    <button
+                      key={n.id}
+                      type="button"
+                      onClick={() => {
+                        if (!n.is_read) markRead(n.id);
+                      }}
+                      className="block w-full text-left"
+                    >
+                      {inner}
+                    </button>
+                  );
+                }
+
+                // Use an <a> with explicit router.push so the dropdown closes
+                // *after* navigation kicks off. A <Link> here used to swallow
+                // clicks intermittently when the same handler also did
+                // setIsOpen(false), because closing the dropdown unmounts the
+                // <a> mid-event.
+                const targetUrl = n.url;
+                return (
+                  <a
                     key={n.id}
-                    href={n.url}
-                    onClick={() => {
+                    href={targetUrl}
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+                      e.preventDefault();
                       if (!n.is_read) markRead(n.id);
+                      router.push(targetUrl);
                       setIsOpen(false);
                     }}
                     className="block"
                   >
-                    {content}
-                  </Link>
-                ) : (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => {
-                      if (!n.is_read) markRead(n.id);
-                    }}
-                    className="block w-full text-left"
-                  >
-                    {content}
-                  </button>
+                    {inner}
+                  </a>
                 );
               })
             )}

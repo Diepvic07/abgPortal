@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 
 interface Notification {
@@ -21,6 +22,7 @@ function stripMentionMarkup(text: string): string {
 
 export function NotificationList() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -214,12 +216,24 @@ export function NotificationList() {
               </div>
             );
 
-            return n.url ? (
-              <Link key={n.id} href={n.url} className="block" onClick={() => !n.is_read && handleMarkRead(n.id)}>
+            if (!n.url) {
+              return <div key={n.id}>{inner}</div>;
+            }
+            const targetUrl = n.url;
+            return (
+              <a
+                key={n.id}
+                href={targetUrl}
+                className="block"
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+                  e.preventDefault();
+                  if (!n.is_read) handleMarkRead(n.id);
+                  router.push(targetUrl);
+                }}
+              >
                 {inner}
-              </Link>
-            ) : (
-              <div key={n.id}>{inner}</div>
+              </a>
             );
           })}
         </div>
