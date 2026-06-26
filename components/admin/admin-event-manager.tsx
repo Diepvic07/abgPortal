@@ -264,7 +264,10 @@ export function AdminEventManager() {
     setForm({
       title: event.title,
       description: event.description,
-      category: event.category,
+      // Older events promoted before category-mapping landed may have a
+      // proposal-only category (e.g. 'talk') the event Zod schema rejects.
+      // Fall back to 'other' so the form loads with a valid value.
+      category: ALL_CATEGORIES.includes(event.category) ? event.category : 'other',
       event_mode: event.event_mode || 'offline',
       status: event.status,
       organizer_member_id: organizerId,

@@ -658,6 +658,22 @@ export async function deleteEventComment(commentId: string): Promise<void> {
 
 // ==================== Admin: Create from Proposal ====================
 
+// Proposal and event use different category enums. Map each proposal category to
+// its closest event category so promoted events pass the event Zod schemas.
+const PROPOSAL_TO_EVENT_CATEGORY: Record<string, EventCategory> = {
+  talk: 'abg_talks',
+  learning: 'learning',
+  fieldtrip: 'fieldtrip',
+  coffee: 'networking',
+  meeting: 'networking',
+  sports: 'event',
+  community_support: 'community_support',
+  charity: 'community_support',
+  event: 'event',
+  project: 'event',
+  other: 'other',
+};
+
 export async function createEventFromProposal(proposalId: string, adminMemberId: string, eventData: {
   event_mode?: EventMode;
   event_date: string;
@@ -705,7 +721,7 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
   const event = await createEvent({
     title: p.title as string,
     description: p.description as string,
-    category: (p.category as EventCategory) || 'event',
+    category: PROPOSAL_TO_EVENT_CATEGORY[p.category as string] || 'event',
     event_mode: eventData.event_mode || proposalEventMode || 'offline',
     event_date: eventData.event_date,
     event_end_date: eventData.event_end_date,
