@@ -18,6 +18,7 @@ import { CommentReactions } from '@/components/ui/comment-reactions';
 import { MentionTextarea, renderMentions, encodementions, decodeMentions } from '@/components/ui/mention-textarea';
 import { ShareButtons } from '@/components/ui/share-buttons';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
+import { getInternalProfileUrl } from '@/lib/profile-url';
 
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
@@ -1732,7 +1733,21 @@ export function ProposalDetail({ proposalId }: Props) {
           {commitments.map((c) => (
             <div key={c.id} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3">
               <div className="flex items-center gap-3">
-                {c.member_avatar_url ? (
+                {c.member_id ? (
+                  <Link
+                    href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })}
+                    className="shrink-0"
+                    aria-label={c.member_name || 'Unknown'}
+                  >
+                    {c.member_avatar_url ? (
+                      <img src={c.member_avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white ${getAvatarColor(c.member_name || '?')}`}>
+                        {(c.member_name || '?')[0].toUpperCase()}
+                      </div>
+                    )}
+                  </Link>
+                ) : c.member_avatar_url ? (
                   <img src={c.member_avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
                 ) : (
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white ${getAvatarColor(c.member_name || '?')}`}>
@@ -1740,7 +1755,16 @@ export function ProposalDetail({ proposalId }: Props) {
                   </div>
                 )}
                 <div>
-                  <span className="font-medium text-gray-900">{c.member_name || 'Unknown'}</span>
+                  {c.member_id ? (
+                    <Link
+                      href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })}
+                      className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
+                    >
+                      {c.member_name || 'Unknown'}
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-gray-900">{c.member_name || 'Unknown'}</span>
+                  )}
                   {c.member_abg_class && <span className="text-sm text-gray-500 ml-2">{c.member_abg_class}</span>}
                   {c.member_id === proposal.created_by_member_id && (
                     <span className="text-xs font-medium text-blue-600 ml-2">
@@ -1887,14 +1911,37 @@ export function ProposalDetail({ proposalId }: Props) {
             <div key={c.id}>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  {c.member_avatar_url ? (
+                  {c.member_id ? (
+                    <Link
+                      href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })}
+                      className="shrink-0"
+                      aria-label={c.member_name || 'Unknown'}
+                    >
+                      {c.member_avatar_url ? (
+                        <img src={c.member_avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                      ) : (
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white ${getAvatarColor(c.member_name || '?')}`}>
+                          {(c.member_name || '?')[0].toUpperCase()}
+                        </div>
+                      )}
+                    </Link>
+                  ) : c.member_avatar_url ? (
                     <img src={c.member_avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
                   ) : (
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white ${getAvatarColor(c.member_name || '?')}`}>
                       {(c.member_name || '?')[0].toUpperCase()}
                     </div>
                   )}
-                  <span className="font-medium text-sm text-gray-900">{c.member_name || 'Unknown'}</span>
+                  {c.member_id ? (
+                    <Link
+                      href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })}
+                      className="font-medium text-sm text-gray-900 hover:text-blue-600 hover:underline"
+                    >
+                      {c.member_name || 'Unknown'}
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-sm text-gray-900">{c.member_name || 'Unknown'}</span>
+                  )}
                   <span className="text-xs text-gray-500">{timeAgo(c.created_at, locale || 'vi')}</span>
                 </div>
                 {editingComment === c.id ? (
@@ -1971,14 +2018,37 @@ export function ProposalDetail({ proposalId }: Props) {
                   {c.replies.map((reply) => (
                     <div key={reply.id} className="bg-gray-50 border border-gray-100 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-1">
-                        {reply.member_avatar_url ? (
+                        {reply.member_id ? (
+                          <Link
+                            href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })}
+                            className="shrink-0"
+                            aria-label={reply.member_name || 'Unknown'}
+                          >
+                            {reply.member_avatar_url ? (
+                              <img src={reply.member_avatar_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                            ) : (
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold text-white ${getAvatarColor(reply.member_name || '?')}`}>
+                                {(reply.member_name || '?')[0].toUpperCase()}
+                              </div>
+                            )}
+                          </Link>
+                        ) : reply.member_avatar_url ? (
                           <img src={reply.member_avatar_url} alt="" className="w-5 h-5 rounded-full object-cover" />
                         ) : (
                           <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold text-white ${getAvatarColor(reply.member_name || '?')}`}>
                             {(reply.member_name || '?')[0].toUpperCase()}
                           </div>
                         )}
-                        <span className="font-medium text-sm text-gray-900">{reply.member_name || 'Unknown'}</span>
+                        {reply.member_id ? (
+                          <Link
+                            href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })}
+                            className="font-medium text-sm text-gray-900 hover:text-blue-600 hover:underline"
+                          >
+                            {reply.member_name || 'Unknown'}
+                          </Link>
+                        ) : (
+                          <span className="font-medium text-sm text-gray-900">{reply.member_name || 'Unknown'}</span>
+                        )}
                         <span className="text-xs text-gray-500">{timeAgo(reply.created_at, locale || 'vi')}</span>
                       </div>
                       {editingComment === reply.id ? (

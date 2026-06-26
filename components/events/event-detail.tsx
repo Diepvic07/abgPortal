@@ -30,6 +30,7 @@ import { EventEmailInviteSection } from './event-email-invite-section';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 import { ShareButtons } from '@/components/ui/share-buttons';
 import { EventRecordingsSection } from '@/components/library/event-recordings-section';
+import { getInternalProfileUrl } from '@/lib/profile-url';
 
 const RSVP_ACTIONS: Array<{
   level: EventRegistrationLevel;
@@ -1120,14 +1121,15 @@ export function EventDetail({ eventId }: { eventId: string }) {
               })
               .map((rsvp) => {
                 const isLead = rsvp.commitment_level === 'will_lead';
-                return (
-                  <div
-                    key={rsvp.id}
-                    className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm ${
-                      isLead ? 'bg-amber-50 text-amber-900 ring-1 ring-amber-200' : 'bg-stone-100 text-stone-700'
-                    }`}
-                    title={RSVP_LABELS[rsvp.commitment_level as EventRegistrationLevel]?.[locale === 'vi' ? 'vi' : 'en']}
-                  >
+                const profileHref = rsvp.member_id
+                  ? getInternalProfileUrl({ id: rsvp.member_id, name: rsvp.member_name })
+                  : null;
+                const chipClasses = `flex items-center gap-2 rounded-full px-3 py-2 text-sm ${
+                  isLead ? 'bg-amber-50 text-amber-900 ring-1 ring-amber-200' : 'bg-stone-100 text-stone-700'
+                }`;
+                const chipTitle = RSVP_LABELS[rsvp.commitment_level as EventRegistrationLevel]?.[locale === 'vi' ? 'vi' : 'en'];
+                const chipContent = (
+                  <>
                     {isLead && <span>👑</span>}
                     {rsvp.member_avatar_url ? (
                       <img src={rsvp.member_avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
@@ -1137,6 +1139,20 @@ export function EventDetail({ eventId }: { eventId: string }) {
                       </div>
                     )}
                     <span className="font-medium">{rsvp.member_name || 'Member'}</span>
+                  </>
+                );
+                return profileHref ? (
+                  <Link
+                    key={rsvp.id}
+                    href={profileHref}
+                    className={`${chipClasses} transition-colors hover:bg-stone-200 ${isLead ? 'hover:bg-amber-100' : ''}`}
+                    title={chipTitle}
+                  >
+                    {chipContent}
+                  </Link>
+                ) : (
+                  <div key={rsvp.id} className={chipClasses} title={chipTitle}>
+                    {chipContent}
                   </div>
                 );
               })}
@@ -1229,7 +1245,21 @@ export function EventDetail({ eventId }: { eventId: string }) {
             {comments.map((comment) => (
               <div key={comment.id}>
                 <div className="flex gap-3 rounded-2xl bg-stone-50 p-4">
-                  {comment.member_avatar_url ? (
+                  {comment.member_id ? (
+                    <Link
+                      href={getInternalProfileUrl({ id: comment.member_id, name: comment.member_name })}
+                      className="shrink-0"
+                      aria-label={comment.member_name || 'Member'}
+                    >
+                      {comment.member_avatar_url ? (
+                        <img src={comment.member_avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
+                      ) : (
+                        <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white ${getAvatarColor(comment.member_name || '?')}`}>
+                          {(comment.member_name || '?')[0].toUpperCase()}
+                        </div>
+                      )}
+                    </Link>
+                  ) : comment.member_avatar_url ? (
                     <img src={comment.member_avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
                   ) : (
                     <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white ${getAvatarColor(comment.member_name || '?')}`}>
@@ -1238,7 +1268,16 @@ export function EventDetail({ eventId }: { eventId: string }) {
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-900">{comment.member_name || 'Member'}</span>
+                      {comment.member_id ? (
+                        <Link
+                          href={getInternalProfileUrl({ id: comment.member_id, name: comment.member_name })}
+                          className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline"
+                        >
+                          {comment.member_name || 'Member'}
+                        </Link>
+                      ) : (
+                        <span className="text-sm font-medium text-gray-900">{comment.member_name || 'Member'}</span>
+                      )}
                       <span className="text-xs text-gray-500">{formatRelativeTime(comment.created_at, locale)}</span>
                     </div>
                     {editingComment === comment.id ? (
@@ -1315,7 +1354,21 @@ export function EventDetail({ eventId }: { eventId: string }) {
                   <div className="ml-12 mt-2 space-y-2 border-l-2 border-gray-200 pl-4">
                     {comment.replies.map((reply) => (
                       <div key={reply.id} className="flex gap-2 rounded-xl bg-gray-50 p-3">
-                        {reply.member_avatar_url ? (
+                        {reply.member_id ? (
+                          <Link
+                            href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })}
+                            className="shrink-0"
+                            aria-label={reply.member_name || 'Member'}
+                          >
+                            {reply.member_avatar_url ? (
+                              <img src={reply.member_avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                            ) : (
+                              <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold text-white ${getAvatarColor(reply.member_name || '?')}`}>
+                                {(reply.member_name || '?')[0].toUpperCase()}
+                              </div>
+                            )}
+                          </Link>
+                        ) : reply.member_avatar_url ? (
                           <img src={reply.member_avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
                         ) : (
                           <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold text-white ${getAvatarColor(reply.member_name || '?')}`}>
@@ -1324,7 +1377,16 @@ export function EventDetail({ eventId }: { eventId: string }) {
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-900">{reply.member_name || 'Member'}</span>
+                            {reply.member_id ? (
+                              <Link
+                                href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })}
+                                className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline"
+                              >
+                                {reply.member_name || 'Member'}
+                              </Link>
+                            ) : (
+                              <span className="text-sm font-medium text-gray-900">{reply.member_name || 'Member'}</span>
+                            )}
                             <span className="text-xs text-gray-500">{formatRelativeTime(reply.created_at, locale)}</span>
                           </div>
                           {editingComment === reply.id ? (
