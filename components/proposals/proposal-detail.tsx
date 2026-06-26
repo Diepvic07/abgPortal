@@ -1735,7 +1735,7 @@ export function ProposalDetail({ proposalId }: Props) {
               <div className="flex items-center gap-3">
                 {c.member_id ? (
                   <Link
-                    href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })}
+                    href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })} target="_blank" rel="noopener noreferrer"
                     className="shrink-0"
                     aria-label={c.member_name || 'Unknown'}
                   >
@@ -1757,7 +1757,7 @@ export function ProposalDetail({ proposalId }: Props) {
                 <div>
                   {c.member_id ? (
                     <Link
-                      href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })}
+                      href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })} target="_blank" rel="noopener noreferrer"
                       className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
                     >
                       {c.member_name || 'Unknown'}
@@ -1913,7 +1913,7 @@ export function ProposalDetail({ proposalId }: Props) {
                 <div className="flex items-center gap-2 mb-2">
                   {c.member_id ? (
                     <Link
-                      href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })}
+                      href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })} target="_blank" rel="noopener noreferrer"
                       className="shrink-0"
                       aria-label={c.member_name || 'Unknown'}
                     >
@@ -1934,7 +1934,7 @@ export function ProposalDetail({ proposalId }: Props) {
                   )}
                   {c.member_id ? (
                     <Link
-                      href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })}
+                      href={getInternalProfileUrl({ id: c.member_id, name: c.member_name })} target="_blank" rel="noopener noreferrer"
                       className="font-medium text-sm text-gray-900 hover:text-blue-600 hover:underline"
                     >
                       {c.member_name || 'Unknown'}
@@ -2020,7 +2020,7 @@ export function ProposalDetail({ proposalId }: Props) {
                       <div className="flex items-center gap-2 mb-1">
                         {reply.member_id ? (
                           <Link
-                            href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })}
+                            href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })} target="_blank" rel="noopener noreferrer"
                             className="shrink-0"
                             aria-label={reply.member_name || 'Unknown'}
                           >
@@ -2041,7 +2041,7 @@ export function ProposalDetail({ proposalId }: Props) {
                         )}
                         {reply.member_id ? (
                           <Link
-                            href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })}
+                            href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })} target="_blank" rel="noopener noreferrer"
                             className="font-medium text-sm text-gray-900 hover:text-blue-600 hover:underline"
                           >
                             {reply.member_name || 'Unknown'}

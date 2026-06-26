@@ -1144,7 +1144,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                 return profileHref ? (
                   <Link
                     key={rsvp.id}
-                    href={profileHref}
+                    href={profileHref} target="_blank" rel="noopener noreferrer"
                     className={`${chipClasses} transition-colors hover:bg-stone-200 ${isLead ? 'hover:bg-amber-100' : ''}`}
                     title={chipTitle}
                   >
@@ -1247,7 +1247,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                 <div className="flex gap-3 rounded-2xl bg-stone-50 p-4">
                   {comment.member_id ? (
                     <Link
-                      href={getInternalProfileUrl({ id: comment.member_id, name: comment.member_name })}
+                      href={getInternalProfileUrl({ id: comment.member_id, name: comment.member_name })} target="_blank" rel="noopener noreferrer"
                       className="shrink-0"
                       aria-label={comment.member_name || 'Member'}
                     >
@@ -1270,7 +1270,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                     <div className="flex items-center gap-2">
                       {comment.member_id ? (
                         <Link
-                          href={getInternalProfileUrl({ id: comment.member_id, name: comment.member_name })}
+                          href={getInternalProfileUrl({ id: comment.member_id, name: comment.member_name })} target="_blank" rel="noopener noreferrer"
                           className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline"
                         >
                           {comment.member_name || 'Member'}
@@ -1356,7 +1356,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                       <div key={reply.id} className="flex gap-2 rounded-xl bg-gray-50 p-3">
                         {reply.member_id ? (
                           <Link
-                            href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })}
+                            href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })} target="_blank" rel="noopener noreferrer"
                             className="shrink-0"
                             aria-label={reply.member_name || 'Member'}
                           >
@@ -1379,7 +1379,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                           <div className="flex items-center gap-2">
                             {reply.member_id ? (
                               <Link
-                                href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })}
+                                href={getInternalProfileUrl({ id: reply.member_id, name: reply.member_name })} target="_blank" rel="noopener noreferrer"
                                 className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline"
                               >
                                 {reply.member_name || 'Member'}
