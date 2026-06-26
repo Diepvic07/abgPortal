@@ -676,7 +676,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
             />
             <InfoBlock
               label={locale === 'vi' ? 'Người tổ chức' : 'Organizer'}
-              value={event.author_name || 'ABG Alumni'}
+              value={event.organizer_name || event.author_name || 'ABG Alumni'}
             />
           </div>
         </section>

@@ -975,7 +975,7 @@ function EventRow({ event, locale, isAuthenticated, libraryItem }: { event: Comm
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-gray-900 text-base truncate">{event.title}</h3>
           <p className="text-sm text-gray-500 mt-0.5">
-            {event.author_name || 'Admin'} · {formatEventDate(event.event_date, locale)}
+            {event.organizer_name || event.author_name || 'Admin'} · {formatEventDate(event.event_date, locale)}
           </p>
         </div>
         <div className="flex items-center gap-4 ml-4 flex-shrink-0">
