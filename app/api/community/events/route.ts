@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth-middleware';
-import { getEvents, getEventById, getRsvpsByEvent, getMemberRsvp, getEventPayments } from '@/lib/supabase-events';
+import { getEvents, getEventById, getRsvpsByEvent, getMemberRsvp, getEventPayments, getGuestRsvpsByEvent } from '@/lib/supabase-events';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { Member, getMembershipStatus as getMemberTier } from '@/types';
 import { z } from 'zod';
@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
         return errorResponse('Event not found', 404);
       }
       const rsvps = await getRsvpsByEvent(eventId);
+      const guestRsvps = await getGuestRsvpsByEvent(eventId);
       const myRsvp = await getMemberRsvp(eventId, member.id);
       // Derive membership status for RSVP tier gating
       const { getMembershipStatus } = await import('@/types');
@@ -54,6 +55,7 @@ export async function GET(request: NextRequest) {
       return successResponse({
         event,
         rsvps,
+        guest_rsvps: guestRsvps,
         my_rsvp: myRsvp?.commitment_level === 'interested' ? null : myRsvp?.commitment_level || null,
         membership_status: membershipStatus,
         my_payment_status: myPayment?.status || null,

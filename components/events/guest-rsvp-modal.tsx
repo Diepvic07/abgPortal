@@ -8,7 +8,7 @@ import { useTranslation } from '@/lib/i18n';
 interface GuestRsvpModalProps {
   event: CommunityEvent;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (guest?: { name: string; email: string }) => void;
 }
 
 export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProps) {
@@ -110,7 +110,7 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
               payerEmail={email}
               payerPhone={phone || undefined}
               paymentId={paymentId!}
-              onComplete={() => { onSuccess(); onClose(); }}
+              onComplete={() => { onSuccess({ name, email }); onClose(); }}
             />
           </div>
         </div>
@@ -131,7 +131,7 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
           <h3 className="text-xl font-bold text-gray-900 mb-2">{t.registrationSuccess}</h3>
           <p className="text-gray-600 mb-6">{t.registrationSuccessMessage}</p>
           <button
-            onClick={() => { onSuccess(); onClose(); }}
+            onClick={() => { onSuccess({ name, email }); onClose(); }}
             className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
           >
             {t.done}

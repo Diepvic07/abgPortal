@@ -28,17 +28,39 @@ function deriveEventMode(event: CommunityEvent): EventMode {
   return 'offline';
 }
 
+type StoredGuestRsvp = { name: string; email: string };
+
+function guestRsvpKey(eventId: string) {
+  return `guestRsvp:${eventId}`;
+}
+
 export function PublicEventDetail({ eventId }: { eventId: string }) {
   const [event, setEvent] = useState<CommunityEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [showGuestRsvp, setShowGuestRsvp] = useState(false);
   const [guestCount, setGuestCount] = useState(0);
+  const [registeredGuest, setRegisteredGuest] = useState<StoredGuestRsvp | null>(null);
   const { locale } = useTranslation();
   const vi = locale === 'vi';
 
   useEffect(() => {
     fetchEvent();
+    // Restore guest registration state from a previous visit
+    try {
+      const raw = localStorage.getItem(guestRsvpKey(eventId));
+      if (raw) setRegisteredGuest(JSON.parse(raw) as StoredGuestRsvp);
+    } catch { /* ignore parse / storage errors */ }
   }, [eventId]);
+
+  function handleGuestSuccess(guest?: { name: string; email: string }) {
+    fetchEvent();
+    if (guest) {
+      setRegisteredGuest(guest);
+      try {
+        localStorage.setItem(guestRsvpKey(eventId), JSON.stringify(guest));
+      } catch { /* ignore quota / privacy-mode errors */ }
+    }
+  }
 
   async function fetchEvent() {
     setLoading(true);
@@ -192,6 +214,27 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
       {event.is_public ? (
         <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">{vi ? 'Tham gia sự kiện' : 'Join This Event'}</h2>
+
+          {registeredGuest ? (
+            <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100">
+                  <svg className="h-5 w-5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-green-900">
+                    {vi ? 'Bạn đã đăng ký tham gia với tư cách khách' : 'You are registered as a guest'}
+                  </p>
+                  <p className="mt-1 text-sm text-green-800 truncate">
+                    {registeredGuest.name} · {registeredGuest.email}
+                  </p>
+                  <p className="mt-2 text-xs text-green-700">
+                    {vi ? 'Hẹn gặp bạn tại sự kiện!' : 'We look forward to seeing you at the event!'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : <>
           <p className="text-sm text-gray-600 mb-4">
             {vi
               ? <>Đăng ký với tư cách khách để tham gia sự kiện này. Thành viên ABG có thể <Link href="/login" className="text-blue-600 hover:underline">đăng nhập</Link> để truy cập đầy đủ.</>
@@ -228,6 +271,7 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
               {vi ? 'Chỗ dành cho khách' : 'Guest spots'}: {guestCount} / {event.capacity_guest}
             </p>
           )}
+          </>}
         </section>
       ) : (
         <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
@@ -254,7 +298,7 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
         <GuestRsvpModal
           event={event}
           onClose={() => setShowGuestRsvp(false)}
-          onSuccess={fetchEvent}
+          onSuccess={handleGuestSuccess}
         />
       )}
     </div>

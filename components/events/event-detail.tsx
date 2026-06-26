@@ -15,6 +15,7 @@ import { ToastNotification, useToasts } from '@/components/ui/toast-notification
 import {
   CommunityEvent,
   EventRsvp,
+  EventGuestRsvp,
   EventComment,
   CommitmentLevel,
   EventMode,
@@ -172,6 +173,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const { toasts, showToast, dismissToast } = useToasts();
   const [event, setEvent] = useState<CommunityEvent | null>(null);
   const [rsvps, setRsvps] = useState<EventRsvp[]>([]);
+  const [guestRsvps, setGuestRsvps] = useState<EventGuestRsvp[]>([]);
   const [comments, setComments] = useState<EventComment[]>([]);
   const [myRsvp, setMyRsvp] = useState<CommitmentLevel | null>(null);
   const [loading, setLoading] = useState(true);
@@ -211,6 +213,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
       if (!res.ok) {
         setEvent(null);
         setRsvps([]);
+        setGuestRsvps([]);
         setMyRsvp(null);
         showToast(locale === 'vi' ? 'Không thể tải thông tin sự kiện.' : 'Unable to load event details.');
         return;
@@ -220,6 +223,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
       if (data.event) {
         setEvent(data.event);
         setRsvps(data.rsvps || []);
+        setGuestRsvps(data.guest_rsvps || []);
         setMyRsvp(data.my_rsvp || null);
         setMyPaymentStatus(data.my_payment_status || null);
         if (data.membership_status) setMembershipStatus(data.membership_status);
@@ -230,6 +234,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
       } else {
         setEvent(null);
         setRsvps([]);
+        setGuestRsvps([]);
         setMyRsvp(null);
         setMyPaymentStatus(null);
       }
@@ -1110,10 +1115,10 @@ export function EventDetail({ eventId }: { eventId: string }) {
         </section>
       )}
 
-      {activeRsvps.length > 0 && (
+      {(activeRsvps.length > 0 || guestRsvps.length > 0) && (
         <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900">
-            {locale === 'vi' ? 'Người đã đăng ký' : 'Registered Members'} ({activeRsvps.length})
+            {locale === 'vi' ? 'Người đã đăng ký' : 'Registered Members'} ({activeRsvps.length + guestRsvps.length})
           </h2>
           <div className="mt-4 flex flex-wrap gap-2">
             {[...activeRsvps]
@@ -1158,6 +1163,22 @@ export function EventDetail({ eventId }: { eventId: string }) {
                   </div>
                 );
               })}
+            {guestRsvps.map((g) => (
+              <div
+                key={g.id}
+                className="flex items-center gap-2 rounded-full px-3 py-2 text-sm bg-blue-50 text-blue-900 ring-1 ring-blue-200"
+                title={g.guest_email}
+              >
+                <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold text-white ${getAvatarColor(g.guest_name)}`}>
+                  {g.guest_name[0]?.toUpperCase() || 'G'}
+                </div>
+                <span className="font-medium">{g.guest_name}</span>
+                <span className="text-xs text-blue-700">· {g.guest_email}</span>
+                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
+                  {locale === 'vi' ? 'Khách' : 'Guest'}
+                </span>
+              </div>
+            ))}
           </div>
         </section>
       )}
