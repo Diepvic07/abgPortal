@@ -56,6 +56,7 @@ export function AdminProposalManager() {
   const [promotingProposal, setPromotingProposal] = useState<CommunityProposal | null>(null);
   const [promoteDate, setPromoteDate] = useState('');
   const [promoteSubmitting, setPromoteSubmitting] = useState(false);
+  const [promoteError, setPromoteError] = useState('');
 
   useEffect(() => {
     fetchProposals();
@@ -102,18 +103,21 @@ export function AdminProposalManager() {
   function openPromote(proposal: CommunityProposal) {
     setPromotingProposal(proposal);
     setPromoteDate(defaultEventDate(proposal));
+    setPromoteError('');
   }
 
   function closePromote() {
     if (promoteSubmitting) return;
     setPromotingProposal(null);
     setPromoteDate('');
+    setPromoteError('');
   }
 
   async function handlePromoteSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!promotingProposal || !promoteDate) return;
     setPromoteSubmitting(true);
+    setPromoteError('');
     setMessage('');
     try {
       const res = await fetch(`/api/admin/community/events/from-proposal/${promotingProposal.id}`, {
@@ -131,10 +135,10 @@ export function AdminProposalManager() {
         await fetchProposals();
       } else {
         const data = await res.json();
-        setMessage(`${t.admin.proposals.eventCreateFailed}: ${data.error || ''}`);
+        setPromoteError(data.error || t.admin.proposals.eventCreateFailed);
       }
     } catch {
-      setMessage(t.admin.messages.somethingWrong);
+      setPromoteError(t.admin.messages.somethingWrong);
     } finally {
       setPromoteSubmitting(false);
     }
@@ -291,6 +295,11 @@ export function AdminProposalManager() {
               <div className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-lg p-3">
                 {t.admin.proposals.promoteHint}
               </div>
+              {promoteError && (
+                <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+                  {promoteError}
+                </div>
+              )}
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
