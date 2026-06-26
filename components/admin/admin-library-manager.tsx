@@ -52,19 +52,36 @@ function resourceLinksToText(links: LibraryResourceLink[]): string {
   return links.map((link) => `${link.label} | ${link.url}`).join('\n');
 }
 
-function parseResourceLinksText(value: string): LibraryResourceLink[] {
-  return value
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
+function parseResourceLinksText(value: string): { links: LibraryResourceLink[]; dropped: string[] } {
+  const links: LibraryResourceLink[] = [];
+  const dropped: string[] = [];
+
+  for (const rawLine of value.split('\n')) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    if (line.includes('|')) {
       const [labelPart, ...urlParts] = line.split('|');
       const label = labelPart.trim();
       const url = urlParts.join('|').trim();
-      if (!label || !url) return null;
-      return { label, url };
-    })
-    .filter((link): link is LibraryResourceLink => Boolean(link));
+      if (label && url) {
+        links.push({ label, url });
+      } else {
+        dropped.push(line);
+      }
+      continue;
+    }
+
+    // Bare URL: auto-label with hostname.
+    try {
+      const parsed = new URL(line);
+      links.push({ label: parsed.hostname, url: line });
+    } catch {
+      dropped.push(line);
+    }
+  }
+
+  return { links, dropped };
 }
 
 function toDateInput(value?: string): string {
@@ -150,6 +167,17 @@ export function AdminLibraryManager() {
 
     try {
       const linked = parseLinkedRef(form.linked_ref);
+      const { links: resourceLinks, dropped: droppedLinks } = parseResourceLinksText(form.resource_links_text);
+
+      if (droppedLinks.length > 0) {
+        setMessage({
+          type: 'error',
+          text: `These resource lines aren't valid (need "Label | URL" or a full URL): ${droppedLinks.join(', ')}`,
+        });
+        setSaving(false);
+        return;
+      }
+
       const payload = {
         title: form.title.trim(),
         description: form.description.trim(),
@@ -157,7 +185,7 @@ export function AdminLibraryManager() {
         proposal_id: linked.proposal_id,
         drive_url: form.drive_url.trim() || null,
         thumbnail_url: form.thumbnail_url.trim() || null,
-        resource_links: parseResourceLinksText(form.resource_links_text),
+        resource_links: resourceLinks,
         duration_text: form.duration_text.trim() || null,
         speaker_name: form.speaker_name.trim() || null,
         recorded_at: form.recorded_at || null,
@@ -380,7 +408,7 @@ export function AdminLibraryManager() {
                 placeholder="Slide deck | https://..."
                 className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
-              <p className="mt-1 text-xs text-gray-500">One link per line. Format: Label | URL</p>
+              <p className="mt-1 text-xs text-gray-500">One link per line. Format: <code>Label | URL</code>, or paste a bare URL (label will be the hostname).</p>
             </label>
           </div>
 
