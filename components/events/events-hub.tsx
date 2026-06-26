@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityEvent, CommunityProposal, EventCategory, EVENT_CATEGORY_LABELS, LibraryItem, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS, ParticipationFormat, ProposalCategory, ProposalGenre } from '@/types';
+import { LibraryPill } from '@/components/library/library-pill';
 
 type TabKey = 'events' | 'proposals' | 'projects' | 'library';
 type EventsView = 'upcoming' | 'past';
@@ -98,6 +99,8 @@ export function EventsHub() {
   const [projectsFilter, setProjectsFilter] = useState<ProjectsFilter>('project_active');
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
   const [canWatchLibrary, setCanWatchLibrary] = useState(false);
+  const [libraryByEvent, setLibraryByEvent] = useState<Map<string, LibraryItem>>(new Map());
+  const [libraryByProposal, setLibraryByProposal] = useState<Map<string, LibraryItem>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -111,6 +114,37 @@ export function EventsHub() {
     else if (activeTab === 'projects') fetchProjects(projectsFilter);
     else if (activeTab === 'library') fetchLibrary();
   }, [activeTab, eventsView, sessionStatus, proposalsFilter, proposalsSort, projectsFilter]);
+
+  // Library lookup maps so row pills can show without per-row fetches.
+  useEffect(() => {
+    if (sessionStatus !== 'authenticated') return;
+    let cancelled = false;
+
+    async function loadLibraryMaps() {
+      try {
+        const res = await fetch('/api/library');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        const items: LibraryItem[] = data.library_items || [];
+        const byEvent = new Map<string, LibraryItem>();
+        const byProposal = new Map<string, LibraryItem>();
+        for (const item of items) {
+          if (item.event_id) byEvent.set(item.event_id, item);
+          if (item.proposal_id) byProposal.set(item.proposal_id, item);
+        }
+        setLibraryByEvent(byEvent);
+        setLibraryByProposal(byProposal);
+      } catch (error) {
+        console.error('Failed to fetch library maps:', error);
+      }
+    }
+
+    void loadLibraryMaps();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionStatus]);
 
   async function fetchEvents() {
     setLoading(true);
@@ -270,6 +304,8 @@ export function EventsHub() {
             session={session}
             view={eventsView}
             onViewChange={setEventsView}
+            libraryByEvent={libraryByEvent}
+            libraryByProposal={libraryByProposal}
           />
         )}
         {activeTab === 'proposals' && (
@@ -282,6 +318,7 @@ export function EventsHub() {
             onFilterChange={setProposalsFilter}
             sort={proposalsSort}
             onSortChange={setProposalsSort}
+            libraryByProposal={libraryByProposal}
           />
         )}
         {activeTab === 'projects' && (
@@ -339,6 +376,8 @@ function EventsTabContent({
   session,
   view,
   onViewChange,
+  libraryByEvent,
+  libraryByProposal,
 }: {
   events: CommunityEvent[];
   pastEvents: CommunityEvent[];
@@ -348,6 +387,8 @@ function EventsTabContent({
   session: ReturnType<typeof useSession>['data'];
   view: EventsView;
   onViewChange: (v: EventsView) => void;
+  libraryByEvent: Map<string, LibraryItem>;
+  libraryByProposal: Map<string, LibraryItem>;
 }) {
   const vi = locale === 'vi';
   const isAuthenticated = !!session;
@@ -401,7 +442,7 @@ function EventsTabContent({
         ) : (
           <div className="divide-y divide-gray-100">
             {pastEvents.map((event) => (
-              <PastEventRow key={event.id} event={event} locale={locale} />
+              <PastEventRow key={event.id} event={event} locale={locale} libraryItem={libraryByEvent.get(event.id)} />
             ))}
           </div>
         )}
@@ -470,7 +511,7 @@ function EventsTabContent({
       <div className="divide-y divide-gray-100">
         {merged.map((item) =>
           item.kind === 'event' ? (
-            <EventRow key={`e-${item.event.id}`} event={item.event} locale={locale} isAuthenticated={isAuthenticated} />
+            <EventRow key={`e-${item.event.id}`} event={item.event} locale={locale} isAuthenticated={isAuthenticated} libraryItem={libraryByEvent.get(item.event.id)} />
           ) : (
             <ProposalRow
               key={`p-${item.proposal.id}`}
@@ -478,6 +519,7 @@ function EventsTabContent({
               locale={locale}
               isAuthenticated={isAuthenticated}
               showUpcomingBadge
+              libraryItem={libraryByProposal.get(item.proposal.id)}
             />
           ),
         )}
@@ -495,6 +537,7 @@ function ProposalsTabContent({
   onFilterChange,
   sort,
   onSortChange,
+  libraryByProposal,
 }: {
   proposals: CommunityProposal[];
   loading: boolean;
@@ -504,6 +547,7 @@ function ProposalsTabContent({
   onFilterChange: (f: ProposalsFilter) => void;
   sort: ProposalsSort;
   onSortChange: (s: ProposalsSort) => void;
+  libraryByProposal: Map<string, LibraryItem>;
 }) {
   const [activeGenre, setActiveGenre] = useState<string | null>(null);
 
@@ -661,7 +705,7 @@ function ProposalsTabContent({
       {/* Filtered proposals list */}
       <div className="divide-y divide-gray-100">
         {filtered.map((proposal) => (
-          <ProposalRow key={proposal.id} proposal={proposal} locale={locale} isAuthenticated={!!session} />
+          <ProposalRow key={proposal.id} proposal={proposal} locale={locale} isAuthenticated={!!session} libraryItem={libraryByProposal.get(proposal.id)} />
         ))}
       </div>
     </div>
@@ -918,7 +962,7 @@ function LibraryRow({ item, canWatch, locale }: { item: LibraryItem; canWatch: b
   );
 }
 
-function EventRow({ event, locale, isAuthenticated }: { event: CommunityEvent; locale: string; isAuthenticated?: boolean }) {
+function EventRow({ event, locale, isAuthenticated, libraryItem }: { event: CommunityEvent; locale: string; isAuthenticated?: boolean; libraryItem?: LibraryItem }) {
   const colors = getCategoryColor(event.category);
   const categoryLabel = EVENT_CATEGORY_LABELS[event.category]?.[locale === 'vi' ? 'vi' : 'en'] || event.category;
   const totalJoined = event.rsvp_count + (event.guest_rsvp_count || 0);
@@ -957,6 +1001,7 @@ function EventRow({ event, locale, isAuthenticated }: { event: CommunityEvent; l
               {locale === 'vi' ? 'Công khai' : 'Public'}
             </span>
           )}
+          {libraryItem && <LibraryPill slug={libraryItem.slug} locale={locale} />}
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${colors.bg} ${colors.text}`}>
             {categoryLabel}
           </span>
@@ -971,11 +1016,13 @@ function ProposalRow({
   locale,
   isAuthenticated,
   showUpcomingBadge = false,
+  libraryItem,
 }: {
   proposal: CommunityProposal;
   locale: string;
   isAuthenticated?: boolean;
   showUpcomingBadge?: boolean;
+  libraryItem?: LibraryItem;
 }) {
   const vi = locale === 'vi';
   const categoryColors: Record<string, { bg: string; text: string }> = {
@@ -1030,6 +1077,7 @@ function ProposalRow({
               {proposal.comment_count}
             </span>
           )}
+          {libraryItem && <LibraryPill slug={libraryItem.slug} locale={locale} />}
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${colors.bg} ${colors.text}`}>
             {categoryLabel}
           </span>
@@ -1039,7 +1087,7 @@ function ProposalRow({
   );
 }
 
-function PastEventRow({ event, locale }: { event: CommunityEvent; locale: string }) {
+function PastEventRow({ event, locale, libraryItem }: { event: CommunityEvent; locale: string; libraryItem?: LibraryItem }) {
   const colors = getCategoryColor(event.category);
   const categoryLabel = EVENT_CATEGORY_LABELS[event.category]?.[locale === 'vi' ? 'vi' : 'en'] || event.category;
 
@@ -1060,6 +1108,7 @@ function PastEventRow({ event, locale }: { event: CommunityEvent; locale: string
           )}
         </div>
         <div className="flex items-center gap-4 ml-4 flex-shrink-0">
+          {libraryItem && <LibraryPill slug={libraryItem.slug} locale={locale} />}
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-600`}>
             {locale === 'vi' ? 'Hoàn thành' : 'Completed'}
           </span>

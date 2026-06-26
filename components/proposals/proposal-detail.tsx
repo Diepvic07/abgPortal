@@ -11,6 +11,7 @@ import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, ParticipationFormat, ProposalDiscussion, DiscussionResponse, ProposalPoll, PollResponse, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS } from '@/types';
 import { EventRecordingsSection } from '@/components/library/event-recordings-section';
+import { LibraryAutoPill } from '@/components/library/library-pill';
 import { ProposalDiscussionSection } from '@/components/proposals/proposal-discussion-section';
 import { ProposalEmailInviteSection } from '@/components/proposals/proposal-email-invite-section';
 import { ProposalPollSection } from '@/components/proposals/proposal-poll-section';
@@ -755,6 +756,7 @@ export function ProposalDetail({ proposalId }: Props) {
           <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${STATUS_COLORS[proposal.status]}`}>
             {(STATUS_LABELS[proposal.status] || { en: proposal.status, vi: proposal.status })[locale === 'vi' ? 'vi' : 'en']}
           </span>
+          <LibraryAutoPill proposalId={proposalId} locale={locale} />
           {proposal.is_pinned && <span className="text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">📌 Pinned</span>}
           {canEdit && !isEditing && (
             <button

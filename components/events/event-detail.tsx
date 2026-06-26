@@ -30,6 +30,7 @@ import { EventEmailInviteSection } from './event-email-invite-section';
 import { CommentReactions } from '@/components/ui/comment-reactions';
 import { ShareButtons } from '@/components/ui/share-buttons';
 import { EventRecordingsSection } from '@/components/library/event-recordings-section';
+import { LibraryAutoPill } from '@/components/library/library-pill';
 import { getInternalProfileUrl } from '@/lib/profile-url';
 
 const RSVP_ACTIONS: Array<{
@@ -639,6 +640,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
               {locale === 'vi' ? 'Chỉ dành cho Premium' : 'Premium only'}
             </span>
           )}
+          <LibraryAutoPill eventId={event.id} locale={locale} />
         </div>
 
         <div className="flex items-start justify-between gap-4">
