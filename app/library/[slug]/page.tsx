@@ -107,10 +107,11 @@ export default async function LibraryDetailPage({ params }: LibraryPageProps) {
               : 'You can still view the metadata and resources below. Upgrade to Premium to watch the workshop recording.'}
           </p>
           <Link
-            href="/onboard"
-            className="mt-4 inline-flex rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+            href="/upgrade"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-transform hover:scale-[1.02] hover:shadow-lg"
           >
-            {isVi ? 'Xem Premium' : 'View Premium'}
+            <span>⭐</span>
+            <span>{isVi ? 'Nâng cấp Premium' : 'Upgrade to Premium'}</span>
           </Link>
         </section>
       )}

@@ -10,6 +10,7 @@ import remarkBreaks from 'remark-breaks';
 import { linkifyText } from '@/lib/linkify';
 import { useTranslation } from '@/lib/i18n';
 import { CommunityProposal, CommunityCommitment, CommunityProposalComment, CommitmentLevel, ParticipationFormat, ProposalDiscussion, DiscussionResponse, ProposalPoll, PollResponse, COMMITMENT_LABELS, COMMITMENT_WEIGHTS, PROPOSAL_CATEGORY_LABELS, PROPOSAL_GENRE_LABELS, PARTICIPATION_FORMAT_LABELS } from '@/types';
+import { EventRecordingsSection } from '@/components/library/event-recordings-section';
 import { ProposalDiscussionSection } from '@/components/proposals/proposal-discussion-section';
 import { ProposalEmailInviteSection } from '@/components/proposals/proposal-email-invite-section';
 import { ProposalPollSection } from '@/components/proposals/proposal-poll-section';
@@ -1789,6 +1790,9 @@ export function ProposalDetail({ proposalId }: Props) {
           )}
         </div>
       </div>
+
+      {/* Workshop recording (library) */}
+      <EventRecordingsSection proposalId={proposalId} locale={locale} />
 
       {/* Online Discussion */}
       {proposal.has_discussion && (

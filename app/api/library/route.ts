@@ -19,8 +19,9 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('event_id') || undefined;
+    const proposalId = searchParams.get('proposal_id') || undefined;
     const canWatch = canWatchLibrary(member);
-    const items = await getPublishedLibraryItems({ eventId });
+    const items = await getPublishedLibraryItems({ eventId, proposalId });
 
     return successResponse({
       can_watch: canWatch,

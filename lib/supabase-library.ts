@@ -58,6 +58,7 @@ function mapRowToLibraryItem(row: Record<string, unknown>): LibraryItem {
 
 export async function getPublishedLibraryItems(options?: {
   eventId?: string;
+  proposalId?: string;
 }): Promise<LibraryItem[]> {
   const supabase = createServerSupabaseClient();
 
@@ -69,6 +70,9 @@ export async function getPublishedLibraryItems(options?: {
 
   if (options?.eventId) {
     query = query.eq('event_id', options.eventId);
+  }
+  if (options?.proposalId) {
+    query = query.eq('proposal_id', options.proposalId);
   }
 
   const { data, error } = await query;
