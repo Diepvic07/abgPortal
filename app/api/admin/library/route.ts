@@ -6,7 +6,7 @@ import { errorResponse, handleApiError, successResponse } from '@/lib/api-respon
 import { isAdminAsync } from '@/lib/admin-utils-server';
 import { getMemberByEmail } from '@/lib/supabase-db';
 import { createLibraryItem, getAllLibraryItems } from '@/lib/supabase-library';
-import { normalizeDriveVideoInput } from '@/lib/drive-video';
+import { isDriveFolderUrl, normalizeDriveVideoInput } from '@/lib/drive-video';
 
 const LibraryStatus = z.enum(['draft', 'published', 'archived']);
 
@@ -74,6 +74,9 @@ export async function POST(request: NextRequest) {
     const driveInput = parsed.data.drive_file_id || parsed.data.drive_url || '';
     const drive = driveInput ? normalizeDriveVideoInput(driveInput) : null;
     if (driveInput && !drive) {
+      if (isDriveFolderUrl(driveInput)) {
+        return errorResponse('This is a folder link. Please paste a link to a specific video file inside the folder (Share → Copy link on the file).', 400);
+      }
       return errorResponse('Invalid Google Drive file link or ID', 400);
     }
 

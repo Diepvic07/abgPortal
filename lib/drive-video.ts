@@ -33,3 +33,14 @@ export function normalizeDriveVideoInput(input: string): { fileId: string; previ
     previewUrl: buildDrivePreviewUrl(fileId),
   };
 }
+
+export function isDriveFolderUrl(input: string): boolean {
+  const value = input.trim();
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return /\/(folders|drive\/folders)\//.test(url.pathname);
+  } catch {
+    return /\/(folders|drive\/folders)\//.test(value);
+  }
+}
