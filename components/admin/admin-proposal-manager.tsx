@@ -35,12 +35,27 @@ const DROPDOWN_STATUSES: ProposalStatus[] = [
   'removed',
 ];
 
+// Promote-to-Event is only meaningful while the proposal is still in the
+// pre-event lifecycle. Removed/completed proposals (already promoted, or
+// archived) and project_* proposals (different lifecycle entirely) hide it.
+const PROMOTABLE_STATUSES: ProposalStatus[] = ['published', 'upcoming'];
+
+function defaultEventDate(proposal: CommunityProposal): string {
+  // datetime-local wants 'YYYY-MM-DDTHH:mm'
+  const base = proposal.target_date ? new Date(proposal.target_date) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}T${pad(base.getHours())}:${pad(base.getMinutes())}`;
+}
+
 export function AdminProposalManager() {
   const { t } = useTranslation();
   const [proposals, setProposals] = useState<CommunityProposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [promotingProposal, setPromotingProposal] = useState<CommunityProposal | null>(null);
+  const [promoteDate, setPromoteDate] = useState('');
+  const [promoteSubmitting, setPromoteSubmitting] = useState(false);
 
   useEffect(() => {
     fetchProposals();
@@ -81,6 +96,47 @@ export function AdminProposalManager() {
       setMessage(t.admin.messages.somethingWrong);
     } finally {
       setActionLoading(null);
+    }
+  }
+
+  function openPromote(proposal: CommunityProposal) {
+    setPromotingProposal(proposal);
+    setPromoteDate(defaultEventDate(proposal));
+  }
+
+  function closePromote() {
+    if (promoteSubmitting) return;
+    setPromotingProposal(null);
+    setPromoteDate('');
+  }
+
+  async function handlePromoteSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!promotingProposal || !promoteDate) return;
+    setPromoteSubmitting(true);
+    setMessage('');
+    try {
+      const res = await fetch(`/api/admin/community/events/from-proposal/${promotingProposal.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_date: new Date(promoteDate).toISOString(),
+          is_public: true,
+        }),
+      });
+      if (res.ok) {
+        setMessage(t.admin.proposals.eventCreated);
+        setPromotingProposal(null);
+        setPromoteDate('');
+        await fetchProposals();
+      } else {
+        const data = await res.json();
+        setMessage(`${t.admin.proposals.eventCreateFailed}: ${data.error || ''}`);
+      }
+    } catch {
+      setMessage(t.admin.messages.somethingWrong);
+    } finally {
+      setPromoteSubmitting(false);
     }
   }
 
@@ -165,6 +221,17 @@ export function AdminProposalManager() {
                     {proposal.is_pinned ? `📌 ${t.admin.proposals.unpin}` : `📌 ${t.admin.proposals.pin}`}
                   </button>
 
+                  {/* Promote to Event */}
+                  {PROMOTABLE_STATUSES.includes(proposal.status) && (
+                    <button
+                      onClick={() => openPromote(proposal)}
+                      disabled={actionLoading === proposal.id}
+                      className="text-xs px-3 py-1.5 border border-indigo-200 text-indigo-700 rounded-lg hover:bg-indigo-50 disabled:opacity-50"
+                    >
+                      🎉 {t.admin.proposals.promoteToEvent}
+                    </button>
+                  )}
+
                   {/* Status dropdown — does not include project_active.
                       Moving into project_active happens on the proposal page
                       where the chat URL / public note can be captured. */}
@@ -200,6 +267,49 @@ export function AdminProposalManager() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {promotingProposal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={closePromote}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">{t.admin.proposals.promoteTitle}</h2>
+              <p className="text-sm text-gray-500 mt-1 line-clamp-2">{promotingProposal.title}</p>
+            </div>
+            <form onSubmit={handlePromoteSubmit} className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t.admin.proposals.eventDate} *</label>
+                <input
+                  type="datetime-local"
+                  value={promoteDate}
+                  onChange={(e) => setPromoteDate(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                {t.admin.proposals.promoteHint}
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={closePromote}
+                  disabled={promoteSubmitting}
+                  className="text-sm px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {t.admin.actions.cancel}
+                </button>
+                <button
+                  type="submit"
+                  disabled={promoteSubmitting || !promoteDate}
+                  className="text-sm px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {promoteSubmitting ? t.admin.proposals.creating : `🎉 ${t.admin.proposals.promoteToEvent}`}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

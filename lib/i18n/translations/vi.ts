@@ -1160,6 +1160,9 @@ export const vi: Translations = {
       creating: 'Đang tạo...',
       eventCreated: 'Đã tạo sự kiện! Sự kiện đang ở trạng thái nháp.',
       eventCreateFailed: 'Không thể tạo sự kiện',
+      promoteToEvent: 'Chuyển thành sự kiện',
+      promoteTitle: 'Chuyển đề xuất thành sự kiện',
+      promoteHint: 'Mặc định mở cho tất cả mọi người (khách, hội viên cơ bản & premium, không giới hạn chỗ). Sự kiện sẽ ở trạng thái nháp — mở từ tab Sự kiện để điều chỉnh đối tượng tham gia hoặc đặt phí trước khi công khai.',
     },
 
     references: {

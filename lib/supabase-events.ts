@@ -667,9 +667,22 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
   capacity?: number;
   capacity_premium?: number;
   capacity_basic?: number;
+  capacity_guest?: number;
+  is_public?: boolean;
   image_url?: string;
 }): Promise<CommunityEvent> {
   const supabase = createServerSupabaseClient();
+
+  // Refuse to promote twice — return the existing event instead of silently
+  // creating a duplicate that would re-import RSVPs.
+  const { data: existingEvent } = await supabase
+    .from('community_events')
+    .select('id')
+    .eq('proposal_id', proposalId)
+    .maybeSingle();
+  if (existingEvent) {
+    throw new Error('This proposal has already been promoted to an event');
+  }
 
   // Fetch the proposal
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -687,7 +700,8 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
     ? p.participation_format as EventMode
     : undefined;
 
-  // Create event
+  // Create event. Default audience = open to everyone (is_public + null capacities
+  // = unlimited per tier). Admin can tighten this from the event editor afterwards.
   const event = await createEvent({
     title: p.title as string,
     description: p.description as string,
@@ -698,6 +712,10 @@ export async function createEventFromProposal(proposalId: string, adminMemberId:
     location: eventData.location,
     location_url: eventData.location_url,
     capacity: eventData.capacity,
+    capacity_premium: eventData.capacity_premium,
+    capacity_basic: eventData.capacity_basic,
+    capacity_guest: eventData.capacity_guest,
+    is_public: eventData.is_public ?? true,
     image_url: eventData.image_url,
     created_by_member_id: adminMemberId,
     proposal_id: proposalId,

@@ -1173,6 +1173,9 @@ export const en = {
       creating: 'Creating...',
       eventCreated: 'Event created successfully! It is in draft status.',
       eventCreateFailed: 'Failed to create event',
+      promoteToEvent: 'Promote to Event',
+      promoteTitle: 'Promote Proposal to Event',
+      promoteHint: 'Defaults to open for everyone (visitors, basic & premium members, unlimited seats). The event will be created in draft status — open it from the Events tab to tighten the audience or set fees before publishing.',
     },
 
     // References

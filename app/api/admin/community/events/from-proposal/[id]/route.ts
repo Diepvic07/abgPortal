@@ -17,6 +17,8 @@ const CreateFromProposalSchema = z.object({
   capacity: z.number().int().positive().optional(),
   capacity_premium: z.number().int().min(0).optional(),
   capacity_basic: z.number().int().min(0).optional(),
+  capacity_guest: z.number().int().min(0).optional(),
+  is_public: z.boolean().optional(),
   image_url: z.string().url().optional(),
 });
 
