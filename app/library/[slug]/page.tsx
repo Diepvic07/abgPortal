@@ -74,9 +74,9 @@ export default async function LibraryDetailPage({ params }: LibraryPageProps) {
           <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
             Premium
           </span>
-          {item.event_title && (
+          {(item.event_title || item.proposal_title) && (
             <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
-              {item.event_title}
+              {item.event_title || item.proposal_title}
             </span>
           )}
         </div>
@@ -147,6 +147,14 @@ export default async function LibraryDetailPage({ params }: LibraryPageProps) {
         <div className="mt-6">
           <Link href={`/events/${item.event_slug}`} className="text-sm font-medium text-blue-700 hover:text-blue-800">
             {isVi ? 'Xem sự kiện liên quan' : 'View linked event'}
+          </Link>
+        </div>
+      )}
+
+      {!item.event_slug && item.proposal_slug && (
+        <div className="mt-6">
+          <Link href={`/proposals/${item.proposal_slug}`} className="text-sm font-medium text-blue-700 hover:text-blue-800">
+            {isVi ? 'Xem đề xuất liên quan' : 'View linked proposal'}
           </Link>
         </div>
       )}

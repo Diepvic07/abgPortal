@@ -897,7 +897,7 @@ function LibraryRow({ item, canWatch, locale }: { item: LibraryItem; canWatch: b
           <p className="text-sm text-gray-500 mt-0.5">
             {item.speaker_name || (locale === 'vi' ? 'ABG Alumni' : 'ABG Alumni')}
             {item.duration_text ? ` · ${item.duration_text}` : ''}
-            {item.event_title ? ` · ${item.event_title}` : ''}
+            {item.event_title ? ` · ${item.event_title}` : item.proposal_title ? ` · ${item.proposal_title}` : ''}
           </p>
           {item.description && (
             <p className="mt-1 line-clamp-1 text-sm text-gray-600">{item.description}</p>

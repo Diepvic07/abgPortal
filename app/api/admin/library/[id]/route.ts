@@ -18,6 +18,7 @@ const UpdateLibraryItemSchema = z.object({
   title: z.string().min(5).max(200).optional(),
   description: z.string().min(10).max(5000).optional(),
   event_id: z.string().nullable().optional(),
+  proposal_id: z.string().nullable().optional(),
   drive_url: z.string().nullable().optional(),
   drive_file_id: z.string().nullable().optional(),
   thumbnail_url: z.string().url().nullable().optional(),

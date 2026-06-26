@@ -604,6 +604,7 @@ export interface LibraryItem {
   title: string;
   description: string;
   event_id?: string;
+  proposal_id?: string;
   drive_file_id?: string;
   drive_preview_url?: string;
   thumbnail_url?: string;
@@ -619,6 +620,8 @@ export interface LibraryItem {
   published_at?: string;
   event_title?: string;
   event_slug?: string;
+  proposal_title?: string;
+  proposal_slug?: string;
   can_watch?: boolean;
 }
 

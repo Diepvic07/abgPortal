@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { CommunityEvent, LibraryItem, LibraryItemStatus, LibraryResourceLink } from '@/types';
+import type { CommunityEvent, CommunityProposal, LibraryItem, LibraryItemStatus, LibraryResourceLink } from '@/types';
 
 type LibraryForm = {
   title: string;
   description: string;
-  event_id: string;
+  linked_ref: string;
   drive_url: string;
   thumbnail_url: string;
   resource_links_text: string;
@@ -19,7 +19,7 @@ type LibraryForm = {
 const emptyForm: LibraryForm = {
   title: '',
   description: '',
-  event_id: '',
+  linked_ref: '',
   drive_url: '',
   thumbnail_url: '',
   resource_links_text: '',
@@ -28,6 +28,19 @@ const emptyForm: LibraryForm = {
   recorded_at: '',
   status: 'draft',
 };
+
+function encodeLinkedRef(item: LibraryItem | null): string {
+  if (!item) return '';
+  if (item.event_id) return `event:${item.event_id}`;
+  if (item.proposal_id) return `proposal:${item.proposal_id}`;
+  return '';
+}
+
+function parseLinkedRef(value: string): { event_id: string | null; proposal_id: string | null } {
+  if (value.startsWith('event:')) return { event_id: value.slice(6), proposal_id: null };
+  if (value.startsWith('proposal:')) return { event_id: null, proposal_id: value.slice(9) };
+  return { event_id: null, proposal_id: null };
+}
 
 const STATUS_LABELS: Record<LibraryItemStatus, string> = {
   draft: 'Draft',
@@ -62,6 +75,7 @@ function toDateInput(value?: string): string {
 export function AdminLibraryManager() {
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [events, setEvents] = useState<CommunityEvent[]>([]);
+  const [proposals, setProposals] = useState<CommunityProposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -76,9 +90,10 @@ export function AdminLibraryManager() {
   async function fetchData() {
     setLoading(true);
     try {
-      const [libraryRes, eventsRes] = await Promise.all([
+      const [libraryRes, eventsRes, proposalsRes] = await Promise.all([
         fetch('/api/admin/library'),
         fetch('/api/admin/community/events'),
+        fetch('/api/admin/community/proposals'),
       ]);
 
       if (libraryRes.ok) {
@@ -89,6 +104,11 @@ export function AdminLibraryManager() {
       if (eventsRes.ok) {
         const data = await eventsRes.json();
         setEvents(data.events || []);
+      }
+
+      if (proposalsRes.ok) {
+        const data = await proposalsRes.json();
+        setProposals(data.proposals || []);
       }
     } catch (error) {
       console.error('Failed to fetch library data:', error);
@@ -110,7 +130,7 @@ export function AdminLibraryManager() {
     setForm({
       title: item.title,
       description: item.description,
-      event_id: item.event_id || '',
+      linked_ref: encodeLinkedRef(item),
       drive_url: item.drive_file_id || '',
       thumbnail_url: item.thumbnail_url || '',
       resource_links_text: resourceLinksToText(item.resource_links),
@@ -129,10 +149,12 @@ export function AdminLibraryManager() {
     setMessage(null);
 
     try {
+      const linked = parseLinkedRef(form.linked_ref);
       const payload = {
         title: form.title.trim(),
         description: form.description.trim(),
-        event_id: form.event_id || null,
+        event_id: linked.event_id,
+        proposal_id: linked.proposal_id,
         drive_url: form.drive_url.trim() || null,
         thumbnail_url: form.thumbnail_url.trim() || null,
         resource_links: parseResourceLinksText(form.resource_links_text),
@@ -260,18 +282,31 @@ export function AdminLibraryManager() {
             </label>
 
             <label className="block">
-              <span className="text-sm font-medium text-gray-700">Linked Event</span>
+              <span className="text-sm font-medium text-gray-700">Linked Event / Proposal</span>
               <select
-                value={form.event_id}
-                onChange={(e) => setForm((prev) => ({ ...prev, event_id: e.target.value }))}
+                value={form.linked_ref}
+                onChange={(e) => setForm((prev) => ({ ...prev, linked_ref: e.target.value }))}
                 className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               >
                 <option value="">No linked event</option>
-                {events.map((event) => (
-                  <option key={event.id} value={event.id}>
-                    {event.title}
-                  </option>
-                ))}
+                {events.length > 0 && (
+                  <optgroup label="Events">
+                    {events.map((event) => (
+                      <option key={`event-${event.id}`} value={`event:${event.id}`}>
+                        {event.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {proposals.length > 0 && (
+                  <optgroup label="Completed Proposals">
+                    {proposals.map((proposal) => (
+                      <option key={`proposal-${proposal.id}`} value={`proposal:${proposal.id}`}>
+                        {proposal.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             </label>
 
@@ -386,7 +421,7 @@ export function AdminLibraryManager() {
                     <div className="font-medium text-gray-900">{item.title}</div>
                     <div className="mt-1 text-sm text-gray-500">{item.speaker_name || 'No speaker'}{item.duration_text ? ` · ${item.duration_text}` : ''}</div>
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-600">{item.event_title || '-'}</td>
+                  <td className="px-4 py-4 text-sm text-gray-600">{item.event_title || item.proposal_title || '-'}</td>
                   <td className="px-4 py-4">
                     <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
                       {STATUS_LABELS[item.status]}

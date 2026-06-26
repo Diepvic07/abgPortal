@@ -4,7 +4,8 @@ import { generateId, formatDate, generateSlug } from '@/lib/utils';
 
 const LIBRARY_SELECT = `
   *,
-  event:community_events(id, title, slug)
+  event:community_events(id, title, slug),
+  proposal:community_proposals(id, title, slug)
 `;
 
 function nullToUndefined<T>(val: T | null): T | undefined {
@@ -26,6 +27,7 @@ function parseResourceLinks(value: unknown): LibraryResourceLink[] {
 
 function mapRowToLibraryItem(row: Record<string, unknown>): LibraryItem {
   const event = row.event as Record<string, unknown> | null;
+  const proposal = row.proposal as Record<string, unknown> | null;
 
   return {
     id: row.id as string,
@@ -33,6 +35,7 @@ function mapRowToLibraryItem(row: Record<string, unknown>): LibraryItem {
     title: row.title as string,
     description: row.description as string,
     event_id: nullToUndefined(row.event_id as string | null),
+    proposal_id: nullToUndefined(row.proposal_id as string | null),
     drive_file_id: nullToUndefined(row.drive_file_id as string | null),
     drive_preview_url: nullToUndefined(row.drive_preview_url as string | null),
     thumbnail_url: nullToUndefined(row.thumbnail_url as string | null),
@@ -48,6 +51,8 @@ function mapRowToLibraryItem(row: Record<string, unknown>): LibraryItem {
     published_at: nullToUndefined(row.published_at as string | null),
     event_title: event && typeof event.title === 'string' ? event.title : undefined,
     event_slug: event && typeof event.slug === 'string' ? event.slug : undefined,
+    proposal_title: proposal && typeof proposal.title === 'string' ? proposal.title : undefined,
+    proposal_slug: proposal && typeof proposal.slug === 'string' ? proposal.slug : undefined,
   };
 }
 
@@ -111,6 +116,7 @@ export async function createLibraryItem(data: {
   title: string;
   description: string;
   event_id?: string | null;
+  proposal_id?: string | null;
   drive_file_id?: string | null;
   drive_preview_url?: string | null;
   thumbnail_url?: string | null;
@@ -133,6 +139,7 @@ export async function createLibraryItem(data: {
       title: data.title,
       description: data.description,
       event_id: data.event_id || null,
+      proposal_id: data.proposal_id || null,
       drive_file_id: data.drive_file_id || null,
       drive_preview_url: data.drive_preview_url || null,
       thumbnail_url: data.thumbnail_url || null,
@@ -164,6 +171,7 @@ export async function updateLibraryItem(
     title: string;
     description: string;
     event_id: string | null;
+    proposal_id: string | null;
     drive_file_id: string | null;
     drive_preview_url: string | null;
     thumbnail_url: string | null;
