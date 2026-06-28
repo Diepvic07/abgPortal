@@ -1492,6 +1492,146 @@ export async function sendEventPaymentNotificationEmail(data: {
   }
 }
 
+/** Send confirmation to the payer once an admin verifies their event payment. */
+export async function sendEventPaymentConfirmedEmail(data: {
+  to: string;
+  payerName: string;
+  eventTitle: string;
+  eventSlug: string;
+  eventDate?: string;
+  eventLocation?: string;
+  amountVnd: number;
+  communityGroupUrl?: string;
+  communityGroupLabel?: string;
+  locale?: Locale;
+}): Promise<void> {
+  const locale: Locale = data.locale === 'en' ? 'en' : 'vi';
+  const resend = getResendClient();
+  const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
+  const eventUrl = `${appUrl}/events/${data.eventSlug}`;
+  const formattedAmount = new Intl.NumberFormat('vi-VN').format(data.amountVnd);
+
+  const formattedDate = data.eventDate
+    ? new Date(data.eventDate).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
+
+  const strings = locale === 'vi'
+    ? {
+        subject: `Đã xác nhận thanh toán · ${data.eventTitle}`,
+        header: 'Thanh toán đã được xác nhận',
+        greeting: `Xin chào ${escapeHtml(data.payerName)},`,
+        intro: 'Ban tổ chức đã xác nhận khoản thanh toán của bạn. Chỗ tham gia sự kiện của bạn đã được đảm bảo. 🎉',
+        eventLabel: 'Sự kiện',
+        whenLabel: 'Thời gian',
+        whereLabel: 'Địa điểm',
+        amountLabel: 'Số tiền',
+        cta: 'Xem chi tiết sự kiện',
+        outro: 'Hẹn gặp bạn tại sự kiện. Nếu có câu hỏi, vui lòng phản hồi email này.',
+        signature: 'Đội ngũ ABG Alumni Connect',
+        footer: 'ABG Alumni Connect — Xác nhận thanh toán sự kiện',
+        groupHeading: 'Tham gia nhóm trao đổi của sự kiện',
+        groupBody: 'Ban tổ chức sẽ gửi cập nhật và trao đổi với người tham gia qua nhóm dưới đây. Hãy tham gia để không bỏ lỡ thông tin.',
+        groupCtaDefault: 'Tham gia nhóm',
+      }
+    : {
+        subject: `Payment confirmed · ${data.eventTitle}`,
+        header: 'Your payment is confirmed',
+        greeting: `Hi ${escapeHtml(data.payerName)},`,
+        intro: 'An organizer has verified your payment. Your spot at the event is now guaranteed. 🎉',
+        eventLabel: 'Event',
+        whenLabel: 'When',
+        whereLabel: 'Where',
+        amountLabel: 'Amount',
+        cta: 'View event details',
+        outro: 'See you at the event. Reply to this email if you have any questions.',
+        signature: 'ABG Alumni Connect team',
+        footer: 'ABG Alumni Connect — Event payment confirmation',
+        groupHeading: 'Join the event community group',
+        groupBody: 'Organizers will share updates and chat with attendees in the group below. Join so you don’t miss anything.',
+        groupCtaDefault: 'Join the group',
+      };
+
+  const rows: string[] = [
+    `<tr><td style="padding:4px 0;font-weight:600;width:100px;">${strings.eventLabel}:</td><td style="padding:4px 0;">${escapeHtml(data.eventTitle)}</td></tr>`,
+  ];
+  if (formattedDate) {
+    rows.push(`<tr><td style="padding:4px 0;font-weight:600;">${strings.whenLabel}:</td><td style="padding:4px 0;">${escapeHtml(formattedDate)}</td></tr>`);
+  }
+  if (data.eventLocation) {
+    rows.push(`<tr><td style="padding:4px 0;font-weight:600;">${strings.whereLabel}:</td><td style="padding:4px 0;">${escapeHtml(data.eventLocation)}</td></tr>`);
+  }
+  rows.push(`<tr><td style="padding:4px 0;font-weight:600;">${strings.amountLabel}:</td><td style="padding:4px 0;">${formattedAmount} VND</td></tr>`);
+
+  const groupBlock = data.communityGroupUrl
+    ? `
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:0 0 24px;">
+            <p style="margin:0 0 8px;font-size:15px;font-weight:600;color:#1d4ed8;">${strings.groupHeading}</p>
+            <p style="margin:0 0 12px;font-size:14px;color:#1f2937;line-height:1.6;">${strings.groupBody}</p>
+            ${data.communityGroupLabel ? `<p style="margin:0 0 8px;font-size:13px;color:#1f2937;"><strong>${escapeHtml(data.communityGroupLabel)}</strong></p>` : ''}
+            <p style="margin:0 0 12px;font-size:14px;color:#1f2937;word-break:break-all;"><a href="${escapeHtml(data.communityGroupUrl)}" style="color:#1d4ed8;text-decoration:underline;">${escapeHtml(data.communityGroupUrl)}</a></p>
+            <table cellpadding="0" cellspacing="0"><tr><td>
+              <a href="${escapeHtml(data.communityGroupUrl)}" style="display:inline-block;padding:10px 22px;background:#1d4ed8;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">${escapeHtml(data.communityGroupLabel || strings.groupCtaDefault)}</a>
+            </td></tr></table>
+          </div>
+`
+    : '';
+
+  const emailHtml = `<!DOCTYPE html>
+<html lang="${locale}"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 0;">
+    <tr><td align="center">
+      <table width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:#16a34a;padding:24px 40px;">
+          <h1 style="margin:0;font-size:20px;color:#ffffff;font-weight:600;">${strings.header}</h1>
+        </td></tr>
+        <tr><td style="padding:28px 40px;">
+          <p style="margin:0 0 16px;font-size:15px;color:#1f2937;">${strings.greeting}</p>
+          <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">${strings.intro}</p>
+
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:0 0 24px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#1f2937;">
+              ${rows.join('')}
+            </table>
+          </div>
+${groupBlock}
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr><td>
+            <a href="${eventUrl}" style="display:inline-block;padding:12px 28px;background:#16a34a;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;">${strings.cta}</a>
+          </td></tr></table>
+
+          <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.6;">${strings.outro}</p>
+          <p style="margin:16px 0 0;font-size:14px;color:#374151;">— ${strings.signature}</p>
+        </td></tr>
+        <tr><td style="padding:20px 40px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">${strings.footer}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const { error } = await resend.emails.send({ from: FROM_EMAIL, to: data.to, subject: strings.subject, html: emailHtml });
+
+  if (error) {
+    if (error.name === 'validation_error' && error.message.includes('only send testing emails')) {
+      if (TEST_MODE_EMAILS.includes(data.to)) {
+        await resend.emails.send({ from: FROM_EMAIL, to: data.to, subject: `[TEST] ${strings.subject}`, html: emailHtml }).catch(e => console.warn('Resend test fallback failed:', e));
+      } else {
+        console.warn('[Resend] Test mode: payment confirmation email not sent to', data.to);
+      }
+      return;
+    }
+    console.error('Failed to send event payment confirmed email:', error);
+  }
+}
+
 /**
  * Send discussion meeting invitation email
  */

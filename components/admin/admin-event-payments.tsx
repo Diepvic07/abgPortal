@@ -11,13 +11,20 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; eventTitle: string }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [payments, setPayments] = useState<EventPayment[]>([]);
   const [guestRsvps, setGuestRsvps] = useState<EventGuestRsvp[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [editAmounts, setEditAmounts] = useState<Record<string, string>>({});
+  const [eventGroupUrl, setEventGroupUrl] = useState<string | null>(null);
+  const [eventGroupLabel, setEventGroupLabel] = useState<string | null>(null);
+  // Which pending payment row is currently showing the inline group-link prompt
+  const [promptingPaymentId, setPromptingPaymentId] = useState<string | null>(null);
+  const [promptUrl, setPromptUrl] = useState('');
+  const [promptLabel, setPromptLabel] = useState('');
+  const [promptError, setPromptError] = useState<string | null>(null);
 
   const PAYER_TYPE_LABELS: Record<string, string> = {
     premium: t.admin.labels.premium,
@@ -39,6 +46,8 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
       if (paymentsRes.ok) {
         const data = await paymentsRes.json();
         setPayments(data.payments || []);
+        setEventGroupUrl(data.community_group_url || null);
+        setEventGroupLabel(data.community_group_label || null);
       }
       if (guestRes.ok) {
         const data = await guestRes.json();
@@ -51,7 +60,66 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
     }
   }
 
+  function isValidUrl(value: string): boolean {
+    try {
+      const u = new URL(value);
+      return u.protocol === 'http:' || u.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  async function submitConfirm(paymentId: string, opts?: { groupUrl?: string; groupLabel?: string }) {
+    setActionLoading(paymentId);
+    setMessage(null);
+    setPromptError(null);
+    try {
+      const payload: Record<string, unknown> = { payment_id: paymentId, status: 'confirmed' };
+      const editedAmount = editAmounts[paymentId];
+      if (editedAmount && parseInt(editedAmount) > 0) {
+        payload.amount_vnd = parseInt(editedAmount);
+      }
+      if (opts?.groupUrl) payload.community_group_url = opts.groupUrl;
+      if (opts?.groupLabel) payload.community_group_label = opts.groupLabel;
+
+      const res = await fetch(`/api/admin/community/events/${eventId}/payments`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        setMessage({ text: (t.admin.eventPayments.paymentStatus as string).replace('{status}', 'confirmed'), type: 'success' });
+        setPromptingPaymentId(null);
+        setPromptUrl('');
+        setPromptLabel('');
+        await fetchData();
+      } else {
+        const data = await res.json().catch(() => null);
+        setMessage({ text: data?.error || t.admin.messages.failed, type: 'error' });
+      }
+    } catch {
+      setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   async function handlePaymentAction(paymentId: string, status: 'confirmed' | 'rejected') {
+    if (status === 'confirmed' && !eventGroupUrl) {
+      // First confirm for this event: open the inline prompt for an optional group link.
+      setPromptingPaymentId(paymentId);
+      setPromptUrl('');
+      setPromptLabel('');
+      setPromptError(null);
+      setMessage(null);
+      return;
+    }
+
+    if (status === 'confirmed') {
+      await submitConfirm(paymentId);
+      return;
+    }
+
     setActionLoading(paymentId);
     setMessage(null);
     try {
@@ -69,13 +137,29 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
         setMessage({ text: (t.admin.eventPayments.paymentStatus as string).replace('{status}', status), type: 'success' });
         await fetchData();
       } else {
-        const data = await res.json();
-        setMessage({ text: data.error || t.admin.messages.failed, type: 'error' });
+        const data = await res.json().catch(() => null);
+        setMessage({ text: data?.error || t.admin.messages.failed, type: 'error' });
       }
     } catch {
       setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
     } finally {
       setActionLoading(null);
+    }
+  }
+
+  async function submitPrompt(paymentId: string, mode: 'with-link' | 'skip') {
+    if (mode === 'with-link') {
+      const url = promptUrl.trim();
+      const label = promptLabel.trim();
+      if (!url || !isValidUrl(url)) {
+        setPromptError(locale === 'vi'
+          ? 'Vui lòng nhập đường dẫn hợp lệ (bắt đầu bằng http:// hoặc https://).'
+          : 'Please enter a valid URL (starting with http:// or https://).');
+        return;
+      }
+      await submitConfirm(paymentId, { groupUrl: url, groupLabel: label });
+    } else {
+      await submitConfirm(paymentId);
     }
   }
 
@@ -128,6 +212,23 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
         </div>
       )}
 
+      {eventGroupUrl && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+          <span className="font-semibold">
+            {locale === 'vi' ? 'Nhóm trao đổi:' : 'Community group:'}
+          </span>{' '}
+          {eventGroupLabel ? <span>{eventGroupLabel} · </span> : null}
+          <a href={eventGroupUrl} target="_blank" rel="noopener noreferrer" className="break-all underline">
+            {eventGroupUrl}
+          </a>
+          <p className="mt-1 text-xs text-blue-700">
+            {locale === 'vi'
+              ? 'Liên kết này sẽ được gửi kèm trong mọi email xác nhận thanh toán tiếp theo.'
+              : 'This link is included in every future payment confirmation email.'}
+          </p>
+        </div>
+      )}
+
       {/* Pending Payments */}
       {pendingPayments.length > 0 && (
         <div>
@@ -174,6 +275,74 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
                     </button>
                   </div>
                 </div>
+
+                {promptingPaymentId === p.id && (
+                  <div className="mt-3 rounded-lg border border-blue-200 bg-white p-3">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {locale === 'vi'
+                        ? 'Thêm nhóm trao đổi (tuỳ chọn)'
+                        : 'Add a community group link (optional)'}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-600">
+                      {locale === 'vi'
+                        ? 'Đây là lần xác nhận thanh toán đầu tiên cho sự kiện này. Nếu bạn cung cấp đường dẫn nhóm Zalo / Facebook / Telegram, mọi email xác nhận tiếp theo sẽ tự động kèm theo liên kết này.'
+                        : 'This is the first payment confirmation for this event. If you provide a Zalo / Facebook / Telegram group link, every future confirmation email will include it automatically.'}
+                    </p>
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">
+                          {locale === 'vi' ? 'Đường dẫn nhóm' : 'Group URL'}
+                        </label>
+                        <input
+                          type="url"
+                          value={promptUrl}
+                          onChange={(e) => setPromptUrl(e.target.value)}
+                          placeholder="https://zalo.me/g/xxxxx"
+                          className="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">
+                          {locale === 'vi' ? 'Tên hiển thị (tuỳ chọn)' : 'Display label (optional)'}
+                        </label>
+                        <input
+                          type="text"
+                          value={promptLabel}
+                          onChange={(e) => setPromptLabel(e.target.value)}
+                          placeholder={locale === 'vi' ? 'Nhóm Zalo sự kiện' : 'Event Zalo group'}
+                          maxLength={120}
+                          className="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
+                    </div>
+                    {promptError && (
+                      <p className="mt-2 text-xs text-red-600">{promptError}</p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => submitPrompt(p.id, 'with-link')}
+                        disabled={actionLoading === p.id}
+                        className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {locale === 'vi' ? 'Xác nhận & lưu nhóm' : 'Confirm & save group'}
+                      </button>
+                      <button
+                        onClick={() => submitPrompt(p.id, 'skip')}
+                        disabled={actionLoading === p.id}
+                        className="text-xs px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        {locale === 'vi' ? 'Xác nhận, bỏ qua nhóm' : 'Confirm without group'}
+                      </button>
+                      <button
+                        onClick={() => { setPromptingPaymentId(null); setPromptError(null); }}
+                        disabled={actionLoading === p.id}
+                        className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                      >
+                        {locale === 'vi' ? 'Huỷ' : 'Cancel'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

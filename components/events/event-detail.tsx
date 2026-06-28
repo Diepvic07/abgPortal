@@ -201,6 +201,10 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [memberPhone, setMemberPhone] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [tierCounts, setTierCounts] = useState<{ premium: number; basic: number }>({ premium: 0, basic: 0 });
+  const [confirmedMemberIds, setConfirmedMemberIds] = useState<string[]>([]);
+  const [confirmedGuestRsvpIds, setConfirmedGuestRsvpIds] = useState<string[]>([]);
+  const [pendingCountServer, setPendingCountServer] = useState(0);
+  const [pendingIncludesMe, setPendingIncludesMe] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [currentMemberIsAdmin, setCurrentMemberIsAdmin] = useState(false);
   const fetchEventDataRef = useRef<() => Promise<void>>(async () => {});
@@ -229,6 +233,10 @@ export function EventDetail({ eventId }: { eventId: string }) {
         if (data.membership_status) setMembershipStatus(data.membership_status);
         if (data.member_phone) setMemberPhone(data.member_phone);
         if (data.tier_counts) setTierCounts(data.tier_counts);
+        setConfirmedMemberIds(Array.isArray(data.confirmed_member_ids) ? data.confirmed_member_ids : []);
+        setConfirmedGuestRsvpIds(Array.isArray(data.confirmed_guest_rsvp_ids) ? data.confirmed_guest_rsvp_ids : []);
+        setPendingCountServer(typeof data.pending_count === 'number' ? data.pending_count : 0);
+        setPendingIncludesMe(!!data.pending_includes_me);
         if (data.currentMemberId) setCurrentMemberId(data.currentMemberId);
         if (data.currentMemberIsAdmin) setCurrentMemberIsAdmin(true);
       } else {
@@ -510,6 +518,26 @@ export function EventDetail({ eventId }: { eventId: string }) {
     [rsvps],
   );
 
+  const confirmedMemberIdSet = useMemo(() => new Set(confirmedMemberIds), [confirmedMemberIds]);
+  const confirmedGuestRsvpIdSet = useMemo(() => new Set(confirmedGuestRsvpIds), [confirmedGuestRsvpIds]);
+  const eventHasFee = !!(event && ((event.fee_premium ?? 0) > 0 || (event.fee_basic ?? 0) > 0 || (event.fee_guest ?? 0) > 0));
+  const confirmedRsvps = useMemo(
+    () => (eventHasFee ? activeRsvps.filter(r => confirmedMemberIdSet.has(r.member_id)) : activeRsvps),
+    [eventHasFee, activeRsvps, confirmedMemberIdSet],
+  );
+  const pendingRsvps = useMemo(
+    () => (eventHasFee ? activeRsvps.filter(r => !confirmedMemberIdSet.has(r.member_id)) : []),
+    [eventHasFee, activeRsvps, confirmedMemberIdSet],
+  );
+  const confirmedGuestRsvps = useMemo(
+    () => (eventHasFee ? guestRsvps.filter(g => confirmedGuestRsvpIdSet.has(g.id)) : guestRsvps),
+    [eventHasFee, guestRsvps, confirmedGuestRsvpIdSet],
+  );
+  const pendingGuestRsvps = useMemo(
+    () => (eventHasFee ? guestRsvps.filter(g => !confirmedGuestRsvpIdSet.has(g.id)) : []),
+    [eventHasFee, guestRsvps, confirmedGuestRsvpIdSet],
+  );
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -542,7 +570,9 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const categoryLabel = EVENT_CATEGORY_LABELS[event.category]?.[locale === 'vi' ? 'vi' : 'en'] || event.category;
   const statusInfo = EVENT_STATUS_LABELS[event.status];
   const isPremium = membershipStatus === 'premium' || membershipStatus === 'grace-period';
-  const registeredCount = activeRsvps.length;
+  const registeredCount = confirmedRsvps.length;
+  // Non-admins only get their own pending row, so trust the server's authoritative pending count.
+  const pendingCount = pendingCountServer;
   const totalCapacity = (event.capacity_premium || 0) + (event.capacity_basic || 0) || event.capacity || 0;
   const capacityPercent = totalCapacity ? (registeredCount / totalCapacity) * 100 : 0;
   const isFull = totalCapacity ? registeredCount >= totalCapacity : false;
@@ -818,6 +848,14 @@ export function EventDetail({ eventId }: { eventId: string }) {
             <p className="mt-1 text-sm text-stone-600">
               {locale === 'vi' ? 'thành viên đã xác nhận tham gia' : 'members confirmed to attend'}
             </p>
+            {eventHasFee && pendingCount > 0 && (
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
+                <span>⏳</span>
+                {locale === 'vi'
+                  ? `${pendingCount} đang chờ xác nhận thanh toán${pendingIncludesMe ? ' (bao gồm bạn)' : ''}`
+                  : `${pendingCount} awaiting payment confirmation${pendingIncludesMe ? ' (including you)' : ''}`}
+              </p>
+            )}
 
             {/* Per-tier breakdown */}
             {(event.capacity_premium != null || event.capacity_basic != null) && (
@@ -871,6 +909,32 @@ export function EventDetail({ eventId }: { eventId: string }) {
           </div>
         </div>
       </section>
+
+      {/* Community group link — visible only to confirmed attendees (or admin) */}
+      {event.community_group_url && (currentMemberIsAdmin || (currentMemberId && confirmedMemberIdSet.has(currentMemberId))) && (
+        <section className="mt-6 rounded-3xl border border-blue-200 bg-blue-50 p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-blue-900">
+            {locale === 'vi' ? 'Nhóm trao đổi sự kiện' : 'Event community group'}
+          </h2>
+          <p className="mt-1 text-sm text-blue-900/80">
+            {locale === 'vi'
+              ? 'Tham gia nhóm dưới đây để nhận cập nhật và trao đổi với ban tổ chức cùng những người tham gia khác.'
+              : 'Join the group below for updates and to chat with organizers and fellow attendees.'}
+          </p>
+          {event.community_group_label && (
+            <p className="mt-3 text-sm font-medium text-blue-900">{event.community_group_label}</p>
+          )}
+          <a
+            href={event.community_group_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            {event.community_group_label || (locale === 'vi' ? 'Tham gia nhóm' : 'Join the group')}
+          </a>
+          <p className="mt-2 break-all text-xs text-blue-700">{event.community_group_url}</p>
+        </section>
+      )}
 
       {/* Fee Pricing */}
       {event.status === 'published' && (event.fee_premium != null || event.fee_basic != null || event.fee_guest != null) && (
@@ -1115,73 +1179,152 @@ export function EventDetail({ eventId }: { eventId: string }) {
         </section>
       )}
 
-      {(activeRsvps.length > 0 || guestRsvps.length > 0) && (
-        <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {locale === 'vi' ? 'Người đã đăng ký' : 'Registered Members'} ({activeRsvps.length + guestRsvps.length})
-          </h2>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {[...activeRsvps]
-              .sort((a, b) => {
-                const order: Record<string, number> = { will_lead: 0, will_participate: 1 };
-                return (order[a.commitment_level] ?? 9) - (order[b.commitment_level] ?? 9);
-              })
-              .map((rsvp) => {
-                const isLead = rsvp.commitment_level === 'will_lead';
-                const profileHref = rsvp.member_id
-                  ? getInternalProfileUrl({ id: rsvp.member_id, name: rsvp.member_name })
-                  : null;
-                const chipClasses = `flex items-center gap-2 rounded-full px-3 py-2 text-sm ${
-                  isLead ? 'bg-amber-50 text-amber-900 ring-1 ring-amber-200' : 'bg-stone-100 text-stone-700'
-                }`;
-                const chipTitle = RSVP_LABELS[rsvp.commitment_level as EventRegistrationLevel]?.[locale === 'vi' ? 'vi' : 'en'];
-                const chipContent = (
-                  <>
-                    {isLead && <span>👑</span>}
-                    {rsvp.member_avatar_url ? (
-                      <img src={rsvp.member_avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
-                    ) : (
-                      <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold text-white ${getAvatarColor(rsvp.member_name || '?')}`}>
-                        {(rsvp.member_name || '?')[0].toUpperCase()}
-                      </div>
-                    )}
-                    <span className="font-medium">{rsvp.member_name || 'Member'}</span>
-                  </>
-                );
-                return profileHref ? (
-                  <Link
-                    key={rsvp.id}
-                    href={profileHref} target="_blank" rel="noopener noreferrer"
-                    className={`${chipClasses} transition-colors hover:bg-stone-200 ${isLead ? 'hover:bg-amber-100' : ''}`}
-                    title={chipTitle}
-                  >
-                    {chipContent}
-                  </Link>
-                ) : (
-                  <div key={rsvp.id} className={chipClasses} title={chipTitle}>
-                    {chipContent}
-                  </div>
-                );
-              })}
-            {guestRsvps.map((g) => (
-              <div
-                key={g.id}
-                className="flex items-center gap-2 rounded-full px-3 py-2 text-sm bg-blue-50 text-blue-900 ring-1 ring-blue-200"
-                title={g.guest_email}
-              >
-                <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold text-white ${getAvatarColor(g.guest_name)}`}>
-                  {g.guest_name[0]?.toUpperCase() || 'G'}
+      {(activeRsvps.length > 0 || guestRsvps.length > 0) && (() => {
+        const sortRsvps = (list: EventRsvp[]) =>
+          [...list].sort((a, b) => {
+            const order: Record<string, number> = { will_lead: 0, will_participate: 1 };
+            return (order[a.commitment_level] ?? 9) - (order[b.commitment_level] ?? 9);
+          });
+
+        const renderMemberChip = (rsvp: EventRsvp, opts?: { pending?: boolean }) => {
+          const isLead = rsvp.commitment_level === 'will_lead';
+          const isPending = !!opts?.pending;
+          const profileHref = rsvp.member_id
+            ? getInternalProfileUrl({ id: rsvp.member_id, name: rsvp.member_name })
+            : null;
+          const baseClasses = isPending
+            ? 'bg-amber-50 text-amber-900 ring-1 ring-amber-200'
+            : isLead
+              ? 'bg-amber-50 text-amber-900 ring-1 ring-amber-200'
+              : 'bg-stone-100 text-stone-700';
+          const hoverClasses = isPending
+            ? 'hover:bg-amber-100'
+            : isLead
+              ? 'hover:bg-amber-100'
+              : 'hover:bg-stone-200';
+          const chipClasses = `flex items-center gap-2 rounded-full px-3 py-2 text-sm ${baseClasses}`;
+          const chipTitle = RSVP_LABELS[rsvp.commitment_level as EventRegistrationLevel]?.[locale === 'vi' ? 'vi' : 'en'];
+          const chipContent = (
+            <>
+              {isLead && !isPending && <span>👑</span>}
+              {rsvp.member_avatar_url ? (
+                <img src={rsvp.member_avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
+              ) : (
+                <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold text-white ${getAvatarColor(rsvp.member_name || '?')}`}>
+                  {(rsvp.member_name || '?')[0].toUpperCase()}
                 </div>
-                <span className="font-medium">{g.guest_name}</span>
-                <span className="text-xs text-blue-700">· {g.guest_email}</span>
-                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
-                  {locale === 'vi' ? 'Khách' : 'Guest'}
+              )}
+              <span className="font-medium">{rsvp.member_name || 'Member'}</span>
+              {isPending && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                  {locale === 'vi' ? 'Chờ TT' : 'Pending'}
                 </span>
+              )}
+            </>
+          );
+          return profileHref ? (
+            <Link
+              key={rsvp.id}
+              href={profileHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${chipClasses} transition-colors ${hoverClasses}`}
+              title={chipTitle}
+            >
+              {chipContent}
+            </Link>
+          ) : (
+            <div key={rsvp.id} className={chipClasses} title={chipTitle}>
+              {chipContent}
+            </div>
+          );
+        };
+
+        const renderGuestChip = (g: EventGuestRsvp, opts?: { pending?: boolean }) => {
+          const isPending = !!opts?.pending;
+          const baseClasses = isPending
+            ? 'bg-amber-50 text-amber-900 ring-1 ring-amber-200'
+            : 'bg-blue-50 text-blue-900 ring-1 ring-blue-200';
+          return (
+            <div
+              key={g.id}
+              className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm ${baseClasses}`}
+              title={g.guest_email}
+            >
+              <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold text-white ${getAvatarColor(g.guest_name)}`}>
+                {g.guest_name[0]?.toUpperCase() || 'G'}
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+              <span className="font-medium">{g.guest_name}</span>
+              <span className={`text-xs ${isPending ? 'text-amber-700' : 'text-blue-700'}`}>· {g.guest_email}</span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${isPending ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-700'}`}>
+                {isPending
+                  ? (locale === 'vi' ? 'Khách · Chờ TT' : 'Guest · Pending')
+                  : (locale === 'vi' ? 'Khách' : 'Guest')}
+              </span>
+            </div>
+          );
+        };
+
+        const confirmedTotal = confirmedRsvps.length + confirmedGuestRsvps.length;
+
+        return (
+          <section className="mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {eventHasFee
+                ? (locale === 'vi' ? 'Đã xác nhận tham gia' : 'Confirmed Attendees')
+                : (locale === 'vi' ? 'Người đã đăng ký' : 'Registered Members')}
+              {' '}({confirmedTotal})
+            </h2>
+            {confirmedTotal > 0 ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {sortRsvps(confirmedRsvps).map((rsvp) => renderMemberChip(rsvp))}
+                {confirmedGuestRsvps.map((g) => renderGuestChip(g))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-stone-500">
+                {locale === 'vi'
+                  ? 'Chưa có ai hoàn tất thanh toán. Hãy là người đầu tiên giữ chỗ chính thức.'
+                  : 'No confirmed attendees yet. Be the first to lock in your spot.'}
+              </p>
+            )}
+
+            {eventHasFee && pendingCount > 0 && (
+              <div className="mt-6 border-t border-stone-200 pt-4">
+                <h3 className="text-sm font-semibold text-amber-800">
+                  {locale === 'vi' ? 'Chờ xác nhận thanh toán' : 'Awaiting payment confirmation'}
+                  {' '}({pendingCount}
+                  {pendingIncludesMe && !currentMemberIsAdmin
+                    ? (locale === 'vi' ? ', bao gồm bạn' : ', including you')
+                    : ''})
+                </h3>
+                {currentMemberIsAdmin ? (
+                  <>
+                    <p className="mt-1 text-xs text-stone-500">
+                      {locale === 'vi'
+                        ? 'Những người này đã đăng ký nhưng ban tổ chức chưa xác nhận thanh toán. Chỉ admin mới thấy danh sách này.'
+                        : 'These members registered but have not had payment verified. Only admins see this list.'}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {sortRsvps(pendingRsvps).map((rsvp) => renderMemberChip(rsvp, { pending: true }))}
+                      {pendingGuestRsvps.map((g) => renderGuestChip(g, { pending: true }))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="mt-1 text-xs text-stone-500">
+                    {pendingIncludesMe
+                      ? (locale === 'vi'
+                          ? 'Thanh toán của bạn đang chờ ban tổ chức xác nhận. Chỗ sẽ được đảm bảo sau khi xác nhận. Danh sách chi tiết chỉ hiển thị cho admin.'
+                          : 'Your payment is awaiting organizer confirmation. Your spot is guaranteed after confirmation. Names are visible to admins only.')
+                      : (locale === 'vi'
+                          ? 'Một số người đã đăng ký nhưng ban tổ chức chưa xác nhận thanh toán. Danh sách chi tiết chỉ hiển thị cho admin.'
+                          : 'Some members registered but payment has not been verified. Names are visible to admins only.')}
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+        );
+      })()}
 
       {/* Email Invite — for creator or admin */}
       {(currentMemberId === event.created_by_member_id || currentMemberIsAdmin) && (

@@ -34,6 +34,8 @@ const CreateEventSchema = z.object({
   registration_deadline: z.string().optional(),
   payment_qr_url: z.string().url().optional(),
   payment_instructions: z.string().optional(),
+  community_group_url: z.string().url().optional(),
+  community_group_label: z.string().max(120).optional(),
   require_question: z.boolean().optional(),
   question_prompt: z.string().max(500).optional(),
   organizer_member_id: z.string().optional(),

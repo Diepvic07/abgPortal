@@ -36,6 +36,8 @@ const UpdateEventSchema = z.object({
   registration_deadline: z.string().nullable().optional(),
   payment_qr_url: z.string().url().nullable().optional(),
   payment_instructions: z.string().nullable().optional(),
+  community_group_url: z.string().url().nullable().optional(),
+  community_group_label: z.string().max(120).nullable().optional(),
   require_question: z.boolean().optional(),
   question_prompt: z.string().max(500).nullable().optional(),
   recap_text: z.string().max(10000).nullable().optional(),

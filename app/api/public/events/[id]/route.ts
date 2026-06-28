@@ -13,8 +13,13 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     const guestRsvps = await getGuestRsvpsByEvent(id);
 
+    // Community group link is for confirmed attendees only — never expose publicly.
+    const publicEvent = { ...event };
+    delete publicEvent.community_group_url;
+    delete publicEvent.community_group_label;
+
     return successResponse({
-      event,
+      event: publicEvent,
       guest_rsvp_count: guestRsvps.length,
     });
   } catch (error) {

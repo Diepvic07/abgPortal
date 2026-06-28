@@ -64,6 +64,8 @@ function mapRowToEvent(row: Record<string, unknown>): CommunityEvent {
     payment_qr_url: nullToUndefined(row.payment_qr_url as string | null),
     payment_instructions: nullToUndefined(row.payment_instructions as string | null),
     payment_code: nullToUndefined(row.payment_code as string | null),
+    community_group_url: nullToUndefined(row.community_group_url as string | null),
+    community_group_label: nullToUndefined(row.community_group_label as string | null),
     guest_rsvp_count: (row.guest_rsvp_count as number) || 0,
     outcome_summary: nullToUndefined(row.outcome_summary as string | null),
     recap_text: nullToUndefined(row.recap_text as string | null),
@@ -139,6 +141,8 @@ export async function createEvent(data: {
   is_public?: boolean;
   payment_qr_url?: string;
   payment_instructions?: string;
+  community_group_url?: string;
+  community_group_label?: string;
   registration_deadline?: string;
   allow_cancellation?: boolean;
   created_by_member_id: string;
@@ -177,6 +181,8 @@ export async function createEvent(data: {
       is_public: data.is_public || false,
       payment_qr_url: data.payment_qr_url || null,
       payment_instructions: data.payment_instructions || null,
+      community_group_url: data.community_group_url || null,
+      community_group_label: data.community_group_label || null,
       registration_deadline: data.registration_deadline || null,
       allow_cancellation: data.allow_cancellation ?? true,
       guest_rsvp_count: 0,
@@ -318,6 +324,8 @@ export async function updateEvent(id: string, data: Partial<{
   registration_deadline: string | null;
   payment_qr_url: string | null;
   payment_instructions: string | null;
+  community_group_url: string | null;
+  community_group_label: string | null;
   organizer_member_id: string | null;
 }>): Promise<CommunityEvent> {
   const supabase = createServerSupabaseClient();

@@ -565,6 +565,10 @@ export interface CommunityEvent {
   payment_qr_url?: string;
   payment_instructions?: string;
   payment_code?: string;
+  // Optional group link (Zalo / Facebook / Telegram / Discord …) shared
+  // with attendees after their payment is confirmed.
+  community_group_url?: string;
+  community_group_label?: string;
   allow_cancellation?: boolean;
   registration_closed?: boolean;
   registration_deadline?: string;

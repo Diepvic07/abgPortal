@@ -11,7 +11,14 @@ export async function GET(request: NextRequest) {
     const past = searchParams.get('past') === 'true' ? true : undefined;
 
     const result = await getPublicEvents({ page, limit, upcoming, past });
-    return successResponse({ events: result.events, total: result.total, page, limit });
+    // Strip community group fields — never expose publicly.
+    const events = result.events.map((e) => {
+      const copy = { ...e };
+      delete copy.community_group_url;
+      delete copy.community_group_label;
+      return copy;
+    });
+    return successResponse({ events, total: result.total, page, limit });
   } catch (error) {
     return handleApiError(error);
   }

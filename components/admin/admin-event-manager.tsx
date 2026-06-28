@@ -92,6 +92,8 @@ interface EventForm {
   registration_deadline: string;
   payment_qr_url: string;
   payment_instructions: string;
+  community_group_url: string;
+  community_group_label: string;
   recap_text: string;
   recap_images: string[];
 }
@@ -132,6 +134,8 @@ const emptyForm: EventForm = {
   registration_deadline: '',
   payment_qr_url: '',
   payment_instructions: '',
+  community_group_url: '',
+  community_group_label: '',
   recap_text: '',
   recap_images: [],
 };
@@ -291,6 +295,8 @@ export function AdminEventManager() {
       registration_deadline: event.registration_deadline ? utcToLocalInput(event.registration_deadline) : '',
       payment_qr_url: event.payment_qr_url || '',
       payment_instructions: event.payment_instructions || '',
+      community_group_url: event.community_group_url || '',
+      community_group_label: event.community_group_label || '',
       recap_text: event.recap_text || '',
       recap_images: event.recap_images || [],
     });
@@ -578,6 +584,12 @@ export function AdminEventManager() {
 
     if (form.payment_instructions) payload.payment_instructions = form.payment_instructions;
     else if (editingEvent) payload.payment_instructions = null;
+
+    if (form.community_group_url.trim()) payload.community_group_url = form.community_group_url.trim();
+    else if (editingEvent) payload.community_group_url = null;
+
+    if (form.community_group_label.trim()) payload.community_group_label = form.community_group_label.trim();
+    else if (editingEvent) payload.community_group_label = null;
 
     // Recap fields
     if (form.recap_text) payload.recap_text = form.recap_text;
@@ -1228,6 +1240,46 @@ export function AdminEventManager() {
                     </div>
                   </>
                 )}
+
+                {/* Community group link — for confirmed attendees only */}
+                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50/50">
+                  <h3 className="text-sm font-semibold text-blue-900 mb-1 flex items-center gap-1.5">
+                    <span>💬</span>{' '}
+                    {locale === 'vi' ? 'Nhóm trao đổi (Zalo / Facebook / …)' : 'Community group (Zalo / Facebook / …)'}
+                  </h3>
+                  <p className="text-xs text-blue-900/70 mb-3">
+                    {locale === 'vi'
+                      ? 'Chỉ hiển thị trên trang sự kiện và trong email cho người đã được xác nhận thanh toán. Không công khai.'
+                      : 'Shown on the event page and confirmation emails for paid-and-confirmed attendees only. Never public.'}
+                  </p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-xs text-gray-700 mb-1">
+                        {locale === 'vi' ? 'Đường dẫn nhóm' : 'Group URL'}
+                      </label>
+                      <input
+                        type="url"
+                        value={form.community_group_url}
+                        onChange={(e) => setForm((f) => ({ ...f, community_group_url: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://zalo.me/g/xxxxx"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-700 mb-1">
+                        {locale === 'vi' ? 'Tên hiển thị (tuỳ chọn)' : 'Display label (optional)'}
+                      </label>
+                      <input
+                        type="text"
+                        value={form.community_group_label}
+                        onChange={(e) => setForm((f) => ({ ...f, community_group_label: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder={locale === 'vi' ? 'Nhóm Zalo sự kiện' : 'Event Zalo group'}
+                        maxLength={120}
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 {/* Recap Section */}
                 {editingEvent && (
