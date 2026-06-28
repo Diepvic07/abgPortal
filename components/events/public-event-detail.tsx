@@ -190,7 +190,7 @@ export function PublicEventDetail({ eventId }: { eventId: string }) {
                 </p>
               </div>
             )}
-            {event.fee_guest != null && (
+            {event.fee_guest != null && !noGuests && (
               <div className="rounded-2xl border border-stone-200 p-4 text-center bg-blue-50 border-blue-200">
                 <p className="text-xs font-medium text-blue-600 mb-1">{vi ? 'Khách' : 'Guest'}</p>
                 <p className="text-xl font-bold text-blue-900">
