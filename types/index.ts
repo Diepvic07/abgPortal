@@ -645,6 +645,7 @@ export interface EventRsvp {
   member_name?: string;
   member_avatar_url?: string;
   member_abg_class?: string;
+  member_membership_status?: MembershipStatus;
 }
 
 export interface EventComment {

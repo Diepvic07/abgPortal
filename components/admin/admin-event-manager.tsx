@@ -1535,7 +1535,27 @@ export function AdminEventManager() {
                       return (
                         <div key={row.id} className="grid grid-cols-[minmax(180px,1fr)_110px_130px_130px_80px] gap-3 px-3 py-3 border-t border-gray-100 items-center text-sm">
                           <div className="min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{row.member_name || row.member_id}</p>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <p className="font-medium text-gray-900 truncate">{row.member_name || row.member_id}</p>
+                              {(() => {
+                                const status = row.member_membership_status;
+                                if (!status) return null;
+                                const styles: Record<string, { bg: string; text: string; vi: string; en: string }> = {
+                                  premium:        { bg: 'bg-purple-100', text: 'text-purple-700', vi: 'Premium', en: 'Premium' },
+                                  basic:          { bg: 'bg-gray-100',   text: 'text-gray-700',   vi: 'Basic',   en: 'Basic' },
+                                  pending:        { bg: 'bg-amber-100',  text: 'text-amber-800',  vi: 'Chờ duyệt', en: 'Pending' },
+                                  'grace-period': { bg: 'bg-amber-100',  text: 'text-amber-800',  vi: 'Gia hạn',   en: 'Grace' },
+                                  expired:        { bg: 'bg-red-100',    text: 'text-red-700',    vi: 'Hết hạn',   en: 'Expired' },
+                                };
+                                const s = styles[status];
+                                if (!s) return null;
+                                return (
+                                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.bg} ${s.text}`}>
+                                    {locale === 'vi' ? s.vi : s.en}
+                                  </span>
+                                );
+                              })()}
+                            </div>
                             <p className="text-xs text-gray-500 truncate">
                               {row.member_abg_class || row.commitment_level}
                               {isOrganizer && <> · {locale === 'vi' ? 'Người tổ chức' : 'Organizer'}</>}

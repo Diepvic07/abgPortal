@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from './supabase/server';
-import { CommunityEvent, EventRsvp, EventComment, EventGuestRsvp, EventPayment, EventCategory, EventStatus, EventMode, EventPaymentStatus, PayerType, CommitmentLevel, CommentStatus } from '@/types';
+import { CommunityEvent, EventRsvp, EventComment, EventGuestRsvp, EventPayment, EventCategory, EventStatus, EventMode, EventPaymentStatus, PayerType, CommitmentLevel, CommentStatus, MembershipStatus, Member, getMembershipStatus } from '@/types';
 import { generateId, formatDate, generateSlug } from '@/lib/utils';
 
 function nullToUndefined<T>(val: T | null): T | undefined {
@@ -100,6 +100,7 @@ function mapRowToRsvp(row: Record<string, unknown>): EventRsvp {
     member_name: nullToUndefined(row.member_name as string | null),
     member_avatar_url: nullToUndefined(row.member_avatar_url as string | null),
     member_abg_class: nullToUndefined(row.member_abg_class as string | null),
+    member_membership_status: nullToUndefined(row.member_membership_status as MembershipStatus | null),
   };
 }
 
@@ -465,7 +466,7 @@ export async function getRsvpsByEvent(eventId: string): Promise<EventRsvp[]> {
 
   const { data: rows, error } = await supabase
     .from('community_event_rsvps')
-    .select('*, members!community_event_rsvps_member_id_fkey(name, avatar_url, abg_class)')
+    .select('*, members!community_event_rsvps_member_id_fkey(name, avatar_url, abg_class, paid, payment_status, membership_expiry)')
     .eq('event_id', eventId)
     .order('created_at', { ascending: true });
 
@@ -476,11 +477,16 @@ export async function getRsvpsByEvent(eventId: string): Promise<EventRsvp[]> {
 
   return (rows || []).map((row: Record<string, unknown>) => {
     const members = row.members as Record<string, unknown> | null;
+    let membershipStatus: MembershipStatus | null = null;
+    if (members) {
+      membershipStatus = getMembershipStatus(members as unknown as Member);
+    }
     return mapRowToRsvp({
       ...row,
       member_name: members?.name || null,
       member_avatar_url: members?.avatar_url || null,
       member_abg_class: members?.abg_class || null,
+      member_membership_status: membershipStatus,
     });
   });
 }
