@@ -959,7 +959,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                 </p>
               </div>
             )}
-            {event.fee_guest != null && event.capacity_guest !== 0 && (
+            {event.fee_guest != null && event.is_public && event.capacity_guest !== 0 && (
               <div className="rounded-2xl border border-stone-200 p-4 text-center">
                 <p className="text-xs font-medium text-gray-500 mb-1">{locale === 'vi' ? 'Khách' : 'Guest'}</p>
                 <p className="text-xl font-bold text-gray-900">
