@@ -1100,6 +1100,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                   const isSelected = myRsvp === action.level;
                   const isDisabled =
                     rsvpLoading ||
+                    isSelected ||
                     (!isPremium && isPremiumExclusive) ||
                     (isFull && !hasRsvp) ||
                     (action.level === 'will_lead' && !canUpgradeToLead);
@@ -1119,7 +1120,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
                           : action.level === 'will_lead'
                             ? 'border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 hover:border-amber-300 hover:shadow-md'
                             : 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 hover:border-blue-300 hover:shadow-md'
-                      } ${isDisabled ? 'cursor-not-allowed opacity-60' : ''}`}
+                      } ${isSelected ? 'cursor-default' : isDisabled ? 'cursor-not-allowed opacity-60' : ''}`}
                     >
                       <div className="flex items-center gap-2.5 text-lg font-bold">
                         <span className="text-xl">{action.icon}</span>
