@@ -1112,23 +1112,27 @@ export function EventDetail({ eventId }: { eventId: string }) {
                       disabled={isDisabled}
                       aria-pressed={isSelected}
                       onClick={() => openRsvpModal(action.level)}
-                      className={`rounded-2xl border-2 px-5 py-5 text-left transition-all duration-200 ${
+                      className={`relative rounded-2xl border-2 px-5 py-5 text-left transition-all duration-200 ${
                         isSelected
-                          ? action.level === 'will_lead'
-                            ? 'border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 shadow-md shadow-amber-100'
-                            : 'border-blue-400 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md shadow-blue-100'
+                          ? 'border-emerald-300 bg-emerald-50/40'
                           : action.level === 'will_lead'
                             ? 'border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 hover:border-amber-300 hover:shadow-md'
                             : 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 hover:border-blue-300 hover:shadow-md'
                       } ${isSelected ? 'cursor-default' : isDisabled ? 'cursor-not-allowed opacity-60' : ''}`}
                     >
+                      {isSelected && (
+                        <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                          {locale === 'vi' ? 'Đã chọn' : 'Selected'}
+                        </span>
+                      )}
                       <div className="flex items-center gap-2.5 text-lg font-bold">
-                        <span className="text-xl">{action.icon}</span>
-                        <span className={action.level === 'will_lead' ? 'text-amber-800' : 'text-blue-800'}>
+                        <span className={`text-xl ${isSelected ? 'grayscale opacity-70' : ''}`}>{action.icon}</span>
+                        <span className={isSelected ? 'text-gray-500' : action.level === 'will_lead' ? 'text-amber-800' : 'text-blue-800'}>
                           {action.label[locale === 'vi' ? 'vi' : 'en']}
                         </span>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-gray-600">
+                      <p className={`mt-2 text-sm leading-6 ${isSelected ? 'text-gray-500' : 'text-gray-600'}`}>
                         {action.helper[locale === 'vi' ? 'vi' : 'en']}
                       </p>
                       {action.level === 'will_lead' && !canUpgradeToLead && (
