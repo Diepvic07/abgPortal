@@ -255,9 +255,41 @@ export function MentionTextarea({
   );
 }
 
+const URL_REGEX = /(https?:\/\/[^\s<>)\]]+)/g;
+
+function renderTextWithLinks(text: string, keyPrefix: string): React.ReactNode[] {
+  const out: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+  let i = 0;
+  URL_REGEX.lastIndex = 0;
+  while ((match = URL_REGEX.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      out.push(text.slice(lastIndex, match.index));
+    }
+    const url = match[1];
+    out.push(
+      <a
+        key={`${keyPrefix}-${i++}`}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 underline hover:text-blue-800 break-all"
+      >
+        {url}
+      </a>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    out.push(text.slice(lastIndex));
+  }
+  return out.length > 0 ? out : [text];
+}
+
 /**
  * Parse mention markers in comment text and return React elements.
- * Converts @[Name](member_id) to styled spans.
+ * Converts @[Name](member_id) to styled spans, and turns bare URLs into links.
  */
 export function renderMentions(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
@@ -267,11 +299,11 @@ export function renderMentions(text: string): React.ReactNode[] {
 
   while ((match = mentionRegex.exec(text)) !== null) {
     if (match.index > lastIndex) {
-      parts.push(text.slice(lastIndex, match.index));
+      parts.push(...renderTextWithLinks(text.slice(lastIndex, match.index), `t-${match.index}`));
     }
     const name = match[1];
     parts.push(
-      <span key={match.index} className="text-blue-600 font-medium">
+      <span key={`m-${match.index}`} className="text-blue-600 font-medium">
         @{name}
       </span>
     );
@@ -279,7 +311,7 @@ export function renderMentions(text: string): React.ReactNode[] {
   }
 
   if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex));
+    parts.push(...renderTextWithLinks(text.slice(lastIndex), `t-${lastIndex}`));
   }
 
   return parts.length > 0 ? parts : [text];
