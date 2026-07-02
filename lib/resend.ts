@@ -1651,6 +1651,8 @@ export async function sendDiscussionInvitationEmail(
     calendarDetailsLabel?: string;
     meetingId?: string;
     meetingPasscode?: string;
+    customSubject?: string;
+    customIntro?: string;
   },
 ): Promise<void> {
   const resend = getResendClient();
@@ -1667,9 +1669,18 @@ export async function sendDiscussionInvitationEmail(
   });
 
   const isVi = locale === 'vi';
-  const subject = isVi
-    ? `Lời mời thảo luận: ${proposalTitle}`
-    : `Discussion Invitation: ${proposalTitle}`;
+  const trimmedCustomSubject = options?.customSubject?.trim();
+  const subject = trimmedCustomSubject
+    ? trimmedCustomSubject
+    : isVi
+      ? `Lời mời thảo luận: ${proposalTitle}`
+      : `Discussion Invitation: ${proposalTitle}`;
+  const trimmedCustomIntro = options?.customIntro?.trim();
+  const introHtml = trimmedCustomIntro
+    ? escapeHtml(trimmedCustomIntro).replace(/\n/g, '<br>')
+    : isVi
+      ? 'Bạn được mời tham gia buổi thảo luận trực tuyến cho đề xuất:'
+      : 'You are invited to join an online discussion for the proposal:';
   const meetingPlatformLabel = options?.meetingPlatformLabel || 'Google Meet';
   const joinButtonLabel = options?.joinButtonLabel || (isVi ? 'Tham gia Google Meet' : 'Join Google Meet');
   const calendarDescriptionLabel = options?.calendarDescriptionLabel || 'Join Google Meet';
@@ -1691,9 +1702,7 @@ export async function sendDiscussionInvitationEmail(
         <tr><td style="padding:32px 40px;">
           <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1f2937;">${isVi ? `Xin chào ${escapeHtml(name)}!` : `Hello ${escapeHtml(name)}!`}</p>
 
-          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${isVi
-    ? `Bạn được mời tham gia buổi thảo luận trực tuyến cho đề xuất:`
-    : `You are invited to join an online discussion for the proposal:`}</p>
+          <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">${introHtml}</p>
 
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:0 0 20px;">
             <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#166534;">${escapeHtml(proposalTitle)}</p>

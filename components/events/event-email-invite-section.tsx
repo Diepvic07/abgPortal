@@ -20,6 +20,13 @@ export function EventEmailInviteSection({
 }: Props) {
   const vi = locale === 'vi';
 
+  const defaultSubject = vi
+    ? `Lời mời tham gia sự kiện: ${eventTitle}`
+    : `Event Invitation: ${eventTitle}`;
+  const defaultIntro = vi
+    ? 'Bạn được mời tham gia sự kiện trực tuyến:'
+    : 'You are invited to join the online event:';
+
   const [showPanel, setShowPanel] = useState(false);
   const [meetingDate, setMeetingDate] = useState('');
   const [meetingTime, setMeetingTime] = useState('20:00');
@@ -30,6 +37,9 @@ export function EventEmailInviteSection({
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [participants, setParticipants] = useState<{ name: string; email: string }[]>([]);
   const [loadingParticipants, setLoadingParticipants] = useState(false);
+  const [showEmailEditor, setShowEmailEditor] = useState(false);
+  const [emailSubject, setEmailSubject] = useState(defaultSubject);
+  const [emailIntro, setEmailIntro] = useState(defaultIntro);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -106,6 +116,8 @@ export function EventEmailInviteSection({
           meeting_id: meetingPlatform === 'meet' ? '' : meetingId.trim(),
           meeting_passcode: meetingPlatform === 'meet' ? '' : meetingPasscode.trim(),
           invited_emails: selectedEmails,
+          email_subject: emailSubject.trim(),
+          email_intro: emailIntro.trim(),
         }),
       });
 
@@ -299,6 +311,70 @@ export function EventEmailInviteSection({
                 ? '2 nh\u1eafc nh\u1edf s\u1ebd \u0111\u01b0\u1ee3c t\u1ef1 \u0111\u1ed9ng th\u00eam v\u00e0o l\u1ecbch: 30 ph\u00fat v\u00e0 10 ph\u00fat tr\u01b0\u1edbc s\u1ef1 ki\u1ec7n.'
                 : '2 reminders will be auto-added to calendar: 30 minutes and 10 minutes before the event.'}
             </p>
+          </div>
+
+          {/* Email content editor (collapsible) */}
+          <div className="border border-gray-200 rounded-lg bg-white">
+            <button
+              type="button"
+              onClick={() => setShowEmailEditor(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg"
+            >
+              <span className="flex items-center gap-2">
+                <span>✉️</span>
+                {vi ? 'Xem/Sửa nội dung email' : 'View/Edit email content'}
+              </span>
+              <svg className={`w-4 h-4 transition-transform ${showEmailEditor ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {showEmailEditor && (
+              <div className="px-4 pb-4 pt-1 space-y-3 border-t border-gray-100">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    {vi ? 'Tiêu đề' : 'Subject'}
+                  </label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    maxLength={200}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    {vi ? 'Lời nhắn' : 'Message'}
+                  </label>
+                  <textarea
+                    value={emailIntro}
+                    onChange={(e) => setEmailIntro(e.target.value)}
+                    rows={3}
+                    maxLength={2000}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm resize-y"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs text-gray-500">
+                    {vi
+                      ? 'Thông tin cuộc họp, nút tham gia và footer được tự động thêm vào.'
+                      : 'Meeting details, join button, and footer are auto-included.'}
+                  </p>
+                  {(emailSubject !== defaultSubject || emailIntro !== defaultIntro) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmailSubject(defaultSubject);
+                        setEmailIntro(defaultIntro);
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
+                    >
+                      {vi ? 'Khôi phục mặc định' : 'Restore default'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Invite list */}

@@ -66,6 +66,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const meeting_platform = normalizeMeetingPlatform(body.meeting_platform);
     const meeting_id = typeof body.meeting_id === 'string' ? body.meeting_id.trim().slice(0, 100) : '';
     const meeting_passcode = typeof body.meeting_passcode === 'string' ? body.meeting_passcode.trim().slice(0, 100) : '';
+    const email_subject = typeof body.email_subject === 'string' ? body.email_subject.trim().slice(0, 200) : '';
+    const email_intro = typeof body.email_intro === 'string' ? body.email_intro.trim().slice(0, 2000) : '';
 
     if (!meeting_date) return errorResponse('Meeting date is required', 400);
     if (!meeting_link) return errorResponse('Meeting link is required', 400);
@@ -106,6 +108,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               calendarDetailsLabel: recipientLocale === 'vi' ? 'Chi tiết sự kiện' : 'View event',
               meetingId: meeting_id || undefined,
               meetingPasscode: meeting_passcode || undefined,
+              customSubject: email_subject || undefined,
+              customIntro: email_intro || undefined,
             },
           );
         } catch (err) {
