@@ -776,6 +776,11 @@ export function AdminEventManager() {
                     {event.is_public && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{t.admin.events.publicBadge}</span>}
                     {event.fee_premium != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{t.admin.events.paidBadge}</span>}
                     {event.registration_closed && <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full">{locale === 'vi' ? 'Đóng đăng ký' : 'Registration closed'}</span>}
+                    {!event.registration_closed && event.registration_deadline && new Date(event.registration_deadline) < new Date() && (
+                      <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full">
+                        {locale === 'vi' ? 'Hết hạn đăng ký' : 'Deadline passed'}
+                      </span>
+                    )}
                     {event.require_question && <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">{locale === 'vi' ? 'Yêu cầu câu hỏi' : 'Q&A required'}</span>}
                   </div>
                   <p className="text-sm text-gray-600 mt-2 line-clamp-2">{event.description}</p>
