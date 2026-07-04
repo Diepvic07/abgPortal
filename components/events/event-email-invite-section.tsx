@@ -35,7 +35,7 @@ export function EventEmailInviteSection({
   const [meetingId, setMeetingId] = useState('');
   const [meetingPasscode, setMeetingPasscode] = useState('');
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
-  const [participants, setParticipants] = useState<{ name: string; email: string }[]>([]);
+  const [participants, setParticipants] = useState<{ name: string; email: string; is_guest?: boolean }[]>([]);
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [showEmailEditor, setShowEmailEditor] = useState(false);
   const [emailSubject, setEmailSubject] = useState(defaultSubject);
@@ -421,6 +421,11 @@ export function EventEmailInviteSection({
                     />
                     <span className="text-gray-700 font-medium">{p.name}</span>
                     <span className="text-gray-400 text-xs">{p.email}</span>
+                    {p.is_guest && (
+                      <span className="text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 uppercase tracking-wide">
+                        {vi ? 'Khách' : 'Guest'}
+                      </span>
+                    )}
                   </label>
                 ))}
               </div>

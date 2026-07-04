@@ -32,12 +32,33 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .eq('event_id', id)
       .in('commitment_level', ['will_participate', 'will_lead']);
 
-    const participants: { name: string; email: string }[] = [];
+    const participants: { name: string; email: string; is_guest?: boolean }[] = [];
+    const seenEmails = new Set<string>();
     for (const row of rsvpRows || []) {
       const m = row.members as Record<string, unknown> | null;
       if (m?.email) {
-        participants.push({ name: (m.name as string) || '', email: m.email as string });
+        const email = m.email as string;
+        seenEmails.add(email.toLowerCase());
+        participants.push({ name: (m.name as string) || '', email });
       }
+    }
+
+    // Also include registered guests (event_guest_rsvps is a separate table)
+    const { data: guestRows } = await (supabase.from('event_guest_rsvps') as any)
+      .select('guest_name, guest_email')
+      .eq('event_id', id)
+      .eq('status', 'registered');
+
+    for (const row of guestRows || []) {
+      const email = row.guest_email as string | null;
+      if (!email) continue;
+      if (seenEmails.has(email.toLowerCase())) continue;
+      seenEmails.add(email.toLowerCase());
+      participants.push({
+        name: (row.guest_name as string) || '',
+        email,
+        is_guest: true,
+      });
     }
 
     return successResponse({ participants });
