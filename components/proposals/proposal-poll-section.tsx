@@ -42,6 +42,8 @@ export function ProposalPollSection({
   const [successMsg, setSuccessMsg] = useState('');
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [newOption, setNewOption] = useState('');
+  const [addingOption, setAddingOption] = useState(false);
 
   const myResponse = useMemo(
     () => responses.find(r => r.member_id === currentMemberId),
@@ -123,6 +125,34 @@ export function ProposalPollSection({
       setError(vi ? 'Có lỗi xảy ra' : 'Something went wrong');
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleAddOption() {
+    if (!currentMemberId) return;
+    const value = newOption.trim();
+    if (!value) return;
+    setAddingOption(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const res = await fetch(`/api/community/proposals/${proposalId}/poll/options`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ option: value }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || (vi ? 'Không thêm được lựa chọn' : 'Failed to add option'));
+        return;
+      }
+      setNewOption('');
+      setSuccessMsg(vi ? 'Đã thêm lựa chọn!' : 'Option added!');
+      onRefresh();
+    } catch {
+      setError(vi ? 'Có lỗi xảy ra' : 'Something went wrong');
+    } finally {
+      setAddingOption(false);
     }
   }
 
@@ -286,6 +316,40 @@ export function ProposalPollSection({
         </div>
         {totalVotes > 0 && (
           <p className="text-xs text-gray-500 mt-2">{totalVotes} {vi ? 'phiếu bầu' : 'total votes'}</p>
+        )}
+
+        {currentMemberId && poll.status === 'open' && poll.options.length < 20 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              {vi ? 'Gợi ý một nội dung khác:' : 'Suggest another topic:'}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newOption}
+                onChange={(e) => setNewOption(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newOption.trim() && !addingOption) {
+                    e.preventDefault();
+                    handleAddOption();
+                  }
+                }}
+                maxLength={200}
+                placeholder={vi ? 'Nhập nội dung bạn quan tâm...' : 'Enter a topic you\'re interested in...'}
+                className="flex-1 px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                disabled={addingOption}
+              />
+              <button
+                onClick={handleAddOption}
+                disabled={addingOption || !newOption.trim()}
+                className="px-4 py-2 text-sm font-medium bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {addingOption
+                  ? (vi ? 'Đang thêm...' : 'Adding...')
+                  : (vi ? '+ Thêm' : '+ Add')}
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
