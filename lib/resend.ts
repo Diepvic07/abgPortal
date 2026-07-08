@@ -23,6 +23,7 @@ function generateIcsInvite(opts: {
   discussionId: string;
   sequence?: number;
   durationMinutes?: number;
+  endDate?: string;
   uidPrefix?: string;
   meetingLabel?: string;
   detailsLabel?: string;
@@ -30,10 +31,14 @@ function generateIcsInvite(opts: {
   meetingPasscode?: string;
   meetingIdLabel?: string;
   meetingPasscodeLabel?: string;
+  isOffline?: boolean;
+  locationText?: string;
+  locationUrl?: string;
+  locationLabel?: string;
 }): string {
-  const { title, meetingDate, meetingLink, proposalUrl, discussionId, sequence = 0, durationMinutes = 60, uidPrefix = 'discussion', meetingLabel = 'Join Google Meet', detailsLabel = 'View proposal', meetingId, meetingPasscode, meetingIdLabel = 'Meeting ID', meetingPasscodeLabel = 'Passcode' } = opts;
+  const { title, meetingDate, meetingLink, proposalUrl, discussionId, sequence = 0, durationMinutes = 60, endDate, uidPrefix = 'discussion', meetingLabel = 'Join Google Meet', detailsLabel = 'View proposal', meetingId, meetingPasscode, meetingIdLabel = 'Meeting ID', meetingPasscodeLabel = 'Passcode', isOffline = false, locationText, locationUrl, locationLabel = 'Location' } = opts;
   const start = new Date(meetingDate);
-  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+  const end = endDate ? new Date(endDate) : new Date(start.getTime() + durationMinutes * 60 * 1000);
 
   const fmt = (d: Date) =>
     d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
@@ -41,10 +46,26 @@ function generateIcsInvite(opts: {
   // Stable UID so updates replace the original event
   const uid = `${uidPrefix}-${discussionId}@abgalumni.vn`;
 
-  const descriptionParts: string[] = [`${meetingLabel}: ${meetingLink}`];
-  if (meetingId) descriptionParts.push(`${meetingIdLabel}: ${meetingId}`);
-  if (meetingPasscode) descriptionParts.push(`${meetingPasscodeLabel}: ${meetingPasscode}`);
+  // Escape .ics text values per RFC 5545 (commas, semicolons, backslashes, newlines)
+  const icsEscape = (s: string) => s
+    .replace(/\\/g, '\\\\')
+    .replace(/\r?\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
+
+  const descriptionParts: string[] = [];
+  if (isOffline) {
+    if (locationText) descriptionParts.push(`${locationLabel}: ${locationText}`);
+    if (locationUrl) descriptionParts.push(`Google Maps: ${locationUrl}`);
+  } else {
+    descriptionParts.push(`${meetingLabel}: ${meetingLink}`);
+    if (meetingId) descriptionParts.push(`${meetingIdLabel}: ${meetingId}`);
+    if (meetingPasscode) descriptionParts.push(`${meetingPasscodeLabel}: ${meetingPasscode}`);
+  }
   descriptionParts.push(`${detailsLabel}: ${proposalUrl}`);
+
+  const icsLocation = isOffline ? (locationText || locationUrl || '') : meetingLink;
+  const icsUrl = isOffline ? (locationUrl || proposalUrl) : meetingLink;
 
   return [
     'BEGIN:VCALENDAR',
@@ -57,10 +78,10 @@ function generateIcsInvite(opts: {
     `DTSTAMP:${fmt(new Date())}`,
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,
-    `SUMMARY:${title}`,
-    `DESCRIPTION:${descriptionParts.join('\\n')}`,
-    `URL:${meetingLink}`,
-    `LOCATION:${meetingLink}`,
+    `SUMMARY:${icsEscape(title)}`,
+    `DESCRIPTION:${icsEscape(descriptionParts.join('\n'))}`,
+    `URL:${icsUrl}`,
+    `LOCATION:${icsEscape(icsLocation)}`,
     'BEGIN:VALARM',
     'TRIGGER:-PT30M',
     'ACTION:DISPLAY',
@@ -1653,12 +1674,16 @@ export async function sendDiscussionInvitationEmail(
     meetingPasscode?: string;
     customSubject?: string;
     customIntro?: string;
+    isOffline?: boolean;
+    locationText?: string;
+    locationUrl?: string;
+    meetingEndDate?: string;
   },
 ): Promise<void> {
   const resend = getResendClient();
   const appUrl = process.env.NEXTAUTH_URL || 'https://abg-connect.vercel.app';
 
-  const formattedDate = new Date(meetingDate).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
+  const dateFmtOpts: Intl.DateTimeFormatOptions = {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -1666,7 +1691,15 @@ export async function sendDiscussionInvitationEmail(
     hour: '2-digit',
     minute: '2-digit',
     timeZone: 'Asia/Ho_Chi_Minh',
-  });
+  };
+  const localeStr = locale === 'vi' ? 'vi-VN' : 'en-US';
+  const formattedDate = new Date(meetingDate).toLocaleString(localeStr, dateFmtOpts);
+  const formattedEndDate = options?.meetingEndDate
+    ? new Date(options.meetingEndDate).toLocaleString(localeStr, dateFmtOpts)
+    : '';
+  const isOffline = !!options?.isOffline;
+  const locationText = options?.locationText?.trim() || '';
+  const locationUrl = options?.locationUrl?.trim() || '';
 
   const isVi = locale === 'vi';
   const trimmedCustomSubject = options?.customSubject?.trim();
@@ -1707,15 +1740,22 @@ export async function sendDiscussionInvitationEmail(
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:0 0 20px;">
             <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#166534;">${escapeHtml(proposalTitle)}</p>
             <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#1f2937;">
-              <tr><td style="padding:4px 0;font-weight:600;width:100px;">${isVi ? 'Thời gian:' : 'Date/Time:'}</td><td style="padding:4px 0;">${escapeHtml(formattedDate)}</td></tr>
-              <tr><td style="padding:4px 0;font-weight:600;">${isVi ? 'Nền tảng:' : 'Platform:'}</td><td style="padding:4px 0;">${escapeHtml(meetingPlatformLabel)}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;width:120px;vertical-align:top;">${isVi ? 'Bắt đầu:' : 'Starts:'}</td><td style="padding:4px 0;">${escapeHtml(formattedDate)}</td></tr>
+              ${formattedEndDate ? `<tr><td style="padding:4px 0;font-weight:600;vertical-align:top;">${isVi ? 'Kết thúc:' : 'Ends:'}</td><td style="padding:4px 0;">${escapeHtml(formattedEndDate)}</td></tr>` : ''}
+              ${isOffline
+                ? `${locationText ? `<tr><td style="padding:4px 0;font-weight:600;vertical-align:top;">${isVi ? 'Địa điểm:' : 'Location:'}</td><td style="padding:4px 0;">${escapeHtml(locationText)}</td></tr>` : ''}`
+                : `<tr><td style="padding:4px 0;font-weight:600;">${isVi ? 'Nền tảng:' : 'Platform:'}</td><td style="padding:4px 0;">${escapeHtml(meetingPlatformLabel)}</td></tr>
               ${meetingId ? `<tr><td style="padding:4px 0;font-weight:600;">${escapeHtml(meetingIdLabelText)}</td><td style="padding:4px 0;font-family:monospace;">${escapeHtml(meetingId)}</td></tr>` : ''}
-              ${meetingPasscode ? `<tr><td style="padding:4px 0;font-weight:600;">${escapeHtml(meetingPasscodeLabelText)}</td><td style="padding:4px 0;font-family:monospace;">${escapeHtml(meetingPasscode)}</td></tr>` : ''}
+              ${meetingPasscode ? `<tr><td style="padding:4px 0;font-weight:600;">${escapeHtml(meetingPasscodeLabelText)}</td><td style="padding:4px 0;font-family:monospace;">${escapeHtml(meetingPasscode)}</td></tr>` : ''}`}
             </table>
           </div>
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;"><tr><td>
-            <a href="${escapeHtml(meetingLink)}" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${escapeHtml(joinButtonLabel)}</a>
+            ${isOffline
+              ? (locationUrl
+                ? `<a href="${escapeHtml(locationUrl)}" style="display:inline-block;padding:14px 36px;background:#16a34a;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${isVi ? 'Mở Google Maps' : 'Open in Google Maps'}</a>`
+                : '')
+              : `<a href="${escapeHtml(meetingLink)}" style="display:inline-block;padding:14px 36px;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">${escapeHtml(joinButtonLabel)}</a>`}
           </td></tr></table>
 
           <p style="margin:0 0 12px;font-size:14px;color:#6b7280;">${isVi
@@ -1739,12 +1779,17 @@ export async function sendDiscussionInvitationEmail(
     meetingLink,
     proposalUrl: appUrl + proposalUrl,
     discussionId: discussionId || `fallback-${new Date(meetingDate).getTime()}`,
+    endDate: options?.meetingEndDate,
     meetingLabel: calendarDescriptionLabel,
     detailsLabel: calendarDetailsLabel,
     meetingId,
     meetingPasscode,
     meetingIdLabel: meetingIdLabelText.replace(/:$/, ''),
     meetingPasscodeLabel: meetingPasscodeLabelText.replace(/:$/, ''),
+    isOffline,
+    locationText,
+    locationUrl,
+    locationLabel: isVi ? 'Địa điểm' : 'Location',
   });
 
   const emailPayload: Parameters<typeof resend.emails.send>[0] = {

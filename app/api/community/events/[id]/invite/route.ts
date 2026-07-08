@@ -83,17 +83,34 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const body = await request.json();
     const { meeting_date, meeting_link, invited_emails } = body;
-    const normalizedMeetingLink = normalizeMeetingLink(meeting_link);
+    const event_mode: 'online' | 'offline' = body.event_mode === 'offline' ? 'offline' : 'online';
+    const normalizedMeetingLink = (event_mode === 'online' ? normalizeMeetingLink(meeting_link) : '') || '';
     const meeting_platform = normalizeMeetingPlatform(body.meeting_platform);
     const meeting_id = typeof body.meeting_id === 'string' ? body.meeting_id.trim().slice(0, 100) : '';
     const meeting_passcode = typeof body.meeting_passcode === 'string' ? body.meeting_passcode.trim().slice(0, 100) : '';
     const email_subject = typeof body.email_subject === 'string' ? body.email_subject.trim().slice(0, 200) : '';
     const email_intro = typeof body.email_intro === 'string' ? body.email_intro.trim().slice(0, 2000) : '';
+    const meeting_end_date = typeof body.meeting_end_date === 'string' ? body.meeting_end_date.trim() : '';
+    const rawLocation = typeof body.location === 'string' ? body.location.trim().slice(0, 500) : '';
+    const rawLocationUrl = typeof body.location_url === 'string' ? body.location_url.trim() : '';
+    const normalizedLocationUrl = (rawLocationUrl ? normalizeMeetingLink(rawLocationUrl) : '') || '';
 
     if (!meeting_date) return errorResponse('Meeting date is required', 400);
-    if (!meeting_link) return errorResponse('Meeting link is required', 400);
-    if (!normalizedMeetingLink) {
-      return errorResponse('Please provide a valid HTTPS meeting link', 400);
+    if (event_mode === 'online') {
+      if (!meeting_link) return errorResponse('Meeting link is required', 400);
+      if (!normalizedMeetingLink) return errorResponse('Please provide a valid HTTPS meeting link', 400);
+    } else {
+      if (!rawLocation) return errorResponse('Location is required for offline events', 400);
+      if (rawLocationUrl && !normalizedLocationUrl) {
+        return errorResponse('Please provide a valid HTTPS location URL', 400);
+      }
+    }
+    if (meeting_end_date) {
+      const start = new Date(meeting_date).getTime();
+      const end = new Date(meeting_end_date).getTime();
+      if (!Number.isFinite(end) || end <= start) {
+        return errorResponse('End date must be after start date', 400);
+      }
     }
     if (!invited_emails || !Array.isArray(invited_emails) || invited_emails.length === 0) {
       return errorResponse('At least one email is required', 400);
@@ -131,6 +148,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               meetingPasscode: meeting_passcode || undefined,
               customSubject: email_subject || undefined,
               customIntro: email_intro || undefined,
+              isOffline: event_mode === 'offline',
+              locationText: rawLocation || undefined,
+              locationUrl: normalizedLocationUrl || undefined,
+              meetingEndDate: meeting_end_date || undefined,
             },
           );
         } catch (err) {

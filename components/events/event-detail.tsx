@@ -1363,6 +1363,10 @@ export function EventDetail({ eventId }: { eventId: string }) {
             eventId={eventId}
             eventTitle={event.title}
             eventDate={event.event_date}
+            eventEndDate={event.event_end_date}
+            eventLocation={event.location}
+            eventLocationUrl={event.location_url}
+            eventMode={event.event_mode === 'hybrid' ? 'online' : event.event_mode}
             locale={locale}
             onSuccess={() => fetchEventDataRef.current()}
           />

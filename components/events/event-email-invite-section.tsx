@@ -3,10 +3,16 @@
 import { useState, useEffect } from 'react';
 import { normalizeMeetingLink, MeetingPlatform } from '@/lib/meeting-link';
 
+type InviteMode = 'online' | 'offline';
+
 interface Props {
   eventId: string;
   eventTitle: string;
   eventDate?: string;
+  eventEndDate?: string;
+  eventLocation?: string;
+  eventLocationUrl?: string;
+  eventMode?: 'online' | 'offline' | 'hybrid';
   locale: string;
   onSuccess?: () => void;
 }
@@ -15,36 +21,46 @@ export function EventEmailInviteSection({
   eventId,
   eventTitle,
   eventDate,
+  eventEndDate,
+  eventLocation,
+  eventLocationUrl,
+  eventMode,
   locale,
   onSuccess,
 }: Props) {
   const vi = locale === 'vi';
+  const initialMode: InviteMode = eventMode === 'offline' ? 'offline' : 'online';
 
   const defaultSubject = vi
     ? `Lời mời tham gia sự kiện: ${eventTitle}`
     : `Event Invitation: ${eventTitle}`;
-  const defaultIntro = vi
-    ? 'Bạn được mời tham gia sự kiện trực tuyến:'
-    : 'You are invited to join the online event:';
+  const buildDefaultIntro = (m: InviteMode) => m === 'offline'
+    ? (vi ? 'Bạn được mời tham gia sự kiện:' : 'You are invited to join the event:')
+    : (vi ? 'Bạn được mời tham gia sự kiện trực tuyến:' : 'You are invited to join the online event:');
 
   const [showPanel, setShowPanel] = useState(false);
+  const [mode, setMode] = useState<InviteMode>(initialMode);
   const [meetingDate, setMeetingDate] = useState('');
   const [meetingTime, setMeetingTime] = useState('20:00');
+  const [meetingEndDate, setMeetingEndDate] = useState('');
+  const [meetingEndTime, setMeetingEndTime] = useState('');
   const [meetingPlatform, setMeetingPlatform] = useState<MeetingPlatform>('meet');
   const [meetingLink, setMeetingLink] = useState('');
   const [meetingId, setMeetingId] = useState('');
   const [meetingPasscode, setMeetingPasscode] = useState('');
+  const [location, setLocation] = useState('');
+  const [locationUrl, setLocationUrl] = useState('');
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [participants, setParticipants] = useState<{ name: string; email: string; is_guest?: boolean }[]>([]);
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [showEmailEditor, setShowEmailEditor] = useState(false);
   const [emailSubject, setEmailSubject] = useState(defaultSubject);
-  const [emailIntro, setEmailIntro] = useState(defaultIntro);
+  const [emailIntro, setEmailIntro] = useState(buildDefaultIntro(initialMode));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Pre-fill date from event date
+  // Pre-fill start date/time from event.event_date
   useEffect(() => {
     if (eventDate) {
       try {
@@ -56,6 +72,23 @@ export function EventEmailInviteSection({
       } catch { /* ignore */ }
     }
   }, [eventDate]);
+
+  // Pre-fill end date/time from event.event_end_date
+  useEffect(() => {
+    if (eventEndDate) {
+      try {
+        const d = new Date(eventEndDate);
+        setMeetingEndDate(d.toISOString().split('T')[0]);
+        const hours = d.getHours().toString().padStart(2, '0');
+        const minutes = d.getMinutes().toString().padStart(2, '0');
+        setMeetingEndTime(`${hours}:${minutes}`);
+      } catch { /* ignore */ }
+    }
+  }, [eventEndDate]);
+
+  // Pre-fill location fields from the event
+  useEffect(() => { if (eventLocation) setLocation(eventLocation); }, [eventLocation]);
+  useEffect(() => { if (eventLocationUrl) setLocationUrl(eventLocationUrl); }, [eventLocationUrl]);
 
   async function fetchParticipants() {
     setLoadingParticipants(true);
@@ -75,26 +108,55 @@ export function EventEmailInviteSection({
 
   async function handleSendInvites() {
     if (!meetingDate || !meetingTime) {
-      setError(vi ? 'Vui l\u00f2ng ch\u1ecdn ng\u00e0y v\u00e0 gi\u1edd' : 'Please select date and time');
+      setError(vi ? 'Vui l\u00f2ng ch\u1ecdn ng\u00e0y v\u00e0 gi\u1edd b\u1eaft \u0111\u1ea7u' : 'Please select start date and time');
       return;
     }
-    if (!meetingLink) {
-      setError(vi ? 'Vui l\u00f2ng nh\u1eadp link tham gia' : 'Please enter a meeting link');
-      return;
+    if (meetingEndDate && meetingEndTime) {
+      const start = new Date(`${meetingDate}T${meetingTime}:00+07:00`).getTime();
+      const end = new Date(`${meetingEndDate}T${meetingEndTime}:00+07:00`).getTime();
+      if (end <= start) {
+        setError(vi ? 'Th\u1eddi gian k\u1ebft th\u00fac ph\u1ea3i sau th\u1eddi gian b\u1eaft \u0111\u1ea7u' : 'End time must be after start time');
+        return;
+      }
     }
-    const normalizedMeetingLink = normalizeMeetingLink(meetingLink);
-    if (!normalizedMeetingLink) {
-      setError(vi ? 'Vui l\u00f2ng nh\u1eadp link HTTPS h\u1ee3p l\u1ec7' : 'Please enter a valid HTTPS meeting link');
-      return;
+
+    let normalizedMeetingLink = '';
+    let normalizedLocationUrl = '';
+
+    if (mode === 'online') {
+      if (!meetingLink) {
+        setError(vi ? 'Vui l\u00f2ng nh\u1eadp link tham gia' : 'Please enter a meeting link');
+        return;
+      }
+      const nl = normalizeMeetingLink(meetingLink);
+      if (!nl) {
+        setError(vi ? 'Vui l\u00f2ng nh\u1eadp link HTTPS h\u1ee3p l\u1ec7' : 'Please enter a valid HTTPS meeting link');
+        return;
+      }
+      if (meetingPlatform === 'meet' && !nl.startsWith('https://meet.google.com/')) {
+        setError(vi ? 'Link kh\u00f4ng ph\u1ea3i Google Meet. Vui l\u00f2ng \u0111\u1ed5i n\u1ec1n t\u1ea3ng ho\u1eb7c d\u00e1n link Meet h\u1ee3p l\u1ec7.' : 'Not a Google Meet link. Switch platform or paste a valid Meet link.');
+        return;
+      }
+      if (meetingPlatform === 'zoom' && !/zoom\.(us|com)/i.test(nl)) {
+        setError(vi ? 'Link kh\u00f4ng ph\u1ea3i Zoom. Vui l\u00f2ng \u0111\u1ed5i n\u1ec1n t\u1ea3ng ho\u1eb7c d\u00e1n link Zoom h\u1ee3p l\u1ec7.' : 'Not a Zoom link. Switch platform or paste a valid Zoom link.');
+        return;
+      }
+      normalizedMeetingLink = nl;
+    } else {
+      if (!location.trim()) {
+        setError(vi ? 'Vui l\u00f2ng nh\u1eadp \u0111\u1ecba \u0111i\u1ec3m' : 'Please enter a location');
+        return;
+      }
+      if (locationUrl.trim()) {
+        const nl = normalizeMeetingLink(locationUrl.trim());
+        if (!nl) {
+          setError(vi ? 'Link Google Maps kh\u00f4ng h\u1ee3p l\u1ec7 (c\u1ea7n HTTPS)' : 'Google Maps link is invalid (needs HTTPS)');
+          return;
+        }
+        normalizedLocationUrl = nl;
+      }
     }
-    if (meetingPlatform === 'meet' && !normalizedMeetingLink.startsWith('https://meet.google.com/')) {
-      setError(vi ? 'Link kh\u00f4ng ph\u1ea3i Google Meet. Vui l\u00f2ng \u0111\u1ed5i n\u1ec1n t\u1ea3ng ho\u1eb7c d\u00e1n link Meet h\u1ee3p l\u1ec7.' : 'Not a Google Meet link. Switch platform or paste a valid Meet link.');
-      return;
-    }
-    if (meetingPlatform === 'zoom' && !/zoom\.(us|com)/i.test(normalizedMeetingLink)) {
-      setError(vi ? 'Link kh\u00f4ng ph\u1ea3i Zoom. Vui l\u00f2ng \u0111\u1ed5i n\u1ec1n t\u1ea3ng ho\u1eb7c d\u00e1n link Zoom h\u1ee3p l\u1ec7.' : 'Not a Zoom link. Switch platform or paste a valid Zoom link.');
-      return;
-    }
+
     if (selectedEmails.length === 0) {
       setError(vi ? 'Vui l\u00f2ng ch\u1ecdn \u00edt nh\u1ea5t 1 ng\u01b0\u1eddi \u0111\u1ec3 m\u1eddi' : 'Please select at least 1 person to invite');
       return;
@@ -106,15 +168,22 @@ export function EventEmailInviteSection({
 
     try {
       const meetingDateTime = `${meetingDate}T${meetingTime}:00+07:00`;
+      const meetingEndDateTime = meetingEndDate && meetingEndTime
+        ? `${meetingEndDate}T${meetingEndTime}:00+07:00`
+        : '';
       const res = await fetch(`/api/community/events/${eventId}/invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          event_mode: mode,
           meeting_date: meetingDateTime,
-          meeting_link: normalizedMeetingLink,
-          meeting_platform: meetingPlatform,
-          meeting_id: meetingPlatform === 'meet' ? '' : meetingId.trim(),
-          meeting_passcode: meetingPlatform === 'meet' ? '' : meetingPasscode.trim(),
+          meeting_end_date: meetingEndDateTime || undefined,
+          meeting_link: mode === 'online' ? normalizedMeetingLink : '',
+          meeting_platform: mode === 'online' ? meetingPlatform : undefined,
+          meeting_id: mode === 'online' && meetingPlatform !== 'meet' ? meetingId.trim() : '',
+          meeting_passcode: mode === 'online' && meetingPlatform !== 'meet' ? meetingPasscode.trim() : '',
+          location: mode === 'offline' ? location.trim() : '',
+          location_url: mode === 'offline' ? normalizedLocationUrl : '',
           invited_emails: selectedEmails,
           email_subject: emailSubject.trim(),
           email_intro: emailIntro.trim(),
@@ -173,11 +242,47 @@ export function EventEmailInviteSection({
               : 'Invitees will receive an email with .ics file to add to Google Calendar, with 2 reminders (30min and 10min before).'}
           </p>
 
+          {/* Mode toggle: offline vs online */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {vi ? 'H\u00ecnh th\u1ee9c s\u1ef1 ki\u1ec7n' : 'Event type'} *
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {(['online', 'offline'] as InviteMode[]).map((m) => (
+                <label
+                  key={m}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm cursor-pointer transition-colors ${
+                    mode === m
+                      ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="event-invite-mode"
+                    value={m}
+                    checked={mode === m}
+                    onChange={() => {
+                      setMode(m);
+                      // Refresh the default intro text if user hasn't customized it
+                      const prevDefault = buildDefaultIntro(mode);
+                      if (emailIntro === prevDefault) setEmailIntro(buildDefaultIntro(m));
+                    }}
+                    className="sr-only"
+                  />
+                  {m === 'online'
+                    ? (vi ? 'Tr\u1ef1c tuy\u1ebfn' : 'Online')
+                    : (vi ? 'Tr\u1ef1c ti\u1ebfp (Offline)' : 'In-person (Offline)')}
+                </label>
+              ))}
+            </div>
+          </div>
+
           {/* Date & Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {vi ? 'Ng\u00e0y' : 'Date'} *
+                {vi ? 'Ng\u00e0y b\u1eaft \u0111\u1ea7u' : 'Start date'} *
               </label>
               <input
                 type="date"
@@ -189,7 +294,7 @@ export function EventEmailInviteSection({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {vi ? 'Gi\u1edd' : 'Time'} *
+                {vi ? 'Gi\u1edd b\u1eaft \u0111\u1ea7u' : 'Start time'} *
               </label>
               <input
                 type="time"
@@ -198,9 +303,89 @@ export function EventEmailInviteSection({
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {vi ? 'Ng\u00e0y k\u1ebft th\u00fac' : 'End date'}
+                <span className="text-gray-400 font-normal ml-1">
+                  ({vi ? 'tu\u1ef3 ch\u1ecdn' : 'optional'})
+                </span>
+              </label>
+              <input
+                type="date"
+                value={meetingEndDate}
+                onChange={(e) => setMeetingEndDate(e.target.value)}
+                min={meetingDate || new Date().toISOString().split('T')[0]}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {vi ? 'Gi\u1edd k\u1ebft th\u00fac' : 'End time'}
+                <span className="text-gray-400 font-normal ml-1">
+                  ({vi ? 'tu\u1ef3 ch\u1ecdn' : 'optional'})
+                </span>
+              </label>
+              <input
+                type="time"
+                value={meetingEndTime}
+                onChange={(e) => setMeetingEndTime(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+              />
+            </div>
           </div>
+          {!meetingEndDate && !meetingEndTime && (
+            <p className="text-xs text-gray-500 -mt-2">
+              {vi
+                ? 'B\u1ecf tr\u1ed1ng n\u1ebfu kh\u00f4ng r\u00f5 gi\u1edd k\u1ebft th\u00fac \u2014 m\u1eb7c \u0111\u1ecbnh 60 ph\u00fat sau gi\u1edd b\u1eaft \u0111\u1ea7u.'
+                : 'Leave blank if unsure \u2014 defaults to 60 minutes after the start time.'}
+            </p>
+          )}
 
-          {/* Platform + Meeting Link */}
+          {/* Offline location fields */}
+          {mode === 'offline' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {vi ? '\u0110\u1ecba \u0111i\u1ec3m' : 'Location'} *
+                </label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder={vi ? 'VD: Nh\u00e0 h\u00e0ng ABC, 123 Nguy\u1ec5n Hu\u1ec7, Q.1, TP.HCM' : 'e.g. ABC Restaurant, 123 Main St, HCMC'}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {vi ? 'Link Google Maps' : 'Google Maps link'}
+                  <span className="text-gray-400 font-normal ml-1">
+                    ({vi ? 'tu\u1ef3 ch\u1ecdn' : 'optional'})
+                  </span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={locationUrl}
+                    onChange={(e) => setLocationUrl(e.target.value)}
+                    placeholder="https://maps.google.com/..."
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+                  />
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location || '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium whitespace-nowrap border border-gray-300"
+                  >
+                    {vi ? 'T\u00ecm tr\u00ean Maps' : 'Find on Maps'}
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Platform + Meeting Link \u2014 online only */}
+          {mode === 'online' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {vi ? 'N\u1ec1n t\u1ea3ng h\u1ecdp' : 'Meeting platform'} *
@@ -302,6 +487,7 @@ export function EventEmailInviteSection({
               </div>
             )}
           </div>
+          )}
 
           {/* Reminders info */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
@@ -360,12 +546,12 @@ export function EventEmailInviteSection({
                       ? 'Thông tin cuộc họp, nút tham gia và footer được tự động thêm vào.'
                       : 'Meeting details, join button, and footer are auto-included.'}
                   </p>
-                  {(emailSubject !== defaultSubject || emailIntro !== defaultIntro) && (
+                  {(emailSubject !== defaultSubject || emailIntro !== buildDefaultIntro(mode)) && (
                     <button
                       type="button"
                       onClick={() => {
                         setEmailSubject(defaultSubject);
-                        setEmailIntro(defaultIntro);
+                        setEmailIntro(buildDefaultIntro(mode));
                       }}
                       className="text-xs text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
                     >
