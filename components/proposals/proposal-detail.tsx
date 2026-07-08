@@ -1664,7 +1664,7 @@ export function ProposalDetail({ proposalId }: Props) {
 
       {/* Reaction Bar — Facebook-style */}
       {!isTerminal && (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-xl">
           {/* Reaction summary */}
           <div className="px-6 py-3 flex items-center gap-2 text-sm text-gray-500 border-b border-gray-100">
             <span className="flex -space-x-1">
@@ -1675,43 +1675,52 @@ export function ProposalDetail({ proposalId }: Props) {
             <span>{proposal.commitment_count} {locale === 'vi' ? 'người tham gia' : 'people committed'}</span>
           </div>
 
-          {/* Reaction buttons — Will Lead first, then Will Join, then Interested */}
-          <div className="grid grid-cols-3 divide-x divide-gray-100">
+          {/* Reaction buttons — Will Lead first, then Will Join (primary CTA), then Interested */}
+          <div className="grid grid-cols-3 gap-2 p-2">
             {([
               { level: 'will_lead' as CommitmentLevel, icon: '🚀', label: locale === 'vi' ? 'Sẽ dẫn dắt' : 'Will Lead', pts: '+5' },
               { level: 'will_participate' as CommitmentLevel, icon: '🙌', label: locale === 'vi' ? 'Sẽ tham gia' : 'Will Join', pts: '+3' },
               { level: 'interested' as CommitmentLevel, icon: '❤️', label: locale === 'vi' ? 'Quan tâm' : 'Interested', pts: '' },
             ]).map(({ level, icon, label, pts }) => {
               const isActive = myCommitment === level;
+              const isPrimary = level === 'will_participate';
+              const baseClasses = 'flex flex-col items-center justify-center gap-0.5 py-3 rounded-lg text-sm font-medium transition-all active:scale-95 disabled:opacity-50';
               if (session) {
+                const showPulse = isPrimary && !isActive && !submittingCommitment;
+                const styleClasses = isActive
+                  ? 'text-blue-600 bg-blue-50'
+                  : isPrimary
+                    ? `bg-gradient-to-br from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 ${showPulse ? 'pulse-ring' : 'shadow-md shadow-blue-500/30'}`
+                    : 'text-gray-600 hover:bg-gray-50';
                 return (
                   <button
                     key={level}
                     onClick={() => isActive ? handleUncommit() : handleCommit(level)}
                     disabled={submittingCommitment}
-                    className={`flex flex-col items-center justify-center gap-0.5 py-3 text-sm font-medium transition-all hover:bg-gray-50 active:scale-95 disabled:opacity-50 ${
-                      isActive ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
-                    }`}
+                    className={`${baseClasses} ${styleClasses}`}
                   >
                     <span className="flex items-center gap-1.5">
                       <span className={`text-xl transition-transform ${isActive ? 'scale-110' : 'hover:scale-125'}`}>{icon}</span>
                       {label}
                     </span>
-                    {pts && <span className="text-xs text-gray-400">{pts} {locale === 'vi' ? 'điểm' : 'pts'}</span>}
+                    {pts && <span className={`text-xs ${isPrimary && !isActive ? 'text-blue-50/90' : 'text-gray-400'}`}>{pts} {locale === 'vi' ? 'điểm' : 'pts'}</span>}
                   </button>
                 );
               }
+              const linkStyle = isPrimary
+                ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 pulse-ring'
+                : 'text-gray-600 hover:bg-gray-50';
               return (
                 <Link
                   key={level}
                   href="/login"
-                  className="flex flex-col items-center justify-center gap-0.5 py-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50 active:scale-95"
+                  className={`${baseClasses} ${linkStyle}`}
                 >
                   <span className="flex items-center gap-1.5">
                     <span className="text-xl hover:scale-125 transition-transform">{icon}</span>
                     {label}
                   </span>
-                  {pts && <span className="text-xs text-gray-400">{pts} {locale === 'vi' ? 'điểm' : 'pts'}</span>}
+                  {pts && <span className={`text-xs ${isPrimary ? 'text-blue-50/90' : 'text-gray-400'}`}>{pts} {locale === 'vi' ? 'điểm' : 'pts'}</span>}
                 </Link>
               );
             })}

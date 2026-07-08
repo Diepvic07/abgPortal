@@ -1104,6 +1104,8 @@ export function EventDetail({ eventId }: { eventId: string }) {
                     (!isPremium && isPremiumExclusive) ||
                     (isFull && !hasRsvp) ||
                     (action.level === 'will_lead' && !canUpgradeToLead);
+                  const isPrimary = action.level === 'will_participate';
+                  const showPulse = isPrimary && !isSelected && !isDisabled;
 
                   return (
                     <button
@@ -1112,12 +1114,12 @@ export function EventDetail({ eventId }: { eventId: string }) {
                       disabled={isDisabled}
                       aria-pressed={isSelected}
                       onClick={() => openRsvpModal(action.level)}
-                      className={`relative rounded-2xl border-2 px-5 py-5 text-left transition-all duration-200 ${
+                      className={`group relative overflow-hidden rounded-2xl px-5 py-5 text-left transition-all duration-200 ${
                         isSelected
-                          ? 'border-emerald-300 bg-emerald-50/40'
-                          : action.level === 'will_lead'
-                            ? 'border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 hover:border-amber-300 hover:shadow-md'
-                            : 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 hover:border-blue-300 hover:shadow-md'
+                          ? 'border-2 border-emerald-300 bg-emerald-50/40'
+                          : isPrimary
+                            ? `bg-gradient-to-br from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 ${showPulse ? 'pulse-ring' : 'shadow-lg shadow-blue-500/30'}`
+                            : 'border border-amber-200 bg-amber-50/60 hover:bg-amber-50 hover:border-amber-300'
                       } ${isSelected ? 'cursor-default' : isDisabled ? 'cursor-not-allowed opacity-60' : ''}`}
                     >
                       {isSelected && (
@@ -1126,13 +1128,26 @@ export function EventDetail({ eventId }: { eventId: string }) {
                           {locale === 'vi' ? 'Đã chọn' : 'Selected'}
                         </span>
                       )}
-                      <div className="flex items-center gap-2.5 text-lg font-bold">
-                        <span className={`text-xl ${isSelected ? 'grayscale opacity-70' : ''}`}>{action.icon}</span>
-                        <span className={isSelected ? 'text-gray-500' : action.level === 'will_lead' ? 'text-amber-800' : 'text-blue-800'}>
-                          {action.label[locale === 'vi' ? 'vi' : 'en']}
-                        </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className={`flex items-center gap-2.5 ${isPrimary && !isSelected ? 'text-lg font-bold' : 'text-base font-semibold'}`}>
+                          <span className={`${isPrimary && !isSelected ? 'text-2xl' : 'text-xl'} ${isSelected ? 'grayscale opacity-70' : ''}`}>{action.icon}</span>
+                          <span className={
+                            isSelected
+                              ? 'text-gray-500'
+                              : isPrimary
+                                ? 'text-white'
+                                : 'text-amber-800'
+                          }>
+                            {action.label[locale === 'vi' ? 'vi' : 'en']}
+                          </span>
+                        </div>
+                        {isPrimary && !isSelected && (
+                          <svg className="w-5 h-5 text-white/90 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                        )}
                       </div>
-                      <p className={`mt-2 text-sm leading-6 ${isSelected ? 'text-gray-500' : 'text-gray-600'}`}>
+                      <p className={`mt-2 text-sm leading-6 ${
+                        isSelected ? 'text-gray-500' : isPrimary ? 'text-blue-50/95' : 'text-gray-600'
+                      }`}>
                         {action.helper[locale === 'vi' ? 'vi' : 'en']}
                       </p>
                       {action.level === 'will_lead' && !canUpgradeToLead && (

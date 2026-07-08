@@ -179,6 +179,23 @@ h1, h2, h3, .font-heading {
 .delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
 
+/* Pulsing glow ring for primary CTA buttons.
+   Two layers: a static drop shadow for elevation, plus an expanding ring that fades out. */
+@keyframes pulse-ring {
+  0%, 100% {
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.45), 0 0 0 0 rgba(37, 99, 235, 0.35);
+  }
+  50% {
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.55), 0 0 0 12px rgba(37, 99, 235, 0);
+  }
+}
+.pulse-ring {
+  animation: pulse-ring 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse-ring { animation: none; }
+}
+
 /* Feature icon gradient bg */
 .feature-icon {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
