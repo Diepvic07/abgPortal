@@ -8,6 +8,7 @@ type LibraryForm = {
   description: string;
   linked_ref: string;
   drive_url: string;
+  canva_url: string;
   thumbnail_url: string;
   resource_links_text: string;
   duration_text: string;
@@ -21,6 +22,7 @@ const emptyForm: LibraryForm = {
   description: '',
   linked_ref: '',
   drive_url: '',
+  canva_url: '',
   thumbnail_url: '',
   resource_links_text: '',
   duration_text: '',
@@ -149,6 +151,7 @@ export function AdminLibraryManager() {
       description: item.description,
       linked_ref: encodeLinkedRef(item),
       drive_url: item.drive_file_id || '',
+      canva_url: item.canva_embed_url || '',
       thumbnail_url: item.thumbnail_url || '',
       resource_links_text: resourceLinksToText(item.resource_links),
       duration_text: item.duration_text || '',
@@ -184,6 +187,7 @@ export function AdminLibraryManager() {
         event_id: linked.event_id,
         proposal_id: linked.proposal_id,
         drive_url: form.drive_url.trim() || null,
+        canva_url: form.canva_url.trim() || null,
         thumbnail_url: form.thumbnail_url.trim() || null,
         resource_links: resourceLinks,
         duration_text: form.duration_text.trim() || null,
@@ -359,6 +363,19 @@ export function AdminLibraryManager() {
                 placeholder="https://drive.google.com/file/d/.../view or file ID"
                 className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
+            </label>
+
+            <label className="md:col-span-2 block">
+              <span className="text-sm font-medium text-gray-700">Canva video link</span>
+              <input
+                value={form.canva_url}
+                onChange={(e) => setForm((prev) => ({ ...prev, canva_url: e.target.value }))}
+                placeholder="https://www.canva.com/design/.../watch"
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Optional. If both are set, the Google Drive video plays first, then the Canva video.
+              </p>
             </label>
 
             <label className="block">

@@ -611,6 +611,7 @@ export interface LibraryItem {
   proposal_id?: string;
   drive_file_id?: string;
   drive_preview_url?: string;
+  canva_embed_url?: string;
   thumbnail_url?: string;
   resource_links: LibraryResourceLink[];
   duration_text?: string;

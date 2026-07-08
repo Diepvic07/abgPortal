@@ -38,6 +38,7 @@ function mapRowToLibraryItem(row: Record<string, unknown>): LibraryItem {
     proposal_id: nullToUndefined(row.proposal_id as string | null),
     drive_file_id: nullToUndefined(row.drive_file_id as string | null),
     drive_preview_url: nullToUndefined(row.drive_preview_url as string | null),
+    canva_embed_url: nullToUndefined(row.canva_embed_url as string | null),
     thumbnail_url: nullToUndefined(row.thumbnail_url as string | null),
     resource_links: parseResourceLinks(row.resource_links),
     duration_text: nullToUndefined(row.duration_text as string | null),
@@ -123,6 +124,7 @@ export async function createLibraryItem(data: {
   proposal_id?: string | null;
   drive_file_id?: string | null;
   drive_preview_url?: string | null;
+  canva_embed_url?: string | null;
   thumbnail_url?: string | null;
   resource_links?: LibraryResourceLink[];
   duration_text?: string | null;
@@ -146,6 +148,7 @@ export async function createLibraryItem(data: {
       proposal_id: data.proposal_id || null,
       drive_file_id: data.drive_file_id || null,
       drive_preview_url: data.drive_preview_url || null,
+      canva_embed_url: data.canva_embed_url || null,
       thumbnail_url: data.thumbnail_url || null,
       resource_links: data.resource_links || [],
       duration_text: data.duration_text || null,
@@ -178,6 +181,7 @@ export async function updateLibraryItem(
     proposal_id: string | null;
     drive_file_id: string | null;
     drive_preview_url: string | null;
+    canva_embed_url: string | null;
     thumbnail_url: string | null;
     resource_links: LibraryResourceLink[];
     duration_text: string | null;

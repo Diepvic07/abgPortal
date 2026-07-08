@@ -84,18 +84,36 @@ export default async function LibraryDetailPage({ params }: LibraryPageProps) {
         <p className="mt-3 text-sm leading-6 text-gray-600">{item.description}</p>
       </div>
 
-      {canWatch && item.drive_preview_url ? (
-        <section className="overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-sm">
-          <div className="aspect-video">
-            <iframe
-              src={item.drive_preview_url}
-              title={item.title}
-              allow="autoplay; fullscreen"
-              allowFullScreen
-              className="h-full w-full"
-            />
-          </div>
-        </section>
+      {canWatch && (item.drive_preview_url || item.canva_embed_url) ? (
+        <div className="space-y-4">
+          {item.drive_preview_url && (
+            <section className="overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-sm">
+              <div className="aspect-video">
+                <iframe
+                  src={item.drive_preview_url}
+                  title={item.title}
+                  allow="autoplay; fullscreen"
+                  allowFullScreen
+                  className="h-full w-full"
+                />
+              </div>
+            </section>
+          )}
+          {item.canva_embed_url && (
+            <section className="overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-sm">
+              <div className="aspect-video">
+                <iframe
+                  src={item.canva_embed_url}
+                  title={`${item.title} — Canva`}
+                  loading="lazy"
+                  allow="fullscreen; clipboard-write"
+                  allowFullScreen
+                  className="h-full w-full"
+                />
+              </div>
+            </section>
+          )}
+        </div>
       ) : (
         <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
           <h2 className="text-lg font-semibold text-amber-900">

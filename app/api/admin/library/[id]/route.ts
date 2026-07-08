@@ -6,6 +6,7 @@ import { errorResponse, handleApiError, successResponse } from '@/lib/api-respon
 import { isAdminAsync } from '@/lib/admin-utils-server';
 import { updateLibraryItem } from '@/lib/supabase-library';
 import { isDriveFolderUrl, normalizeDriveVideoInput } from '@/lib/drive-video';
+import { normalizeCanvaVideoInput } from '@/lib/canva-video';
 
 const LibraryStatus = z.enum(['draft', 'published', 'archived']);
 
@@ -21,6 +22,7 @@ const UpdateLibraryItemSchema = z.object({
   proposal_id: z.string().nullable().optional(),
   drive_url: z.string().nullable().optional(),
   drive_file_id: z.string().nullable().optional(),
+  canva_url: z.string().nullable().optional(),
   thumbnail_url: z.string().url().nullable().optional(),
   resource_links: z.array(ResourceLinkSchema).max(20).optional(),
   duration_text: z.string().max(80).nullable().optional(),
@@ -53,7 +55,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return errorResponse(parsed.error.issues.map((e) => e.message).join(', '), 400);
     }
 
-    const { drive_file_id, drive_url, ...rest } = parsed.data;
+    const { drive_file_id, drive_url, canva_url, ...rest } = parsed.data;
     const updateData: Parameters<typeof updateLibraryItem>[1] = { ...rest };
     const driveInput = drive_file_id ?? drive_url;
     if (driveInput !== undefined) {
@@ -70,6 +72,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         }
         updateData.drive_file_id = drive.fileId;
         updateData.drive_preview_url = drive.previewUrl;
+      }
+    }
+
+    if (canva_url !== undefined) {
+      if (!canva_url) {
+        updateData.canva_embed_url = null;
+      } else {
+        const canva = normalizeCanvaVideoInput(canva_url);
+        if (!canva) {
+          return errorResponse('Invalid Canva video link. Paste the share URL from Canva (e.g. https://www.canva.com/design/…/watch).', 400);
+        }
+        updateData.canva_embed_url = canva.embedUrl;
       }
     }
 

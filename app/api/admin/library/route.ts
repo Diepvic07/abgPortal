@@ -7,6 +7,7 @@ import { isAdminAsync } from '@/lib/admin-utils-server';
 import { getMemberByEmail } from '@/lib/supabase-db';
 import { createLibraryItem, getAllLibraryItems } from '@/lib/supabase-library';
 import { isDriveFolderUrl, normalizeDriveVideoInput } from '@/lib/drive-video';
+import { normalizeCanvaVideoInput } from '@/lib/canva-video';
 
 const LibraryStatus = z.enum(['draft', 'published', 'archived']);
 
@@ -22,6 +23,7 @@ const CreateLibraryItemSchema = z.object({
   proposal_id: z.string().nullable().optional(),
   drive_url: z.string().nullable().optional(),
   drive_file_id: z.string().nullable().optional(),
+  canva_url: z.string().nullable().optional(),
   thumbnail_url: z.string().url().nullable().optional(),
   resource_links: z.array(ResourceLinkSchema).max(20).optional(),
   duration_text: z.string().max(80).nullable().optional(),
@@ -80,6 +82,12 @@ export async function POST(request: NextRequest) {
       return errorResponse('Invalid Google Drive file link or ID', 400);
     }
 
+    const canvaInput = parsed.data.canva_url || '';
+    const canva = canvaInput ? normalizeCanvaVideoInput(canvaInput) : null;
+    if (canvaInput && !canva) {
+      return errorResponse('Invalid Canva video link. Paste the share URL from Canva (e.g. https://www.canva.com/design/…/watch).', 400);
+    }
+
     const item = await createLibraryItem({
       title: parsed.data.title,
       description: parsed.data.description,
@@ -87,6 +95,7 @@ export async function POST(request: NextRequest) {
       proposal_id: parsed.data.proposal_id || null,
       drive_file_id: drive?.fileId || null,
       drive_preview_url: drive?.previewUrl || null,
+      canva_embed_url: canva?.embedUrl || null,
       thumbnail_url: parsed.data.thumbnail_url || null,
       resource_links: parsed.data.resource_links || [],
       duration_text: parsed.data.duration_text || null,
