@@ -1100,6 +1100,7 @@ function mapRowToPayment(row: Record<string, unknown>): EventPayment {
     payer_name: row.payer_name as string,
     payer_email: row.payer_email as string,
     notes: nullToUndefined(row.notes as string | null),
+    cancellation_note: nullToUndefined(row.cancellation_note as string | null),
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
   };
@@ -1114,6 +1115,8 @@ export async function createEventPayment(data: {
   payer_name: string;
   payer_email: string;
   notes?: string;
+  status?: EventPaymentStatus;
+  confirmed_by_admin_id?: string;
 }): Promise<EventPayment> {
   const supabase = createServerSupabaseClient();
   const id = generateId();
@@ -1128,7 +1131,8 @@ export async function createEventPayment(data: {
       member_id: data.member_id || null,
       guest_rsvp_id: data.guest_rsvp_id || null,
       amount_vnd: data.amount_vnd,
-      status: 'pending',
+      status: data.status || 'pending',
+      confirmed_by_admin_id: data.confirmed_by_admin_id || null,
       payer_name: data.payer_name,
       payer_email: data.payer_email,
       notes: data.notes || null,
@@ -1163,13 +1167,20 @@ export async function getEventPayments(eventId: string): Promise<EventPayment[]>
   return (rows || []).map((r: Record<string, unknown>) => mapRowToPayment(r));
 }
 
-export async function updateEventPaymentStatus(paymentId: string, status: EventPaymentStatus, adminId?: string, amountVnd?: number): Promise<EventPayment> {
+export async function updateEventPaymentStatus(
+  paymentId: string,
+  status: EventPaymentStatus,
+  adminId?: string,
+  amountVnd?: number,
+  cancellationNote?: string,
+): Promise<EventPayment> {
   const supabase = createServerSupabaseClient();
   const now = formatDate();
 
   const updateData: Record<string, unknown> = { status, updated_at: now };
   if (adminId) updateData.confirmed_by_admin_id = adminId;
   if (amountVnd != null) updateData.amount_vnd = amountVnd;
+  if (cancellationNote !== undefined) updateData.cancellation_note = cancellationNote || null;
 
   const { data: row, error } = await supabase
     .from('event_payments')
@@ -1184,4 +1195,43 @@ export async function updateEventPaymentStatus(paymentId: string, status: EventP
   }
 
   return mapRowToPayment(row as Record<string, unknown>);
+}
+
+export async function getEventPaymentById(paymentId: string): Promise<EventPayment | null> {
+  const supabase = createServerSupabaseClient();
+  const { data: row, error } = await supabase
+    .from('event_payments')
+    .select('*')
+    .eq('id', paymentId)
+    .maybeSingle();
+  if (error) {
+    console.error('Error fetching event payment:', error);
+    return null;
+  }
+  return row ? mapRowToPayment(row as Record<string, unknown>) : null;
+}
+
+export async function deleteEventPayment(paymentId: string): Promise<void> {
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase.from('event_payments').delete().eq('id', paymentId);
+  if (error) {
+    console.error('Error deleting event payment:', error);
+    throw new Error('Failed to delete payment');
+  }
+}
+
+export async function setGuestRsvpStatus(
+  guestRsvpId: string,
+  status: 'registered' | 'cancelled',
+): Promise<void> {
+  const supabase = createServerSupabaseClient();
+  const now = formatDate();
+  const { error } = await supabase
+    .from('event_guest_rsvps')
+    .update({ status, updated_at: now })
+    .eq('id', guestRsvpId);
+  if (error) {
+    console.error('Error updating guest rsvp status:', error);
+    throw new Error('Failed to update guest rsvp');
+  }
 }

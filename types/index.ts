@@ -667,7 +667,7 @@ export interface EventComment {
 }
 
 export type GuestRsvpStatus = 'registered' | 'cancelled';
-export type EventPaymentStatus = 'pending' | 'confirmed' | 'rejected';
+export type EventPaymentStatus = 'pending' | 'confirmed' | 'rejected' | 'cancelled_no_refund' | 'refunded';
 export type PayerType = 'premium' | 'basic' | 'guest';
 
 export interface EventGuestRsvp {
@@ -694,6 +694,7 @@ export interface EventPayment {
   payer_name: string;
   payer_email: string;
   notes?: string;
+  cancellation_note?: string;
   created_at: string;
   updated_at: string;
 }
