@@ -12,7 +12,19 @@ const STATUS_COLORS: Record<string, string> = {
   refunded: 'bg-gray-200 text-gray-700',
 };
 
-type FilterKey = 'active' | 'pending' | 'cancelled_no_refund' | 'refunded' | 'rejected';
+type FilterKey = 'active' | 'cancelled_no_refund' | 'refunded' | 'rejected';
+
+type PendingParticipant = {
+  kind: 'member' | 'guest';
+  member_id?: string;
+  guest_rsvp_id?: string;
+  name: string;
+  email?: string;
+  abg_class?: string;
+  avatar_url?: string;
+  pending_payment_id: string | null;
+  created_at: string;
+};
 
 function statusLabel(locale: string, status: EventPaymentStatus): string {
   if (locale !== 'vi') return status.replace(/_/g, ' ');
@@ -28,6 +40,7 @@ function statusLabel(locale: string, status: EventPaymentStatus): string {
 export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; eventTitle: string }) {
   const { t, locale } = useTranslation();
   const [payments, setPayments] = useState<EventPayment[]>([]);
+  const [pendingParticipants, setPendingParticipants] = useState<PendingParticipant[]>([]);
   const [guestRsvps, setGuestRsvps] = useState<EventGuestRsvp[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -77,6 +90,7 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
       if (paymentsRes.ok) {
         const data = await paymentsRes.json();
         setPayments(data.payments || []);
+        setPendingParticipants(data.pending_participants || []);
         setEventGroupUrl(data.community_group_url || null);
         setEventGroupLabel(data.community_group_label || null);
         setEventFees({
@@ -224,18 +238,18 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
     }
   }
 
-  async function deletePending(paymentId: string) {
+  async function deleteUnpaid(target: { payment_id?: string; member_id?: string; guest_rsvp_id?: string }, actionKey: string) {
     if (!confirm(locale === 'vi'
       ? 'Xoá đăng ký chưa thanh toán này? Không thể hoàn tác.'
       : 'Delete this unpaid registration? This cannot be undone.')) return;
-    setActionLoading(paymentId);
+    setActionLoading(actionKey);
     setMessage(null);
     setMenuOpenId(null);
     try {
       const res = await fetch(`/api/admin/community/events/${eventId}/payments`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payment_id: paymentId }),
+        body: JSON.stringify(target),
       });
       if (res.ok) {
         setMessage({
@@ -262,17 +276,14 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
   const cancelledKeptList = payments.filter(p => p.status === 'cancelled_no_refund');
   const refundedList = payments.filter(p => p.status === 'refunded');
   const rejectedList = payments.filter(p => p.status === 'rejected');
-  const pendingList = payments.filter(p => p.status === 'pending');
 
   const confirmedTotal = confirmedList.reduce((s, p) => s + p.amount_vnd, 0);
   const cancelledKeptTotal = cancelledKeptList.reduce((s, p) => s + p.amount_vnd, 0);
-  const pendingTotal = pendingList.reduce((s, p) => s + p.amount_vnd, 0);
   const refundedTotal = refundedList.reduce((s, p) => s + p.amount_vnd, 0);
   const revenueTotal = confirmedTotal + cancelledKeptTotal;
 
   const filterCounts: Record<FilterKey, number> = {
     active: confirmedList.length,
-    pending: pendingList.length,
     cancelled_no_refund: cancelledKeptList.length,
     refunded: refundedList.length,
     rejected: rejectedList.length,
@@ -281,7 +292,6 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
   const filterPayments = (() => {
     switch (filter) {
       case 'active': return confirmedList;
-      case 'pending': return pendingList;
       case 'cancelled_no_refund': return cancelledKeptList;
       case 'refunded': return refundedList;
       case 'rejected': return rejectedList;
@@ -306,7 +316,7 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
       </div>
 
       {/* Revenue Summary */}
-      {payments.length > 0 && (
+      {(payments.length > 0 || pendingParticipants.length > 0) && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
             <p className="text-xs text-green-600 font-medium">{t.admin.eventPayments.confirmed}</p>
@@ -315,8 +325,8 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
           </div>
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
             <p className="text-xs text-amber-600 font-medium">{t.admin.eventPayments.pending}</p>
-            <p className="text-lg font-bold text-amber-800">{new Intl.NumberFormat('vi-VN').format(pendingTotal)}</p>
-            <p className="text-xs text-amber-600">{pendingList.length} {t.admin.eventPayments.paymentsCount}</p>
+            <p className="text-lg font-bold text-amber-800">{pendingParticipants.length}</p>
+            <p className="text-xs text-amber-600">{locale === 'vi' ? 'người chưa xác nhận' : 'unpaid participants'}</p>
           </div>
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
             <p className="text-xs text-orange-700 font-medium">{locale === 'vi' ? 'Đã huỷ · giữ tiền' : 'Cancelled · kept'}</p>
@@ -357,123 +367,158 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
         </div>
       )}
 
-      {/* Pending Payments (always shown separately at top for admin action) */}
-      {pendingList.length > 0 && (
+      {/* Pending participants: unpaid RSVPs + pending event_payments */}
+      {pendingParticipants.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-amber-800 mb-2">{t.admin.eventPayments.pendingPayments} ({pendingList.length})</h4>
+          <h4 className="text-sm font-semibold text-amber-800 mb-1">
+            {locale === 'vi' ? 'Chờ thanh toán' : 'Awaiting payment'} ({pendingParticipants.length})
+          </h4>
+          <p className="text-xs text-gray-500 mb-2">
+            {locale === 'vi'
+              ? 'Đã đăng ký nhưng chưa xác nhận thanh toán. Nếu họ không đến, hãy xoá khỏi danh sách. Nếu họ đã chuyển khoản, hãy xác nhận hoặc thêm thủ công qua "+ Thêm người đã thanh toán".'
+              : 'Registered but payment not confirmed. Delete no-shows, or confirm/add manually if they actually paid.'}
+          </p>
           <div className="space-y-3">
-            {pendingList.map((p) => (
-              <div key={p.id} className="border border-amber-200 bg-amber-50 rounded-xl p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-semibold text-gray-900">{p.payer_name}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[p.status]}`}>{statusLabel(locale, p.status)}</span>
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{PAYER_TYPE_LABELS[p.payer_type]}</span>
+            {pendingParticipants.map((pp) => {
+              const payment = pp.pending_payment_id
+                ? payments.find(p => p.id === pp.pending_payment_id)
+                : undefined;
+              const key = pp.pending_payment_id || pp.member_id || pp.guest_rsvp_id!;
+              const busy = actionLoading === key;
+              return (
+                <div key={key} className="border border-amber-200 bg-amber-50 rounded-xl p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="font-semibold text-gray-900">{pp.name}</span>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                          {pp.kind === 'guest' ? PAYER_TYPE_LABELS.guest : (pp.abg_class || t.admin.labels.basic)}
+                        </span>
+                        {payment ? (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                            {locale === 'vi' ? 'Đã báo đã trả' : 'Claimed paid'}
+                          </span>
+                        ) : (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            {locale === 'vi' ? 'Chỉ đăng ký' : 'RSVP only'}
+                          </span>
+                        )}
+                      </div>
+                      {pp.email && <p className="text-sm text-gray-600">{pp.email}</p>}
+                      {payment && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="number"
+                            min="0"
+                            value={editAmounts[payment.id] ?? String(payment.amount_vnd)}
+                            onChange={(e) => setEditAmounts(prev => ({ ...prev, [payment.id]: e.target.value }))}
+                            className="w-32 px-2 py-1 border border-gray-300 rounded text-sm font-semibold text-gray-900"
+                          />
+                          <span className="text-sm text-gray-500">{t.admin.eventPayments.vnd}</span>
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(pp.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-600">{p.payer_email}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <input
-                        type="number"
-                        min="0"
-                        value={editAmounts[p.id] ?? String(p.amount_vnd)}
-                        onChange={(e) => setEditAmounts(prev => ({ ...prev, [p.id]: e.target.value }))}
-                        className="w-32 px-2 py-1 border border-gray-300 rounded text-sm font-semibold text-gray-900"
-                      />
-                      <span className="text-sm text-gray-500">{t.admin.eventPayments.vnd}</span>
+                    <div className="flex gap-2 shrink-0">
+                      {payment && (
+                        <button
+                          onClick={() => handlePaymentAction(payment.id, 'confirmed')}
+                          disabled={busy}
+                          className="text-xs px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {t.admin.actions.confirm}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteUnpaid(
+                          payment
+                            ? { payment_id: payment.id }
+                            : pp.kind === 'member'
+                              ? { member_id: pp.member_id! }
+                              : { guest_rsvp_id: pp.guest_rsvp_id! },
+                          key,
+                        )}
+                        disabled={busy}
+                        className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                        title={locale === 'vi' ? 'Xoá đăng ký (không thanh toán)' : 'Delete unpaid registration'}
+                      >
+                        {locale === 'vi' ? 'Xoá' : 'Delete'}
+                      </button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(p.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </p>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <button
-                      onClick={() => handlePaymentAction(p.id, 'confirmed')}
-                      disabled={actionLoading === p.id}
-                      className="text-xs px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                    >
-                      {t.admin.actions.confirm}
-                    </button>
-                    <button
-                      onClick={() => deletePending(p.id)}
-                      disabled={actionLoading === p.id}
-                      className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
-                      title={locale === 'vi' ? 'Xoá đăng ký (không thanh toán)' : 'Delete unpaid registration'}
-                    >
-                      {locale === 'vi' ? 'Xoá' : 'Delete'}
-                    </button>
-                  </div>
-                </div>
 
-                {promptingPaymentId === p.id && (
-                  <div className="mt-3 rounded-lg border border-blue-200 bg-white p-3">
-                    <p className="text-sm font-semibold text-gray-900">
-                      {locale === 'vi'
-                        ? 'Thêm nhóm trao đổi (tuỳ chọn)'
-                        : 'Add a community group link (optional)'}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-600">
-                      {locale === 'vi'
-                        ? 'Đây là lần xác nhận thanh toán đầu tiên cho sự kiện này. Nếu bạn cung cấp đường dẫn nhóm Zalo / Facebook / Telegram, mọi email xác nhận tiếp theo sẽ tự động kèm theo liên kết này.'
-                        : 'This is the first payment confirmation for this event. If you provide a Zalo / Facebook / Telegram group link, every future confirmation email will include it automatically.'}
-                    </p>
-                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700">
-                          {locale === 'vi' ? 'Đường dẫn nhóm' : 'Group URL'}
-                        </label>
-                        <input
-                          type="url"
-                          value={promptUrl}
-                          onChange={(e) => setPromptUrl(e.target.value)}
-                          placeholder="https://zalo.me/g/xxxxx"
-                          className="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                        />
+                  {payment && promptingPaymentId === payment.id && (
+                    <div className="mt-3 rounded-lg border border-blue-200 bg-white p-3">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {locale === 'vi'
+                          ? 'Thêm nhóm trao đổi (tuỳ chọn)'
+                          : 'Add a community group link (optional)'}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-600">
+                        {locale === 'vi'
+                          ? 'Đây là lần xác nhận thanh toán đầu tiên cho sự kiện này. Nếu bạn cung cấp đường dẫn nhóm Zalo / Facebook / Telegram, mọi email xác nhận tiếp theo sẽ tự động kèm theo liên kết này.'
+                          : 'This is the first payment confirmation for this event. If you provide a Zalo / Facebook / Telegram group link, every future confirmation email will include it automatically.'}
+                      </p>
+                      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700">
+                            {locale === 'vi' ? 'Đường dẫn nhóm' : 'Group URL'}
+                          </label>
+                          <input
+                            type="url"
+                            value={promptUrl}
+                            onChange={(e) => setPromptUrl(e.target.value)}
+                            placeholder="https://zalo.me/g/xxxxx"
+                            className="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700">
+                            {locale === 'vi' ? 'Tên hiển thị (tuỳ chọn)' : 'Display label (optional)'}
+                          </label>
+                          <input
+                            type="text"
+                            value={promptLabel}
+                            onChange={(e) => setPromptLabel(e.target.value)}
+                            placeholder={locale === 'vi' ? 'Nhóm Zalo sự kiện' : 'Event Zalo group'}
+                            maxLength={120}
+                            className="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700">
-                          {locale === 'vi' ? 'Tên hiển thị (tuỳ chọn)' : 'Display label (optional)'}
-                        </label>
-                        <input
-                          type="text"
-                          value={promptLabel}
-                          onChange={(e) => setPromptLabel(e.target.value)}
-                          placeholder={locale === 'vi' ? 'Nhóm Zalo sự kiện' : 'Event Zalo group'}
-                          maxLength={120}
-                          className="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                        />
+                      {promptError && (
+                        <p className="mt-2 text-xs text-red-600">{promptError}</p>
+                      )}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          onClick={() => submitPrompt(payment.id, 'with-link')}
+                          disabled={busy}
+                          className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {locale === 'vi' ? 'Xác nhận & lưu nhóm' : 'Confirm & save group'}
+                        </button>
+                        <button
+                          onClick={() => submitPrompt(payment.id, 'skip')}
+                          disabled={busy}
+                          className="text-xs px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          {locale === 'vi' ? 'Xác nhận, bỏ qua nhóm' : 'Confirm without group'}
+                        </button>
+                        <button
+                          onClick={() => { setPromptingPaymentId(null); setPromptError(null); }}
+                          disabled={busy}
+                          className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                        >
+                          {locale === 'vi' ? 'Huỷ' : 'Cancel'}
+                        </button>
                       </div>
                     </div>
-                    {promptError && (
-                      <p className="mt-2 text-xs text-red-600">{promptError}</p>
-                    )}
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => submitPrompt(p.id, 'with-link')}
-                        disabled={actionLoading === p.id}
-                        className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                      >
-                        {locale === 'vi' ? 'Xác nhận & lưu nhóm' : 'Confirm & save group'}
-                      </button>
-                      <button
-                        onClick={() => submitPrompt(p.id, 'skip')}
-                        disabled={actionLoading === p.id}
-                        className="text-xs px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-                      >
-                        {locale === 'vi' ? 'Xác nhận, bỏ qua nhóm' : 'Confirm without group'}
-                      </button>
-                      <button
-                        onClick={() => { setPromptingPaymentId(null); setPromptError(null); }}
-                        disabled={actionLoading === p.id}
-                        className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-700 disabled:opacity-50"
-                      >
-                        {locale === 'vi' ? 'Huỷ' : 'Cancel'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -487,7 +532,6 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
           <div className="flex flex-wrap gap-1">
             {([
               ['active', locale === 'vi' ? 'Đang tham gia' : 'Attending'],
-              ['pending', locale === 'vi' ? 'Chờ thanh toán' : 'Pending'],
               ['cancelled_no_refund', locale === 'vi' ? 'Đã huỷ · giữ tiền' : 'Cancelled · kept'],
               ['refunded', locale === 'vi' ? 'Đã hoàn tiền' : 'Refunded'],
               ['rejected', locale === 'vi' ? 'Từ chối' : 'Rejected'],

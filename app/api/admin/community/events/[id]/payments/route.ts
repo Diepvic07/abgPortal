@@ -13,9 +13,11 @@ import {
   deleteEventPayment,
   createGuestRsvp,
   getGuestRsvpByEmail,
+  getGuestRsvpsByEvent,
   setGuestRsvpStatus,
   upsertRsvp,
   removeRsvp,
+  getRsvpsByEvent,
 } from '@/lib/supabase-events';
 import { getMemberByEmail, getMemberById } from '@/lib/supabase-db';
 import { sendEventPaymentConfirmedEmail } from '@/lib/resend';
@@ -30,12 +32,72 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     }
 
     const { id } = await params;
-    const [payments, event] = await Promise.all([
+    const [payments, event, rsvps, guestRsvps] = await Promise.all([
       getEventPayments(id),
       getEventById(id),
+      getRsvpsByEvent(id),
+      getGuestRsvpsByEvent(id),
     ]);
+
+    // Anyone with a *confirmed* payment counts as paid.
+    // Everyone else who registered but isn't paid falls into the pending bucket
+    // — this includes members who have a pending event_payments row AND those
+    // who RSVP'd on the site but never went through the "I've paid" flow.
+    const confirmedMemberIds = new Set(
+      payments.filter(p => p.status === 'confirmed' && p.member_id).map(p => p.member_id!),
+    );
+    const confirmedGuestRsvpIds = new Set(
+      payments.filter(p => p.status === 'confirmed' && p.guest_rsvp_id).map(p => p.guest_rsvp_id!),
+    );
+    const pendingPaymentByMemberId = new Map<string, string>();
+    const pendingPaymentByGuestRsvpId = new Map<string, string>();
+    for (const p of payments) {
+      if (p.status !== 'pending') continue;
+      if (p.member_id) pendingPaymentByMemberId.set(p.member_id, p.id);
+      if (p.guest_rsvp_id) pendingPaymentByGuestRsvpId.set(p.guest_rsvp_id, p.id);
+    }
+
+    type PendingParticipant = {
+      kind: 'member' | 'guest';
+      member_id?: string;
+      guest_rsvp_id?: string;
+      name: string;
+      email?: string;
+      abg_class?: string;
+      avatar_url?: string;
+      pending_payment_id: string | null;
+      created_at: string;
+    };
+    const pending_participants: PendingParticipant[] = [];
+
+    for (const r of rsvps) {
+      if (r.commitment_level !== 'will_participate' && r.commitment_level !== 'will_lead') continue;
+      if (confirmedMemberIds.has(r.member_id)) continue;
+      pending_participants.push({
+        kind: 'member',
+        member_id: r.member_id,
+        name: r.member_name || '—',
+        abg_class: r.member_abg_class,
+        avatar_url: r.member_avatar_url,
+        pending_payment_id: pendingPaymentByMemberId.get(r.member_id) || null,
+        created_at: r.created_at,
+      });
+    }
+    for (const g of guestRsvps) {
+      if (confirmedGuestRsvpIds.has(g.id)) continue;
+      pending_participants.push({
+        kind: 'guest',
+        guest_rsvp_id: g.id,
+        name: g.guest_name,
+        email: g.guest_email,
+        pending_payment_id: pendingPaymentByGuestRsvpId.get(g.id) || null,
+        created_at: g.created_at,
+      });
+    }
+
     return successResponse({
       payments,
+      pending_participants,
       community_group_url: event?.community_group_url || null,
       community_group_label: event?.community_group_label || null,
       fee_premium: event?.fee_premium ?? null,
@@ -241,9 +303,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-// Hard-delete a pending payment (no money moved). Used for the
-// "no-show, never paid" cleanup — removes the RSVP too.
-const DeletePaymentSchema = z.object({ payment_id: z.string() });
+// Remove an unpaid participant from the event. Accepts one of:
+//   - payment_id: an existing pending event_payments row (deleted along with the RSVP)
+//   - member_id:  a member whose RSVP should be dropped (also deletes any pending payment row)
+//   - guest_rsvp_id: a guest whose RSVP should be marked cancelled (also deletes any pending payment row)
+// Refunding a *confirmed* payment goes through PATCH, not DELETE.
+const DeletePaymentSchema = z
+  .object({
+    payment_id: z.string().optional(),
+    member_id: z.string().optional(),
+    guest_rsvp_id: z.string().optional(),
+  })
+  .refine((v) => !!v.payment_id || !!v.member_id || !!v.guest_rsvp_id, {
+    message: 'Provide payment_id, member_id, or guest_rsvp_id',
+  });
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -259,19 +332,48 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const { id: eventId } = await params;
-    const payment = await getEventPaymentById(parsed.data.payment_id);
-    if (!payment) return errorResponse('Payment not found', 404);
-    if (payment.status !== 'pending') {
-      return errorResponse('Only pending payments can be deleted; use PATCH to refund or cancel a confirmed payment', 400);
+
+    if (parsed.data.payment_id) {
+      const payment = await getEventPaymentById(parsed.data.payment_id);
+      if (!payment) return errorResponse('Payment not found', 404);
+      if (payment.status !== 'pending') {
+        return errorResponse('Only pending payments can be deleted; use PATCH to refund or cancel a confirmed payment', 400);
+      }
+      if (payment.member_id) {
+        await removeRsvp(eventId, payment.member_id);
+      } else if (payment.guest_rsvp_id) {
+        await setGuestRsvpStatus(payment.guest_rsvp_id, 'cancelled');
+      }
+      await deleteEventPayment(parsed.data.payment_id);
+      return successResponse({ ok: true });
     }
 
-    if (payment.member_id) {
-      await removeRsvp(eventId, payment.member_id);
-    } else if (payment.guest_rsvp_id) {
-      await setGuestRsvpStatus(payment.guest_rsvp_id, 'cancelled');
+    // No payment_id: caller is dropping someone whose registration may or may not
+    // have an event_payments row. Clean up whichever pending row exists (if any)
+    // in addition to the RSVP itself. Confirmed payments are protected — those
+    // require PATCH (refunded / cancelled_no_refund) so revenue stays consistent.
+    const eventPayments = await getEventPayments(eventId);
+    if (parsed.data.member_id) {
+      const memberId = parsed.data.member_id;
+      const confirmed = eventPayments.find(p => p.member_id === memberId && p.status === 'confirmed');
+      if (confirmed) {
+        return errorResponse('Cannot delete a member with a confirmed payment; use refund or cancel-keep-money instead', 400);
+      }
+      const pending = eventPayments.find(p => p.member_id === memberId && p.status === 'pending');
+      if (pending) await deleteEventPayment(pending.id);
+      await removeRsvp(eventId, memberId);
+      return successResponse({ ok: true });
     }
-    await deleteEventPayment(parsed.data.payment_id);
 
+    // guest_rsvp_id branch
+    const guestRsvpId = parsed.data.guest_rsvp_id!;
+    const confirmed = eventPayments.find(p => p.guest_rsvp_id === guestRsvpId && p.status === 'confirmed');
+    if (confirmed) {
+      return errorResponse('Cannot delete a guest with a confirmed payment; use refund or cancel-keep-money instead', 400);
+    }
+    const pending = eventPayments.find(p => p.guest_rsvp_id === guestRsvpId && p.status === 'pending');
+    if (pending) await deleteEventPayment(pending.id);
+    await setGuestRsvpStatus(guestRsvpId, 'cancelled');
     return successResponse({ ok: true });
   } catch (error) {
     return handleApiError(error);
