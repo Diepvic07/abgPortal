@@ -1271,7 +1271,7 @@ export const vi: Translations = {
       account: 'Số tài khoản',
       name: 'Tên',
       transferContent: 'Nội dung chuyển khoản',
-      confirmButton: 'Tôi đã chuyển khoản',
+      confirmButton: 'Chuyển khoản rồi nhé',
       confirming: 'Đang gửi...',
       confirmNote: 'Sau khi bấm, admin sẽ kiểm tra chuyển khoản và xác nhận đăng ký của bạn.',
       successTitle: 'Đã gửi xác nhận thanh toán!',
