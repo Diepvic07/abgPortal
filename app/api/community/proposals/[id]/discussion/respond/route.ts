@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth-middleware';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { ensureParticipantCommitment } from '@/lib/supabase-community';
 import { generateId, formatDate } from '@/lib/utils';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -78,6 +79,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         });
 
       if (error) throw new Error('Failed to submit response');
+    }
+
+    // Voting on a discussion (dates or question) implies "I will participate" —
+    // auto-promote if not already committed at that level or higher.
+    // Skipped when the response was deleted above (early-returned).
+    // Failure here must not fail the vote.
+    try {
+      await ensureParticipantCommitment(proposalId, member.id);
+    } catch (err) {
+      console.error('[discussion/respond] auto-promote commitment failed:', err);
     }
 
     return successResponse({ message: 'Response submitted successfully' });

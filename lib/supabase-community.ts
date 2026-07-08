@@ -404,6 +404,32 @@ export async function upsertCommitment(data: {
   return commitment;
 }
 
+// Auto-promote a member to `will_participate` if they don't already have a
+// stronger commitment. Used when a member votes on a proposal poll or discussion
+// date poll — voting is treated as an implicit "I will participate" signal.
+// Never downgrades an existing `will_lead` or `will_participate`.
+export async function ensureParticipantCommitment(
+  proposalId: string,
+  memberId: string,
+): Promise<void> {
+  const supabase = createServerSupabaseClient();
+  const { data: existing } = await supabase
+    .from('community_commitments')
+    .select('commitment_level')
+    .eq('proposal_id', proposalId)
+    .eq('member_id', memberId)
+    .maybeSingle();
+
+  const currentLevel = (existing as { commitment_level?: CommitmentLevel } | null)?.commitment_level;
+  if (currentLevel === 'will_participate' || currentLevel === 'will_lead') return;
+
+  await upsertCommitment({
+    proposal_id: proposalId,
+    member_id: memberId,
+    commitment_level: 'will_participate',
+  });
+}
+
 export async function removeCommitment(proposalId: string, memberId: string): Promise<void> {
   const supabase = createServerSupabaseClient();
 
