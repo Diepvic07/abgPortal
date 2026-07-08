@@ -79,9 +79,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (!canva_url) {
         updateData.canva_embed_url = null;
       } else {
-        const canva = normalizeCanvaVideoInput(canva_url);
+        const canva = await normalizeCanvaVideoInput(canva_url);
         if (!canva) {
-          return errorResponse('Invalid Canva video link. Paste the share URL from Canva (e.g. https://www.canva.com/design/…/watch).', 400);
+          return errorResponse('Invalid Canva video link. Paste the "Public view link" from Canva (canva.link/… or canva.com/design/…/watch).', 400);
         }
         updateData.canva_embed_url = canva.embedUrl;
       }

@@ -83,9 +83,9 @@ export async function POST(request: NextRequest) {
     }
 
     const canvaInput = parsed.data.canva_url || '';
-    const canva = canvaInput ? normalizeCanvaVideoInput(canvaInput) : null;
+    const canva = canvaInput ? await normalizeCanvaVideoInput(canvaInput) : null;
     if (canvaInput && !canva) {
-      return errorResponse('Invalid Canva video link. Paste the share URL from Canva (e.g. https://www.canva.com/design/…/watch).', 400);
+      return errorResponse('Invalid Canva video link. Paste the "Public view link" from Canva (canva.link/… or canva.com/design/…/watch).', 400);
     }
 
     const item = await createLibraryItem({
