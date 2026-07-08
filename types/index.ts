@@ -690,6 +690,9 @@ export interface EventPayment {
   member_id?: string;
   guest_rsvp_id?: string;
   amount_vnd: number;
+  // Only meaningful when status === 'refunded'. Undefined for legacy rows
+  // refunded before this column existed — treat as a full refund of amount_vnd.
+  refunded_amount_vnd?: number;
   status: EventPaymentStatus;
   confirmed_by_admin_id?: string;
   payer_name: string;

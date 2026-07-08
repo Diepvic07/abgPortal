@@ -1095,6 +1095,7 @@ function mapRowToPayment(row: Record<string, unknown>): EventPayment {
     member_id: nullToUndefined(row.member_id as string | null),
     guest_rsvp_id: nullToUndefined(row.guest_rsvp_id as string | null),
     amount_vnd: row.amount_vnd as number,
+    refunded_amount_vnd: nullToUndefined(row.refunded_amount_vnd as number | null),
     status: (row.status as EventPaymentStatus) || 'pending',
     confirmed_by_admin_id: nullToUndefined(row.confirmed_by_admin_id as string | null),
     payer_name: row.payer_name as string,
@@ -1173,6 +1174,7 @@ export async function updateEventPaymentStatus(
   adminId?: string,
   amountVnd?: number,
   cancellationNote?: string,
+  refundedAmountVnd?: number | null,
 ): Promise<EventPayment> {
   const supabase = createServerSupabaseClient();
   const now = formatDate();
@@ -1181,6 +1183,13 @@ export async function updateEventPaymentStatus(
   if (adminId) updateData.confirmed_by_admin_id = adminId;
   if (amountVnd != null) updateData.amount_vnd = amountVnd;
   if (cancellationNote !== undefined) updateData.cancellation_note = cancellationNote || null;
+  // Explicit null clears a prior refund amount (e.g., when restoring to confirmed).
+  if (refundedAmountVnd !== undefined) updateData.refunded_amount_vnd = refundedAmountVnd;
+  // If the row is leaving 'refunded' status (e.g., re-confirmed), wipe the refund
+  // amount so it doesn't linger with stale data.
+  if (status !== 'refunded' && refundedAmountVnd === undefined) {
+    updateData.refunded_amount_vnd = null;
+  }
 
   const { data: row, error } = await supabase
     .from('event_payments')

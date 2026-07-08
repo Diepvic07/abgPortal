@@ -49,11 +49,18 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
   const [eventGroupUrl, setEventGroupUrl] = useState<string | null>(null);
   const [eventGroupLabel, setEventGroupLabel] = useState<string | null>(null);
   const [eventFees, setEventFees] = useState<{ premium: number | null; basic: number | null; guest: number | null }>({ premium: null, basic: null, guest: null });
-  // Which pending payment row is currently showing the inline group-link prompt
+  // Which row is currently showing the inline group-link prompt.
+  // Payments key by their id; RSVP-only rows key by member_id / guest_rsvp_id.
   const [promptingPaymentId, setPromptingPaymentId] = useState<string | null>(null);
+  const [promptingRsvpKey, setPromptingRsvpKey] = useState<string | null>(null);
   const [promptUrl, setPromptUrl] = useState('');
   const [promptLabel, setPromptLabel] = useState('');
   const [promptError, setPromptError] = useState<string | null>(null);
+  // Inline refund form state.
+  const [refundingPaymentId, setRefundingPaymentId] = useState<string | null>(null);
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundNote, setRefundNote] = useState('');
+  const [refundError, setRefundError] = useState<string | null>(null);
 
   const [filter, setFilter] = useState<FilterKey>('active');
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
@@ -212,6 +219,108 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
     }
   }
 
+  function rsvpKey(pp: PendingParticipant): string {
+    return (pp.member_id || pp.guest_rsvp_id!) as string;
+  }
+
+  function defaultRsvpAmount(pp: PendingParticipant): number | null {
+    return pp.kind === 'guest' ? eventFees.guest : eventFees.basic;
+  }
+
+  function rsvpAmountValue(pp: PendingParticipant): string {
+    const key = rsvpKey(pp);
+    if (editAmounts[key] !== undefined) return editAmounts[key];
+    const fee = defaultRsvpAmount(pp);
+    return fee != null ? String(fee) : '';
+  }
+
+  async function submitConfirmRsvp(pp: PendingParticipant, opts?: { groupUrl?: string; groupLabel?: string }) {
+    const key = rsvpKey(pp);
+    const raw = rsvpAmountValue(pp).trim();
+    const amount = raw === '' ? NaN : parseInt(raw);
+    if (!Number.isFinite(amount) || amount < 0) {
+      setMessage({
+        text: locale === 'vi' ? 'Nhập số tiền hợp lệ.' : 'Enter a valid amount.',
+        type: 'error',
+      });
+      return;
+    }
+    if (pp.kind === 'guest' && !pp.email) {
+      setMessage({
+        text: locale === 'vi' ? 'Không có email khách để xác nhận.' : 'Guest email missing.',
+        type: 'error',
+      });
+      return;
+    }
+
+    setActionLoading(key);
+    setMessage(null);
+    setPromptError(null);
+    try {
+      const payload: Record<string, unknown> = {
+        amount_vnd: amount,
+        send_confirmation_email: true,
+      };
+      if (pp.kind === 'member') {
+        payload.member_id = pp.member_id;
+      } else {
+        payload.guest_name = pp.name;
+        payload.guest_email = pp.email;
+      }
+      if (opts?.groupUrl) payload.community_group_url = opts.groupUrl;
+      if (opts?.groupLabel) payload.community_group_label = opts.groupLabel;
+
+      const res = await fetch(`/api/admin/community/events/${eventId}/payments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        setMessage({ text: (t.admin.eventPayments.paymentStatus as string).replace('{status}', 'confirmed'), type: 'success' });
+        setPromptingRsvpKey(null);
+        setPromptUrl('');
+        setPromptLabel('');
+        await fetchData();
+      } else {
+        const data = await res.json().catch(() => null);
+        setMessage({ text: data?.error || t.admin.messages.failed, type: 'error' });
+      }
+    } catch {
+      setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleRsvpConfirm(pp: PendingParticipant) {
+    if (!eventGroupUrl) {
+      setPromptingRsvpKey(rsvpKey(pp));
+      setPromptingPaymentId(null);
+      setPromptUrl('');
+      setPromptLabel('');
+      setPromptError(null);
+      setMessage(null);
+      return;
+    }
+    await submitConfirmRsvp(pp);
+  }
+
+  async function submitRsvpPrompt(pp: PendingParticipant, mode: 'with-link' | 'skip') {
+    if (mode === 'with-link') {
+      const url = promptUrl.trim();
+      const label = promptLabel.trim();
+      if (!url || !isValidUrl(url)) {
+        setPromptError(locale === 'vi'
+          ? 'Vui lòng nhập đường dẫn hợp lệ (bắt đầu bằng http:// hoặc https://).'
+          : 'Please enter a valid URL (starting with http:// or https://).');
+        return;
+      }
+      await submitConfirmRsvp(pp, { groupUrl: url, groupLabel: label });
+    } else {
+      await submitConfirmRsvp(pp);
+    }
+  }
+
   async function patchStatus(paymentId: string, status: EventPaymentStatus, opts?: { cancellationNote?: string }) {
     setActionLoading(paymentId);
     setMessage(null);
@@ -233,6 +342,69 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
       }
     } catch {
       setMessage({ text: t.admin.messages.somethingWrong, type: 'error' });
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  function openRefundForm(p: EventPayment) {
+    setRefundingPaymentId(p.id);
+    setRefundAmount(String(p.amount_vnd));
+    setRefundNote('');
+    setRefundError(null);
+    setMenuOpenId(null);
+    setMessage(null);
+  }
+
+  function closeRefundForm() {
+    setRefundingPaymentId(null);
+    setRefundAmount('');
+    setRefundNote('');
+    setRefundError(null);
+  }
+
+  async function submitRefund(p: EventPayment) {
+    setRefundError(null);
+    const raw = refundAmount.trim();
+    const amount = raw === '' ? NaN : parseInt(raw);
+    if (!Number.isFinite(amount) || amount < 0) {
+      setRefundError(locale === 'vi' ? 'Nhập số tiền hợp lệ.' : 'Enter a valid amount.');
+      return;
+    }
+    if (amount > p.amount_vnd) {
+      setRefundError(locale === 'vi'
+        ? `Không vượt quá số tiền đã thu (${new Intl.NumberFormat('vi-VN').format(p.amount_vnd)} VND).`
+        : `Cannot exceed the paid amount (${new Intl.NumberFormat('vi-VN').format(p.amount_vnd)} VND).`);
+      return;
+    }
+    setActionLoading(p.id);
+    setMessage(null);
+    try {
+      const payload: Record<string, unknown> = {
+        payment_id: p.id,
+        status: 'refunded',
+        refunded_amount_vnd: amount,
+      };
+      const note = refundNote.trim();
+      if (note) payload.cancellation_note = note;
+      const res = await fetch(`/api/admin/community/events/${eventId}/payments`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        setMessage({
+          text: (t.admin.eventPayments.paymentStatus as string).replace('{status}', 'refunded'),
+          type: 'success',
+        });
+        closeRefundForm();
+        await fetchData();
+      } else {
+        const data = await res.json().catch(() => null);
+        setRefundError(data?.error || t.admin.messages.failed);
+      }
+    } catch {
+      setRefundError(t.admin.messages.somethingWrong);
     } finally {
       setActionLoading(null);
     }
@@ -277,10 +449,20 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
   const refundedList = payments.filter(p => p.status === 'refunded');
   const rejectedList = payments.filter(p => p.status === 'rejected');
 
+  // Legacy rows refunded before we tracked partial amounts have
+  // refunded_amount_vnd = undefined; treat those as full refunds.
+  function refundedPortion(p: EventPayment): number {
+    return p.refunded_amount_vnd ?? p.amount_vnd;
+  }
+  function keptPortion(p: EventPayment): number {
+    return p.amount_vnd - refundedPortion(p);
+  }
+
   const confirmedTotal = confirmedList.reduce((s, p) => s + p.amount_vnd, 0);
   const cancelledKeptTotal = cancelledKeptList.reduce((s, p) => s + p.amount_vnd, 0);
-  const refundedTotal = refundedList.reduce((s, p) => s + p.amount_vnd, 0);
-  const revenueTotal = confirmedTotal + cancelledKeptTotal;
+  const refundedTotal = refundedList.reduce((s, p) => s + refundedPortion(p), 0);
+  const partialRefundKeptTotal = refundedList.reduce((s, p) => s + keptPortion(p), 0);
+  const revenueTotal = confirmedTotal + cancelledKeptTotal + partialRefundKeptTotal;
 
   const filterCounts: Record<FilterKey, number> = {
     active: confirmedList.length,
@@ -437,7 +619,7 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
                             )}
                           </div>
                           {pp.email && <p className="text-sm text-gray-600">{pp.email}</p>}
-                          {payment && (
+                          {payment ? (
                             <div className="flex items-center gap-2 mt-1">
                               <input
                                 type="number"
@@ -448,17 +630,38 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
                               />
                               <span className="text-sm text-gray-500">{t.admin.eventPayments.vnd}</span>
                             </div>
+                          ) : (
+                            <div className="flex items-center gap-2 mt-1">
+                              <input
+                                type="number"
+                                min="0"
+                                value={rsvpAmountValue(pp)}
+                                onChange={(e) => setEditAmounts(prev => ({ ...prev, [key]: e.target.value }))}
+                                placeholder={locale === 'vi' ? 'Số tiền đã nhận' : 'Amount received'}
+                                className="w-32 px-2 py-1 border border-gray-300 rounded text-sm font-semibold text-gray-900"
+                              />
+                              <span className="text-sm text-gray-500">{t.admin.eventPayments.vnd}</span>
+                            </div>
                           )}
                           <p className="text-xs text-gray-500 mt-1">
                             {new Date(pp.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                         <div className="flex gap-2 shrink-0">
-                          {payment && (
+                          {payment ? (
                             <button
                               onClick={() => handlePaymentAction(payment.id, 'confirmed')}
                               disabled={busy}
                               className="text-xs px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                            >
+                              {t.admin.actions.confirm}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleRsvpConfirm(pp)}
+                              disabled={busy}
+                              className="text-xs px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                              title={locale === 'vi' ? 'Xác nhận đã nhận thanh toán' : 'Mark payment as received'}
                             >
                               {t.admin.actions.confirm}
                             </button>
@@ -548,6 +751,74 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
                           </div>
                         </div>
                       )}
+
+                      {!payment && promptingRsvpKey === key && (
+                        <div className="mt-3 rounded-lg border border-blue-200 bg-white p-3">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {locale === 'vi'
+                              ? 'Thêm nhóm trao đổi (tuỳ chọn)'
+                              : 'Add a community group link (optional)'}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-600">
+                            {locale === 'vi'
+                              ? 'Đây là lần xác nhận thanh toán đầu tiên cho sự kiện này. Nếu bạn cung cấp đường dẫn nhóm Zalo / Facebook / Telegram, mọi email xác nhận tiếp theo sẽ tự động kèm theo liên kết này.'
+                              : 'This is the first payment confirmation for this event. If you provide a Zalo / Facebook / Telegram group link, every future confirmation email will include it automatically.'}
+                          </p>
+                          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700">
+                                {locale === 'vi' ? 'Đường dẫn nhóm' : 'Group URL'}
+                              </label>
+                              <input
+                                type="url"
+                                value={promptUrl}
+                                onChange={(e) => setPromptUrl(e.target.value)}
+                                placeholder="https://zalo.me/g/xxxxx"
+                                className="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700">
+                                {locale === 'vi' ? 'Tên hiển thị (tuỳ chọn)' : 'Display label (optional)'}
+                              </label>
+                              <input
+                                type="text"
+                                value={promptLabel}
+                                onChange={(e) => setPromptLabel(e.target.value)}
+                                placeholder={locale === 'vi' ? 'Nhóm Zalo sự kiện' : 'Event Zalo group'}
+                                maxLength={120}
+                                className="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                              />
+                            </div>
+                          </div>
+                          {promptError && (
+                            <p className="mt-2 text-xs text-red-600">{promptError}</p>
+                          )}
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                              onClick={() => submitRsvpPrompt(pp, 'with-link')}
+                              disabled={busy}
+                              className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              {locale === 'vi' ? 'Xác nhận & lưu nhóm' : 'Confirm & save group'}
+                            </button>
+                            <button
+                              onClick={() => submitRsvpPrompt(pp, 'skip')}
+                              disabled={busy}
+                              className="text-xs px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                            >
+                              {locale === 'vi' ? 'Xác nhận, bỏ qua nhóm' : 'Confirm without group'}
+                            </button>
+                            <button
+                              onClick={() => { setPromptingRsvpKey(null); setPromptError(null); }}
+                              disabled={busy}
+                              className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                            >
+                              {locale === 'vi' ? 'Huỷ' : 'Cancel'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -570,26 +841,44 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
                       <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{PAYER_TYPE_LABELS[p.payer_type]}</span>
                     </div>
                     <p className="text-xs text-gray-500">{p.payer_email}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <input
-                        type="number"
-                        min="0"
-                        value={editAmounts[p.id] ?? String(p.amount_vnd)}
-                        onChange={(e) => setEditAmounts(prev => ({ ...prev, [p.id]: e.target.value }))}
-                        className="w-28 px-2 py-0.5 border border-gray-200 rounded text-xs font-medium text-gray-700"
-                        disabled={p.status === 'refunded'}
-                      />
-                      <span className="text-xs text-gray-400">{t.admin.eventPayments.vnd}</span>
-                      {editAmounts[p.id] && parseInt(editAmounts[p.id]) !== p.amount_vnd && p.status !== 'refunded' && (
-                        <button
-                          onClick={() => handlePaymentAction(p.id, p.status === 'rejected' ? 'rejected' : 'confirmed')}
-                          disabled={actionLoading === p.id}
-                          className="text-xs px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                        >
-                          {t.admin.actions.save}
-                        </button>
-                      )}
-                    </div>
+                    {p.status === 'refunded' ? (
+                      <div className="mt-1 text-xs text-gray-700 space-y-0.5">
+                        <div>
+                          <span className="text-gray-500">{locale === 'vi' ? 'Đã thu: ' : 'Paid: '}</span>
+                          <span className="font-medium">{new Intl.NumberFormat('vi-VN').format(p.amount_vnd)} {t.admin.eventPayments.vnd}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">{locale === 'vi' ? 'Đã hoàn: ' : 'Refunded: '}</span>
+                          <span className="font-medium text-blue-700">{new Intl.NumberFormat('vi-VN').format(refundedPortion(p))} {t.admin.eventPayments.vnd}</span>
+                        </div>
+                        {keptPortion(p) > 0 && (
+                          <div>
+                            <span className="text-gray-500">{locale === 'vi' ? 'Giữ lại: ' : 'Kept: '}</span>
+                            <span className="font-medium text-emerald-700">{new Intl.NumberFormat('vi-VN').format(keptPortion(p))} {t.admin.eventPayments.vnd}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="number"
+                          min="0"
+                          value={editAmounts[p.id] ?? String(p.amount_vnd)}
+                          onChange={(e) => setEditAmounts(prev => ({ ...prev, [p.id]: e.target.value }))}
+                          className="w-28 px-2 py-0.5 border border-gray-200 rounded text-xs font-medium text-gray-700"
+                        />
+                        <span className="text-xs text-gray-400">{t.admin.eventPayments.vnd}</span>
+                        {editAmounts[p.id] && parseInt(editAmounts[p.id]) !== p.amount_vnd && (
+                          <button
+                            onClick={() => handlePaymentAction(p.id, p.status === 'rejected' ? 'rejected' : 'confirmed')}
+                            disabled={actionLoading === p.id}
+                            className="text-xs px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            {t.admin.actions.save}
+                          </button>
+                        )}
+                      </div>
+                    )}
                     {p.cancellation_note && (
                       <p className="mt-1 text-xs text-orange-700 italic">
                         {locale === 'vi' ? 'Ghi chú huỷ: ' : 'Cancel note: '}{p.cancellation_note}
@@ -610,11 +899,7 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
                         {p.status === 'confirmed' && (
                           <>
                             <MenuItem
-                              onClick={() => {
-                                const note = prompt(locale === 'vi' ? 'Ghi chú (tuỳ chọn):' : 'Note (optional):') ?? undefined;
-                                if (note === undefined) return; // cancelled
-                                patchStatus(p.id, 'refunded', { cancellationNote: note });
-                              }}
+                              onClick={() => openRefundForm(p)}
                               label={locale === 'vi' ? 'Xoá & hoàn tiền' : 'Remove & refund'}
                               hint={locale === 'vi' ? 'Trừ khỏi doanh thu' : 'Excluded from revenue'}
                             />
@@ -673,6 +958,82 @@ export function AdminEventPayments({ eventId, eventTitle }: { eventId: string; e
                     )}
                   </div>
                 </div>
+
+                {refundingPaymentId === p.id && (
+                  <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {locale === 'vi' ? 'Xoá & hoàn tiền' : 'Remove & refund'}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-600">
+                      {locale === 'vi'
+                        ? `Đã thu ${new Intl.NumberFormat('vi-VN').format(p.amount_vnd)} VND. Nhập số tiền thực tế đã hoàn — có thể hoàn toàn bộ hoặc một phần.`
+                        : `Paid ${new Intl.NumberFormat('vi-VN').format(p.amount_vnd)} VND. Enter the actual amount refunded — full or partial.`}
+                    </p>
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">
+                          {locale === 'vi' ? 'Số tiền hoàn (VND)' : 'Refund amount (VND)'}
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max={p.amount_vnd}
+                          value={refundAmount}
+                          onChange={(e) => { setRefundAmount(e.target.value); setRefundError(null); }}
+                          className="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-sm font-semibold"
+                        />
+                        <div className="mt-1 flex flex-wrap gap-2 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => { setRefundAmount(String(p.amount_vnd)); setRefundError(null); }}
+                            className="text-blue-700 hover:underline"
+                          >
+                            {locale === 'vi' ? 'Toàn bộ' : 'Full'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setRefundAmount(String(Math.floor(p.amount_vnd / 2))); setRefundError(null); }}
+                            className="text-blue-700 hover:underline"
+                          >
+                            {locale === 'vi' ? '50%' : 'Half'}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">
+                          {locale === 'vi' ? 'Ghi chú (tuỳ chọn)' : 'Note (optional)'}
+                        </label>
+                        <input
+                          type="text"
+                          value={refundNote}
+                          onChange={(e) => setRefundNote(e.target.value)}
+                          maxLength={500}
+                          placeholder={locale === 'vi' ? 'Lý do hoàn / phương thức' : 'Reason / method'}
+                          className="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
+                    </div>
+                    {refundError && (
+                      <p className="mt-2 text-xs text-red-600">{refundError}</p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => submitRefund(p)}
+                        disabled={actionLoading === p.id}
+                        className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {locale === 'vi' ? 'Xác nhận hoàn tiền' : 'Confirm refund'}
+                      </button>
+                      <button
+                        onClick={closeRefundForm}
+                        disabled={actionLoading === p.id}
+                        className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                      >
+                        {locale === 'vi' ? 'Huỷ' : 'Cancel'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

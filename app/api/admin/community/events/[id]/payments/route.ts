@@ -113,6 +113,10 @@ const UpdatePaymentSchema = z.object({
   payment_id: z.string(),
   status: z.enum(['confirmed', 'rejected', 'cancelled_no_refund', 'refunded']),
   amount_vnd: z.number().int().positive().optional(),
+  // For status='refunded' only. Amount actually returned to the payer.
+  // Between 0 and the payment's amount_vnd. Omit for a full refund of
+  // the original amount.
+  refunded_amount_vnd: z.number().int().nonnegative().optional(),
   cancellation_note: z.string().trim().max(500).optional(),
   // Optional community group link to attach to the event on this confirm.
   // Only persisted if the event doesn't already have one. Accept empty
@@ -138,12 +142,27 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const before = await getEventPaymentById(parsed.data.payment_id);
     if (!before) return errorResponse('Payment not found', 404);
 
+    // For refunds, decide the refunded amount:
+    //   - explicit value from client (partial refund),
+    //   - or default to the original paid amount (full refund).
+    // Cap it at amount_vnd — the check constraint enforces this too.
+    let refundedAmountVnd: number | null | undefined;
+    if (parsed.data.status === 'refunded') {
+      const original = parsed.data.amount_vnd ?? before.amount_vnd;
+      const requested = parsed.data.refunded_amount_vnd ?? original;
+      if (requested > original) {
+        return errorResponse('Refunded amount cannot exceed the paid amount', 400);
+      }
+      refundedAmountVnd = requested;
+    }
+
     const payment = await updateEventPaymentStatus(
       parsed.data.payment_id,
       parsed.data.status,
       admin?.id,
       parsed.data.amount_vnd,
       parsed.data.cancellation_note,
+      refundedAmountVnd,
     );
 
     const { id: eventId } = await params;
@@ -220,6 +239,14 @@ const AddParticipantSchema = z
     guest_phone: z.string().trim().max(50).optional(),
     amount_vnd: z.number().int().nonnegative(),
     notes: z.string().trim().max(500).optional(),
+    // Optional community group link to attach on this confirm.
+    // Only persisted if the event doesn't already have one.
+    community_group_url: z.string().trim().url().or(z.literal('')).optional(),
+    community_group_label: z.string().trim().max(120).optional(),
+    // When true, send the payment-confirmed email to the participant.
+    // Used by the "confirm registered participant" flow; the manual
+    // "+ Add paid participant" modal leaves this off.
+    send_confirmation_email: z.boolean().optional(),
   })
   .refine(
     (v) => !!v.member_id || (!!v.guest_name && !!v.guest_email),
@@ -240,15 +267,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const { id: eventId } = await params;
-    const event = await getEventById(eventId);
+    let event = await getEventById(eventId);
     if (!event) return errorResponse('Event not found', 404);
 
     const admin = await getMemberByEmail(session.user.email);
 
     let payment;
+    let payerMember: Awaited<ReturnType<typeof getMemberById>> | null = null;
     if (parsed.data.member_id) {
       const member = await getMemberById(parsed.data.member_id);
       if (!member) return errorResponse('Member not found', 404);
+      payerMember = member;
       const membershipStatus = getMembershipStatus(member);
       const payerType = membershipStatus === 'premium' ? 'premium' as const : 'basic' as const;
 
@@ -295,6 +324,35 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         status: 'confirmed',
         confirmed_by_admin_id: admin?.id,
       });
+    }
+
+    // Attach community group link if admin supplied one and event has none.
+    const trimmedUrl = parsed.data.community_group_url?.trim() || '';
+    const trimmedLabel = parsed.data.community_group_label?.trim() || '';
+    if (trimmedUrl && !event.community_group_url) {
+      event = await updateEvent(eventId, {
+        community_group_url: trimmedUrl,
+        community_group_label: trimmedLabel || null,
+      });
+    }
+
+    if (parsed.data.send_confirmation_email && payment.payer_email && event) {
+      try {
+        await sendEventPaymentConfirmedEmail({
+          to: payment.payer_email,
+          payerName: payment.payer_name || payerMember?.name || payment.payer_email,
+          eventTitle: event.title,
+          eventSlug: event.slug,
+          eventDate: event.event_date,
+          eventLocation: event.location || undefined,
+          amountVnd: payment.amount_vnd,
+          communityGroupUrl: event.community_group_url,
+          communityGroupLabel: event.community_group_label,
+          locale: payerMember?.locale,
+        });
+      } catch (emailError) {
+        console.error('Failed to send payment confirmation email:', emailError);
+      }
     }
 
     return successResponse({ payment });
