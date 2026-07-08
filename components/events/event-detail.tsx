@@ -197,6 +197,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
   const [pendingRsvp, setPendingRsvp] = useState<EventRegistrationLevel | null>(null);
   const [rsvpNote, setRsvpNote] = useState('');
   const [showPaymentFlow, setShowPaymentFlow] = useState(false);
+  const [pendingCommitmentLevel, setPendingCommitmentLevel] = useState<EventRegistrationLevel>('will_participate');
   const [myPaymentStatus, setMyPaymentStatus] = useState<string | null>(null);
   const [memberPhone, setMemberPhone] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -280,6 +281,19 @@ export function EventDetail({ eventId }: { eventId: string }) {
   }, [eventId]);
 
   async function submitRsvp(level: EventRegistrationLevel) {
+    // For paid events, defer RSVP creation until the member actually
+    // confirms payment. Closing the QR modal without confirming leaves
+    // no registration behind, so admin's pending list only holds real
+    // intents (see /confirm-payment endpoint).
+    const isPrem = membershipStatus === 'premium' || membershipStatus === 'grace-period';
+    const fee = isPrem ? event?.fee_premium : event?.fee_basic;
+    const paidEvent = fee != null && fee > 0;
+    if (paidEvent) {
+      setPendingCommitmentLevel(level);
+      setShowPaymentFlow(true);
+      return;
+    }
+
     setRsvpLoading(true);
     try {
       const res = await fetch(`/api/community/events/${eventId}/rsvp`, {
@@ -301,19 +315,12 @@ export function EventDetail({ eventId }: { eventId: string }) {
       setRsvpNote('');
       await fetchEventDataRef.current();
 
-      // Check if event requires payment for this member's tier
-      const isPrem = membershipStatus === 'premium' || membershipStatus === 'grace-period';
-      const fee = isPrem ? event?.fee_premium : event?.fee_basic;
-      if (fee != null && fee > 0) {
-        setShowPaymentFlow(true);
-      } else {
-        showToast(
-          level === 'will_lead'
-            ? (locale === 'vi' ? 'Bạn đã đăng ký vai trò dẫn dắt.' : 'You are registered as a lead.')
-            : (locale === 'vi' ? 'Bạn đã đăng ký tham gia sự kiện.' : 'You are registered for the event.'),
-          'success',
-        );
-      }
+      showToast(
+        level === 'will_lead'
+          ? (locale === 'vi' ? 'Bạn đã đăng ký vai trò dẫn dắt.' : 'You are registered as a lead.')
+          : (locale === 'vi' ? 'Bạn đã đăng ký tham gia sự kiện.' : 'You are registered for the event.'),
+        'success',
+      );
     } catch (error) {
       console.error('Failed to RSVP:', error);
       showToast(locale === 'vi' ? 'Không thể cập nhật đăng ký.' : 'Unable to update RSVP.');
@@ -1784,8 +1791,11 @@ export function EventDetail({ eventId }: { eventId: string }) {
                   payerEmail={session.user.email || ''}
                   payerPhone={memberPhone || undefined}
                   paymentId=""
+                  commitmentLevel={pendingCommitmentLevel}
+                  onCancel={() => setShowPaymentFlow(false)}
                   onComplete={() => {
                     setShowPaymentFlow(false);
+                    void fetchEventDataRef.current();
                     showToast(locale === 'vi' ? 'Đã gửi xác nhận thanh toán!' : 'Payment confirmation sent!', 'success');
                   }}
                 />

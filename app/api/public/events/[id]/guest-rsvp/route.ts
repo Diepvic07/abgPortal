@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
-import { getPublicEventById, createGuestRsvp, getGuestRsvpByEmail, createEventPayment } from '@/lib/supabase-events';
+import { getPublicEventById, createGuestRsvp, getGuestRsvpByEmail } from '@/lib/supabase-events';
 import { z } from 'zod';
 
 const GuestRsvpSchema = z.object({
@@ -33,7 +33,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return errorResponse('Registration deadline has passed', 400);
     }
 
-    // Check duplicate
+    // Check duplicate (only against actual registrations — deferred flow
+    // hasn't written anything yet, so re-attempting from the QR screen
+    // will still be caught here after they finally confirm payment).
     const existing = await getGuestRsvpByEmail(id, parsed.data.guest_email);
     if (existing) {
       return errorResponse('You have already registered for this event', 409);
@@ -52,6 +54,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return errorResponse('Guest capacity is full', 400);
     }
 
+    const requiresPayment = event.fee_guest != null && event.fee_guest > 0;
+
+    // For paid events, defer creation of the guest_rsvp + pending payment
+    // until the guest actually clicks "Tôi đã chuyển khoản". Closing the QR
+    // modal at this point should leave no trace.
+    if (requiresPayment) {
+      return successResponse({
+        rsvp: null,
+        payment: null,
+        requires_payment: true,
+        deferred: true,
+      }, 200);
+    }
+
+    // Free event: register immediately.
     const rsvp = await createGuestRsvp({
       event_id: id,
       guest_name: parsed.data.guest_name,
@@ -60,23 +77,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       question: parsed.data.question,
     });
 
-    // If event has a guest fee, create a pending payment record
-    let payment = null;
-    if (event.fee_guest != null && event.fee_guest > 0) {
-      payment = await createEventPayment({
-        event_id: id,
-        payer_type: 'guest',
-        guest_rsvp_id: rsvp.id,
-        amount_vnd: event.fee_guest,
-        payer_name: parsed.data.guest_name,
-        payer_email: parsed.data.guest_email,
-      });
-    }
-
     return successResponse({
       rsvp,
-      payment,
-      requires_payment: event.fee_guest != null && event.fee_guest > 0,
+      payment: null,
+      requires_payment: false,
     }, 201);
   } catch (error) {
     if (error instanceof Error && error.message === 'You have already registered for this event') {

@@ -20,7 +20,6 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rsvpComplete, setRsvpComplete] = useState(false);
-  const [paymentId, setPaymentId] = useState<string | null>(null);
   const [requiresPayment, setRequiresPayment] = useState(false);
 
   const t = locale === 'vi' ? {
@@ -67,6 +66,8 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
     setError('');
 
     try {
+      // Server now defers guest_rsvp + payment creation for paid events
+      // until the guest actually clicks "Tôi đã chuyển khoản".
       const res = await fetch(`/api/public/events/${event.id}/guest-rsvp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,8 +80,8 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
         return;
       }
 
-      if (data.requires_payment && data.payment) {
-        setPaymentId(data.payment.id);
+      if (data.requires_payment) {
+        // No guest_rsvp row exists yet — the payment step will create both.
         setRequiresPayment(true);
         setRsvpComplete(true);
       } else {
@@ -109,7 +110,9 @@ export function GuestRsvpModal({ event, onClose, onSuccess }: GuestRsvpModalProp
               payerName={name}
               payerEmail={email}
               payerPhone={phone || undefined}
-              paymentId={paymentId!}
+              paymentId=""
+              guestQuestion={question.trim() || undefined}
+              onCancel={onClose}
               onComplete={() => { onSuccess({ name, email }); onClose(); }}
             />
           </div>

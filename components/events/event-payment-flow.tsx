@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CommunityEvent, PayerType } from '@/types';
+import { CommunityEvent, PayerType, CommitmentLevel } from '@/types';
 import { useTranslation } from '@/lib/i18n';
 
 const DEFAULT_PAYMENT_CONFIG = {
@@ -58,10 +58,18 @@ interface EventPaymentFlowProps {
   payerEmail: string;
   payerPhone?: string;
   paymentId: string;
+  // Members: which RSVP level to create when payment is confirmed (defaults to will_participate).
+  commitmentLevel?: CommitmentLevel;
+  // Guests: the question they submitted in the RSVP form (needed at confirm-payment time
+  // because we no longer create the guest_rsvp upfront for paid events).
+  guestQuestion?: string;
+  // Called when the user explicitly cancels ("Đổi ý — huỷ đăng ký") or closes without paying.
+  // For paid events this is important: nothing is registered, so callers should just dismiss.
+  onCancel?: () => void;
   onComplete: () => void;
 }
 
-export function EventPaymentFlow({ event, payerType, payerName, payerEmail, payerPhone, paymentId, onComplete }: EventPaymentFlowProps) {
+export function EventPaymentFlow({ event, payerType, payerName, payerEmail, payerPhone, paymentId, commitmentLevel, guestQuestion, onCancel, onComplete }: EventPaymentFlowProps) {
   const { locale } = useTranslation();
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -76,8 +84,9 @@ export function EventPaymentFlow({ event, payerType, payerName, payerEmail, paye
     name: 'Tên',
     transferContent: 'Nội dung CK',
     confirmButton: 'Tôi đã chuyển khoản',
+    cancelButton: 'Đổi ý — huỷ đăng ký',
     confirming: 'Đang gửi...',
-    confirmNote: 'Sau khi bấm, admin sẽ kiểm tra chuyển khoản và xác nhận đăng ký của bạn.',
+    confirmNote: 'Chỉ khi bấm "Tôi đã chuyển khoản" mới được ghi nhận đăng ký. Đóng cửa sổ này = huỷ đăng ký, không lưu lại.',
     successTitle: 'Đã gửi xác nhận thanh toán!',
     successMessage: 'Admin sẽ kiểm tra thanh toán của bạn sớm. Bạn sẽ nhận được xác nhận.',
     done: 'Xong',
@@ -91,8 +100,9 @@ export function EventPaymentFlow({ event, payerType, payerName, payerEmail, paye
     name: 'Name',
     transferContent: 'Transfer content',
     confirmButton: 'I Have Made Payment',
+    cancelButton: 'Never mind — cancel',
     confirming: 'Sending...',
-    confirmNote: 'After clicking, admin will verify your transfer and confirm your registration.',
+    confirmNote: 'Only "I Have Made Payment" registers you. Closing this window does not save anything.',
     successTitle: 'Payment Confirmation Sent!',
     successMessage: 'Admin will verify your payment shortly. You will receive a confirmation.',
     done: 'Done',
@@ -127,10 +137,24 @@ export function EventPaymentFlow({ event, payerType, payerName, payerEmail, paye
         ? `/api/public/events/${event.id}/confirm-payment`
         : `/api/community/events/${event.id}/confirm-payment`;
 
+      const body = isGuest
+        ? {
+            payer_name: payerName,
+            payer_email: payerEmail,
+            payer_phone: payerPhone,
+            question: guestQuestion,
+          }
+        : {
+            payer_name: payerName,
+            payer_email: payerEmail,
+            payment_id: paymentId,
+            commitment_level: commitmentLevel || 'will_participate',
+          };
+
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payer_name: payerName, payer_email: payerEmail, payment_id: paymentId }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -225,7 +249,17 @@ export function EventPaymentFlow({ event, payerType, payerName, payerEmail, paye
         {confirming ? t.confirming : t.confirmButton}
       </button>
 
-      <p className="text-xs text-gray-400 text-center">
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          disabled={confirming}
+          className="w-full px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg disabled:opacity-50"
+        >
+          {t.cancelButton}
+        </button>
+      )}
+
+      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center">
         {t.confirmNote}
       </p>
     </div>
