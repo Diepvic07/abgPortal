@@ -31,15 +31,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const description = proposal.description.replace(/\s+/g, ' ').slice(0, 160);
 
+  const ogImage = proposal.image_url || 'https://www.abgalumni.vn/images/abg-icon-512.png';
+
   return {
     title: `${proposal.title} | ABG Alumni Connect`,
     description,
     openGraph: {
       title: proposal.title,
       description,
-      ...(proposal.image_url && {
-        images: [{ url: proposal.image_url, width: 1200, height: 630, alt: proposal.title }],
-      }),
+      images: [{ url: ogImage, width: 1200, height: 630, alt: proposal.title }],
     },
   };
 }

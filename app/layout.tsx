@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   title: 'ABG Alumni Connect',
   description: 'Connect with fellow ABG Alumni members',
   manifest: '/manifest.json',
+  metadataBase: new URL('https://www.abgalumni.vn'),
+  openGraph: {
+    images: [{ url: '/images/abg-icon-512.png', width: 512, height: 512, alt: 'ABG Alumni' }],
+  },
 };
 
 export default function RootLayout({

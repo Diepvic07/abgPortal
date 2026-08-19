@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
     openGraph: {
       title,
       description: excerpt,
-      images: article.image_url ? [{ url: article.image_url }] : [],
+      images: [{ url: article.image_url || 'https://www.abgalumni.vn/images/abg-icon-512.png' }],
       type: 'article',
       publishedTime: article.published_date,
       authors: [article.author_name],
