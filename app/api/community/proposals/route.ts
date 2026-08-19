@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
       target_time: typeof target_time === 'string' ? target_time.trim().slice(0, 10) : undefined,
       image_url: image_url || undefined,
       tags: Array.isArray(tags) ? tags.filter((t: string) => typeof t === 'string' && t.trim()).map((t: string) => t.trim()).slice(0, 10) : [],
-      location: typeof location === 'string' ? location.trim().slice(0, 100) : undefined,
+      location: typeof location === 'string' ? location.trim().slice(0, 200) : undefined,
       map_url: typeof map_url === 'string' ? map_url.trim().slice(0, 500) : undefined,
       participation_format: participation_format && VALID_FORMATS.includes(participation_format) ? participation_format : 'offline',
       duration: typeof duration === 'string' ? duration.trim().slice(0, 100) : undefined,

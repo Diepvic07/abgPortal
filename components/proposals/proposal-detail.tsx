@@ -125,7 +125,6 @@ export function ProposalDetail({ proposalId }: Props) {
   const [editTargetDate, setEditTargetDate] = useState('');
   const [editTargetTime, setEditTargetTime] = useState('');
   const [editLocation, setEditLocation] = useState('');
-  const [editCustomLocation, setEditCustomLocation] = useState('');
   const [editMapUrl, setEditMapUrl] = useState('');
   const [editParticipationFormat, setEditParticipationFormat] = useState<ParticipationFormat>('offline');
   const [editTags, setEditTags] = useState<string[]>([]);
@@ -489,15 +488,8 @@ export function ProposalDetail({ proposalId }: Props) {
     setEditGenre(proposal.genre || 'other');
     setEditTargetDate(proposal.target_date || '');
     setEditTargetTime(proposal.target_time || '');
-    const loc = proposal.location || '';
+    setEditLocation(proposal.location || '');
     setEditMapUrl(proposal.map_url || '');
-    if (loc === 'Hà Nội' || loc === 'HCM' || loc === '') {
-      setEditLocation(loc);
-      setEditCustomLocation('');
-    } else {
-      setEditLocation('__custom__');
-      setEditCustomLocation(loc);
-    }
     setEditParticipationFormat((proposal.participation_format as ParticipationFormat) || 'offline');
     setEditTags(proposal.tags || []);
     setEditTagInput('');
@@ -617,7 +609,7 @@ export function ProposalDetail({ proposalId }: Props) {
           genre: editGenre,
           target_date: editTargetDate || null,
           target_time: editTargetTime || null,
-          location: editLocation === '__custom__' ? editCustomLocation.trim() : editLocation || null,
+          location: editLocation.trim() || null,
           map_url: editMapUrl.trim() || null,
           participation_format: editParticipationFormat,
           tags: editTags,
@@ -679,13 +671,7 @@ export function ProposalDetail({ proposalId }: Props) {
         if (data.category && ['talk', 'learning', 'fieldtrip', 'meeting', 'sports', 'community_support'].includes(data.category)) setEditCategory(data.category);
         if (data.genre && ['education', 'health', 'finance', 'technology', 'business', 'culture', 'environment', 'other'].includes(data.genre)) setEditGenre(data.genre);
         if (data.location) {
-          if (data.location === 'Hà Nội' || data.location === 'HCM') {
-            setEditLocation(data.location);
-            setEditCustomLocation('');
-          } else {
-            setEditLocation('__custom__');
-            setEditCustomLocation(data.location);
-          }
+          setEditLocation(data.location);
         }
         if (data.participation_format && ['online', 'offline', 'hybrid'].includes(data.participation_format)) setEditParticipationFormat(data.participation_format);
         if (Array.isArray(data.tags)) setEditTags(data.tags);
@@ -863,27 +849,15 @@ export function ProposalDetail({ proposalId }: Props) {
             <div className="flex flex-wrap items-center gap-4 mt-3">
               <label className="text-sm text-gray-600 flex items-center gap-1">
                 {locale === 'vi' ? 'Địa điểm' : 'Location'}:
-                <select
-                  value={editLocation}
-                  onChange={e => { setEditLocation(e.target.value); if (e.target.value !== '__custom__') setEditCustomLocation(''); }}
-                  className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">{locale === 'vi' ? '-- Chọn --' : '-- Select --'}</option>
-                  <option value="Hà Nội">Hà Nội</option>
-                  <option value="HCM">HCM</option>
-                  <option value="__custom__">{locale === 'vi' ? 'Khác...' : 'Other...'}</option>
-                </select>
-              </label>
-              {editLocation === '__custom__' && (
                 <input
                   type="text"
-                  value={editCustomLocation}
-                  onChange={e => setEditCustomLocation(e.target.value)}
-                  placeholder={locale === 'vi' ? 'Nhập địa điểm...' : 'Enter location...'}
-                  className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  maxLength={100}
+                  value={editLocation}
+                  onChange={e => setEditLocation(e.target.value)}
+                  placeholder={locale === 'vi' ? 'VD: Dạo Coffee, Hà Nội' : 'e.g. Dao Coffee, Hanoi'}
+                  className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  maxLength={200}
                 />
-              )}
+              </label>
               <label className="text-sm text-gray-600 flex items-center gap-1">
                 {locale === 'vi' ? 'Hình thức' : 'Format'}:
                 <select
@@ -1044,7 +1018,7 @@ export function ProposalDetail({ proposalId }: Props) {
                               title: editTitle,
                               category: editCategory,
                               description: editDescription,
-                              location: editLocation === '__custom__' ? editCustomLocation : editLocation,
+                              location: editLocation,
                               duration: editDuration === '__custom__' ? editCustomDuration : editDuration,
                               timeSlots: editHasDiscussion ? editDiscussionOptions.filter(o => o.date && o.startTime && o.endTime) : [],
                             }),

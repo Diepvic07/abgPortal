@@ -41,7 +41,6 @@ export function NewProposalForm() {
   const [category, setCategory] = useState<ProposalCategory | ''>('');
   const [genre, setGenre] = useState<ProposalGenre>('other');
   const [location, setLocation] = useState('');
-  const [customLocation, setCustomLocation] = useState('');
   const [mapUrl, setMapUrl] = useState('');
   const [participationFormat, setParticipationFormat] = useState<ParticipationFormat>('offline');
   const [what, setWhat] = useState('');
@@ -163,13 +162,7 @@ export function NewProposalForm() {
         if (Array.isArray(data.tags)) setTags(data.tags);
         if (data.genre && ['education', 'health', 'finance', 'technology', 'business', 'culture', 'environment', 'other'].includes(data.genre)) setGenre(data.genre);
         if (data.location) {
-          if (data.location === 'Hà Nội' || data.location === 'HCM') {
-            setLocation(data.location);
-            setCustomLocation('');
-          } else {
-            setLocation('__custom__');
-            setCustomLocation(data.location);
-          }
+          setLocation(data.location);
         }
         if (data.participation_format && ['online', 'offline', 'hybrid'].includes(data.participation_format)) setParticipationFormat(data.participation_format);
         if (data.why && !why) setWhy(data.why);
@@ -208,7 +201,7 @@ export function NewProposalForm() {
           title,
           category: category || 'other',
           description: what,
-          location: location === '__custom__' ? customLocation : location,
+          location,
           duration: duration === '__custom__' ? customDuration : duration,
           timeSlots: hasDiscussion ? discussionOptions.filter(o => o.date && o.startTime && o.endTime) : [],
         }),
@@ -268,9 +261,8 @@ export function NewProposalForm() {
       return;
     }
     if (needsLocation && !isOnlineTalk) {
-      const effectiveLocation = location === '__custom__' ? customLocation.trim() : location;
-      if (!effectiveLocation) {
-        setError(vi ? 'Vui lòng chọn địa điểm' : 'Please select a location');
+      if (!location.trim()) {
+        setError(vi ? 'Vui lòng nhập địa điểm' : 'Please enter a location');
         return;
       }
     }
@@ -313,7 +305,7 @@ export function NewProposalForm() {
           commitment_level: commitmentLevel,
           image_url: imageUrl || undefined,
           tags,
-          location: location === '__custom__' ? customLocation.trim() : location || undefined,
+          location: location.trim() || undefined,
           map_url: mapUrl.trim() || undefined,
           participation_format: participationFormat,
           has_discussion: hasDiscussion,
@@ -552,7 +544,7 @@ export function NewProposalForm() {
                     <button
                       key={loc.value}
                       type="button"
-                      onClick={() => { setLocation(loc.value); setCustomLocation(''); }}
+                      onClick={() => setLocation(loc.value)}
                       className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all border ${
                         location === loc.value
                           ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
@@ -562,28 +554,15 @@ export function NewProposalForm() {
                       {loc.label}
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => setLocation('__custom__')}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all border ${
-                      location === '__custom__'
-                        ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                        : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
-                    }`}
-                  >
-                    ✏️ {vi ? 'Khác' : 'Other'}
-                  </button>
                 </div>
-                {location === '__custom__' && (
-                  <input
-                    type="text"
-                    value={customLocation}
-                    onChange={(e) => setCustomLocation(e.target.value)}
-                    placeholder={vi ? 'Nhập địa điểm...' : 'Enter location...'}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm mt-2"
-                    maxLength={100}
-                  />
-                )}
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder={vi ? 'VD: Dạo Coffee, Hà Nội' : 'e.g. Dao Coffee, Hanoi'}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                  maxLength={200}
+                />
                 <div className="mt-3">
                   <label htmlFor="mapUrl" className="block text-sm font-medium text-gray-700 mb-1">
                     {vi ? '🗺️ Link Google Maps (tùy chọn)' : '🗺️ Google Maps link (optional)'}
@@ -771,7 +750,7 @@ export function NewProposalForm() {
                   <button
                     key={loc.value}
                     type="button"
-                    onClick={() => { setLocation(loc.value); setCustomLocation(''); }}
+                    onClick={() => setLocation(loc.value)}
                     className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all border ${
                       location === loc.value
                         ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
@@ -781,28 +760,15 @@ export function NewProposalForm() {
                     {loc.label}
                   </button>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => setLocation('__custom__')}
-                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all border ${
-                    location === '__custom__'
-                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                      : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
-                  }`}
-                >
-                  ✏️ {vi ? 'Khác' : 'Other'}
-                </button>
               </div>
-              {location === '__custom__' && (
-                <input
-                  type="text"
-                  value={customLocation}
-                  onChange={(e) => setCustomLocation(e.target.value)}
-                  placeholder={vi ? 'Nhập địa điểm...' : 'Enter location...'}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm mt-2"
-                  maxLength={100}
-                />
-              )}
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder={vi ? 'VD: Dạo Coffee, Hà Nội' : 'e.g. Dao Coffee, Hanoi'}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                maxLength={200}
+              />
             </div>
             <div className="bg-gray-50 rounded-xl p-5">
               <label className="block text-base font-semibold text-gray-900 mb-3">
@@ -1308,9 +1274,9 @@ export function NewProposalForm() {
                   <span className="px-2 py-1 rounded-full bg-white text-gray-700 font-medium">
                     {PROPOSAL_GENRE_LABELS[genre]?.icon} {PROPOSAL_GENRE_LABELS[genre]?.[vi ? 'vi' : 'en']}
                   </span>
-                  {(location || customLocation) && (
+                  {location && (
                     <span className="px-2 py-1 rounded-full bg-white text-gray-700 font-medium">
-                      📍 {location === '__custom__' ? customLocation : location}
+                      📍 {location}
                     </span>
                   )}
                   <span className="px-2 py-1 rounded-full bg-white text-gray-700 font-medium">
