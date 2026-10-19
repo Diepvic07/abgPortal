@@ -111,7 +111,8 @@ export function AdminLibraryManager() {
     try {
       const [libraryRes, eventsRes, proposalsRes] = await Promise.all([
         fetch('/api/admin/library'),
-        fetch('/api/admin/community/events'),
+        // Latest 500 of each, newest first (both APIs sort by created_at desc)
+        fetch('/api/admin/community/events?limit=500'),
         fetch('/api/admin/community/proposals'),
       ]);
 
@@ -331,10 +332,10 @@ export function AdminLibraryManager() {
                   </optgroup>
                 )}
                 {proposals.length > 0 && (
-                  <optgroup label="Completed Proposals">
+                  <optgroup label="Proposals">
                     {proposals.map((proposal) => (
                       <option key={`proposal-${proposal.id}`} value={`proposal:${proposal.id}`}>
-                        {proposal.title}
+                        {proposal.title} ({proposal.status})
                       </option>
                     ))}
                   </optgroup>

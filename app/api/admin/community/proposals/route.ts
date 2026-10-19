@@ -3,9 +3,6 @@ import { authOptions } from '@/lib/auth';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-response';
 import { isAdminAsync } from '@/lib/admin-utils-server';
 import { getProposals } from '@/lib/supabase-community';
-import { ProposalStatus } from '@/types';
-
-const COMPLETED_STATUSES: ProposalStatus[] = ['completed', 'project_completed'];
 
 export async function GET() {
   try {
@@ -17,8 +14,9 @@ export async function GET() {
       return errorResponse('Admin access required', 403);
     }
 
+    // All proposals except removed ones: a recording can belong to a proposal
+    // that was never moved to "completed" (e.g. a coffee talk run straight from the proposal).
     const result = await getProposals({
-      status: COMPLETED_STATUSES,
       page: 1,
       limit: 500,
       sort: 'newest',
