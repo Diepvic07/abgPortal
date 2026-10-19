@@ -463,16 +463,29 @@ export function ProposalDetail({ proposalId }: Props) {
   async function handleRecapImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setEditError(locale === 'vi' ? 'Ảnh quá lớn. Tối đa 5MB.' : 'Image too large. Maximum 5MB.');
+      if (recapImageRef.current) recapImageRef.current.value = '';
+      return;
+    }
     setRecapImageUploading(true);
+    setEditError(null);
     try {
       const formData = new FormData();
       formData.append('file', file);
       const res = await fetch('/api/community/proposals/upload-image', { method: 'POST', body: formData });
-      if (res.ok) {
-        const data = await res.json();
-        setRecapImages(prev => [...prev, data.data.url]);
+      const data = await res.json();
+      // The API returns { success, url }. Read the url here, not inside the state updater:
+      // an error thrown inside the updater runs during render and crashes the whole page.
+      const url: string | undefined = data.url;
+      if (res.ok && url) {
+        setRecapImages(prev => [...prev, url]);
+      } else {
+        setEditError(data.error || (locale === 'vi' ? 'Không thể tải ảnh lên' : 'Failed to upload image'));
       }
-    } catch {} finally {
+    } catch {
+      setEditError(locale === 'vi' ? 'Lỗi tải ảnh' : 'Image upload error');
+    } finally {
       setRecapImageUploading(false);
       if (recapImageRef.current) recapImageRef.current.value = '';
     }
