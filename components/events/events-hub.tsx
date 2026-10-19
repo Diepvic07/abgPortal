@@ -953,9 +953,11 @@ function LibraryRow({ item, canWatch, locale }: { item: LibraryItem; canWatch: b
               {item.resource_links.length} {locale === 'vi' ? 'tài nguyên' : 'resources'}
             </span>
           )}
-          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${canWatch ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
-            {canWatch ? (locale === 'vi' ? 'Xem video' : 'Watch') : (locale === 'vi' ? 'Premium' : 'Premium')}
-          </span>
+          {item.has_video && (
+            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${canWatch ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+              {canWatch ? (locale === 'vi' ? 'Xem video' : 'Watch') : (locale === 'vi' ? 'Premium' : 'Premium')}
+            </span>
+          )}
         </div>
       </div>
     </Link>

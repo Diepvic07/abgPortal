@@ -54,6 +54,8 @@ export default async function LibraryDetailPage({ params }: LibraryPageProps) {
 
   const membershipStatus = getMembershipStatus(member);
   const canWatch = !!member.is_admin || membershipStatus === 'premium' || membershipStatus === 'grace-period';
+  // Some items only hold resource links (slides, documents) and no recording
+  const hasVideo = !!(item.drive_preview_url || item.canva_embed_url);
   const isVi = locale === 'vi';
 
   return (
@@ -71,9 +73,11 @@ export default async function LibraryDetailPage({ params }: LibraryPageProps) {
           <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
             {isVi ? 'Thư viện' : 'Library'}
           </span>
-          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-            Premium
-          </span>
+          {hasVideo && (
+            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+              Premium
+            </span>
+          )}
           {(item.event_title || item.proposal_title) && (
             <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
               {item.event_title || item.proposal_title}
@@ -84,7 +88,7 @@ export default async function LibraryDetailPage({ params }: LibraryPageProps) {
         <p className="mt-3 text-sm leading-6 text-gray-600">{item.description}</p>
       </div>
 
-      {canWatch && (item.drive_preview_url || item.canva_embed_url) ? (
+      {!hasVideo ? null : canWatch ? (
         <div className="space-y-4">
           {item.drive_preview_url && (
             <section className="overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-sm">

@@ -628,6 +628,8 @@ export interface LibraryItem {
   proposal_title?: string;
   proposal_slug?: string;
   can_watch?: boolean;
+  /** True when the item has a Drive or Canva video. Sent even when the URLs are hidden from non-Premium members. */
+  has_video?: boolean;
 }
 
 export interface EventRsvp {

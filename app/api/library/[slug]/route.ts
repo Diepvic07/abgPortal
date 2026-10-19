@@ -31,6 +31,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       library_item: {
         ...item,
         can_watch: canWatch,
+        has_video: !!(item.drive_preview_url || item.canva_embed_url),
         drive_preview_url: canWatch ? item.drive_preview_url : undefined,
         canva_embed_url: canWatch ? item.canva_embed_url : undefined,
       },
