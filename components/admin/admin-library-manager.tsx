@@ -331,10 +331,10 @@ export function AdminLibraryManager() {
                   </optgroup>
                 )}
                 {proposals.length > 0 && (
-                  <optgroup label="Completed Proposals">
+                  <optgroup label="Proposals">
                     {proposals.map((proposal) => (
                       <option key={`proposal-${proposal.id}`} value={`proposal:${proposal.id}`}>
-                        {proposal.title}
+                        {proposal.title} ({proposal.status})
                       </option>
                     ))}
                   </optgroup>
