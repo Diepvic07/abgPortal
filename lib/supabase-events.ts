@@ -868,6 +868,7 @@ export async function getAllEvents(options?: {
   status?: EventStatus;
   category?: string;
   search?: string;
+  limit?: number;
 }): Promise<CommunityEvent[]> {
   const supabase = createServerSupabaseClient();
 
@@ -875,6 +876,10 @@ export async function getAllEvents(options?: {
     .from('community_events')
     .select(EVENT_MEMBER_SELECT)
     .order('created_at', { ascending: false });
+
+  if (options?.limit) {
+    query = query.limit(options.limit);
+  }
 
   if (options?.status) {
     query = query.eq('status', options.status);

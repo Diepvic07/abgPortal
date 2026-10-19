@@ -57,11 +57,14 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || undefined;
     const search = searchParams.get('search') || undefined;
     const parsedStatus = status ? EventStatus.safeParse(status) : null;
+    const parsedLimit = Number(searchParams.get('limit'));
+    const limit = Number.isInteger(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 500) : undefined;
 
     const events = await getAllEvents({
       category,
       status: parsedStatus?.success ? parsedStatus.data : undefined,
       search,
+      limit,
     });
 
     return successResponse({ events });
