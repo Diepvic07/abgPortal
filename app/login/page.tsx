@@ -20,7 +20,7 @@ export default async function LoginPage({
 
   return (
     <LoginPageClient
-      errorCode={params.error}
+      errorCode={typeof params.error === "string" ? params.error : undefined}
       email={normalizeLoginEmail(params.email)}
       callbackUrl={safeLoginCallbackUrl(params.callbackUrl, "/request")}
     />
