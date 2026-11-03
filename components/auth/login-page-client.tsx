@@ -11,7 +11,15 @@ const ERROR_KEYS: Record<string, keyof typeof import('@/lib/i18n/translations/en
   SessionRequired: 'sessionRequired',
 };
 
-export function LoginPageClient({ errorCode }: { errorCode?: string }) {
+export function LoginPageClient({
+  errorCode,
+  email,
+  callbackUrl,
+}: {
+  errorCode?: string;
+  email?: string;
+  callbackUrl: string;
+}) {
   const { t } = useTranslation();
 
   const errorMessage = errorCode
@@ -32,7 +40,7 @@ export function LoginPageClient({ errorCode }: { errorCode?: string }) {
             {errorMessage}
           </div>
         )}
-        <LoginForm />
+        <LoginForm initialEmail={email} callbackUrl={callbackUrl} />
         <p className="text-center text-sm text-gray-500 mt-6">
           {t.auth.notMemberYet}{" "}
           <Link href="/signup" className="text-blue-600 hover:underline">

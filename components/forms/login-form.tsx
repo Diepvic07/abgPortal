@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n";
 import posthog from "posthog-js";
 
-export function LoginForm() {
-  const [email, setEmail] = useState("");
+export function LoginForm({ initialEmail = "", callbackUrl = "/request" }: { initialEmail?: string; callbackUrl?: string }) {
+  const [email, setEmail] = useState(initialEmail);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
@@ -56,7 +56,7 @@ export function LoginForm() {
       }
 
       // Send magic link (server enforces 60s per-email cooldown)
-      const result = await signIn("email", { email, redirect: false, callbackUrl: "/request" });
+      const result = await signIn("email", { email, redirect: false, callbackUrl });
       if (result?.error) {
         if (result.error.includes("wait") || result.error.includes("seconds")) {
           setError(result.error);
@@ -122,7 +122,7 @@ export function LoginForm() {
       </div>
 
       <button
-        onClick={() => signIn("google", { callbackUrl: "/request" })}
+        onClick={() => signIn("google", { callbackUrl }, email ? { login_hint: email } : undefined)}
         className="w-full py-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-3 transition-colors"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
