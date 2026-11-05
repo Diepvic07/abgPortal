@@ -37,7 +37,7 @@ The development of ABG Alumni Connect is divided into small phases that preserve
 ## Phase 5: Notifications and Engagement
 - [x] Support push subscriptions, in-app notifications, notification preferences, notification bell, proposal discussion reminders, and duplicate reminders.
 - [ ] Add unified notification preferences for email and push channels.
-- [ ] Add email digest or AI-personalized event/proposal/news recommendations for members who do not rely on browser notifications.
+- [ ] Add email digest or AI-personalized event/proposal/news recommendations for members who do not rely on browser notifications. Spec: [Weekly Activity Email](2026-06-14-weekly-activity-email/requirements.md).
 - [ ] Add reliable `@mention` autocomplete and member-ID based mention notifications for event and proposal comments.
 - [ ] Add active-member retention reporting around event RSVPs, proposal commitments, comments, searches, and introductions.
 
